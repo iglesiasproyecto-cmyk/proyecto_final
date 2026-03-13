@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IGLESIABD — Esquema de Base de Datos</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0b0f1a;
+  --bg2:       #111827;
+  --bg3:       #1a2236;
+  --border:    #1e2d45;
+  --border2:   #243347;
+  --txt:       #e2e8f4;
+  --txt2:      #8899b4;
+  --txt3:      #4d6080;
+  --gold:      #e2b96a;
+  --gold2:     #c99a45;
+  --blue:      #4a9eff;
+  --blue2:     #2d7fe0;
+  --green:     #45d68a;
+  --green2:    #2db36a;
+  --orange:    #ff8c42;
+  --red:       #ff5a5a;
+  --purple:    #a78bfa;
+
+  --geo:       #4a9eff;
+  --iglesia:   #a78bfa;
+  --ministerio:#45d68a;
+  --usuarios:  #ff8c42;
+  --eventos:   #e2b96a;
+  --cursos:    #5ec4ff;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font-family: 'Sora', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── FONDO ANIMADO ─── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(74,158,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(167,139,250,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 50% 50%, rgba(69,214,138,0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ─── LAYOUT ─── */
+.shell { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: 260px; flex-shrink: 0;
+  background: rgba(17,24,39,0.95);
+  border-right: 1px solid var(--border);
+  position: sticky; top: 0; height: 100vh;
+  overflow-y: auto; overflow-x: hidden;
+  backdrop-filter: blur(12px);
+  display: flex; flex-direction: column;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+.sidebar-logo {
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+.sidebar-logo h1 {
+  font-family: 'Space Mono', monospace;
+  font-size: .75rem; font-weight: 700;
+  color: var(--gold); letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.sidebar-logo p { font-size: .65rem; color: var(--txt3); margin-top: 3px; }
+
+.sidebar-nav { padding: 16px 12px; flex: 1; }
+
+.nav-group { margin-bottom: 6px; }
+.nav-group-title {
+  font-size: .6rem; font-weight: 700; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--txt3);
+  padding: 10px 10px 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px; border-radius: 7px;
+  cursor: pointer; transition: all .18s;
+  font-size: .75rem; color: var(--txt2);
+  position: relative; overflow: hidden;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+.nav-item:hover { background: var(--bg3); color: var(--txt); border-color: var(--border2); }
+.nav-item.active {
+  background: var(--bg3); color: var(--txt);
+  border-color: var(--border2);
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 20%; bottom: 20%;
+  width: 3px; border-radius: 2px;
+  background: var(--item-color, var(--blue));
+}
+.nav-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: var(--item-color, var(--blue));
+  box-shadow: 0 0 6px var(--item-color, var(--blue));
+}
+.nav-count {
+  margin-left: auto;
+  font-family: 'Space Mono', monospace;
+  font-size: .6rem; color: var(--txt3);
+  background: var(--bg); padding: 1px 6px; border-radius: 10px;
+}
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  font-size: .65rem; color: var(--txt3);
+  line-height: 1.6;
+}
+.sidebar-footer span { color: var(--gold); font-family: 'Space Mono', monospace; }
+
+/* ─── MAIN CONTENT ─── */
+.main { flex: 1; min-width: 0; }
+
+/* ─── HERO ─── */
+.hero {
+  padding: 60px 56px 48px;
+  border-bottom: 1px solid var(--border);
+  position: relative; overflow: hidden;
+}
+.hero::after {
+  content: 'BD';
+  position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
+  font-family: 'Space Mono', monospace;
+  font-size: 9rem; font-weight: 700;
+  color: rgba(74,158,255,0.04);
+  pointer-events: none; user-select: none;
+  letter-spacing: -.02em;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(74,158,255,0.08); border: 1px solid rgba(74,158,255,0.2);
+  padding: 5px 14px; border-radius: 20px;
+  font-size: .7rem; font-family: 'Space Mono', monospace;
+  color: var(--blue); letter-spacing: .08em; text-transform: uppercase;
+  margin-bottom: 22px;
+}
+.hero-eyebrow::before { content: ''; width: 6px; height: 6px; background: var(--blue); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.hero h2 {
+  font-size: 2.8rem; font-weight: 800; line-height: 1.1;
+  letter-spacing: -.03em; margin-bottom: 14px;
+}
+.hero h2 span { color: var(--gold); }
+.hero p { font-size: .9rem; color: var(--txt2); max-width: 560px; line-height: 1.7; }
+
+.hero-stats {
+  display: flex; gap: 32px; margin-top: 32px;
+  padding-top: 28px; border-top: 1px solid var(--border);
+}
+.stat { display: flex; flex-direction: column; gap: 3px; }
+.stat-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.6rem; font-weight: 700; color: var(--txt);
+  line-height: 1;
+}
+.stat-num span { color: var(--gold); }
+.stat-label { font-size: .68rem; color: var(--txt3); text-transform: uppercase; letter-spacing: .1em; }
+
+/* ─── TABS ─── */
+.tabs-bar {
+  display: flex; gap: 2px;
+  padding: 16px 56px 0;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(11,15,26,0.96);
+  backdrop-filter: blur(16px);
+}
+.tab-btn {
+  padding: 10px 20px;
+  font-size: .75rem; font-weight: 600;
+  color: var(--txt3); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .2s; background: none; border-top: none; border-left: none; border-right: none;
+  font-family: 'Sora', sans-serif;
+  letter-spacing: .02em;
+}
+.tab-btn:hover { color: var(--txt2); }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* ─── PANELS ─── */
+.panel { display: none; padding: 40px 56px 60px; }
+.panel.active { display: block; }
+
+/* ─── SECTION HEADER ─── */
+.section-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 28px;
+}
+.section-title {
+  font-size: 1.1rem; font-weight: 700; color: var(--txt);
+}
+.section-sub { font-size: .8rem; color: var(--txt3); margin-top: 2px; }
+.section-badge {
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem; padding: 3px 10px; border-radius: 12px;
+  border: 1px solid; margin-left: auto;
+}
+
+/* ─── GRUPO GRID ─── */
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.group-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
+  cursor: pointer; transition: all .22s;
+  position: relative; overflow: hidden;
+}
+.group-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--gc);
+  opacity: 0; transition: opacity .22s;
+}
+.group-card:hover { border-color: var(--gc); transform: translateY(-2px); }
+.group-card:hover::before { opacity: 1; }
+.group-card.selected { border-color: var(--gc); }
+.group-card.selected::before { opacity: 1; }
+.gc-icon { font-size: 1.4rem; margin-bottom: 10px; }
+.gc-name { font-size: .85rem; font-weight: 700; color: var(--txt); margin-bottom: 4px; }
+.gc-count { font-family: 'Space Mono', monospace; font-size: .7rem; color: var(--txt3); }
+.gc-tables { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; }
+.gc-tag {
+  font-size: .6rem; padding: 2px 8px; border-radius: 6px;
+  background: rgba(255,255,255,0.04); color: var(--txt3);
+  font-family: 'Space Mono', monospace;
+}
+
+/* ─── TABLA CARD ─── */
+.tables-list { display: flex; flex-direction: column; gap: 2px; }
+
+.table-accordion {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  transition: border-color .2s;
+}
+.table-accordion:hover { border-color: var(--border2); }
+.table-accordion.open { border-color: var(--acc-color, var(--border2)); }
+
+.table-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px; cursor: pointer;
+  user-select: none;
+}
+.table-color-bar {
+  width: 4px; height: 36px; border-radius: 3px;
+  background: var(--acc-color); flex-shrink: 0;
+}
+.table-name {
+  font-family: 'Space Mono', monospace;
+  font-size: .85rem; font-weight: 700; color: var(--txt);
+}
+.table-desc { font-size: .72rem; color: var(--txt3); margin-top: 2px; }
+.table-meta { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.col-badge {
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem; color: var(--txt3);
+  background: var(--bg3); padding: 3px 10px; border-radius: 8px;
+}
+.grupo-chip {
+  font-size: .6rem; padding: 3px 9px; border-radius: 8px;
+  color: var(--acc-color); border: 1px solid;
+  border-color: color-mix(in srgb, var(--acc-color) 30%, transparent);
+  background: color-mix(in srgb, var(--acc-color) 6%, transparent);
+  font-weight: 600; letter-spacing: .04em;
+}
+.chevron { color: var(--txt3); transition: transform .25s; font-size: .8rem; }
+.table-accordion.open .chevron { transform: rotate(180deg); }
+
+.table-body { display: none; border-top: 1px solid var(--border); }
+.table-accordion.open .table-body { display: block; }
+
+/* ─── COLUMNS TABLE ─── */
+.cols-table { width: 100%; border-collapse: collapse; }
+.cols-table thead tr {
+  background: var(--bg3);
+}
+.cols-table th {
+  padding: 10px 16px; text-align: left;
+  font-size: .65rem; font-weight: 700;
+  color: var(--txt3); letter-spacing: .1em; text-transform: uppercase;
+  font-family: 'Space Mono', monospace;
+  border-bottom: 1px solid var(--border);
+}
+.cols-table td {
+  padding: 10px 16px;
+  font-size: .75rem; border-bottom: 1px solid rgba(30,45,69,0.5);
+  vertical-align: top;
+}
+.cols-table tr:last-child td { border-bottom: none; }
+.cols-table tr.row-pk { background: rgba(226,185,106,0.04); }
+.cols-table tr.row-fk { background: rgba(74,158,255,0.04); }
+.cols-table tr.row-uq { background: rgba(69,214,138,0.04); }
+
+.col-name { font-family: 'Space Mono', monospace; font-size: .78rem; }
+.col-name.pk { color: var(--gold); }
+.col-name.fk { color: var(--blue); }
+.col-name.uq { color: var(--green); }
+.col-name.normal { color: var(--txt2); }
+
+.badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 16px; border-radius: 4px;
+  font-family: 'Space Mono', monospace; font-size: .55rem; font-weight: 700;
+}
+.badge.pk { background: rgba(226,185,106,0.15); color: var(--gold); }
+.badge.fk { background: rgba(74,158,255,0.15); color: var(--blue); }
+.badge.uq { background: rgba(69,214,138,0.15); color: var(--green); }
+
+.col-type { font-family: 'Space Mono', monospace; font-size: .7rem; color: var(--orange); }
+.col-rest { font-size: .68rem; color: var(--txt3); max-width: 280px; line-height: 1.5; }
+.col-desc { font-size: .72rem; color: var(--txt2); max-width: 280px; line-height: 1.5; }
+
+.table-footer-note {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  background: rgba(74,158,255,0.03);
+  font-size: .72rem; color: var(--txt3); line-height: 1.6;
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.table-footer-note .note-icon { color: var(--blue); flex-shrink: 0; font-size: .85rem; }
+
+/* ─── FILTER BAR ─── */
+.filter-bar {
+  display: flex; gap: 10px; align-items: center;
+  margin-bottom: 20px; flex-wrap: wrap;
+}
+.filter-input {
+  flex: 1; min-width: 200px;
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--txt); padding: 9px 16px; border-radius: 9px;
+  font-family: 'Sora', sans-serif; font-size: .78rem;
+  outline: none; transition: border-color .2s;
+}
+.filter-input:focus { border-color: var(--blue); }
+.filter-input::placeholder { color: var(--txt3); }
+.filter-chip {
+  padding: 7px 14px; border-radius: 9px;
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--txt3); font-size: .72rem; cursor: pointer;
+  transition: all .18s; font-family: 'Sora', sans-serif; font-weight: 600;
+}
+.filter-chip:hover { border-color: var(--border2); color: var(--txt); }
+.filter-chip.on { color: var(--chip-c); border-color: var(--chip-c); background: color-mix(in srgb, var(--chip-c) 8%, transparent); }
+
+/* ─── RELACIONES ─── */
+.rel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.rel-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.rel-from, .rel-to {
+  display: flex; align-items: center; gap: 10px;
+}
+.rel-table-name {
+  font-family: 'Space Mono', monospace;
+  font-size: .78rem; font-weight: 700;
+  padding: 4px 10px; border-radius: 7px;
+  background: var(--bg3);
+}
+.rel-field {
+  font-family: 'Space Mono', monospace;
+  font-size: .68rem; color: var(--blue);
+}
+.rel-arrow {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .7rem;
+}
+.rel-arrow-line {
+  flex: 1; height: 1px; background: var(--border2);
+  position: relative; min-width: 30px;
+}
+.rel-arrow-line::after {
+  content: '▶'; position: absolute; right: -6px; top: -7px;
+  font-size: .55rem; color: var(--border2);
+}
+.rel-cardinality {
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem; padding: 2px 8px; border-radius: 6px;
+  background: rgba(69,214,138,0.08); color: var(--green);
+  border: 1px solid rgba(69,214,138,0.2);
+}
+.rel-type-opt {
+  font-size: .62rem; padding: 2px 8px; border-radius: 6px;
+  background: rgba(255,140,66,0.08); color: var(--orange);
+  border: 1px solid rgba(255,140,66,0.2);
+}
+
+/* ─── CONVENCIONES PANEL ─── */
+.conv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.conv-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 20px;
+}
+.conv-title {
+  font-size: .75rem; font-weight: 700; color: var(--txt);
+  margin-bottom: 6px; display: flex; align-items: center; gap: 8px;
+}
+.conv-icon { font-size: 1rem; }
+.conv-text { font-size: .73rem; color: var(--txt2); line-height: 1.7; }
+.conv-code {
+  font-family: 'Space Mono', monospace;
+  background: var(--bg3); padding: 2px 7px; border-radius: 4px;
+  font-size: .68rem; color: var(--gold);
+}
+
+/* ─── CORRECTIONS PANEL ─── */
+.corrections-list { display: flex; flex-direction: column; gap: 12px; }
+.corr-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 22px;
+  border-left: 4px solid var(--corr-c);
+  display: flex; gap: 16px; align-items: flex-start;
+}
+.corr-badge {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  background: color-mix(in srgb, var(--corr-c) 12%, transparent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem;
+}
+.corr-title { font-size: .82rem; font-weight: 700; color: var(--txt); margin-bottom: 4px; }
+.corr-body { font-size: .73rem; color: var(--txt2); line-height: 1.7; }
+.corr-tables { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.corr-table-tag {
+  font-family: 'Space Mono', monospace; font-size: .62rem;
+  padding: 2px 8px; border-radius: 5px;
+  background: var(--bg3); color: var(--txt3);
+}
+
+/* ─── ERD MINI ─── */
+#erd-canvas { display: block; cursor: grab; }
+#erd-canvas:active { cursor: grabbing; }
+.erd-wrap {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden; position: relative;
+}
+.erd-toolbar {
+  display: flex; gap: 8px; padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+.erd-btn {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--txt2); padding: 5px 12px; border-radius: 7px;
+  font-size: .7rem; cursor: pointer; font-family: 'Sora', sans-serif;
+  transition: all .18s;
+}
+.erd-btn:hover { border-color: var(--gold); color: var(--gold); }
+.erd-label { font-size: .7rem; color: var(--txt3); margin-left: auto; font-family: 'Space Mono', monospace; }
+
+/* ─── SEARCH HIGHLIGHT ─── */
+.hl { background: rgba(226,185,106,0.25); color: var(--gold); border-radius: 2px; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 960px) {
+  .sidebar { display: none; }
+  .hero { padding: 36px 28px 32px; }
+  .tabs-bar { padding: 0 28px; }
+  .panel { padding: 28px 28px 48px; }
+  .groups-grid { grid-template-columns: 1fr 1fr; }
+  .rel-grid { grid-template-columns: 1fr; }
+  .conv-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── ANIMATIONS ─── */
+.fade-in { animation: fadeIn .3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.table-accordion { animation: fadeIn .25s ease; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">⛪</span>
+    <h1>IGLESIABD</h1>
+    <p>Esquema v2.0 — Corregido</p>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-title">Navegación</div>
+      <a class="nav-item active" onclick="goTab('tablas')" style="--item-color:var(--blue)">
+        <div class="nav-dot"></div> Tablas del esquema <span class="nav-count">23</span>
+      </a>
+      <a class="nav-item" onclick="goTab('relaciones')" style="--item-color:var(--green)">
+        <div class="nav-dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div> Relaciones <span class="nav-count">33</span>
+      </a>
+      <a class="nav-item" onclick="goTab('convenciones')" style="--item-color:var(--gold)">
+        <div class="nav-dot" style="background:var(--gold);box-shadow:0 0 6px var(--gold)"></div> Convenciones
+      </a>
+      <a class="nav-item" onclick="goTab('correcciones')" style="--item-color:var(--red)">
+        <div class="nav-dot" style="background:var(--red);box-shadow:0 0 6px var(--red)"></div> Correcciones <span class="nav-count">9</span>
+      </a>
+      <a class="nav-item" onclick="goTab('erd')" style="--item-color:var(--purple)">
+        <div class="nav-dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></div> Diagrama ERD
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Dominios</div>
+      <a class="nav-item" onclick="filterGroup('geo')" style="--item-color:var(--geo)">
+        <div class="nav-dot" style="background:var(--geo);box-shadow:0 0 6px var(--geo)"></div> Geografía <span class="nav-count">3</span>
+      </a>
+      <a class="nav-item" onclick="filterGroup('iglesia')" style="--item-color:var(--iglesia)">
+        <div class="nav-dot" style="background:var(--iglesia);box-shadow:0 0 6px var(--iglesia)"></div> Iglesia <span class="nav-count">4</span>
+      </a>
+      <a class="nav-item" onclick="filterGroup('ministerio')" style="--item-color:var(--ministerio)">
+        <div class="nav-dot" style="background:var(--ministerio);box-shadow:0 0 6px var(--ministerio)"></div> Ministerios <span class="nav-count">2</span>
+      </a>
+      <a class="nav-item" onclick="filterGroup('usuarios')" style="--item-color:var(--usuarios)">
+        <div class="nav-dot" style="background:var(--usuarios);box-shadow:0 0 6px var(--usuarios)"></div> Usuarios <span class="nav-count">4</span>
+      </a>
+      <a class="nav-item" onclick="filterGroup('eventos')" style="--item-color:var(--eventos)">
+        <div class="nav-dot" style="background:var(--eventos);box-shadow:0 0 6px var(--eventos)"></div> Eventos <span class="nav-count">4</span>
+      </a>
+      <a class="nav-item" onclick="filterGroup('cursos')" style="--item-color:var(--cursos)">
+        <div class="nav-dot" style="background:var(--cursos);box-shadow:0 0 6px var(--cursos)"></div> Cursos <span class="nav-count">5</span>
+      </a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <span>23</span> tablas &nbsp;·&nbsp; <span>33</span> relaciones<br>
+    <span>2</span> tablas nuevas &nbsp;·&nbsp; <span>9</span> correcciones
+  </div>
+</aside>
+
+<!-- ══ MAIN ══════════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">Base de datos · Versión 2.0</div>
+    <h2>IGLESIA<span>BD</span></h2>
+    <p>Esquema de base de datos para la gestión integral de iglesias, ministerios, usuarios, eventos y formación. Diseñado con buenas prácticas y convenciones unificadas.</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">23<span>.</span></div><div class="stat-label">Tablas</div></div>
+      <div class="stat"><div class="stat-num">33<span>.</span></div><div class="stat-label">Relaciones</div></div>
+      <div class="stat"><div class="stat-num">6<span>.</span></div><div class="stat-label">Dominios</div></div>
+      <div class="stat"><div class="stat-num">2<span>.</span></div><div class="stat-label">Tablas nuevas</div></div>
+      <div class="stat"><div class="stat-num">9<span>.</span></div><div class="stat-label">Correcciones</div></div>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" onclick="switchTab('tablas', this)">📋 Tablas</button>
+    <button class="tab-btn" onclick="switchTab('relaciones', this)">🔗 Relaciones</button>
+    <button class="tab-btn" onclick="switchTab('convenciones', this)">📐 Convenciones</button>
+    <button class="tab-btn" onclick="switchTab('correcciones', this)">🔴 Correcciones</button>
+    <button class="tab-btn" onclick="switchTab('erd', this)">🗺 Diagrama</button>
+  </div>
+
+  <!-- ── PANEL: TABLAS ──────────────────────────────────────── -->
+  <div class="panel active fade-in" id="panel-tablas">
+
+    <!-- Groups overview -->
+    <div class="groups-grid" id="groups-grid">
+      <div class="group-card selected" style="--gc:var(--geo)" onclick="filterGroup('all')">
+        <div class="gc-icon">🌎</div>
+        <div class="gc-name">Todas</div>
+        <div class="gc-count">23 tablas</div>
+        <div class="gc-tables">
+          <span class="gc-tag">todos los dominios</span>
+        </div>
+      </div>
+      <div class="group-card" style="--gc:var(--geo)" onclick="filterGroup('geo')">
+        <div class="gc-icon">🗺</div>
+        <div class="gc-name">Geografía</div>
+        <div class="gc-count">3 tablas</div>
+        <div class="gc-tables">
+          <span class="gc-tag">Pais</span><span class="gc-tag">Departamento</span><span class="gc-tag">Ciudad</span>
+        </div>
+      </div>
+      <div class="group-card" style="--gc:var(--iglesia)" onclick="filterGroup('iglesia')">
+        <div class="gc-icon">⛪</div>
+        <div class="gc-name">Iglesia & Sedes</div>
+        <div class="gc-count">4 tablas</div>
+        <div class="gc-tables">
+          <span class="gc-tag">Iglesia</span><span class="gc-tag">Pastor</span><span class="gc-tag">IglesiaPastor</span><span class="gc-tag">Sede</span>
+        </div>
+      </div>
+      <div class="group-card" style="--gc:var(--ministerio)" onclick="filterGroup('ministerio')">
+        <div class="gc-icon">✝️</div>
+        <div class="gc-name">Ministerios</div>
+        <div class="gc-count">2 tablas</div>
+        <div class="gc-tables">
+          <span class="gc-tag">Ministerio</span><span class="gc-tag">MiembroMinisterio</span>
+        </div>
+      </div>
+      <div class="group-card" style="--gc:var(--usuarios)" onclick="filterGroup('usuarios')">
+        <div class="gc-icon">👥</div>
+        <div class="gc-name">Usuarios & Roles</div>
+        <div class="gc-count">4 tablas</div>
+        <div class="gc-tables">
+          <span class="gc-tag">Usuario</span><span class="gc-tag">Rol</span><span class="gc-tag">UsuarioRol</span><span class="gc-tag">Notificacion</span>
+        </div>
+      </div>
+      <div class="group-card" style="--gc:var(--eventos)" onclick="filterGroup('eventos')">
+        <div class="gc-icon">📅</div>
+        <div class="gc-name">Eventos & Tareas</div>
+        <div class="gc-count">4 tablas</div>
+        <div class="gc-tables">
+          <span class="gc-tag">TipoEvento</span><span class="gc-tag">Evento</span><span class="gc-tag">Tarea</span><span class="gc-tag">TareaAsignada</span>
+        </div>
+      </div>
+      <div class="group-card" style="--gc:var(--cursos)" onclick="filterGroup('cursos')">
+        <div class="gc-icon">📚</div>
+        <div class="gc-name">Cursos & Formación</div>
+        <div class="gc-count">5 tablas</div>
+        <div class="gc-tables">
+          <span class="gc-tag">Curso</span><span class="gc-tag">Modulo</span><span class="gc-tag">Evaluacion</span><span class="gc-tag">ProcesoAsignadoCurso</span><span class="gc-tag">DetalleProcesoCurso</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <input class="filter-input" id="search-input" placeholder="🔍  Buscar tabla o columna..." oninput="searchTables(this.value)">
+      <div class="filter-chip" id="chip-all" style="--chip-c:var(--txt)" onclick="filterGroup('all')" title="Todas">Todas</div>
+      <div class="filter-chip" id="chip-geo" style="--chip-c:var(--geo)" onclick="filterGroup('geo')" title="Geo">Geo</div>
+      <div class="filter-chip" id="chip-iglesia" style="--chip-c:var(--iglesia)" onclick="filterGroup('iglesia')" title="Iglesia">Iglesia</div>
+      <div class="filter-chip" id="chip-ministerio" style="--chip-c:var(--ministerio)" onclick="filterGroup('ministerio')" title="Ministerios">Ministerios</div>
+      <div class="filter-chip" id="chip-usuarios" style="--chip-c:var(--usuarios)" onclick="filterGroup('usuarios')" title="Usuarios">Usuarios</div>
+      <div class="filter-chip" id="chip-eventos" style="--chip-c:var(--eventos)" onclick="filterGroup('eventos')" title="Eventos">Eventos</div>
+      <div class="filter-chip" id="chip-cursos" style="--chip-c:var(--cursos)" onclick="filterGroup('cursos')" title="Cursos">Cursos</div>
+    </div>
+
+    <!-- Tables list -->
+    <div class="tables-list" id="tables-list"></div>
+  </div>
+
+  <!-- ── PANEL: RELACIONES ─────────────────────────────────── -->
+  <div class="panel" id="panel-relaciones">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Mapa de Relaciones</div>
+        <div class="section-sub">33 relaciones entre tablas — cardinalidad y tipo</div>
+      </div>
+    </div>
+    <div class="rel-grid" id="rel-grid"></div>
+  </div>
+
+  <!-- ── PANEL: CONVENCIONES ───────────────────────────────── -->
+  <div class="panel" id="panel-convenciones">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Convenciones del Proyecto</div>
+        <div class="section-sub">Reglas de nomenclatura y diseño aplicadas uniformemente</div>
+      </div>
+    </div>
+    <div class="conv-grid" id="conv-grid"></div>
+  </div>
+
+  <!-- ── PANEL: CORRECCIONES ───────────────────────────────── -->
+  <div class="panel" id="panel-correcciones">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Correcciones Aplicadas</div>
+        <div class="section-sub">Problemas identificados y soluciones implementadas</div>
+      </div>
+    </div>
+    <div class="corrections-list" id="corrections-list"></div>
+  </div>
+
+  <!-- ── PANEL: ERD ─────────────────────────────────────────── -->
+  <div class="panel" id="panel-erd">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Diagrama Entidad-Relación</div>
+        <div class="section-sub">Arrastra las tablas · Scroll para zoom · Clic para resaltar relaciones</div>
+      </div>
+    </div>
+    <div class="erd-wrap">
+      <div class="erd-toolbar">
+        <button class="erd-btn" onclick="erdReset()">↺ Reset</button>
+        <button class="erd-btn" onclick="erdZoom(1.2)">＋ Zoom</button>
+        <button class="erd-btn" onclick="erdZoom(0.83)">－ Zoom</button>
+        <button class="erd-btn" onclick="erdExpandAll()">⊞ Expandir todo</button>
+        <button class="erd-btn" onclick="erdCollapseAll()">⊟ Colapsar todo</button>
+        <span class="erd-label" id="erd-zoom-lbl">60%</span>
+      </div>
+      <canvas id="erd-canvas" style="width:100%;height:600px"></canvas>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════════════
+const GRUPOS = {
+  geo:        { nombre: "Geografía",        color: "#4a9eff" },
+  iglesia:    { nombre: "Iglesia & Sedes",  color: "#a78bfa" },
+  ministerio: { nombre: "Ministerios",      color: "#45d68a" },
+  usuarios:   { nombre: "Usuarios & Roles", color: "#ff8c42" },
+  eventos:    { nombre: "Eventos & Tareas", color: "#e2b96a" },
+  cursos:     { nombre: "Cursos",           color: "#5ec4ff" },
+};
+
+const TABLAS = [
+  { nombre:"Pais", grupo:"geo", descripcion:"Catálogo de países para la jerarquía geográfica.", nueva:false,
+    columnas:[
+      {n:"idPais",         t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único del país",            tipo:"pk"},
+      {n:"nombre",         t:"VARCHAR(100)", r:"NOT NULL  UNIQUE",                       d:"Nombre oficial del país",                 tipo:"uq"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:""},
+  { nombre:"Departamento", grupo:"geo", descripcion:"División político-administrativa de primer nivel dentro de un país.", nueva:false,
+    columnas:[
+      {n:"idDepartamento", t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único del departamento",    tipo:"pk"},
+      {n:"nombre",         t:"VARCHAR(100)", r:"NOT NULL",                               d:"Nombre del departamento",                 tipo:"normal"},
+      {n:"idPais",         t:"INT",          r:"NOT NULL  FK → Pais.idPais",             d:"País al que pertenece",                   tipo:"fk"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"UNIQUE compuesto (nombre, idPais) evita departamentos duplicados en el mismo país."},
+  { nombre:"Ciudad", grupo:"geo", descripcion:"Ciudad o municipio dentro de un departamento.", nueva:false,
+    columnas:[
+      {n:"idCiudad",       t:"INT",          r:"PK  AUTO_INCREMENT",                          d:"Identificador único de la ciudad",   tipo:"pk"},
+      {n:"nombre",         t:"VARCHAR(100)", r:"NOT NULL",                                    d:"Nombre de la ciudad",                tipo:"normal"},
+      {n:"idDepartamento", t:"INT",          r:"NOT NULL  FK → Departamento.idDepartamento",  d:"Departamento al que pertenece",      tipo:"fk"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                     d:"Fecha y hora de creación",           tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",    d:"Fecha y hora de última actualización",tipo:"normal"},
+    ], notas:"UNIQUE compuesto (nombre, idDepartamento) evita ciudades duplicadas en el mismo departamento."},
+  { nombre:"Iglesia", grupo:"iglesia", descripcion:"Entidad principal. Puede tener múltiples sedes y pastores.", nueva:false,
+    columnas:[
+      {n:"idIglesia",      t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único de la iglesia",       tipo:"pk"},
+      {n:"nombre",         t:"VARCHAR(150)", r:"NOT NULL",                               d:"Nombre oficial de la iglesia",            tipo:"normal"},
+      {n:"fechaFundacion", t:"DATE",         r:"NULL",                                   d:"Fecha de fundación",                      tipo:"normal"},
+      {n:"estado",         t:"ENUM('activa','inactiva','fusionada','cerrada')", r:"NOT NULL  DEFAULT 'activa'", d:"Estado operativo", tipo:"normal"},
+      {n:"idCiudad",       t:"INT",          r:"NOT NULL  FK → Ciudad.idCiudad",         d:"Ciudad de la sede principal",             tipo:"fk"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"⚠️ Se eliminó idPastor para romper la dependencia circular. La relación se gestiona en IglesiaPastor."},
+  { nombre:"Pastor", grupo:"iglesia", descripcion:"Persona que ejerce liderazgo pastoral. Puede vincularse a una cuenta de usuario.", nueva:false,
+    columnas:[
+      {n:"idPastor",       t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único del pastor",          tipo:"pk"},
+      {n:"nombres",        t:"VARCHAR(100)", r:"NOT NULL",                               d:"Nombres del pastor",                      tipo:"normal"},
+      {n:"apellidos",      t:"VARCHAR(100)", r:"NOT NULL",                               d:"Apellidos del pastor",                    tipo:"normal"},
+      {n:"correo",         t:"VARCHAR(200)", r:"NOT NULL  UNIQUE",                       d:"Correo electrónico",                      tipo:"uq"},
+      {n:"telefono",       t:"VARCHAR(20)",  r:"NULL",                                   d:"Teléfono de contacto",                    tipo:"normal"},
+      {n:"idUsuario",      t:"INT",          r:"NULL  FK → Usuario.idUsuario  UNIQUE",   d:"Cuenta de usuario asociada (opcional)",   tipo:"fk"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"⚠️ Se eliminó idIglesia para romper dependencia circular. Se añadió idUsuario para vincular al pastor con su cuenta."},
+  { nombre:"IglesiaPastor", grupo:"iglesia", descripcion:"🆕 Resuelve la dependencia circular Iglesia ↔ Pastor. Registra asignaciones con historial.", nueva:true,
+    columnas:[
+      {n:"idIglesiaPastor",t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único del registro",        tipo:"pk"},
+      {n:"idIglesia",      t:"INT",          r:"NOT NULL  FK → Iglesia.idIglesia",       d:"Iglesia a la que está asignado el pastor",tipo:"fk"},
+      {n:"idPastor",       t:"INT",          r:"NOT NULL  FK → Pastor.idPastor",         d:"Pastor asignado",                         tipo:"fk"},
+      {n:"esPrincipal",    t:"TINYINT(1)",   r:"NOT NULL  DEFAULT 1",                    d:"1 = pastor principal, 0 = auxiliar",      tipo:"normal"},
+      {n:"fechaInicio",    t:"DATE",         r:"NOT NULL",                               d:"Desde cuándo lidera esta iglesia",        tipo:"normal"},
+      {n:"fechaFin",       t:"DATE",         r:"NULL",                                   d:"Hasta cuándo (NULL = activo)",            tipo:"normal"},
+      {n:"observaciones",  t:"TEXT",         r:"NULL",                                   d:"Notas sobre la asignación",               tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"Permite historial de pastores por iglesia. Si fechaFin es NULL el pastor sigue activo."},
+  { nombre:"Sede", grupo:"iglesia", descripcion:"Punto físico de reunión perteneciente a una iglesia.", nueva:false,
+    columnas:[
+      {n:"idSede",         t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único de la sede",          tipo:"pk"},
+      {n:"nombre",         t:"VARCHAR(150)", r:"NOT NULL",                               d:"Nombre o alias de la sede",               tipo:"normal"},
+      {n:"direccion",      t:"VARCHAR(255)", r:"NULL",                                   d:"Dirección física",                        tipo:"normal"},
+      {n:"idCiudad",       t:"INT",          r:"NOT NULL  FK → Ciudad.idCiudad",         d:"Ciudad donde se ubica",                   tipo:"fk"},
+      {n:"idIglesia",      t:"INT",          r:"NOT NULL  FK → Iglesia.idIglesia",       d:"Iglesia a la que pertenece",              tipo:"fk"},
+      {n:"estado",         t:"ENUM('activa','inactiva','en_construccion')", r:"NOT NULL  DEFAULT 'activa'", d:"Estado operativo",   tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"⚠️ idCiudad corregido de VARCHAR(100) a INT con FK formal hacia Ciudad."},
+  { nombre:"Ministerio", grupo:"ministerio", descripcion:"Área de trabajo organizada dentro de una sede (alabanza, jóvenes, misiones, etc.).", nueva:false,
+    columnas:[
+      {n:"idMinisterio",   t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único del ministerio",      tipo:"pk"},
+      {n:"nombre",         t:"VARCHAR(100)", r:"NOT NULL",                               d:"Nombre del ministerio",                   tipo:"normal"},
+      {n:"descripcion",    t:"TEXT",         r:"NULL",                                   d:"Propósito del ministerio",                tipo:"normal"},
+      {n:"estado",         t:"ENUM('activo','inactivo','suspendido')", r:"NOT NULL  DEFAULT 'activo'", d:"Estado del ministerio",   tipo:"normal"},
+      {n:"idSede",         t:"INT",          r:"NOT NULL  FK → Sede.idSede",             d:"Sede a la que pertenece",                 tipo:"fk"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"UNIQUE compuesto (nombre, idSede) evita ministerios con el mismo nombre en la misma sede."},
+  { nombre:"MiembroMinisterio", grupo:"ministerio", descripcion:"Tabla de unión. Registra la participación de un usuario en un ministerio con fechas.", nueva:false,
+    columnas:[
+      {n:"idMiembroMinisterio",t:"INT",      r:"PK  AUTO_INCREMENT",                          d:"Identificador único del registro",   tipo:"pk"},
+      {n:"idUsuario",      t:"INT",          r:"NOT NULL  FK → Usuario.idUsuario",             d:"Usuario miembro",                    tipo:"fk"},
+      {n:"idMinisterio",   t:"INT",          r:"NOT NULL  FK → Ministerio.idMinisterio",       d:"Ministerio al que pertenece",        tipo:"fk"},
+      {n:"rolEnMinisterio",t:"VARCHAR(100)", r:"NULL",                                         d:"Rol específico (líder, voluntario)", tipo:"normal"},
+      {n:"fechaIngreso",   t:"DATE",         r:"NOT NULL  DEFAULT (CURDATE())",                d:"Fecha de ingreso al ministerio",     tipo:"normal"},
+      {n:"fechaSalida",    t:"DATE",         r:"NULL",                                         d:"Fecha de salida (NULL = activo)",    tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                      d:"Fecha y hora de creación",           tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",     d:"Fecha y hora de última actualización",tipo:"normal"},
+    ], notas:"UNIQUE compuesto (idUsuario, idMinisterio, fechaIngreso) permite reincorporación."},
+  { nombre:"Rol", grupo:"usuarios", descripcion:"Catálogo de roles del sistema que determinan permisos de acceso.", nueva:false,
+    columnas:[
+      {n:"idRol",          t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único del rol",             tipo:"pk"},
+      {n:"nombre",         t:"VARCHAR(100)", r:"NOT NULL  UNIQUE",                       d:"Nombre del rol (Administrador, Pastor…)", tipo:"uq"},
+      {n:"descripcion",    t:"TEXT",         r:"NULL",                                   d:"Descripción de permisos del rol",         tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"UNIQUE en nombre evita roles duplicados."},
+  { nombre:"Usuario", grupo:"usuarios", descripcion:"Persona registrada con credenciales de acceso al sistema.", nueva:false,
+    columnas:[
+      {n:"idUsuario",      t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único del usuario",         tipo:"pk"},
+      {n:"nombres",        t:"VARCHAR(100)", r:"NOT NULL",                               d:"Nombres del usuario",                     tipo:"normal"},
+      {n:"apellidos",      t:"VARCHAR(100)", r:"NOT NULL",                               d:"Apellidos del usuario",                   tipo:"normal"},
+      {n:"correo",         t:"VARCHAR(200)", r:"NOT NULL  UNIQUE",                       d:"Correo — usado como login",               tipo:"uq"},
+      {n:"contrasenaHash", t:"VARCHAR(255)", r:"NOT NULL",                               d:"Hash de contraseña (bcrypt/Argon2)",       tipo:"normal"},
+      {n:"telefono",       t:"VARCHAR(20)",  r:"NULL",                                   d:"Teléfono de contacto",                    tipo:"normal"},
+      {n:"activo",         t:"TINYINT(1)",   r:"NOT NULL  DEFAULT 1",                    d:"1 = activo, 0 = deshabilitado",           tipo:"normal"},
+      {n:"ultimoAcceso",   t:"DATETIME",     r:"NULL",                                   d:"Último inicio de sesión exitoso",         tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"⚠️ contrasena VARCHAR(50) → contrasenaHash VARCHAR(255). Estado binary(2) → activo TINYINT(1). Se removió idMinisterio e idUsuariosRoles."},
+  { nombre:"UsuarioRol", grupo:"usuarios", descripcion:"Asigna un rol a un usuario en el contexto de una iglesia/sede específica.", nueva:false,
+    columnas:[
+      {n:"idUsuarioRol",   t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único del registro",        tipo:"pk"},
+      {n:"idUsuario",      t:"INT",          r:"NOT NULL  FK → Usuario.idUsuario",       d:"Usuario al que se asigna el rol",         tipo:"fk"},
+      {n:"idRol",          t:"INT",          r:"NOT NULL  FK → Rol.idRol",               d:"Rol asignado",                            tipo:"fk"},
+      {n:"idIglesia",      t:"INT",          r:"NOT NULL  FK → Iglesia.idIglesia",       d:"Iglesia en cuyo contexto aplica",         tipo:"fk"},
+      {n:"idSede",         t:"INT",          r:"NULL  FK → Sede.idSede",                 d:"Sede específica (NULL = toda la iglesia)",tipo:"fk"},
+      {n:"fechaInicio",    t:"DATE",         r:"NOT NULL  DEFAULT (CURDATE())",          d:"Desde cuándo aplica la asignación",       tipo:"normal"},
+      {n:"fechaFin",       t:"DATE",         r:"NULL",                                   d:"Vencimiento (NULL = vigente)",            tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"⚠️ Se añadió idRol que faltaba completamente. Permite historial de roles con fechaInicio/fechaFin."},
+  { nombre:"Notificacion", grupo:"usuarios", descripcion:"Mensajes enviados al buzón interno de un usuario.", nueva:false,
+    columnas:[
+      {n:"idNotificacion", t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único",                     tipo:"pk"},
+      {n:"idUsuario",      t:"INT",          r:"NOT NULL  FK → Usuario.idUsuario",       d:"Usuario destinatario",                    tipo:"fk"},
+      {n:"titulo",         t:"VARCHAR(200)", r:"NOT NULL",                               d:"Título breve",                            tipo:"normal"},
+      {n:"mensaje",        t:"TEXT",         r:"NOT NULL",                               d:"Cuerpo del mensaje",                      tipo:"normal"},
+      {n:"leida",          t:"TINYINT(1)",   r:"NOT NULL  DEFAULT 0",                    d:"0 = no leída, 1 = leída",                 tipo:"normal"},
+      {n:"fechaLectura",   t:"DATETIME",     r:"NULL",                                   d:"Cuándo se marcó como leída",              tipo:"normal"},
+      {n:"tipo",           t:"ENUM('informacion','alerta','tarea','evento','curso')", r:"NOT NULL  DEFAULT 'informacion'", d:"Categoría", tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"⚠️ Se añadieron leida, fechaLectura y tipo. El índice (idUsuario, leida) optimiza 'notificaciones no leídas'."},
+  { nombre:"TipoEvento", grupo:"eventos", descripcion:"🆕 Catálogo controlado de tipos de evento. Reemplaza el campo VARCHAR libre.", nueva:true,
+    columnas:[
+      {n:"idTipoEvento",   t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único del tipo",            tipo:"pk"},
+      {n:"nombre",         t:"VARCHAR(100)", r:"NOT NULL  UNIQUE",                       d:"Nombre (Retiro, Conferencia, Culto…)",    tipo:"uq"},
+      {n:"descripcion",    t:"TEXT",         r:"NULL",                                   d:"Descripción del tipo",                    tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"Reemplaza Evento.tipoEvento VARCHAR libre por una FK controlada."},
+  { nombre:"Evento", grupo:"eventos", descripcion:"Actividad programada en una sede, organizada por iglesia y/o ministerio.", nueva:false,
+    columnas:[
+      {n:"idEvento",       t:"INT",          r:"PK  AUTO_INCREMENT",                          d:"Identificador único del evento",     tipo:"pk"},
+      {n:"nombre",         t:"VARCHAR(150)", r:"NOT NULL",                                    d:"Nombre del evento",                  tipo:"normal"},
+      {n:"descripcion",    t:"TEXT",         r:"NULL",                                        d:"Descripción detallada",              tipo:"normal"},
+      {n:"idTipoEvento",   t:"INT",          r:"NOT NULL  FK → TipoEvento.idTipoEvento",      d:"Tipo de evento",                     tipo:"fk"},
+      {n:"fechaInicio",    t:"DATETIME",     r:"NOT NULL",                                    d:"Fecha y hora de inicio",             tipo:"normal"},
+      {n:"fechaFin",       t:"DATETIME",     r:"NOT NULL",                                    d:"Fecha y hora de fin",                tipo:"normal"},
+      {n:"estado",         t:"ENUM('programado','en_curso','finalizado','cancelado')", r:"NOT NULL  DEFAULT 'programado'", d:"Estado", tipo:"normal"},
+      {n:"idIglesia",      t:"INT",          r:"NOT NULL  FK → Iglesia.idIglesia",            d:"Iglesia organizadora",               tipo:"fk"},
+      {n:"idSede",         t:"INT",          r:"NULL  FK → Sede.idSede",                      d:"Sede (NULL = sin sede física)",      tipo:"fk"},
+      {n:"idMinisterio",   t:"INT",          r:"NULL  FK → Ministerio.idMinisterio",          d:"Ministerio responsable (opcional)",  tipo:"fk"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                     d:"Fecha y hora de creación",           tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",    d:"Fecha y hora de última actualización",tipo:"normal"},
+    ], notas:"⚠️ tipoEvento VARCHAR reemplazado por FK a TipoEvento. Se añadió idSede que faltaba."},
+  { nombre:"Tarea", grupo:"eventos", descripcion:"Actividad específica que debe realizarse. Puede estar relacionada o no a un evento.", nueva:false,
+    columnas:[
+      {n:"idTarea",        t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único de la tarea",         tipo:"pk"},
+      {n:"titulo",         t:"VARCHAR(200)", r:"NOT NULL",                               d:"Título descriptivo",                      tipo:"normal"},
+      {n:"descripcion",    t:"TEXT",         r:"NULL",                                   d:"Detalle de lo que debe hacerse",          tipo:"normal"},
+      {n:"fechaLimite",    t:"DATETIME",     r:"NULL",                                   d:"Fecha y hora límite",                     tipo:"normal"},
+      {n:"estado",         t:"ENUM('pendiente','en_progreso','completada','cancelada')", r:"NOT NULL  DEFAULT 'pendiente'", d:"Estado",tipo:"normal"},
+      {n:"prioridad",      t:"ENUM('baja','media','alta','urgente')", r:"NOT NULL  DEFAULT 'media'", d:"Nivel de prioridad",         tipo:"normal"},
+      {n:"idEvento",       t:"INT",          r:"NULL  FK → Evento.idEvento",             d:"Evento relacionado (NULL = independiente)",tipo:"fk"},
+      {n:"idUsuarioCreador",t:"INT",         r:"NOT NULL  FK → Usuario.idUsuario",       d:"Usuario que creó la tarea",               tipo:"fk"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"⚠️ Se eliminó idTareasAsignadas para romper la dependencia circular. Estado binary(2) → ENUM semántico."},
+  { nombre:"TareaAsignada", grupo:"eventos", descripcion:"Registro de asignación de una tarea a un usuario específico.", nueva:false,
+    columnas:[
+      {n:"idTareaAsignada",t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único del registro",        tipo:"pk"},
+      {n:"idTarea",        t:"INT",          r:"NOT NULL  FK → Tarea.idTarea",           d:"Tarea que se asigna",                     tipo:"fk"},
+      {n:"idUsuario",      t:"INT",          r:"NOT NULL  FK → Usuario.idUsuario",       d:"Usuario asignado",                        tipo:"fk"},
+      {n:"fechaAsignacion",t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Cuándo fue asignada",                     tipo:"normal"},
+      {n:"fechaCompletado",t:"DATETIME",     r:"NULL",                                   d:"Cuándo fue completada",                   tipo:"normal"},
+      {n:"observaciones",  t:"TEXT",         r:"NULL",                                   d:"Comentarios sobre la ejecución",          tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"⚠️ Relación ahora unidireccional (TareaAsignada → Tarea), eliminando la dependencia circular."},
+  { nombre:"Curso", grupo:"cursos", descripcion:"Programa de formación compuesto por módulos, asociado a un ministerio.", nueva:false,
+    columnas:[
+      {n:"idCurso",        t:"INT",          r:"PK  AUTO_INCREMENT",                          d:"Identificador único del curso",      tipo:"pk"},
+      {n:"nombre",         t:"VARCHAR(200)", r:"NOT NULL",                                    d:"Nombre del curso",                   tipo:"normal"},
+      {n:"descripcion",    t:"TEXT",         r:"NULL",                                        d:"Descripción y objetivos",            tipo:"normal"},
+      {n:"duracionHoras",  t:"INT UNSIGNED", r:"NULL",                                        d:"Duración estimada en horas",         tipo:"normal"},
+      {n:"estado",         t:"ENUM('borrador','activo','inactivo','archivado')", r:"NOT NULL  DEFAULT 'borrador'", d:"Ciclo de vida", tipo:"normal"},
+      {n:"idMinisterio",   t:"INT",          r:"NOT NULL  FK → Ministerio.idMinisterio",      d:"Ministerio responsable",             tipo:"fk"},
+      {n:"idUsuarioCreador",t:"INT",         r:"NOT NULL  FK → Usuario.idUsuario",            d:"Usuario que creó el curso",          tipo:"fk"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                     d:"Fecha y hora de creación",           tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",    d:"Fecha y hora de última actualización",tipo:"normal"},
+    ], notas:"⚠️ Se enriqueció la tabla original (solo tenía Nombre). Se añaden descripcion, duracionHoras, estado, idUsuarioCreador."},
+  { nombre:"Modulo", grupo:"cursos", descripcion:"Unidad temática dentro de un curso. Los módulos se ordenan secuencialmente.", nueva:false,
+    columnas:[
+      {n:"idModulo",       t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único del módulo",          tipo:"pk"},
+      {n:"titulo",         t:"VARCHAR(150)", r:"NOT NULL",                               d:"Título del módulo",                       tipo:"normal"},
+      {n:"descripcion",    t:"TEXT",         r:"NULL",                                   d:"Contenido del módulo",                    tipo:"normal"},
+      {n:"orden",          t:"INT UNSIGNED", r:"NOT NULL  DEFAULT 1",                    d:"Posición dentro del curso",               tipo:"normal"},
+      {n:"estado",         t:"ENUM('borrador','publicado','archivado')", r:"NOT NULL  DEFAULT 'borrador'", d:"Estado de publicación", tipo:"normal"},
+      {n:"idCurso",        t:"INT",          r:"NOT NULL  FK → Curso.idCurso",           d:"Curso al que pertenece",                  tipo:"fk"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"Se agregó orden para controlar la secuencia. UNIQUE (idCurso, orden) evita duplicados. Estado binary(2) → ENUM."},
+  { nombre:"Evaluacion", grupo:"cursos", descripcion:"Registro del desempeño de un usuario al completar un módulo.", nueva:false,
+    columnas:[
+      {n:"idEvaluacion",   t:"INT",          r:"PK  AUTO_INCREMENT",                     d:"Identificador único",                     tipo:"pk"},
+      {n:"idModulo",       t:"INT",          r:"NOT NULL  FK → Modulo.idModulo",         d:"Módulo evaluado",                         tipo:"fk"},
+      {n:"idUsuario",      t:"INT",          r:"NOT NULL  FK → Usuario.idUsuario",       d:"Usuario evaluado",                        tipo:"fk"},
+      {n:"calificacion",   t:"DECIMAL(5,2)", r:"NULL",                                   d:"Calificación obtenida (ej: 85.50)",        tipo:"normal"},
+      {n:"estado",         t:"ENUM('pendiente','aprobado','reprobado','en_revision')", r:"NOT NULL  DEFAULT 'pendiente'", d:"Resultado",tipo:"normal"},
+      {n:"observaciones",  t:"TEXT",         r:"NULL",                                   d:"Retroalimentación del evaluador",         tipo:"normal"},
+      {n:"fechaEvaluacion",t:"DATETIME",     r:"NULL",                                   d:"Cuándo se realizó",                       tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"UNIQUE (idModulo, idUsuario) evita evaluaciones duplicadas. Se añadió calificacion DECIMAL y fechaEvaluacion."},
+  { nombre:"ProcesoAsignadoCurso", grupo:"cursos", descripcion:"Instancia de un curso asignado a una iglesia en un período (ciclo lectivo).", nueva:false,
+    columnas:[
+      {n:"idProcesoAsignadoCurso",t:"INT",   r:"PK  AUTO_INCREMENT",                     d:"Identificador único del proceso",         tipo:"pk"},
+      {n:"idCurso",        t:"INT",          r:"NOT NULL  FK → Curso.idCurso",           d:"Curso que se asigna",                     tipo:"fk"},
+      {n:"idIglesia",      t:"INT",          r:"NOT NULL  FK → Iglesia.idIglesia",       d:"Iglesia a la que se asigna el curso",     tipo:"fk"},
+      {n:"fechaInicio",    t:"DATE",         r:"NOT NULL",                               d:"Fecha de inicio del ciclo",               tipo:"normal"},
+      {n:"fechaFin",       t:"DATE",         r:"NOT NULL",                               d:"Fecha de finalización del ciclo",         tipo:"normal"},
+      {n:"estado",         t:"ENUM('programado','en_curso','finalizado','cancelado')", r:"NOT NULL  DEFAULT 'programado'", d:"Estado", tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                d:"Fecha y hora de creación",                tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",d:"Fecha y hora de última actualización",   tipo:"normal"},
+    ], notas:"⚠️ Se eliminó campo Fecha redundante (ya existían FechaInicio y FechaFinal). Estado binary(2) → ENUM."},
+  { nombre:"DetalleProcesoCurso", grupo:"cursos", descripcion:"Participantes inscritos en un proceso (instancia) de un curso.", nueva:false,
+    columnas:[
+      {n:"idDetalleProcesoCurso", t:"INT",   r:"PK  AUTO_INCREMENT",                                        d:"Identificador único",tipo:"pk"},
+      {n:"idProcesoAsignadoCurso",t:"INT",   r:"NOT NULL  FK → ProcesoAsignadoCurso.idProcesoAsignadoCurso",d:"Proceso al que se inscribe",tipo:"fk"},
+      {n:"idUsuario",      t:"INT",          r:"NOT NULL  FK → Usuario.idUsuario",                          d:"Usuario inscrito",    tipo:"fk"},
+      {n:"fechaInscripcion",t:"DATE",        r:"NOT NULL  DEFAULT (CURDATE())",                             d:"Fecha de inscripción",tipo:"normal"},
+      {n:"estado",         t:"ENUM('inscrito','en_progreso','completado','retirado')", r:"NOT NULL  DEFAULT 'inscrito'", d:"Estado de participación",tipo:"normal"},
+      {n:"creadoEn",       t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()",                                   d:"Fecha y hora de creación",tipo:"normal"},
+      {n:"actualizadoEn",  t:"DATETIME",     r:"NOT NULL  DEFAULT NOW()  ON UPDATE NOW()",                  d:"Fecha y hora de última actualización",tipo:"normal"},
+    ], notas:"⚠️ CORRECCIÓN CRÍTICA: idProcesoAsignadoRol (apuntaba a tabla inexistente) renombrado a idProcesoAsignadoCurso con FK real."},
+];
+
+const RELACIONES = [
+  {origen:"Departamento",         campo:"idPais",                   destino:"Pais",                   card:"N:1", tipo:"Obligatoria"},
+  {origen:"Ciudad",               campo:"idDepartamento",           destino:"Departamento",           card:"N:1", tipo:"Obligatoria"},
+  {origen:"Iglesia",              campo:"idCiudad",                 destino:"Ciudad",                 card:"N:1", tipo:"Obligatoria"},
+  {origen:"IglesiaPastor",        campo:"idIglesia",                destino:"Iglesia",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"IglesiaPastor",        campo:"idPastor",                 destino:"Pastor",                 card:"N:1", tipo:"Obligatoria"},
+  {origen:"Pastor",               campo:"idUsuario",                destino:"Usuario",                card:"1:1", tipo:"Opcional"},
+  {origen:"Sede",                 campo:"idCiudad",                 destino:"Ciudad",                 card:"N:1", tipo:"Obligatoria"},
+  {origen:"Sede",                 campo:"idIglesia",                destino:"Iglesia",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"Ministerio",           campo:"idSede",                   destino:"Sede",                   card:"N:1", tipo:"Obligatoria"},
+  {origen:"MiembroMinisterio",    campo:"idUsuario",                destino:"Usuario",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"MiembroMinisterio",    campo:"idMinisterio",             destino:"Ministerio",             card:"N:1", tipo:"Obligatoria"},
+  {origen:"UsuarioRol",           campo:"idUsuario",                destino:"Usuario",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"UsuarioRol",           campo:"idRol",                    destino:"Rol",                    card:"N:1", tipo:"Obligatoria"},
+  {origen:"UsuarioRol",           campo:"idIglesia",                destino:"Iglesia",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"UsuarioRol",           campo:"idSede",                   destino:"Sede",                   card:"N:1", tipo:"Opcional"},
+  {origen:"Notificacion",         campo:"idUsuario",                destino:"Usuario",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"Evento",               campo:"idTipoEvento",             destino:"TipoEvento",             card:"N:1", tipo:"Obligatoria"},
+  {origen:"Evento",               campo:"idIglesia",                destino:"Iglesia",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"Evento",               campo:"idSede",                   destino:"Sede",                   card:"N:1", tipo:"Opcional"},
+  {origen:"Evento",               campo:"idMinisterio",             destino:"Ministerio",             card:"N:1", tipo:"Opcional"},
+  {origen:"Tarea",                campo:"idEvento",                 destino:"Evento",                 card:"N:1", tipo:"Opcional"},
+  {origen:"Tarea",                campo:"idUsuarioCreador",         destino:"Usuario",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"TareaAsignada",        campo:"idTarea",                  destino:"Tarea",                  card:"N:1", tipo:"Obligatoria"},
+  {origen:"TareaAsignada",        campo:"idUsuario",                destino:"Usuario",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"Curso",                campo:"idMinisterio",             destino:"Ministerio",             card:"N:1", tipo:"Obligatoria"},
+  {origen:"Curso",                campo:"idUsuarioCreador",         destino:"Usuario",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"Modulo",               campo:"idCurso",                  destino:"Curso",                  card:"N:1", tipo:"Obligatoria"},
+  {origen:"Evaluacion",           campo:"idModulo",                 destino:"Modulo",                 card:"N:1", tipo:"Obligatoria"},
+  {origen:"Evaluacion",           campo:"idUsuario",                destino:"Usuario",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"ProcesoAsignadoCurso", campo:"idCurso",                  destino:"Curso",                  card:"N:1", tipo:"Obligatoria"},
+  {origen:"ProcesoAsignadoCurso", campo:"idIglesia",                destino:"Iglesia",                card:"N:1", tipo:"Obligatoria"},
+  {origen:"DetalleProcesoCurso",  campo:"idProcesoAsignadoCurso",   destino:"ProcesoAsignadoCurso",   card:"N:1", tipo:"Obligatoria"},
+  {origen:"DetalleProcesoCurso",  campo:"idUsuario",                destino:"Usuario",                card:"N:1", tipo:"Obligatoria"},
+];
+
+const CONVENCIONES = [
+  {icon:"🏷️", titulo:"Nomenclatura de tablas",     texto:"Singular en PascalCase. Ej: <code>Pais</code>, <code>Iglesia</code>, <code>Usuario</code>. No plurales ni MAYÚSCULAS."},
+  {icon:"📝", titulo:"Nomenclatura de columnas",    texto:"camelCase. Ej: <code>idPais</code>, <code>fechaInicio</code>, <code>contrasenaHash</code>. Sin guiones ni guiones bajos."},
+  {icon:"🔑", titulo:"Claves primarias (PK)",       texto:"Siempre <code>id + NombreTabla</code>. Ej: <code>idPais</code>, <code>idUsuario</code>, <code>idMinisterio</code>. INT AUTO_INCREMENT."},
+  {icon:"🔗", titulo:"Claves foráneas (FK)",        texto:"<code>id + TablaReferenciada</code>. Ej: <code>idPais</code> en Departamento apunta a <code>Pais.idPais</code>."},
+  {icon:"✅", titulo:"Campos booleanos",            texto:"TINYINT(1) con nombre afirmativo: <code>activo</code>, <code>leida</code>, <code>esPrincipal</code>. Valor 0 = No, 1 = Sí."},
+  {icon:"📋", titulo:"Campos de estado / categoría",texto:"ENUM con valores en español minúscula. Ej: <code>ENUM('activo','inactivo','suspendido')</code>."},
+  {icon:"📅", titulo:"Fechas sin hora",             texto:"DATE para fechas sin hora. Ej: <code>fechaNacimiento</code>, <code>fechaFundacion</code>, <code>fechaInscripcion</code>."},
+  {icon:"🕐", titulo:"Fechas con hora",             texto:"DATETIME para timestamps. Ej: <code>fechaInicio</code> de evento, <code>creadoEn</code>, <code>ultimoAcceso</code>."},
+  {icon:"📊", titulo:"Campos de auditoría",         texto:"Presentes en todas las tablas: <code>creadoEn DATETIME NOT NULL DEFAULT NOW()</code> y <code>actualizadoEn … ON UPDATE NOW()</code>."},
+  {icon:"🔒", titulo:"Contraseñas",                 texto:"VARCHAR(255) nombrado <code>contrasenaHash</code>. Solo se almacena el resultado de bcrypt o Argon2. NUNCA texto plano."},
+  {icon:"📖", titulo:"Textos largos",               texto:"TEXT para descripciones, observaciones y mensajes sin límite fijo. VARCHAR para textos acotados."},
+  {icon:"🌐", titulo:"Idioma de identificadores",   texto:"Todos los nombres de tablas y columnas en español. Los tipos de dato SQL (INT, VARCHAR, DATE, ENUM, TEXT…) en inglés por estándar."},
+];
+
+const CORRECCIONES = [
+  {nivel:"🔴", color:"#ff5a5a", titulo:"Dependencia circular: Iglesia ↔ Pastor", cuerpo:"IGLESIAS tenía FK a PASTORES y PASTORES tenía FK a IGLESIAS. Era imposible insertar ninguno de los dos sin violar integridad referencial. Solución: se eliminó idPastor de Iglesia y se creó la tabla IglesiaPastor.", tablas:["Iglesia","Pastor","IglesiaPastor"]},
+  {nivel:"🔴", color:"#ff5a5a", titulo:"Dependencia circular: Tarea ↔ TareaAsignada", cuerpo:"TAREAS tenía idTareasAsignadas como FK y TAREASASIGNADAS apuntaba de vuelta. Mismo antipatrón. Solución: se eliminó idTareasAsignadas de Tarea. La relación es ahora unidireccional.", tablas:["Tarea","TareaAsignada"]},
+  {nivel:"🔴", color:"#ff5a5a", titulo:"SEDES.idCiudad con tipo incorrecto", cuerpo:"idCiudad en SEDES era VARCHAR(100) en lugar de INT. Era imposible crear una FK formal hacia CIUDAD. Todas las demás FK de ciudad usan INT.", tablas:["Sede"]},
+  {nivel:"🔴", color:"#ff5a5a", titulo:"FK rota en DetalleProcesoCurso", cuerpo:"El campo idProcesoAsignadoRol apuntaba a una tabla PROCESOASIGNADOROL que no existe en el esquema. Se renombró a idProcesoAsignadoCurso con FK real.", tablas:["DetalleProcesoCurso"]},
+  {nivel:"🔴", color:"#ff5a5a", titulo:"Sin restricciones UNIQUE en campos críticos", cuerpo:"Usuario.correo, Pastor.correo y Rol.nombre no tenían UNIQUE. Se podían crear usuarios duplicados con el mismo correo, haciendo la autenticación por email imposible.", tablas:["Usuario","Pastor","Rol"]},
+  {nivel:"🟡", color:"#e2b96a", titulo:"Contraseña en texto plano con longitud insuficiente", cuerpo:"Contrasena VARCHAR(50) sugería texto plano. Un hash de bcrypt tiene 60+ caracteres. Se cambió a contrasenaHash VARCHAR(255).", tablas:["Usuario"]},
+  {nivel:"🟡", color:"#e2b96a", titulo:"UsuarioRol no tenía campo idRol", cuerpo:"La tabla que debía asignar roles a usuarios ¡no tenía el campo del rol! Era la omisión más absurda del esquema. Se añadió idRol con FK a Rol.", tablas:["UsuarioRol"]},
+  {nivel:"🟡", color:"#e2b96a", titulo:"Estado binary(2) en 5 tablas", cuerpo:"binary(2) almacena bytes crudos sin semántica. Se reemplazó por ENUM con valores descriptivos en español en todas las tablas afectadas.", tablas:["Usuario","Tarea","Modulo","Evaluacion","ProcesoAsignadoCurso"]},
+  {nivel:"🟢", color:"#45d68a", titulo:"Campos de auditoría y enriquecimiento", cuerpo:"Ninguna tabla tenía creadoEn ni actualizadoEn. Se añadieron a las 23 tablas. Además se enriquecieron Curso, Notificacion y Evento con campos funcionales que faltaban.", tablas:["Todas las tablas"]},
+];
+
+// ══════════════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════════════
+let currentGroup = 'all';
+let currentSearch = '';
+
+function getColor(grupo) { return GRUPOS[grupo]?.color || '#888'; }
+
+function renderTables() {
+  const list = document.getElementById('tables-list');
+  let filtered = TABLAS;
+  if (currentGroup !== 'all') filtered = filtered.filter(t => t.grupo === currentGroup);
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    filtered = filtered.filter(t =>
+      t.nombre.toLowerCase().includes(q) ||
+      t.descripcion.toLowerCase().includes(q) ||
+      t.columnas.some(c => c.n.toLowerCase().includes(q) || c.t.toLowerCase().includes(q))
+    );
+  }
+  if (filtered.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:48px;color:var(--txt3);font-size:.85rem">Sin resultados para "<strong style="color:var(--txt2)">${currentSearch}</strong>"</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(t => renderTableCard(t)).join('');
+}
+
+function renderTableCard(t) {
+  const color = getColor(t.grupo);
+  const grupo = GRUPOS[t.grupo];
+  const newBadge = t.nueva ? `<span style="font-size:.6rem;background:rgba(69,214,138,0.12);color:var(--green);border:1px solid rgba(69,214,138,0.25);padding:2px 8px;border-radius:6px;font-weight:700;margin-left:8px">🆕 NUEVA</span>` : '';
+  const colsHtml = t.columnas.map(c => {
+    const q = currentSearch.toLowerCase();
+    const hlName = q && c.n.toLowerCase().includes(q)
+      ? c.n.replace(new RegExp(q,'gi'), m => `<span class="hl">${m}</span>`) : c.n;
+    const badgeHtml = c.tipo !== 'normal'
+      ? `<span class="badge ${c.tipo}">${c.tipo.toUpperCase()}</span>` : '';
+    const nameClass = c.tipo !== 'normal' ? c.tipo : 'normal';
+    return `<tr class="row-${c.tipo}">
+      <td style="width:24px">${badgeHtml}</td>
+      <td><span class="col-name ${nameClass}">${hlName}</span></td>
+      <td><span class="col-type">${c.t}</span></td>
+      <td><span class="col-rest">${c.r}</span></td>
+      <td><span class="col-desc">${c.d}</span></td>
+    </tr>`;
+  }).join('');
+  const noteHtml = t.notas ? `<div class="table-footer-note"><span class="note-icon">💡</span><span>${t.notas}</span></div>` : '';
+  const titleHl = currentSearch && t.nombre.toLowerCase().includes(currentSearch.toLowerCase())
+    ? t.nombre.replace(new RegExp(currentSearch,'gi'), m => `<span class="hl">${m}</span>`) : t.nombre;
+
+  return `<div class="table-accordion" style="--acc-color:${color}" id="acc-${t.nombre}">
+    <div class="table-header" onclick="toggleAcc('${t.nombre}')">
+      <div class="table-color-bar"></div>
+      <div>
+        <div class="table-name">${titleHl}${newBadge}</div>
+        <div class="table-desc">${t.descripcion}</div>
+      </div>
+      <div class="table-meta">
+        <span class="col-badge">${t.columnas.length} cols</span>
+        <span class="grupo-chip">${grupo.nombre}</span>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="table-body">
+      <table class="cols-table">
+        <thead><tr>
+          <th style="width:28px"></th>
+          <th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th>
+        </tr></thead>
+        <tbody>${colsHtml}</tbody>
+      </table>
+      ${noteHtml}
+    </div>
+  </div>`;
+}
+
+function toggleAcc(nombre) {
+  const el = document.getElementById('acc-' + nombre);
+  el.classList.toggle('open');
+}
+
+function filterGroup(grupo) {
+  currentGroup = grupo;
+  currentSearch = '';
+  document.getElementById('search-input').value = '';
+  // chips
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('on'));
+  const chip = document.getElementById('chip-' + grupo);
+  if (chip) chip.classList.add('on');
+  // group cards
+  document.querySelectorAll('.group-card').forEach(c => c.classList.remove('selected'));
+  renderTables();
+  goTab('tablas');
+}
+
+function searchTables(val) {
+  currentSearch = val.trim();
+  renderTables();
+  // auto-expand results
+  if (currentSearch) {
+    setTimeout(() => {
+      document.querySelectorAll('.table-accordion').forEach(el => el.classList.add('open'));
+    }, 50);
+  }
+}
+
+function renderRelaciones() {
+  const grid = document.getElementById('rel-grid');
+  grid.innerHTML = RELACIONES.map(r => {
+    const oColor = getColor(TABLAS.find(t=>t.nombre===r.origen)?.grupo || 'geo');
+    const dColor = getColor(TABLAS.find(t=>t.nombre===r.destino)?.grupo || 'geo');
+    const optBadge = r.tipo === 'Opcional'
+      ? `<span class="rel-type-opt">Opcional</span>` : '';
+    return `<div class="rel-card">
+      <div class="rel-from">
+        <span class="rel-table-name" style="color:${oColor}">${r.origen}</span>
+        <span class="rel-field">.${r.campo}</span>
+      </div>
+      <div class="rel-arrow">
+        <div class="rel-arrow-line"></div>
+        <span class="rel-cardinality">${r.card}</span>
+        ${optBadge}
+      </div>
+      <div class="rel-to">
+        <span class="rel-table-name" style="color:${dColor}">${r.destino}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderConvenciones() {
+  const grid = document.getElementById('conv-grid');
+  grid.innerHTML = CONVENCIONES.map(c => `
+    <div class="conv-card">
+      <div class="conv-title"><span class="conv-icon">${c.icon}</span>${c.titulo}</div>
+      <div class="conv-text">${c.texto.replace(/<code>(.*?)<\/code>/g, '<span class="conv-code">$1</span>')}</div>
+    </div>
+  `).join('');
+}
+
+function renderCorrecciones() {
+  const list = document.getElementById('corrections-list');
+  list.innerHTML = CORRECCIONES.map(c => `
+    <div class="corr-card" style="--corr-c:${c.color}">
+      <div class="corr-badge">${c.nivel}</div>
+      <div>
+        <div class="corr-title">${c.titulo}</div>
+        <div class="corr-body">${c.cuerpo}</div>
+        <div class="corr-tables">${c.tablas.map(t=>`<span class="corr-table-tag">${t}</span>`).join('')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════════════════
+function switchTab(tab, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('fade-in');
+  btn.classList.add('active');
+  if (tab === 'erd') { setTimeout(initERD, 60); }
+}
+
+function goTab(tab) {
+  const btn = document.querySelector(`.tab-btn[onclick*="${tab}"]`);
+  if (btn) switchTab(tab, btn);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ERD CANVAS
+// ══════════════════════════════════════════════════════════════
+let erdInitialized = false;
+const erdPos = {};
+let erdScale = 0.55, erdTx = 30, erdTy = 30;
+let erdDrag = null, erdDox = 0, erdDoy = 0;
+let erdPanning = false, erdPsx = 0, erdPsy = 0, erdPtx = 0, erdPty = 0;
+let erdSelected = null;
+let erdExpanded = {};
+
+const ERD_TW = 200, ERD_HDR = 32, ERD_RH = 18;
+const ERD_LAYOUT = {
+  Pais:[30,30], Departamento:[30,170], Ciudad:[30,320],
+  Iglesia:[280,30], Pastor:[280,230], IglesiaPastor:[280,440], Sede:[280,640],
+  Ministerio:[530,30], MiembroMinisterio:[530,220],
+  Rol:[780,30], Usuario:[780,190], UsuarioRol:[780,430], Notificacion:[780,650],
+  TipoEvento:[1040,30], Evento:[1040,200], Tarea:[1040,450], TareaAsignada:[1040,680],
+  Curso:[1290,30], Modulo:[1290,220], Evaluacion:[1290,430], ProcesoAsignadoCurso:[1290,630], DetalleProcesoCurso:[1290,870],
+};
+
+function erdTH(t) {
+  if (!erdExpanded[t.nombre]) return ERD_HDR;
+  return ERD_HDR + t.columnas.length * ERD_RH + 4;
+}
+
+function initERD() {
+  if (erdInitialized) { erdDraw(); return; }
+  erdInitialized = true;
+  TABLAS.forEach(t => {
+    const [x,y] = ERD_LAYOUT[t.nombre] || [100,100];
+    erdPos[t.nombre] = {x, y};
+    erdExpanded[t.nombre] = false;
+  });
+  const cvs = document.getElementById('erd-canvas');
+  const wrap = cvs.parentElement;
+  cvs.width = wrap.clientWidth;
+  cvs.height = 600;
+
+  cvs.addEventListener('mousedown', erdMouseDown);
+  window.addEventListener('mousemove', erdMouseMove);
+  window.addEventListener('mouseup', () => { erdDrag = null; erdPanning = false; });
+  cvs.addEventListener('wheel', erdWheel, {passive:false});
+  cvs.addEventListener('dblclick', erdDblClick);
+  erdDraw();
+}
+
+function erdDblClick(e) {
+  const {x,y} = s2w_erd(e.clientX, e.clientY);
+  const hit = erdHitTest(x, y);
+  if (hit) {
+    erdExpanded[hit] = !erdExpanded[hit];
+    erdDraw();
+  }
+}
+
+function erdMouseDown(e) {
+  const {x,y} = s2w_erd(e.clientX, e.clientY);
+  const hit = erdHitTest(x, y);
+  if (hit) {
+    erdDrag = hit; erdDox = x - erdPos[hit].x; erdDoy = y - erdPos[hit].y;
+    erdSelected = hit;
+  } else {
+    erdPanning = true; erdPsx = e.clientX; erdPsy = e.clientY; erdPtx = erdTx; erdPty = erdTy;
+    erdSelected = null;
+  }
+  erdDraw();
+}
+
+function erdMouseMove(e) {
+  if (erdDrag) {
+    const {x,y} = s2w_erd(e.clientX, e.clientY);
+    erdPos[erdDrag].x = x - erdDox;
+    erdPos[erdDrag].y = y - erdDoy;
+    erdDraw();
+  } else if (erdPanning) {
+    erdTx = erdPtx + (e.clientX - erdPsx);
+    erdTy = erdPty + (e.clientY - erdPsy);
+    erdDraw();
+  }
+}
+
+function erdWheel(e) {
+  e.preventDefault();
+  const f = e.deltaY < 0 ? 1.1 : 0.91;
+  erdTx = e.clientX - (e.clientX - erdTx)*f;
+  erdTy = e.clientY - (e.clientY - erdTy)*f;
+  erdScale = Math.max(0.08, Math.min(4, erdScale*f));
+  erdDraw();
+}
+
+function s2w_erd(sx, sy) {
+  const cvs = document.getElementById('erd-canvas');
+  const rect = cvs.getBoundingClientRect();
+  return { x:(sx - rect.left - erdTx)/erdScale, y:(sy - rect.top - erdTy)/erdScale };
+}
+
+function erdHitTest(wx, wy) {
+  for (let i = TABLAS.length-1; i >= 0; i--) {
+    const t = TABLAS[i], p = erdPos[t.nombre], h = erdTH(t);
+    if (wx >= p.x && wx <= p.x + ERD_TW && wy >= p.y && wy <= p.y + h) return t.nombre;
+  }
+  return null;
+}
+
+function erdZoom(f) {
+  const cvs = document.getElementById('erd-canvas');
+  const cx = cvs.width/2, cy = cvs.height/2;
+  erdTx = cx - (cx - erdTx)*f;
+  erdTy = cy - (cy - erdTy)*f;
+  erdScale = Math.max(0.08, Math.min(4, erdScale*f));
+  erdDraw();
+}
+
+function erdReset() { erdScale = 0.55; erdTx = 30; erdTy = 30; erdDraw(); }
+function erdExpandAll() { TABLAS.forEach(t => erdExpanded[t.nombre] = true); erdDraw(); }
+function erdCollapseAll() { TABLAS.forEach(t => erdExpanded[t.nombre] = false); erdDraw(); }
+
+function erdDraw() {
+  const cvs = document.getElementById('erd-canvas');
+  if (!cvs) return;
+  const ctx = cvs.getContext('2d');
+  cvs.width = cvs.offsetWidth;
+
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+
+  // BG
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(0,0,cvs.width,cvs.height);
+
+  // Grid
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+  ctx.lineWidth = 1;
+  const gs = 40 * erdScale;
+  const ox = ((erdTx % gs) + gs) % gs;
+  const oy = ((erdTy % gs) + gs) % gs;
+  for(let x = ox; x < cvs.width; x += gs){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,cvs.height); ctx.stroke(); }
+  for(let y = oy; y < cvs.height; y += gs){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cvs.width,y); ctx.stroke(); }
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(erdTx, erdTy);
+  ctx.scale(erdScale, erdScale);
+
+  // Relations
+  RELACIONES.forEach(r => {
+    const fromT = TABLAS.find(t => t.nombre === r.origen);
+    const toT = TABLAS.find(t => t.nombre === r.destino);
+    if (!fromT || !toT) return;
+    const active = erdSelected === r.origen || erdSelected === r.destino;
+    erdDrawRel(erdPos[r.origen], erdTH(fromT), erdPos[r.destino], erdTH(toT), active, r.tipo);
+  });
+
+  // Tables
+  TABLAS.forEach(t => erdDrawTable(ctx, t, erdSelected === t.nombre));
+
+  ctx.restore();
+  document.getElementById('erd-zoom-lbl').textContent = Math.round(erdScale*100) + '%';
+}
+
+function erdDrawRel(fp, fh, tp, th, active, tipo) {
+  const cvs = document.getElementById('erd-canvas');
+  const ctx = cvs.getContext('2d');
+  const fcx = fp.x+ERD_TW/2, fcy = fp.y+fh/2;
+  const tcx = tp.x+ERD_TW/2, tcy = tp.y+th/2;
+  const dx = tcx-fcx, dy = tcy-fcy;
+  let x1,y1,x2,y2;
+  if(Math.abs(dx) >= Math.abs(dy)){
+    if(dx>0){x1=fp.x+ERD_TW;y1=fp.y+fh/2;x2=tp.x;y2=tp.y+th/2;}
+    else{x1=fp.x;y1=fp.y+fh/2;x2=tp.x+ERD_TW;y2=tp.y+th/2;}
+  } else {
+    if(dy>0){x1=fp.x+ERD_TW/2;y1=fp.y+fh;x2=tp.x+ERD_TW/2;y2=tp.y;}
+    else{x1=fp.x+ERD_TW/2;y1=fp.y;x2=tp.x+ERD_TW/2;y2=tp.y+th;}
+  }
+  const mx = (x1+x2)/2;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x1,y1);
+  ctx.bezierCurveTo(mx,y1,mx,y2,x2,y2);
+  if (active) {
+    ctx.strokeStyle = 'rgba(226,185,106,0.85)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+  } else if (tipo === 'Opcional') {
+    ctx.strokeStyle = 'rgba(255,140,66,0.3)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,4]);
+  } else {
+    ctx.strokeStyle = 'rgba(74,158,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // Arrow
+  const angle = Math.atan2(y2-y1, x2-x1);
+  ctx.fillStyle = active ? 'rgba(226,185,106,0.9)' : tipo === 'Opcional' ? 'rgba(255,140,66,0.5)' : 'rgba(74,158,255,0.45)';
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-8*Math.cos(angle-0.4), y2-8*Math.sin(angle-0.4));
+  ctx.lineTo(x2-8*Math.cos(angle+0.4), y2-8*Math.sin(angle+0.4));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function erdDrawTable(ctx, t, sel) {
+  const p = erdPos[t.nombre];
+  const h = erdTH(t);
+  const color = getColor(t.grupo);
+  const r = 7;
+
+  ctx.save();
+  // Shadow
+  ctx.shadowColor = sel ? 'rgba(226,185,106,0.4)' : 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = sel ? 20 : 12;
+  ctx.shadowOffsetY = 3;
+
+  // Body
+  roundRect(ctx, p.x, p.y, ERD_TW, h, r);
+  ctx.fillStyle = '#111827';
+  ctx.fill();
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+  // Border
+  roundRect(ctx, p.x, p.y, ERD_TW, h, r);
+  ctx.strokeStyle = sel ? '#e2b96a' : '#1e2d45';
+  ctx.lineWidth = sel ? 2 : 1;
+  ctx.stroke();
+
+  // Header bg
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(p.x, p.y, ERD_TW, ERD_HDR, [r,r,0,0]);
+  ctx.fillStyle = color + '18';
+  ctx.fill();
+  ctx.restore();
+
+  // Left strip
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(p.x, p.y, 3, ERD_HDR, [r,0,0,r]);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+
+  // Divider
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y+ERD_HDR); ctx.lineTo(p.x+ERD_TW, p.y+ERD_HDR);
+  ctx.strokeStyle = '#1e2d45'; ctx.lineWidth = 1; ctx.stroke();
+
+  // Name
+  ctx.font = 'bold 10px "Space Mono", monospace';
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  ctx.fillStyle = color;
+  const nameStr = t.nombre.length > 20 ? t.nombre.slice(0,18)+'..' : t.nombre;
+  ctx.fillText(nameStr, p.x+10, p.y+ERD_HDR/2);
+
+  // New badge
+  if (t.nueva) {
+    ctx.font = '7px Arial';
+    ctx.fillStyle = '#45d68a';
+    ctx.textAlign = 'right';
+    ctx.fillText('NEW', p.x+ERD_TW-6, p.y+ERD_HDR/2);
+  }
+
+  // Expand hint
+  if (!erdExpanded[t.nombre]) {
+    ctx.font = '8px Arial';
+    ctx.fillStyle = '#4d6080';
+    ctx.textAlign = 'right';
+    if (!t.nueva) ctx.fillText('dbl-clic', p.x+ERD_TW-6, p.y+ERD_HDR/2);
+  }
+
+  // Columns (when expanded)
+  if (erdExpanded[t.nombre]) {
+    t.columnas.forEach((c, i) => {
+      const ry = p.y + ERD_HDR + i * ERD_RH;
+      const cy2 = ry + ERD_RH/2;
+      if (c.tipo === 'pk') ctx.fillStyle = 'rgba(226,185,106,0.06)';
+      else if (c.tipo === 'fk') ctx.fillStyle = 'rgba(74,158,255,0.06)';
+      else ctx.fillStyle = 'transparent';
+      ctx.fillRect(p.x+1, ry, ERD_TW-2, ERD_RH);
+
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      if (c.tipo === 'pk') { ctx.font = 'bold 7px monospace'; ctx.fillStyle = '#e2b96a'; ctx.fillText('PK', p.x+5, cy2); }
+      else if (c.tipo === 'fk') { ctx.font = 'bold 7px monospace'; ctx.fillStyle = '#4a9eff'; ctx.fillText('FK', p.x+5, cy2); }
+
+      const nx = c.tipo !== 'normal' ? p.x+20 : p.x+6;
+      ctx.font = (c.tipo==='pk'?'bold ':'')+`9px "Sora",sans-serif`;
+      ctx.fillStyle = c.tipo==='pk' ? '#e2b96a' : c.tipo==='fk' ? '#7bbde8' : '#aab8cc';
+      ctx.fillText(c.n.length>18?c.n.slice(0,17)+'…':c.n, nx, cy2);
+
+      ctx.font = '8px monospace'; ctx.fillStyle = '#444'; ctx.textAlign = 'right';
+      const typeStr = c.t.length > 12 ? c.t.slice(0,11)+'…' : c.t;
+      ctx.fillText(typeStr, p.x+ERD_TW-4, cy2);
+    });
+  }
+
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+renderTables();
+renderRelaciones();
+renderConvenciones();
+renderCorrecciones();
+
+// Chip inicial
+document.getElementById('chip-all').classList.add('on');
+</script>
+</body>
+</html>
