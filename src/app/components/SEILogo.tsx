@@ -1,4 +1,5 @@
-import logoImage from "figma:asset/c213986cba199fbbd1eb1e261be133808f51b787.png";
+// Use local asset; figma: virtual import is unavailable in Vite runtime
+import logoImage from "../../assets/c213986cba199fbbd1eb1e261be133808f51b787.png";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 interface SEILogoProps {
