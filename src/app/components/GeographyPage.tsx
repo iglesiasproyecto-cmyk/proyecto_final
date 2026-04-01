@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useApp } from "../store/AppContext";
+import { useState } from "react";
+import { usePaises, useDepartamentos, useCiudades } from "@/hooks/useGeografia";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -12,18 +12,35 @@ import {
 import { Globe, MapPin, Building, Plus, Pencil, Trash2, ChevronRight, ChevronDown, Search } from "lucide-react";
 
 export function GeographyPage() {
-  const { paises, departamentosGeo, ciudades, addPais, updatePais, deletePais, addDepartamentoGeo, updateDepartamentoGeo, deleteDepartamentoGeo, addCiudad, updateCiudad, deleteCiudad } = useApp();
-  const [expandedPais, setExpandedPais] = useState<Set<string>>(new Set());
-  const [expandedDep, setExpandedDep] = useState<Set<string>>(new Set());
+  const { data: paises = [], isLoading: paisesLoading } = usePaises();
+  const { data: departamentosGeo = [], isLoading: deptosLoading } = useDepartamentos();
+  const { data: ciudades = [], isLoading: ciudadesLoading } = useCiudades();
+  const isLoading = paisesLoading || deptosLoading || ciudadesLoading;
+
+  const [expandedPais, setExpandedPais] = useState<Set<number>>(new Set());
+  const [expandedDep, setExpandedDep] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState("");
-  const [dialog, setDialog] = useState<{ type: "pais" | "dep" | "ciudad"; mode: "add" | "edit"; id?: string; parentId?: string } | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: string; name: string } | null>(null);
+  const [dialog, setDialog] = useState<{ type: "pais" | "dep" | "ciudad"; mode: "add" | "edit"; id?: number; parentId?: number } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: number; name: string } | null>(null);
   const [formNombre, setFormNombre] = useState("");
 
-  const togglePais = (id: string) => { const s = new Set(expandedPais); s.has(id) ? s.delete(id) : s.add(id); setExpandedPais(s); };
-  const toggleDep = (id: string) => { const s = new Set(expandedDep); s.has(id) ? s.delete(id) : s.add(id); setExpandedDep(s); };
+  // Phase 3 stubs — mutations will be implemented in the next phase
+  const addPais = (_nombre: string) => { /* Phase 3 */ };
+  const updatePais = (_id: number, _nombre: string) => { /* Phase 3 */ };
+  const deletePais = (_id: number) => { /* Phase 3 */ };
+  const addDepartamentoGeo = (_nombre: string, _idPais: number) => { /* Phase 3 */ };
+  const updateDepartamentoGeo = (_id: number, _nombre: string) => { /* Phase 3 */ };
+  const deleteDepartamentoGeo = (_id: number) => { /* Phase 3 */ };
+  const addCiudad = (_nombre: string, _idDepartamentoGeo: number) => { /* Phase 3 */ };
+  const updateCiudad = (_id: number, _nombre: string) => { /* Phase 3 */ };
+  const deleteCiudad = (_id: number) => { /* Phase 3 */ };
 
-  const openDialog = (type: typeof dialog extends null ? never : NonNullable<typeof dialog>["type"], mode: "add" | "edit", id?: string, parentId?: string) => {
+  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando geografía...</div>;
+
+  const togglePais = (id: number) => { const s = new Set(expandedPais); s.has(id) ? s.delete(id) : s.add(id); setExpandedPais(s); };
+  const toggleDep = (id: number) => { const s = new Set(expandedDep); s.has(id) ? s.delete(id) : s.add(id); setExpandedDep(s); };
+
+  const openDialog = (type: NonNullable<typeof dialog>["type"], mode: "add" | "edit", id?: number, parentId?: number) => {
     if (mode === "edit") {
       if (type === "pais") setFormNombre(paises.find(p => p.idPais === id)?.nombre || "");
       if (type === "dep") setFormNombre(departamentosGeo.find(d => d.idDepartamentoGeo === id)?.nombre || "");
@@ -50,7 +67,16 @@ export function GeographyPage() {
     setConfirmDelete(null);
   };
 
-  const filteredPaises = search ? paises.filter(p => p.nombre.toLowerCase().includes(search.toLowerCase()) || departamentosGeo.some(d => d.idPais === p.idPais && d.nombre.toLowerCase().includes(search.toLowerCase())) || ciudades.some(c => { const d = departamentosGeo.find(dd => dd.idDepartamentoGeo === c.idDepartamentoGeo); return d?.idPais === p.idPais && c.nombre.toLowerCase().includes(search.toLowerCase()); })) : paises;
+  const filteredPaises = search
+    ? paises.filter(p =>
+        p.nombre.toLowerCase().includes(search.toLowerCase()) ||
+        departamentosGeo.some(d => d.idPais === p.idPais && d.nombre.toLowerCase().includes(search.toLowerCase())) ||
+        ciudades.some(c => {
+          const d = departamentosGeo.find(dd => dd.idDepartamentoGeo === c.idDepartamentoGeo);
+          return d?.idPais === p.idPais && c.nombre.toLowerCase().includes(search.toLowerCase());
+        })
+      )
+    : paises;
 
   const dialogTitle = dialog ? `${dialog.mode === "add" ? "Nuevo" : "Editar"} ${dialog.type === "pais" ? "País" : dialog.type === "dep" ? "Departamento" : "Ciudad"}` : "";
 
