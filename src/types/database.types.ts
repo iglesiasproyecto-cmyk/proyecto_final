@@ -1,1 +1,1229 @@
-{"types":"export type Json =\n  | string\n  | number\n  | boolean\n  | null\n  | { [key: string]: Json | undefined }\n  | Json[]\n\nexport type Database = {\n  // Allows to automatically instantiate createClient with right options\n  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)\n  __InternalSupabase: {\n    PostgrestVersion: \"14.4\"\n  }\n  public: {\n    Tables: {\n      ciudad: {\n        Row: {\n          creado_en: string\n          id_ciudad: number\n          id_departamento: number\n          nombre: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          id_ciudad?: number\n          id_departamento: number\n          nombre: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          id_ciudad?: number\n          id_departamento?: number\n          nombre?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"ciudad_id_departamento_fkey\"\n            columns: [\"id_departamento\"]\n            isOneToOne: false\n            referencedRelation: \"departamento\"\n            referencedColumns: [\"id_departamento\"]\n          },\n        ]\n      }\n      curso: {\n        Row: {\n          creado_en: string\n          descripcion: string | null\n          duracion_horas: number | null\n          estado: Database[\"public\"][\"Enums\"][\"estado_curso\"]\n          id_curso: number\n          id_ministerio: number\n          id_usuario_creador: number\n          nombre: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          descripcion?: string | null\n          duracion_horas?: number | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_curso\"]\n          id_curso?: number\n          id_ministerio: number\n          id_usuario_creador: number\n          nombre: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          descripcion?: string | null\n          duracion_horas?: number | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_curso\"]\n          id_curso?: number\n          id_ministerio?: number\n          id_usuario_creador?: number\n          nombre?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"curso_id_ministerio_fkey\"\n            columns: [\"id_ministerio\"]\n            isOneToOne: false\n            referencedRelation: \"ministerio\"\n            referencedColumns: [\"id_ministerio\"]\n          },\n          {\n            foreignKeyName: \"curso_id_usuario_creador_fkey\"\n            columns: [\"id_usuario_creador\"]\n            isOneToOne: false\n            referencedRelation: \"usuario\"\n            referencedColumns: [\"id_usuario\"]\n          },\n        ]\n      }\n      departamento: {\n        Row: {\n          creado_en: string\n          id_departamento: number\n          id_pais: number\n          nombre: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          id_departamento?: number\n          id_pais: number\n          nombre: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          id_departamento?: number\n          id_pais?: number\n          nombre?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"departamento_id_pais_fkey\"\n            columns: [\"id_pais\"]\n            isOneToOne: false\n            referencedRelation: \"pais\"\n            referencedColumns: [\"id_pais\"]\n          },\n        ]\n      }\n      detalle_proceso_curso: {\n        Row: {\n          creado_en: string\n          estado: Database[\"public\"][\"Enums\"][\"estado_detalle\"]\n          fecha_inscripcion: string\n          id_detalle_proceso_curso: number\n          id_proceso_asignado_curso: number\n          id_usuario: number\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          estado?: Database[\"public\"][\"Enums\"][\"estado_detalle\"]\n          fecha_inscripcion?: string\n          id_detalle_proceso_curso?: number\n          id_proceso_asignado_curso: number\n          id_usuario: number\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          estado?: Database[\"public\"][\"Enums\"][\"estado_detalle\"]\n          fecha_inscripcion?: string\n          id_detalle_proceso_curso?: number\n          id_proceso_asignado_curso?: number\n          id_usuario?: number\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"detalle_proceso_curso_id_proceso_asignado_curso_fkey\"\n            columns: [\"id_proceso_asignado_curso\"]\n            isOneToOne: false\n            referencedRelation: \"proceso_asignado_curso\"\n            referencedColumns: [\"id_proceso_asignado_curso\"]\n          },\n          {\n            foreignKeyName: \"detalle_proceso_curso_id_usuario_fkey\"\n            columns: [\"id_usuario\"]\n            isOneToOne: false\n            referencedRelation: \"usuario\"\n            referencedColumns: [\"id_usuario\"]\n          },\n        ]\n      }\n      evaluacion: {\n        Row: {\n          calificacion: number | null\n          creado_en: string\n          estado: Database[\"public\"][\"Enums\"][\"estado_evaluacion\"]\n          fecha_evaluacion: string | null\n          id_evaluacion: number\n          id_modulo: number\n          id_usuario: number\n          observaciones: string | null\n          updated_at: string\n        }\n        Insert: {\n          calificacion?: number | null\n          creado_en?: string\n          estado?: Database[\"public\"][\"Enums\"][\"estado_evaluacion\"]\n          fecha_evaluacion?: string | null\n          id_evaluacion?: number\n          id_modulo: number\n          id_usuario: number\n          observaciones?: string | null\n          updated_at?: string\n        }\n        Update: {\n          calificacion?: number | null\n          creado_en?: string\n          estado?: Database[\"public\"][\"Enums\"][\"estado_evaluacion\"]\n          fecha_evaluacion?: string | null\n          id_evaluacion?: number\n          id_modulo?: number\n          id_usuario?: number\n          observaciones?: string | null\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"evaluacion_id_modulo_fkey\"\n            columns: [\"id_modulo\"]\n            isOneToOne: false\n            referencedRelation: \"modulo\"\n            referencedColumns: [\"id_modulo\"]\n          },\n          {\n            foreignKeyName: \"evaluacion_id_usuario_fkey\"\n            columns: [\"id_usuario\"]\n            isOneToOne: false\n            referencedRelation: \"usuario\"\n            referencedColumns: [\"id_usuario\"]\n          },\n        ]\n      }\n      evento: {\n        Row: {\n          creado_en: string\n          descripcion: string | null\n          estado: Database[\"public\"][\"Enums\"][\"estado_evento\"]\n          fecha_fin: string\n          fecha_inicio: string\n          id_evento: number\n          id_iglesia: number\n          id_ministerio: number | null\n          id_sede: number | null\n          id_tipo_evento: number\n          nombre: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          descripcion?: string | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_evento\"]\n          fecha_fin: string\n          fecha_inicio: string\n          id_evento?: number\n          id_iglesia: number\n          id_ministerio?: number | null\n          id_sede?: number | null\n          id_tipo_evento: number\n          nombre: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          descripcion?: string | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_evento\"]\n          fecha_fin?: string\n          fecha_inicio?: string\n          id_evento?: number\n          id_iglesia?: number\n          id_ministerio?: number | null\n          id_sede?: number | null\n          id_tipo_evento?: number\n          nombre?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"evento_id_iglesia_fkey\"\n            columns: [\"id_iglesia\"]\n            isOneToOne: false\n            referencedRelation: \"iglesia\"\n            referencedColumns: [\"id_iglesia\"]\n          },\n          {\n            foreignKeyName: \"evento_id_ministerio_fkey\"\n            columns: [\"id_ministerio\"]\n            isOneToOne: false\n            referencedRelation: \"ministerio\"\n            referencedColumns: [\"id_ministerio\"]\n          },\n          {\n            foreignKeyName: \"evento_id_sede_fkey\"\n            columns: [\"id_sede\"]\n            isOneToOne: false\n            referencedRelation: \"sede\"\n            referencedColumns: [\"id_sede\"]\n          },\n          {\n            foreignKeyName: \"evento_id_tipo_evento_fkey\"\n            columns: [\"id_tipo_evento\"]\n            isOneToOne: false\n            referencedRelation: \"tipo_evento\"\n            referencedColumns: [\"id_tipo_evento\"]\n          },\n        ]\n      }\n      iglesia: {\n        Row: {\n          creado_en: string\n          estado: Database[\"public\"][\"Enums\"][\"estado_iglesia\"]\n          fecha_fundacion: string | null\n          id_ciudad: number\n          id_iglesia: number\n          nombre: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          estado?: Database[\"public\"][\"Enums\"][\"estado_iglesia\"]\n          fecha_fundacion?: string | null\n          id_ciudad: number\n          id_iglesia?: number\n          nombre: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          estado?: Database[\"public\"][\"Enums\"][\"estado_iglesia\"]\n          fecha_fundacion?: string | null\n          id_ciudad?: number\n          id_iglesia?: number\n          nombre?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"iglesia_id_ciudad_fkey\"\n            columns: [\"id_ciudad\"]\n            isOneToOne: false\n            referencedRelation: \"ciudad\"\n            referencedColumns: [\"id_ciudad\"]\n          },\n        ]\n      }\n      iglesia_pastor: {\n        Row: {\n          creado_en: string\n          es_principal: boolean\n          fecha_fin: string | null\n          fecha_inicio: string\n          id_iglesia: number\n          id_iglesia_pastor: number\n          id_pastor: number\n          observaciones: string | null\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          es_principal?: boolean\n          fecha_fin?: string | null\n          fecha_inicio: string\n          id_iglesia: number\n          id_iglesia_pastor?: number\n          id_pastor: number\n          observaciones?: string | null\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          es_principal?: boolean\n          fecha_fin?: string | null\n          fecha_inicio?: string\n          id_iglesia?: number\n          id_iglesia_pastor?: number\n          id_pastor?: number\n          observaciones?: string | null\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"iglesia_pastor_id_iglesia_fkey\"\n            columns: [\"id_iglesia\"]\n            isOneToOne: false\n            referencedRelation: \"iglesia\"\n            referencedColumns: [\"id_iglesia\"]\n          },\n          {\n            foreignKeyName: \"iglesia_pastor_id_pastor_fkey\"\n            columns: [\"id_pastor\"]\n            isOneToOne: false\n            referencedRelation: \"pastor\"\n            referencedColumns: [\"id_pastor\"]\n          },\n        ]\n      }\n      miembro_ministerio: {\n        Row: {\n          creado_en: string\n          fecha_ingreso: string\n          fecha_salida: string | null\n          id_miembro_ministerio: number\n          id_ministerio: number\n          id_usuario: number\n          rol_en_ministerio: string | null\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          fecha_ingreso?: string\n          fecha_salida?: string | null\n          id_miembro_ministerio?: number\n          id_ministerio: number\n          id_usuario: number\n          rol_en_ministerio?: string | null\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          fecha_ingreso?: string\n          fecha_salida?: string | null\n          id_miembro_ministerio?: number\n          id_ministerio?: number\n          id_usuario?: number\n          rol_en_ministerio?: string | null\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"miembro_ministerio_id_ministerio_fkey\"\n            columns: [\"id_ministerio\"]\n            isOneToOne: false\n            referencedRelation: \"ministerio\"\n            referencedColumns: [\"id_ministerio\"]\n          },\n          {\n            foreignKeyName: \"miembro_ministerio_id_usuario_fkey\"\n            columns: [\"id_usuario\"]\n            isOneToOne: false\n            referencedRelation: \"usuario\"\n            referencedColumns: [\"id_usuario\"]\n          },\n        ]\n      }\n      ministerio: {\n        Row: {\n          creado_en: string\n          descripcion: string | null\n          estado: Database[\"public\"][\"Enums\"][\"estado_ministerio\"]\n          id_ministerio: number\n          id_sede: number\n          nombre: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          descripcion?: string | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_ministerio\"]\n          id_ministerio?: number\n          id_sede: number\n          nombre: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          descripcion?: string | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_ministerio\"]\n          id_ministerio?: number\n          id_sede?: number\n          nombre?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"ministerio_id_sede_fkey\"\n            columns: [\"id_sede\"]\n            isOneToOne: false\n            referencedRelation: \"sede\"\n            referencedColumns: [\"id_sede\"]\n          },\n        ]\n      }\n      modulo: {\n        Row: {\n          creado_en: string\n          descripcion: string | null\n          estado: Database[\"public\"][\"Enums\"][\"estado_modulo\"]\n          id_curso: number\n          id_modulo: number\n          orden: number\n          titulo: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          descripcion?: string | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_modulo\"]\n          id_curso: number\n          id_modulo?: number\n          orden?: number\n          titulo: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          descripcion?: string | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_modulo\"]\n          id_curso?: number\n          id_modulo?: number\n          orden?: number\n          titulo?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"modulo_id_curso_fkey\"\n            columns: [\"id_curso\"]\n            isOneToOne: false\n            referencedRelation: \"curso\"\n            referencedColumns: [\"id_curso\"]\n          },\n        ]\n      }\n      notificacion: {\n        Row: {\n          creado_en: string\n          fecha_lectura: string | null\n          id_notificacion: number\n          id_usuario: number\n          leida: boolean\n          mensaje: string\n          tipo: Database[\"public\"][\"Enums\"][\"tipo_notificacion\"]\n          titulo: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          fecha_lectura?: string | null\n          id_notificacion?: number\n          id_usuario: number\n          leida?: boolean\n          mensaje: string\n          tipo?: Database[\"public\"][\"Enums\"][\"tipo_notificacion\"]\n          titulo: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          fecha_lectura?: string | null\n          id_notificacion?: number\n          id_usuario?: number\n          leida?: boolean\n          mensaje?: string\n          tipo?: Database[\"public\"][\"Enums\"][\"tipo_notificacion\"]\n          titulo?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"notificacion_id_usuario_fkey\"\n            columns: [\"id_usuario\"]\n            isOneToOne: false\n            referencedRelation: \"usuario\"\n            referencedColumns: [\"id_usuario\"]\n          },\n        ]\n      }\n      pais: {\n        Row: {\n          creado_en: string\n          id_pais: number\n          nombre: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          id_pais?: number\n          nombre: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          id_pais?: number\n          nombre?: string\n          updated_at?: string\n        }\n        Relationships: []\n      }\n      pastor: {\n        Row: {\n          apellidos: string\n          correo: string\n          creado_en: string\n          id_pastor: number\n          id_usuario: number | null\n          nombres: string\n          telefono: string | null\n          updated_at: string\n        }\n        Insert: {\n          apellidos: string\n          correo: string\n          creado_en?: string\n          id_pastor?: number\n          id_usuario?: number | null\n          nombres: string\n          telefono?: string | null\n          updated_at?: string\n        }\n        Update: {\n          apellidos?: string\n          correo?: string\n          creado_en?: string\n          id_pastor?: number\n          id_usuario?: number | null\n          nombres?: string\n          telefono?: string | null\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"pastor_id_usuario_fkey\"\n            columns: [\"id_usuario\"]\n            isOneToOne: true\n            referencedRelation: \"usuario\"\n            referencedColumns: [\"id_usuario\"]\n          },\n        ]\n      }\n      proceso_asignado_curso: {\n        Row: {\n          creado_en: string\n          estado: Database[\"public\"][\"Enums\"][\"estado_proceso\"]\n          fecha_fin: string\n          fecha_inicio: string\n          id_curso: number\n          id_iglesia: number\n          id_proceso_asignado_curso: number\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          estado?: Database[\"public\"][\"Enums\"][\"estado_proceso\"]\n          fecha_fin: string\n          fecha_inicio: string\n          id_curso: number\n          id_iglesia: number\n          id_proceso_asignado_curso?: number\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          estado?: Database[\"public\"][\"Enums\"][\"estado_proceso\"]\n          fecha_fin?: string\n          fecha_inicio?: string\n          id_curso?: number\n          id_iglesia?: number\n          id_proceso_asignado_curso?: number\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"proceso_asignado_curso_id_curso_fkey\"\n            columns: [\"id_curso\"]\n            isOneToOne: false\n            referencedRelation: \"curso\"\n            referencedColumns: [\"id_curso\"]\n          },\n          {\n            foreignKeyName: \"proceso_asignado_curso_id_iglesia_fkey\"\n            columns: [\"id_iglesia\"]\n            isOneToOne: false\n            referencedRelation: \"iglesia\"\n            referencedColumns: [\"id_iglesia\"]\n          },\n        ]\n      }\n      recurso: {\n        Row: {\n          creado_en: string\n          id_modulo: number\n          id_recurso: number\n          nombre: string\n          tipo: Database[\"public\"][\"Enums\"][\"tipo_recurso\"]\n          updated_at: string\n          url: string\n        }\n        Insert: {\n          creado_en?: string\n          id_modulo: number\n          id_recurso?: number\n          nombre: string\n          tipo?: Database[\"public\"][\"Enums\"][\"tipo_recurso\"]\n          updated_at?: string\n          url: string\n        }\n        Update: {\n          creado_en?: string\n          id_modulo?: number\n          id_recurso?: number\n          nombre?: string\n          tipo?: Database[\"public\"][\"Enums\"][\"tipo_recurso\"]\n          updated_at?: string\n          url?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"recurso_id_modulo_fkey\"\n            columns: [\"id_modulo\"]\n            isOneToOne: false\n            referencedRelation: \"modulo\"\n            referencedColumns: [\"id_modulo\"]\n          },\n        ]\n      }\n      rol: {\n        Row: {\n          creado_en: string\n          descripcion: string | null\n          id_rol: number\n          nombre: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          descripcion?: string | null\n          id_rol?: number\n          nombre: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          descripcion?: string | null\n          id_rol?: number\n          nombre?: string\n          updated_at?: string\n        }\n        Relationships: []\n      }\n      sede: {\n        Row: {\n          creado_en: string\n          direccion: string | null\n          estado: Database[\"public\"][\"Enums\"][\"estado_sede\"]\n          id_ciudad: number\n          id_iglesia: number\n          id_sede: number\n          nombre: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          direccion?: string | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_sede\"]\n          id_ciudad: number\n          id_iglesia: number\n          id_sede?: number\n          nombre: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          direccion?: string | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_sede\"]\n          id_ciudad?: number\n          id_iglesia?: number\n          id_sede?: number\n          nombre?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"sede_id_ciudad_fkey\"\n            columns: [\"id_ciudad\"]\n            isOneToOne: false\n            referencedRelation: \"ciudad\"\n            referencedColumns: [\"id_ciudad\"]\n          },\n          {\n            foreignKeyName: \"sede_id_iglesia_fkey\"\n            columns: [\"id_iglesia\"]\n            isOneToOne: false\n            referencedRelation: \"iglesia\"\n            referencedColumns: [\"id_iglesia\"]\n          },\n        ]\n      }\n      sede_pastor: {\n        Row: {\n          creado_en: string\n          es_principal: boolean\n          fecha_fin: string | null\n          fecha_inicio: string\n          id_pastor: number\n          id_sede: number\n          id_sede_pastor: number\n          observaciones: string | null\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          es_principal?: boolean\n          fecha_fin?: string | null\n          fecha_inicio: string\n          id_pastor: number\n          id_sede: number\n          id_sede_pastor?: number\n          observaciones?: string | null\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          es_principal?: boolean\n          fecha_fin?: string | null\n          fecha_inicio?: string\n          id_pastor?: number\n          id_sede?: number\n          id_sede_pastor?: number\n          observaciones?: string | null\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"sede_pastor_id_pastor_fkey\"\n            columns: [\"id_pastor\"]\n            isOneToOne: false\n            referencedRelation: \"pastor\"\n            referencedColumns: [\"id_pastor\"]\n          },\n          {\n            foreignKeyName: \"sede_pastor_id_sede_fkey\"\n            columns: [\"id_sede\"]\n            isOneToOne: false\n            referencedRelation: \"sede\"\n            referencedColumns: [\"id_sede\"]\n          },\n        ]\n      }\n      tarea: {\n        Row: {\n          creado_en: string\n          descripcion: string | null\n          estado: Database[\"public\"][\"Enums\"][\"estado_tarea\"]\n          fecha_limite: string | null\n          id_evento: number | null\n          id_tarea: number\n          id_usuario_creador: number\n          prioridad: Database[\"public\"][\"Enums\"][\"prioridad_tarea\"]\n          titulo: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          descripcion?: string | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_tarea\"]\n          fecha_limite?: string | null\n          id_evento?: number | null\n          id_tarea?: number\n          id_usuario_creador: number\n          prioridad?: Database[\"public\"][\"Enums\"][\"prioridad_tarea\"]\n          titulo: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          descripcion?: string | null\n          estado?: Database[\"public\"][\"Enums\"][\"estado_tarea\"]\n          fecha_limite?: string | null\n          id_evento?: number | null\n          id_tarea?: number\n          id_usuario_creador?: number\n          prioridad?: Database[\"public\"][\"Enums\"][\"prioridad_tarea\"]\n          titulo?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"tarea_id_evento_fkey\"\n            columns: [\"id_evento\"]\n            isOneToOne: false\n            referencedRelation: \"evento\"\n            referencedColumns: [\"id_evento\"]\n          },\n          {\n            foreignKeyName: \"tarea_id_usuario_creador_fkey\"\n            columns: [\"id_usuario_creador\"]\n            isOneToOne: false\n            referencedRelation: \"usuario\"\n            referencedColumns: [\"id_usuario\"]\n          },\n        ]\n      }\n      tarea_asignada: {\n        Row: {\n          creado_en: string\n          fecha_asignacion: string\n          fecha_completado: string | null\n          id_tarea: number\n          id_tarea_asignada: number\n          id_usuario: number\n          observaciones: string | null\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          fecha_asignacion?: string\n          fecha_completado?: string | null\n          id_tarea: number\n          id_tarea_asignada?: number\n          id_usuario: number\n          observaciones?: string | null\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          fecha_asignacion?: string\n          fecha_completado?: string | null\n          id_tarea?: number\n          id_tarea_asignada?: number\n          id_usuario?: number\n          observaciones?: string | null\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"tarea_asignada_id_tarea_fkey\"\n            columns: [\"id_tarea\"]\n            isOneToOne: false\n            referencedRelation: \"tarea\"\n            referencedColumns: [\"id_tarea\"]\n          },\n          {\n            foreignKeyName: \"tarea_asignada_id_usuario_fkey\"\n            columns: [\"id_usuario\"]\n            isOneToOne: false\n            referencedRelation: \"usuario\"\n            referencedColumns: [\"id_usuario\"]\n          },\n        ]\n      }\n      tipo_evento: {\n        Row: {\n          creado_en: string\n          descripcion: string | null\n          id_tipo_evento: number\n          nombre: string\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          descripcion?: string | null\n          id_tipo_evento?: number\n          nombre: string\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          descripcion?: string | null\n          id_tipo_evento?: number\n          nombre?: string\n          updated_at?: string\n        }\n        Relationships: []\n      }\n      usuario: {\n        Row: {\n          activo: boolean\n          apellidos: string\n          auth_user_id: string | null\n          contrasena_hash: string\n          correo: string\n          creado_en: string\n          id_usuario: number\n          nombres: string\n          telefono: string | null\n          ultimo_acceso: string | null\n          updated_at: string\n        }\n        Insert: {\n          activo?: boolean\n          apellidos: string\n          auth_user_id?: string | null\n          contrasena_hash: string\n          correo: string\n          creado_en?: string\n          id_usuario?: number\n          nombres: string\n          telefono?: string | null\n          ultimo_acceso?: string | null\n          updated_at?: string\n        }\n        Update: {\n          activo?: boolean\n          apellidos?: string\n          auth_user_id?: string | null\n          contrasena_hash?: string\n          correo?: string\n          creado_en?: string\n          id_usuario?: number\n          nombres?: string\n          telefono?: string | null\n          ultimo_acceso?: string | null\n          updated_at?: string\n        }\n        Relationships: []\n      }\n      usuario_rol: {\n        Row: {\n          creado_en: string\n          fecha_fin: string | null\n          fecha_inicio: string\n          id_iglesia: number\n          id_rol: number\n          id_sede: number | null\n          id_usuario: number\n          id_usuario_rol: number\n          updated_at: string\n        }\n        Insert: {\n          creado_en?: string\n          fecha_fin?: string | null\n          fecha_inicio?: string\n          id_iglesia: number\n          id_rol: number\n          id_sede?: number | null\n          id_usuario: number\n          id_usuario_rol?: number\n          updated_at?: string\n        }\n        Update: {\n          creado_en?: string\n          fecha_fin?: string | null\n          fecha_inicio?: string\n          id_iglesia?: number\n          id_rol?: number\n          id_sede?: number | null\n          id_usuario?: number\n          id_usuario_rol?: number\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"usuario_rol_id_iglesia_fkey\"\n            columns: [\"id_iglesia\"]\n            isOneToOne: false\n            referencedRelation: \"iglesia\"\n            referencedColumns: [\"id_iglesia\"]\n          },\n          {\n            foreignKeyName: \"usuario_rol_id_rol_fkey\"\n            columns: [\"id_rol\"]\n            isOneToOne: false\n            referencedRelation: \"rol\"\n            referencedColumns: [\"id_rol\"]\n          },\n          {\n            foreignKeyName: \"usuario_rol_id_sede_fkey\"\n            columns: [\"id_sede\"]\n            isOneToOne: false\n            referencedRelation: \"sede\"\n            referencedColumns: [\"id_sede\"]\n          },\n          {\n            foreignKeyName: \"usuario_rol_id_usuario_fkey\"\n            columns: [\"id_usuario\"]\n            isOneToOne: false\n            referencedRelation: \"usuario\"\n            referencedColumns: [\"id_usuario\"]\n          },\n        ]\n      }\n    }\n    Views: {\n      [_ in never]: never\n    }\n    Functions: {\n      [_ in never]: never\n    }\n    Enums: {\n      estado_curso: \"borrador\" | \"activo\" | \"inactivo\" | \"archivado\"\n      estado_detalle: \"inscrito\" | \"en_progreso\" | \"completado\" | \"retirado\"\n      estado_evaluacion: \"pendiente\" | \"aprobado\" | \"reprobado\" | \"en_revision\"\n      estado_evento: \"programado\" | \"en_curso\" | \"finalizado\" | \"cancelado\"\n      estado_iglesia: \"activa\" | \"inactiva\" | \"fusionada\" | \"cerrada\"\n      estado_ministerio: \"activo\" | \"inactivo\" | \"suspendido\"\n      estado_modulo: \"borrador\" | \"publicado\" | \"archivado\"\n      estado_proceso: \"programado\" | \"en_curso\" | \"finalizado\" | \"cancelado\"\n      estado_sede: \"activa\" | \"inactiva\" | \"en_construccion\"\n      estado_tarea: \"pendiente\" | \"en_progreso\" | \"completada\" | \"cancelada\"\n      prioridad_tarea: \"baja\" | \"media\" | \"alta\" | \"urgente\"\n      tipo_notificacion: \"informacion\" | \"alerta\" | \"tarea\" | \"evento\" | \"curso\"\n      tipo_recurso: \"archivo\" | \"enlace\"\n    }\n    CompositeTypes: {\n      [_ in never]: never\n    }\n  }\n}\n\ntype DatabaseWithoutInternals = Omit<Database, \"__InternalSupabase\">\n\ntype DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, \"public\">]\n\nexport type Tables<\n  DefaultSchemaTableNameOrOptions extends\n    | keyof (DefaultSchema[\"Tables\"] & DefaultSchema[\"Views\"])\n    | { schema: keyof DatabaseWithoutInternals },\n  TableName extends DefaultSchemaTableNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"] &\n        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Views\"])\n    : never = never,\n> = DefaultSchemaTableNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"] &\n      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Views\"])[TableName] extends {\n      Row: infer R\n    }\n    ? R\n    : never\n  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema[\"Tables\"] &\n        DefaultSchema[\"Views\"])\n    ? (DefaultSchema[\"Tables\"] &\n        DefaultSchema[\"Views\"])[DefaultSchemaTableNameOrOptions] extends {\n        Row: infer R\n      }\n      ? R\n      : never\n    : never\n\nexport type TablesInsert<\n  DefaultSchemaTableNameOrOptions extends\n    | keyof DefaultSchema[\"Tables\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  TableName extends DefaultSchemaTableNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"]\n    : never = never,\n> = DefaultSchemaTableNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"][TableName] extends {\n      Insert: infer I\n    }\n    ? I\n    : never\n  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema[\"Tables\"]\n    ? DefaultSchema[\"Tables\"][DefaultSchemaTableNameOrOptions] extends {\n        Insert: infer I\n      }\n      ? I\n      : never\n    : never\n\nexport type TablesUpdate<\n  DefaultSchemaTableNameOrOptions extends\n    | keyof DefaultSchema[\"Tables\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  TableName extends DefaultSchemaTableNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"]\n    : never = never,\n> = DefaultSchemaTableNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"][TableName] extends {\n      Update: infer U\n    }\n    ? U\n    : never\n  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema[\"Tables\"]\n    ? DefaultSchema[\"Tables\"][DefaultSchemaTableNameOrOptions] extends {\n        Update: infer U\n      }\n      ? U\n      : never\n    : never\n\nexport type Enums<\n  DefaultSchemaEnumNameOrOptions extends\n    | keyof DefaultSchema[\"Enums\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  EnumName extends DefaultSchemaEnumNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions[\"schema\"]][\"Enums\"]\n    : never = never,\n> = DefaultSchemaEnumNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions[\"schema\"]][\"Enums\"][EnumName]\n  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema[\"Enums\"]\n    ? DefaultSchema[\"Enums\"][DefaultSchemaEnumNameOrOptions]\n    : never\n\nexport type CompositeTypes<\n  PublicCompositeTypeNameOrOptions extends\n    | keyof DefaultSchema[\"CompositeTypes\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions[\"schema\"]][\"CompositeTypes\"]\n    : never = never,\n> = PublicCompositeTypeNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions[\"schema\"]][\"CompositeTypes\"][CompositeTypeName]\n  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema[\"CompositeTypes\"]\n    ? DefaultSchema[\"CompositeTypes\"][PublicCompositeTypeNameOrOptions]\n    : never\n\nexport const Constants = {\n  public: {\n    Enums: {\n      estado_curso: [\"borrador\", \"activo\", \"inactivo\", \"archivado\"],\n      estado_detalle: [\"inscrito\", \"en_progreso\", \"completado\", \"retirado\"],\n      estado_evaluacion: [\"pendiente\", \"aprobado\", \"reprobado\", \"en_revision\"],\n      estado_evento: [\"programado\", \"en_curso\", \"finalizado\", \"cancelado\"],\n      estado_iglesia: [\"activa\", \"inactiva\", \"fusionada\", \"cerrada\"],\n      estado_ministerio: [\"activo\", \"inactivo\", \"suspendido\"],\n      estado_modulo: [\"borrador\", \"publicado\", \"archivado\"],\n      estado_proceso: [\"programado\", \"en_curso\", \"finalizado\", \"cancelado\"],\n      estado_sede: [\"activa\", \"inactiva\", \"en_construccion\"],\n      estado_tarea: [\"pendiente\", \"en_progreso\", \"completada\", \"cancelada\"],\n      prioridad_tarea: [\"baja\", \"media\", \"alta\", \"urgente\"],\n      tipo_notificacion: [\"informacion\", \"alerta\", \"tarea\", \"evento\", \"curso\"],\n      tipo_recurso: [\"archivo\", \"enlace\"],\n    },\n  },\n} as const\n"}
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.4"
+  }
+  public: {
+    Tables: {
+      ciudad: {
+        Row: {
+          creado_en: string
+          id_ciudad: number
+          id_departamento: number
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          id_ciudad?: number
+          id_departamento: number
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          id_ciudad?: number
+          id_departamento?: number
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ciudad_id_departamento_fkey"
+            columns: ["id_departamento"]
+            isOneToOne: false
+            referencedRelation: "departamento"
+            referencedColumns: ["id_departamento"]
+          },
+        ]
+      }
+      curso: {
+        Row: {
+          creado_en: string
+          descripcion: string | null
+          duracion_horas: number | null
+          estado: Database["public"]["Enums"]["estado_curso"]
+          id_curso: number
+          id_ministerio: number
+          id_usuario_creador: number
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          descripcion?: string | null
+          duracion_horas?: number | null
+          estado?: Database["public"]["Enums"]["estado_curso"]
+          id_curso?: number
+          id_ministerio: number
+          id_usuario_creador: number
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          descripcion?: string | null
+          duracion_horas?: number | null
+          estado?: Database["public"]["Enums"]["estado_curso"]
+          id_curso?: number
+          id_ministerio?: number
+          id_usuario_creador?: number
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curso_id_ministerio_fkey"
+            columns: ["id_ministerio"]
+            isOneToOne: false
+            referencedRelation: "ministerio"
+            referencedColumns: ["id_ministerio"]
+          },
+          {
+            foreignKeyName: "curso_id_usuario_creador_fkey"
+            columns: ["id_usuario_creador"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      departamento: {
+        Row: {
+          creado_en: string
+          id_departamento: number
+          id_pais: number
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          id_departamento?: number
+          id_pais: number
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          id_departamento?: number
+          id_pais?: number
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departamento_id_pais_fkey"
+            columns: ["id_pais"]
+            isOneToOne: false
+            referencedRelation: "pais"
+            referencedColumns: ["id_pais"]
+          },
+        ]
+      }
+      detalle_proceso_curso: {
+        Row: {
+          creado_en: string
+          estado: Database["public"]["Enums"]["estado_detalle"]
+          fecha_inscripcion: string
+          id_detalle_proceso_curso: number
+          id_proceso_asignado_curso: number
+          id_usuario: number
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_detalle"]
+          fecha_inscripcion?: string
+          id_detalle_proceso_curso?: number
+          id_proceso_asignado_curso: number
+          id_usuario: number
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_detalle"]
+          fecha_inscripcion?: string
+          id_detalle_proceso_curso?: number
+          id_proceso_asignado_curso?: number
+          id_usuario?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "detalle_proceso_curso_id_proceso_asignado_curso_fkey"
+            columns: ["id_proceso_asignado_curso"]
+            isOneToOne: false
+            referencedRelation: "proceso_asignado_curso"
+            referencedColumns: ["id_proceso_asignado_curso"]
+          },
+          {
+            foreignKeyName: "detalle_proceso_curso_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      evaluacion: {
+        Row: {
+          calificacion: number | null
+          creado_en: string
+          estado: Database["public"]["Enums"]["estado_evaluacion"]
+          fecha_evaluacion: string | null
+          id_evaluacion: number
+          id_modulo: number
+          id_usuario: number
+          observaciones: string | null
+          updated_at: string
+        }
+        Insert: {
+          calificacion?: number | null
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_evaluacion"]
+          fecha_evaluacion?: string | null
+          id_evaluacion?: number
+          id_modulo: number
+          id_usuario: number
+          observaciones?: string | null
+          updated_at?: string
+        }
+        Update: {
+          calificacion?: number | null
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_evaluacion"]
+          fecha_evaluacion?: string | null
+          id_evaluacion?: number
+          id_modulo?: number
+          id_usuario?: number
+          observaciones?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluacion_id_modulo_fkey"
+            columns: ["id_modulo"]
+            isOneToOne: false
+            referencedRelation: "modulo"
+            referencedColumns: ["id_modulo"]
+          },
+          {
+            foreignKeyName: "evaluacion_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      evento: {
+        Row: {
+          creado_en: string
+          descripcion: string | null
+          estado: Database["public"]["Enums"]["estado_evento"]
+          fecha_fin: string
+          fecha_inicio: string
+          id_evento: number
+          id_iglesia: number
+          id_ministerio: number | null
+          id_sede: number | null
+          id_tipo_evento: number
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["estado_evento"]
+          fecha_fin: string
+          fecha_inicio: string
+          id_evento?: number
+          id_iglesia: number
+          id_ministerio?: number | null
+          id_sede?: number | null
+          id_tipo_evento: number
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["estado_evento"]
+          fecha_fin?: string
+          fecha_inicio?: string
+          id_evento?: number
+          id_iglesia?: number
+          id_ministerio?: number | null
+          id_sede?: number | null
+          id_tipo_evento?: number
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evento_id_iglesia_fkey"
+            columns: ["id_iglesia"]
+            isOneToOne: false
+            referencedRelation: "iglesia"
+            referencedColumns: ["id_iglesia"]
+          },
+          {
+            foreignKeyName: "evento_id_ministerio_fkey"
+            columns: ["id_ministerio"]
+            isOneToOne: false
+            referencedRelation: "ministerio"
+            referencedColumns: ["id_ministerio"]
+          },
+          {
+            foreignKeyName: "evento_id_sede_fkey"
+            columns: ["id_sede"]
+            isOneToOne: false
+            referencedRelation: "sede"
+            referencedColumns: ["id_sede"]
+          },
+          {
+            foreignKeyName: "evento_id_tipo_evento_fkey"
+            columns: ["id_tipo_evento"]
+            isOneToOne: false
+            referencedRelation: "tipo_evento"
+            referencedColumns: ["id_tipo_evento"]
+          },
+        ]
+      }
+      iglesia: {
+        Row: {
+          creado_en: string
+          estado: Database["public"]["Enums"]["estado_iglesia"]
+          fecha_fundacion: string | null
+          id_ciudad: number
+          id_iglesia: number
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_iglesia"]
+          fecha_fundacion?: string | null
+          id_ciudad: number
+          id_iglesia?: number
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_iglesia"]
+          fecha_fundacion?: string | null
+          id_ciudad?: number
+          id_iglesia?: number
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iglesia_id_ciudad_fkey"
+            columns: ["id_ciudad"]
+            isOneToOne: false
+            referencedRelation: "ciudad"
+            referencedColumns: ["id_ciudad"]
+          },
+        ]
+      }
+      iglesia_pastor: {
+        Row: {
+          creado_en: string
+          es_principal: boolean
+          fecha_fin: string | null
+          fecha_inicio: string
+          id_iglesia: number
+          id_iglesia_pastor: number
+          id_pastor: number
+          observaciones: string | null
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          es_principal?: boolean
+          fecha_fin?: string | null
+          fecha_inicio: string
+          id_iglesia: number
+          id_iglesia_pastor?: number
+          id_pastor: number
+          observaciones?: string | null
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          es_principal?: boolean
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id_iglesia?: number
+          id_iglesia_pastor?: number
+          id_pastor?: number
+          observaciones?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iglesia_pastor_id_iglesia_fkey"
+            columns: ["id_iglesia"]
+            isOneToOne: false
+            referencedRelation: "iglesia"
+            referencedColumns: ["id_iglesia"]
+          },
+          {
+            foreignKeyName: "iglesia_pastor_id_pastor_fkey"
+            columns: ["id_pastor"]
+            isOneToOne: false
+            referencedRelation: "pastor"
+            referencedColumns: ["id_pastor"]
+          },
+        ]
+      }
+      miembro_ministerio: {
+        Row: {
+          creado_en: string
+          fecha_ingreso: string
+          fecha_salida: string | null
+          id_miembro_ministerio: number
+          id_ministerio: number
+          id_usuario: number
+          rol_en_ministerio: string | null
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          fecha_ingreso?: string
+          fecha_salida?: string | null
+          id_miembro_ministerio?: number
+          id_ministerio: number
+          id_usuario: number
+          rol_en_ministerio?: string | null
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          fecha_ingreso?: string
+          fecha_salida?: string | null
+          id_miembro_ministerio?: number
+          id_ministerio?: number
+          id_usuario?: number
+          rol_en_ministerio?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "miembro_ministerio_id_ministerio_fkey"
+            columns: ["id_ministerio"]
+            isOneToOne: false
+            referencedRelation: "ministerio"
+            referencedColumns: ["id_ministerio"]
+          },
+          {
+            foreignKeyName: "miembro_ministerio_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      ministerio: {
+        Row: {
+          creado_en: string
+          descripcion: string | null
+          estado: Database["public"]["Enums"]["estado_ministerio"]
+          id_ministerio: number
+          id_sede: number
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["estado_ministerio"]
+          id_ministerio?: number
+          id_sede: number
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["estado_ministerio"]
+          id_ministerio?: number
+          id_sede?: number
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ministerio_id_sede_fkey"
+            columns: ["id_sede"]
+            isOneToOne: false
+            referencedRelation: "sede"
+            referencedColumns: ["id_sede"]
+          },
+        ]
+      }
+      modulo: {
+        Row: {
+          creado_en: string
+          descripcion: string | null
+          estado: Database["public"]["Enums"]["estado_modulo"]
+          id_curso: number
+          id_modulo: number
+          orden: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["estado_modulo"]
+          id_curso: number
+          id_modulo?: number
+          orden?: number
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["estado_modulo"]
+          id_curso?: number
+          id_modulo?: number
+          orden?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modulo_id_curso_fkey"
+            columns: ["id_curso"]
+            isOneToOne: false
+            referencedRelation: "curso"
+            referencedColumns: ["id_curso"]
+          },
+        ]
+      }
+      notificacion: {
+        Row: {
+          creado_en: string
+          fecha_lectura: string | null
+          id_notificacion: number
+          id_usuario: number
+          leida: boolean
+          mensaje: string
+          tipo: Database["public"]["Enums"]["tipo_notificacion"]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          fecha_lectura?: string | null
+          id_notificacion?: number
+          id_usuario: number
+          leida?: boolean
+          mensaje: string
+          tipo?: Database["public"]["Enums"]["tipo_notificacion"]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          fecha_lectura?: string | null
+          id_notificacion?: number
+          id_usuario?: number
+          leida?: boolean
+          mensaje?: string
+          tipo?: Database["public"]["Enums"]["tipo_notificacion"]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacion_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      pais: {
+        Row: {
+          creado_en: string
+          id_pais: number
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          id_pais?: number
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          id_pais?: number
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pastor: {
+        Row: {
+          apellidos: string
+          correo: string
+          creado_en: string
+          id_pastor: number
+          id_usuario: number | null
+          nombres: string
+          telefono: string | null
+          updated_at: string
+        }
+        Insert: {
+          apellidos: string
+          correo: string
+          creado_en?: string
+          id_pastor?: number
+          id_usuario?: number | null
+          nombres: string
+          telefono?: string | null
+          updated_at?: string
+        }
+        Update: {
+          apellidos?: string
+          correo?: string
+          creado_en?: string
+          id_pastor?: number
+          id_usuario?: number | null
+          nombres?: string
+          telefono?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pastor_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: true
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      proceso_asignado_curso: {
+        Row: {
+          creado_en: string
+          estado: Database["public"]["Enums"]["estado_proceso"]
+          fecha_fin: string
+          fecha_inicio: string
+          id_curso: number
+          id_iglesia: number
+          id_proceso_asignado_curso: number
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_proceso"]
+          fecha_fin: string
+          fecha_inicio: string
+          id_curso: number
+          id_iglesia: number
+          id_proceso_asignado_curso?: number
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_proceso"]
+          fecha_fin?: string
+          fecha_inicio?: string
+          id_curso?: number
+          id_iglesia?: number
+          id_proceso_asignado_curso?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proceso_asignado_curso_id_curso_fkey"
+            columns: ["id_curso"]
+            isOneToOne: false
+            referencedRelation: "curso"
+            referencedColumns: ["id_curso"]
+          },
+          {
+            foreignKeyName: "proceso_asignado_curso_id_iglesia_fkey"
+            columns: ["id_iglesia"]
+            isOneToOne: false
+            referencedRelation: "iglesia"
+            referencedColumns: ["id_iglesia"]
+          },
+        ]
+      }
+      recurso: {
+        Row: {
+          creado_en: string
+          id_modulo: number
+          id_recurso: number
+          nombre: string
+          tipo: Database["public"]["Enums"]["tipo_recurso"]
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          creado_en?: string
+          id_modulo: number
+          id_recurso?: number
+          nombre: string
+          tipo?: Database["public"]["Enums"]["tipo_recurso"]
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          creado_en?: string
+          id_modulo?: number
+          id_recurso?: number
+          nombre?: string
+          tipo?: Database["public"]["Enums"]["tipo_recurso"]
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurso_id_modulo_fkey"
+            columns: ["id_modulo"]
+            isOneToOne: false
+            referencedRelation: "modulo"
+            referencedColumns: ["id_modulo"]
+          },
+        ]
+      }
+      rol: {
+        Row: {
+          creado_en: string
+          descripcion: string | null
+          id_rol: number
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          descripcion?: string | null
+          id_rol?: number
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          descripcion?: string | null
+          id_rol?: number
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sede: {
+        Row: {
+          creado_en: string
+          direccion: string | null
+          estado: Database["public"]["Enums"]["estado_sede"]
+          id_ciudad: number
+          id_iglesia: number
+          id_sede: number
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          direccion?: string | null
+          estado?: Database["public"]["Enums"]["estado_sede"]
+          id_ciudad: number
+          id_iglesia: number
+          id_sede?: number
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          direccion?: string | null
+          estado?: Database["public"]["Enums"]["estado_sede"]
+          id_ciudad?: number
+          id_iglesia?: number
+          id_sede?: number
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sede_id_ciudad_fkey"
+            columns: ["id_ciudad"]
+            isOneToOne: false
+            referencedRelation: "ciudad"
+            referencedColumns: ["id_ciudad"]
+          },
+          {
+            foreignKeyName: "sede_id_iglesia_fkey"
+            columns: ["id_iglesia"]
+            isOneToOne: false
+            referencedRelation: "iglesia"
+            referencedColumns: ["id_iglesia"]
+          },
+        ]
+      }
+      sede_pastor: {
+        Row: {
+          creado_en: string
+          es_principal: boolean
+          fecha_fin: string | null
+          fecha_inicio: string
+          id_pastor: number
+          id_sede: number
+          id_sede_pastor: number
+          observaciones: string | null
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          es_principal?: boolean
+          fecha_fin?: string | null
+          fecha_inicio: string
+          id_pastor: number
+          id_sede: number
+          id_sede_pastor?: number
+          observaciones?: string | null
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          es_principal?: boolean
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id_pastor?: number
+          id_sede?: number
+          id_sede_pastor?: number
+          observaciones?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sede_pastor_id_pastor_fkey"
+            columns: ["id_pastor"]
+            isOneToOne: false
+            referencedRelation: "pastor"
+            referencedColumns: ["id_pastor"]
+          },
+          {
+            foreignKeyName: "sede_pastor_id_sede_fkey"
+            columns: ["id_sede"]
+            isOneToOne: false
+            referencedRelation: "sede"
+            referencedColumns: ["id_sede"]
+          },
+        ]
+      }
+      tarea: {
+        Row: {
+          creado_en: string
+          descripcion: string | null
+          estado: Database["public"]["Enums"]["estado_tarea"]
+          fecha_limite: string | null
+          id_evento: number | null
+          id_tarea: number
+          id_usuario_creador: number
+          prioridad: Database["public"]["Enums"]["prioridad_tarea"]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["estado_tarea"]
+          fecha_limite?: string | null
+          id_evento?: number | null
+          id_tarea?: number
+          id_usuario_creador: number
+          prioridad?: Database["public"]["Enums"]["prioridad_tarea"]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["estado_tarea"]
+          fecha_limite?: string | null
+          id_evento?: number | null
+          id_tarea?: number
+          id_usuario_creador?: number
+          prioridad?: Database["public"]["Enums"]["prioridad_tarea"]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarea_id_evento_fkey"
+            columns: ["id_evento"]
+            isOneToOne: false
+            referencedRelation: "evento"
+            referencedColumns: ["id_evento"]
+          },
+          {
+            foreignKeyName: "tarea_id_usuario_creador_fkey"
+            columns: ["id_usuario_creador"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      tarea_asignada: {
+        Row: {
+          creado_en: string
+          fecha_asignacion: string
+          fecha_completado: string | null
+          id_tarea: number
+          id_tarea_asignada: number
+          id_usuario: number
+          observaciones: string | null
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          fecha_asignacion?: string
+          fecha_completado?: string | null
+          id_tarea: number
+          id_tarea_asignada?: number
+          id_usuario: number
+          observaciones?: string | null
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          fecha_asignacion?: string
+          fecha_completado?: string | null
+          id_tarea?: number
+          id_tarea_asignada?: number
+          id_usuario?: number
+          observaciones?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarea_asignada_id_tarea_fkey"
+            columns: ["id_tarea"]
+            isOneToOne: false
+            referencedRelation: "tarea"
+            referencedColumns: ["id_tarea"]
+          },
+          {
+            foreignKeyName: "tarea_asignada_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      tipo_evento: {
+        Row: {
+          creado_en: string
+          descripcion: string | null
+          id_tipo_evento: number
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          descripcion?: string | null
+          id_tipo_evento?: number
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          descripcion?: string | null
+          id_tipo_evento?: number
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      usuario: {
+        Row: {
+          activo: boolean
+          apellidos: string
+          auth_user_id: string | null
+          contrasena_hash: string
+          correo: string
+          creado_en: string
+          id_usuario: number
+          nombres: string
+          telefono: string | null
+          ultimo_acceso: string | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          apellidos: string
+          auth_user_id?: string | null
+          contrasena_hash: string
+          correo: string
+          creado_en?: string
+          id_usuario?: number
+          nombres: string
+          telefono?: string | null
+          ultimo_acceso?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          apellidos?: string
+          auth_user_id?: string | null
+          contrasena_hash?: string
+          correo?: string
+          creado_en?: string
+          id_usuario?: number
+          nombres?: string
+          telefono?: string | null
+          ultimo_acceso?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      usuario_rol: {
+        Row: {
+          creado_en: string
+          fecha_fin: string | null
+          fecha_inicio: string
+          id_iglesia: number
+          id_rol: number
+          id_sede: number | null
+          id_usuario: number
+          id_usuario_rol: number
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id_iglesia: number
+          id_rol: number
+          id_sede?: number | null
+          id_usuario: number
+          id_usuario_rol?: number
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id_iglesia?: number
+          id_rol?: number
+          id_sede?: number | null
+          id_usuario?: number
+          id_usuario_rol?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_rol_id_iglesia_fkey"
+            columns: ["id_iglesia"]
+            isOneToOne: false
+            referencedRelation: "iglesia"
+            referencedColumns: ["id_iglesia"]
+          },
+          {
+            foreignKeyName: "usuario_rol_id_rol_fkey"
+            columns: ["id_rol"]
+            isOneToOne: false
+            referencedRelation: "rol"
+            referencedColumns: ["id_rol"]
+          },
+          {
+            foreignKeyName: "usuario_rol_id_sede_fkey"
+            columns: ["id_sede"]
+            isOneToOne: false
+            referencedRelation: "sede"
+            referencedColumns: ["id_sede"]
+          },
+          {
+            foreignKeyName: "usuario_rol_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      estado_curso: "borrador" | "activo" | "inactivo" | "archivado"
+      estado_detalle: "inscrito" | "en_progreso" | "completado" | "retirado"
+      estado_evaluacion: "pendiente" | "aprobado" | "reprobado" | "en_revision"
+      estado_evento: "programado" | "en_curso" | "finalizado" | "cancelado"
+      estado_iglesia: "activa" | "inactiva" | "fusionada" | "cerrada"
+      estado_ministerio: "activo" | "inactivo" | "suspendido"
+      estado_modulo: "borrador" | "publicado" | "archivado"
+      estado_proceso: "programado" | "en_curso" | "finalizado" | "cancelado"
+      estado_sede: "activa" | "inactiva" | "en_construccion"
+      estado_tarea: "pendiente" | "en_progreso" | "completada" | "cancelada"
+      prioridad_tarea: "baja" | "media" | "alta" | "urgente"
+      tipo_notificacion: "informacion" | "alerta" | "tarea" | "evento" | "curso"
+      tipo_recurso: "archivo" | "enlace"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      estado_curso: ["borrador", "activo", "inactivo", "archivado"],
+      estado_detalle: ["inscrito", "en_progreso", "completado", "retirado"],
+      estado_evaluacion: ["pendiente", "aprobado", "reprobado", "en_revision"],
+      estado_evento: ["programado", "en_curso", "finalizado", "cancelado"],
+      estado_iglesia: ["activa", "inactiva", "fusionada", "cerrada"],
+      estado_ministerio: ["activo", "inactivo", "suspendido"],
+      estado_modulo: ["borrador", "publicado", "archivado"],
+      estado_proceso: ["programado", "en_curso", "finalizado", "cancelado"],
+      estado_sede: ["activa", "inactiva", "en_construccion"],
+      estado_tarea: ["pendiente", "en_progreso", "completada", "cancelada"],
+      prioridad_tarea: ["baja", "media", "alta", "urgente"],
+      tipo_notificacion: ["informacion", "alerta", "tarea", "evento", "curso"],
+      tipo_recurso: ["archivo", "enlace"],
+    },
+  },
+} as const

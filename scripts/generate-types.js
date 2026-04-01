@@ -28,7 +28,16 @@ async function generateTypes() {
       throw new Error(`Type generation failed: ${response.status} ${error}`);
     }
     
-    const types = await response.text();
+    const responseText = await response.text();
+    
+    // Try to parse as JSON first (API may return {types: "..."})
+    let types = responseText;
+    try {
+      const json = JSON.parse(responseText);
+      if (json.types) types = json.types;
+    } catch (e) {
+      // Not JSON, use as-is
+    }
     
     // Write to file
     const fs = await import('fs');
