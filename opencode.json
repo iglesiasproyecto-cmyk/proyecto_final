@@ -1,0 +1,28 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "supabase": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=heibyjbvfiokmduwwawm"
+      ],
+      "environment": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_fd926362e8d7400e10f11d75f5f24cf55ee69b1a"
+      },
+      "enabled": true
+    },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    },
+    "aceternityui": {
+      "type": "local",
+      "command": ["npx", "aceternityui-mcp"],
+      "enabled": true
+    }
+  }
+}
