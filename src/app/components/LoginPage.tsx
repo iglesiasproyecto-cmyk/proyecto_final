@@ -1,63 +1,60 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router";
-import { useApp } from "../store/AppContext";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Card } from "./ui/card";
-import { motion } from "motion/react";
-import { SEILogo } from "./SEILogo";
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router'
+import { supabase } from '@/lib/supabaseClient'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Card } from './ui/card'
+import { motion } from 'motion/react'
+import { SEILogo } from './SEILogo'
 import {
   Church, Eye, EyeOff, LogIn, Shield, Building2, Crown,
-  User, ChevronRight, Sparkles
-} from "lucide-react";
+  User, ChevronRight, Sparkles,
+} from 'lucide-react'
 
 const testCredentials = [
-  { email: "super@email.com", label: "Super Admin", desc: "Gestión global", icon: Shield, color: "from-red-500 to-orange-500" },
-  { email: "admin@email.com", label: "Admin Iglesia", desc: "Administración", icon: Building2, color: "from-indigo-500 to-blue-500" },
-  { email: "lider@email.com", label: "Líder", desc: "Ministerio", icon: Crown, color: "from-amber-500 to-yellow-500" },
-  { email: "servidor@email.com", label: "Servidor", desc: "Miembro activo", icon: User, color: "from-cyan-500 to-sky-500" },
-];
+  { email: 'admin@iglesiabd.com', label: 'Admin', desc: 'Gestión global', icon: Shield, color: 'from-red-500 to-orange-500' },
+]
 
 export function LoginPage() {
-  const { login } = useApp();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("password");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+    e.preventDefault()
+    setError('')
     if (!email || !password) {
-      setError("Por favor completa todos los campos.");
-      return;
+      setError('Por favor completa todos los campos.')
+      return
     }
-    setIsLoading(true);
-    // Simulate brief loading
-    await new Promise((r) => setTimeout(r, 400));
-    const success = login(email, password);
-    if (success) {
-      navigate("/app");
+    setIsLoading(true)
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    if (authError) {
+      setError('Credenciales incorrectas.')
+      setIsLoading(false)
     } else {
-      setError("Credenciales incorrectas. Usa una de las cuentas de prueba.");
-      setIsLoading(false);
+      navigate('/app')
     }
-  };
+  }
 
   const handleQuickLogin = async (credEmail: string) => {
-    setEmail(credEmail);
-    setError("");
-    setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
-    const success = login(credEmail, "password");
-    if (success) {
-      navigate("/app");
+    setEmail(credEmail)
+    setError('')
+    setIsLoading(true)
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: credEmail,
+      password: 'Password123!',
+    })
+    if (authError) {
+      setError('Cuenta demo no encontrada. Créala en Supabase Dashboard > Auth > Users.')
+      setIsLoading(false)
     } else {
-      setIsLoading(false);
+      navigate('/app')
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex bg-[#0c2340] overflow-hidden">
