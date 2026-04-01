@@ -79,7 +79,7 @@ export async function getIglesiaPastores(): Promise<IglesiaPastor[]> {
 
 export async function getSedes(idIglesia?: number): Promise<Sede[]> {
   let q = supabase.from('sede').select('*').order('nombre')
-  if (idIglesia) q = q.eq('id_iglesia', idIglesia)
+  if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
   const { data, error } = await q
   if (error) throw error
   return data.map(mapSede)
