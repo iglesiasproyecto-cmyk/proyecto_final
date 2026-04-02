@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { useApp } from "../store/AppContext";
+import { useState } from "react";
+import { useUsuarios, useRoles } from "@/hooks/useUsuarios";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -10,26 +10,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, Phone } from "lucide-react";
 
 export function UsuariosPage() {
-  const { usuarios, usuarioRoles, roles, iglesias, sedes, miembrosMinisterio, ministerios, toggleUsuarioActivo } = useApp();
+  const { data: usuarios = [], isLoading } = useUsuarios();
+  const { data: roles = [] } = useRoles();
   const [search, setSearch] = useState("");
   const [filterEstado, setFilterEstado] = useState("all");
   const [filterRol, setFilterRol] = useState("all");
-  const [detail, setDetail] = useState<string | null>(null);
+  const [detail, setDetail] = useState<number | null>(null);
 
-  const enriched = useMemo(() => usuarios.map(u => {
-    const userRoles = usuarioRoles.filter(ur => ur.idUsuario === u.idUsuario && !ur.fechaFin);
-    const roleNames = userRoles.map(ur => {
-      const r = roles.find(rl => rl.idRol === ur.idRol);
-      const ig = iglesias.find(i => i.idIglesia === ur.idIglesia);
-      return { rolNombre: r?.nombre || "—", iglesiaNombre: ig?.nombre || "—" };
-    });
-    const memberships = miembrosMinisterio.filter(mm => mm.idUsuario === u.idUsuario && !mm.fechaSalida);
-    const minNames = memberships.map(mm => {
-      const m = ministerios.find(x => x.idMinisterio === mm.idMinisterio);
-      return { nombre: m?.nombre || "—", rol: mm.rolEnMinisterio || "—" };
-    });
-    return { ...u, roleNames, minNames, memberships };
-  }), [usuarios, usuarioRoles, roles, iglesias, miembrosMinisterio, ministerios]);
+  // Stub mutations — Phase 3
+  const toggleUsuarioActivo = (_id: number) => { /* Phase 3 */ };
+
+  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+
+  // Role/ministry enrichment deferred to Phase 3 (requires per-user queries)
+  const enriched = usuarios.map(u => ({
+    ...u,
+    roleNames: [] as { rolNombre: string; iglesiaNombre: string }[],
+    minNames: [] as { nombre: string; rol: string }[],
+  }));
 
   const filtered = enriched.filter(u => {
     if (search) {
