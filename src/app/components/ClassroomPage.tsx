@@ -1,32 +1,31 @@
-import React, { useState } from "react";
-import { useApp } from "../store/AppContext";
+import { useState } from "react";
+import { useCursos } from "@/hooks/useCursos";
+import { useMinisterios } from "@/hooks/useMinisterios";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
-import { BookOpen, Plus, ChevronRight, ChevronDown, FileText, Link as LinkIcon, Download, ExternalLink, GraduationCap, Layers, ArrowLeft } from "lucide-react";
+import { Plus, ChevronRight, ChevronDown, FileText, Link as LinkIcon, Download, ExternalLink, GraduationCap, Layers, ArrowLeft } from "lucide-react";
 
 export function ClassroomPage() {
-  const { cursos, ministerios, user } = useApp();
-  const [selectedMinId, setSelectedMinId] = useState(user?.idMinisterio || "min1");
-  const [selectedCursoId, setSelectedCursoId] = useState<string | null>(null);
-  const [selectedModuloId, setSelectedModuloId] = useState<string | null>(null);
-  const [expandedCursos, setExpandedCursos] = useState<Set<string>>(new Set());
+  const { data: ministerios = [] } = useMinisterios();
+  const [selectedMinId, setSelectedMinId] = useState<number | null>(null);
+  const actualMinId = selectedMinId ?? ministerios[0]?.idMinisterio ?? 0;
+  const { data: cursos = [], isLoading } = useCursos(actualMinId || undefined);
+  const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null);
+  const [selectedModuloId, setSelectedModuloId] = useState<number | null>(null);
+  const [expandedCursos, setExpandedCursos] = useState<Set<number>>(new Set());
   const [showCreateCurso, setShowCreateCurso] = useState(false);
   const [showCreateModulo, setShowCreateModulo] = useState(false);
 
-  if (!user) return null;
-  const role = user.rol;
-  const canManage = role === "lider";
-  const isMinLocked = role === "lider" || role === "servidor";
+  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
-  const minCursos = cursos.filter((c) => c.idMinisterio === selectedMinId);
-  const selectedCurso = selectedCursoId ? minCursos.find((c) => c.idCurso === selectedCursoId) : null;
+  const selectedCurso = selectedCursoId ? cursos.find((c) => c.idCurso === selectedCursoId) : null;
   const selectedModulo = selectedModuloId && selectedCurso ? selectedCurso.modulos?.find((m) => m.idModulo === selectedModuloId) : null;
-  const min = ministerios.find((m) => m.idMinisterio === selectedMinId);
+  const min = ministerios.find((m) => m.idMinisterio === actualMinId);
 
-  const toggleCurso = (id: string) => {
+  const toggleCurso = (id: number) => {
     const next = new Set(expandedCursos);
     if (next.has(id)) next.delete(id); else next.add(id);
     setExpandedCursos(next);
@@ -64,25 +63,29 @@ export function ClassroomPage() {
           <p className="text-muted-foreground text-sm">{min ? `${min.nombre} — Cursos y módulos de capacitación` : "Selecciona un ministerio"}</p>
         </div>
         <div className="flex gap-2">
-          {!isMinLocked && (
-            <select value={selectedMinId} onChange={(e) => { setSelectedMinId(e.target.value); setSelectedCursoId(null); }} className="border rounded-lg px-3 py-2 text-sm bg-card">
+          {ministerios.length > 0 && (
+            <select
+              value={actualMinId}
+              onChange={(e) => { setSelectedMinId(Number(e.target.value)); setSelectedCursoId(null); }}
+              className="border rounded-lg px-3 py-2 text-sm bg-card"
+            >
               {ministerios.filter((m) => m.estado === "activo").map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
             </select>
           )}
-          {canManage && <Button onClick={() => setShowCreateCurso(true)}><Plus className="w-4 h-4 mr-2" /> Nuevo Curso</Button>}
+          <Button onClick={() => setShowCreateCurso(true)}><Plus className="w-4 h-4 mr-2" /> Nuevo Curso</Button>
         </div>
       </div>
 
-      {minCursos.length === 0 ? (
+      {cursos.length === 0 ? (
         <Card className="p-12 text-center">
           <GraduationCap className="w-16 h-16 mx-auto text-muted-foreground/20 mb-4" />
           <h3 className="text-muted-foreground mb-2">Aula vacía</h3>
           <p className="text-sm text-muted-foreground">Aún no hay cursos de formación en este ministerio.</p>
-          {canManage && <Button className="mt-4" onClick={() => setShowCreateCurso(true)}><Plus className="w-4 h-4 mr-2" /> Crear primer curso</Button>}
+          <Button className="mt-4" onClick={() => setShowCreateCurso(true)}><Plus className="w-4 h-4 mr-2" /> Crear primer curso</Button>
         </Card>
       ) : (
         <div className="space-y-3">
-          {minCursos.map((curso, idx) => {
+          {cursos.map((curso, idx) => {
             const isExpanded = expandedCursos.has(curso.idCurso);
             return (
               <Card key={curso.idCurso} className="overflow-hidden">
@@ -113,11 +116,9 @@ export function ClassroomPage() {
                         <ChevronRight className="w-4 h-4 text-muted-foreground" />
                       </button>
                     ))}
-                    {canManage && (
-                      <button onClick={() => { setSelectedCursoId(curso.idCurso); setShowCreateModulo(true); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-primary hover:bg-primary/5 transition-colors">
-                        <Plus className="w-4 h-4" /><span className="text-sm">Agregar módulo</span>
-                      </button>
-                    )}
+                    <button onClick={() => { setSelectedCursoId(curso.idCurso); setShowCreateModulo(true); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-primary hover:bg-primary/5 transition-colors">
+                      <Plus className="w-4 h-4" /><span className="text-sm">Agregar módulo</span>
+                    </button>
                   </div>
                 )}
               </Card>
