@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useApp } from "../store/AppContext";
+import { useIglesias } from "@/hooks/useIglesias";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
-import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, Camera, CheckCircle2, Calendar } from "lucide-react";
+import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -23,14 +24,18 @@ const roleGradients: Record<string, string> = {
 };
 
 export function ProfilePage() {
-  const { user, iglesias, setActiveChurch } = useApp();
+  const { usuarioActual, logout } = useApp();
+  const { data: iglesias = [] } = useIglesias();
   const [showPassword, setShowPassword] = useState(false);
+  const [activeChurchId, setActiveChurchId] = useState<number | null>(null);
 
-  if (!user) return null;
-  const fullName = `${user.nombres} ${user.apellidos}`;
-  const initials = `${user.nombres.charAt(0)}${user.apellidos.charAt(0)}`;
-  const userIglesias = iglesias.filter((ig) => user.iglesiasIds.includes(ig.idIglesia) && ig.estado === "activa");
-  const gradient = roleGradients[user.rol] || "from-gray-500 to-gray-600";
+  if (!usuarioActual) return null;
+  const fullName = `${usuarioActual.nombres} ${usuarioActual.apellidos}`;
+  const initials = `${usuarioActual.nombres.charAt(0)}${usuarioActual.apellidos.charAt(0)}`;
+  // rol is not stored on Usuario; default to "servidor" for display
+  const rol = "servidor";
+  const gradient = roleGradients[rol] || "from-gray-500 to-gray-600";
+  const activeIglesias = iglesias.filter((ig) => ig.estado === "activa");
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -48,8 +53,8 @@ export function ProfilePage() {
               <div className="flex-1 pb-1">
                 <h1 className="text-xl">{fullName}</h1>
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="default" className="text-xs">{roleLabels[user.rol]}</Badge>
-                  <span className="text-xs text-muted-foreground">{user.correo}</span>
+                  <Badge variant="default" className="text-xs">{roleLabels[rol]}</Badge>
+                  <span className="text-xs text-muted-foreground">{usuarioActual.correo}</span>
                 </div>
               </div>
             </div>
@@ -74,29 +79,32 @@ export function ProfilePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-muted-foreground mb-1.5 block">Nombres</label>
-                  <Input defaultValue={user.nombres} className="bg-input-background h-11" />
+                  <Input defaultValue={usuarioActual.nombres} className="bg-input-background h-11" />
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground mb-1.5 block">Apellidos</label>
-                  <Input defaultValue={user.apellidos} className="bg-input-background h-11" />
+                  <Input defaultValue={usuarioActual.apellidos} className="bg-input-background h-11" />
                 </div>
               </div>
               <div>
                 <label className="text-sm text-muted-foreground mb-1.5 flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5" /> Correo electronico
                 </label>
-                <Input value={user.correo} disabled className="bg-muted h-11" />
+                <Input value={usuarioActual.correo} disabled className="bg-muted h-11" />
                 <p className="text-xs text-muted-foreground mt-1.5">El correo no puede modificarse</p>
               </div>
               <div>
                 <label className="text-sm text-muted-foreground mb-1.5 flex items-center gap-1.5">
                   <Phone className="w-3.5 h-3.5" /> Telefono
                 </label>
-                <Input defaultValue={user.telefono || ""} className="bg-input-background h-11" placeholder="+502 5555-0000" />
+                <Input defaultValue={usuarioActual.telefono || ""} className="bg-input-background h-11" placeholder="+502 5555-0000" />
               </div>
-              <div className="pt-2">
+              <div className="pt-2 flex gap-3">
                 <Button className="h-10">
                   <Save className="w-4 h-4 mr-2" /> Guardar Cambios
+                </Button>
+                <Button variant="outline" className="h-10" onClick={() => logout()}>
+                  Cerrar Sesion
                 </Button>
               </div>
             </Card>
@@ -145,8 +153,8 @@ export function ProfilePage() {
               </div>
               <p className="text-sm text-muted-foreground">Selecciona la iglesia activa para tu sesion actual.</p>
               <div className="space-y-2">
-                {userIglesias.map((ig) => {
-                  const isActive = ig.idIglesia === user.idIglesiaActiva;
+                {activeIglesias.map((ig) => {
+                  const isActive = ig.idIglesia === activeChurchId;
                   return (
                     <div
                       key={ig.idIglesia}
@@ -155,7 +163,7 @@ export function ProfilePage() {
                           ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
                           : "border-transparent bg-accent/30 hover:bg-accent/50 hover:border-border"
                       }`}
-                      onClick={() => setActiveChurch(ig.idIglesia)}
+                      onClick={() => setActiveChurchId(ig.idIglesia)}
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
                         isActive ? "bg-primary text-white shadow-md" : "bg-primary/10 text-primary"
@@ -174,6 +182,9 @@ export function ProfilePage() {
                     </div>
                   );
                 })}
+                {activeIglesias.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-6">No hay iglesias disponibles</p>
+                )}
               </div>
             </Card>
 
@@ -185,7 +196,7 @@ export function ProfilePage() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between p-3 rounded-xl bg-accent/30">
                   <span className="text-muted-foreground">Rol actual</span>
-                  <Badge variant="secondary">{roleLabels[user.rol]}</Badge>
+                  <Badge variant="secondary">{roleLabels[rol]}</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mt-3">
                   Los roles se asignan por iglesia y sede a traves de la tabla UsuarioRol.
