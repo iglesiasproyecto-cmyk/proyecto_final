@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useApp } from "../store/AppContext";
+import { useState } from "react";
+import { useEventos, useTiposEvento } from "@/hooks/useEventos";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -7,7 +7,7 @@ import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
-import { CalendarDays, Plus, MapPin, Clock, Globe, Users, Inbox } from "lucide-react";
+import { CalendarDays, Plus, MapPin, Clock, Globe, Users } from "lucide-react";
 
 const scopeConfig = {
   global: { label: "Global", color: "bg-indigo-100 text-indigo-700", icon: <Globe className="w-3.5 h-3.5" /> },
@@ -22,20 +22,11 @@ const estadoColors: Record<string, string> = {
 };
 
 export function EventsPage() {
-  const { eventos, user, ministerios, tiposEvento } = useApp();
+  const { data: eventos = [], isLoading } = useEventos();
+  const { data: tiposEvento = [] } = useTiposEvento();
   const [showCreate, setShowCreate] = useState(false);
 
-  if (!user) return null;
-  const role = user.rol;
-
-  let visibleEvents = eventos.filter((e) => e.idIglesia === user.idIglesiaActiva);
-  if (role !== "admin_iglesia") {
-    visibleEvents = visibleEvents.filter((e) => !e.idMinisterio || e.idMinisterio === user.idMinisterio);
-  }
-
-  const canCreate = role !== "servidor" && role !== "super_admin";
-  const showTabs = role === "admin_iglesia";
-  const pageTitle = role === "servidor" ? "Cronograma de Eventos" : role === "admin_iglesia" ? "Eventos de la Iglesia" : "Eventos";
+  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
   const formatDateTime = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -43,8 +34,8 @@ export function EventsPage() {
       " " + d.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
   };
 
-  const renderEventsList = (eventsToRender: typeof visibleEvents) => {
-    const grouped: Record<string, typeof visibleEvents> = {};
+  const renderEventsList = (eventsToRender: typeof eventos) => {
+    const grouped: Record<string, typeof eventos> = {};
     eventsToRender.forEach((e) => {
       const month = new Date(e.fechaInicio).toLocaleDateString("es", { month: "long", year: "numeric" });
       if (!grouped[month]) grouped[month] = [];
@@ -108,36 +99,28 @@ export function EventsPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1>{pageTitle}</h1>
-          <p className="text-muted-foreground text-sm">
-            {role === "servidor" ? "Eventos globales y de tu ministerio" : "Gestiona los eventos de la iglesia"}
-          </p>
+          <h1>Eventos de la Iglesia</h1>
+          <p className="text-muted-foreground text-sm">Gestiona los eventos de la iglesia</p>
         </div>
-        {canCreate && (
-          <Button onClick={() => setShowCreate(true)} className="shrink-0">
-            <Plus className="w-4 h-4 mr-2" /> Nuevo Evento
-          </Button>
-        )}
+        <Button onClick={() => setShowCreate(true)} className="shrink-0">
+          <Plus className="w-4 h-4 mr-2" /> Nuevo Evento
+        </Button>
       </motion.div>
 
-      {showTabs ? (
-        <Tabs defaultValue="todos">
-          <TabsList>
-            <TabsTrigger value="todos">Todos</TabsTrigger>
-            <TabsTrigger value="global">Globales</TabsTrigger>
-            <TabsTrigger value="ministerio">Ministeriales</TabsTrigger>
-          </TabsList>
-          {["todos", "global", "ministerio"].map((tab) => (
-            <TabsContent key={tab} value={tab}>
-              {renderEventsList(tab === "todos" ? visibleEvents : tab === "global" ? visibleEvents.filter((e) => !e.idMinisterio) : visibleEvents.filter((e) => !!e.idMinisterio))}
-            </TabsContent>
-          ))}
-        </Tabs>
-      ) : (
-        renderEventsList(visibleEvents)
-      )}
+      <Tabs defaultValue="todos">
+        <TabsList>
+          <TabsTrigger value="todos">Todos</TabsTrigger>
+          <TabsTrigger value="global">Globales</TabsTrigger>
+          <TabsTrigger value="ministerio">Ministeriales</TabsTrigger>
+        </TabsList>
+        {["todos", "global", "ministerio"].map((tab) => (
+          <TabsContent key={tab} value={tab}>
+            {renderEventsList(tab === "todos" ? eventos : tab === "global" ? eventos.filter((e) => !e.idMinisterio) : eventos.filter((e) => !!e.idMinisterio))}
+          </TabsContent>
+        ))}
+      </Tabs>
 
-      {visibleEvents.length === 0 && (
+      {eventos.length === 0 && (
         <Card className="p-16 text-center">
           <CalendarDays className="w-16 h-16 mx-auto text-muted-foreground/20 mb-4" />
           <h3 className="text-muted-foreground mb-1">Sin eventos programados</h3>
