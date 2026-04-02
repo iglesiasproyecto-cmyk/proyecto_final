@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useApp } from "../store/AppContext";
-import type { Iglesia } from "../store/AppContext";
+import { useState } from "react";
+import { useIglesias } from "@/hooks/useIglesias";
+import type { Iglesia } from "@/types/app.types";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { motion } from "motion/react";
-import { Building2, Plus, Search, MapPin, Mail, Phone, Power, PowerOff, Globe, Pencil, Save, X, Calendar } from "lucide-react";
+import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar } from "lucide-react";
 
 const estadoLabels: Record<string, string> = {
   activa: "Activa",
@@ -19,42 +19,24 @@ const estadoLabels: Record<string, string> = {
 interface IglesiaFormData {
   nombre: string;
   fechaFundacion: string;
-  idCiudad: string;
+  idCiudad: number; // Phase 3: populate from useCiudades()
 }
 
 export function ChurchesPage() {
-  const { iglesias, ciudades, departamentosGeo, paises, toggleIglesiaEstado, updateIglesia, createIglesia } = useApp();
+  const { data: iglesias = [], isLoading } = useIglesias();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "activa" | "inactiva">("all");
   const [showCreate, setShowCreate] = useState(false);
   const [editingIglesia, setEditingIglesia] = useState<Iglesia | null>(null);
-  const [form, setForm] = useState<IglesiaFormData>({ nombre: "", fechaFundacion: "", idCiudad: "" });
+  const [form, setForm] = useState<IglesiaFormData>({ nombre: "", fechaFundacion: "", idCiudad: 0 });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof IglesiaFormData, string>>>({});
 
-  useEffect(() => {
-    if (editingIglesia) {
-      setForm({
-        nombre: editingIglesia.nombre,
-        fechaFundacion: editingIglesia.fechaFundacion || "",
-        idCiudad: editingIglesia.idCiudad,
-      });
-      setFormErrors({});
-    }
-  }, [editingIglesia]);
+  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
-  useEffect(() => {
-    if (showCreate) {
-      setForm({ nombre: "", fechaFundacion: "", idCiudad: ciudades[0]?.idCiudad || "" });
-      setFormErrors({});
-    }
-  }, [showCreate, ciudades]);
-
-  const getCiudadInfo = (idCiudad: string) => {
-    const ciudad = ciudades.find((c) => c.idCiudad === idCiudad);
-    const depGeo = ciudad ? departamentosGeo.find((d) => d.idDepartamentoGeo === ciudad.idDepartamentoGeo) : null;
-    const pais = depGeo ? paises.find((p) => p.idPais === depGeo.idPais) : null;
-    return { ciudad, depGeo, pais };
-  };
+  // Stub mutations — Phase 3
+  const toggleIglesiaEstado = (_id: number) => { /* Phase 3 */ };
+  const updateIglesia = (_id: number, _data: Partial<Iglesia>) => { /* Phase 3 */ };
+  const createIglesia = (_data: Omit<Iglesia, "idIglesia">) => { /* Phase 3 */ };
 
   const updateField = (field: keyof IglesiaFormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -71,14 +53,9 @@ export function ChurchesPage() {
 
   const handleSaveEdit = () => {
     if (!editingIglesia || !validateForm()) return;
-    const { ciudad, depGeo, pais } = getCiudadInfo(form.idCiudad);
     updateIglesia(editingIglesia.idIglesia, {
       nombre: form.nombre.trim(),
       fechaFundacion: form.fechaFundacion || null,
-      idCiudad: form.idCiudad,
-      ciudadNombre: ciudad?.nombre,
-      departamentoGeoNombre: depGeo?.nombre,
-      paisNombre: pais?.nombre,
       actualizadoEn: new Date().toISOString(),
     });
     setEditingIglesia(null);
@@ -86,18 +63,14 @@ export function ChurchesPage() {
 
   const handleCreate = () => {
     if (!validateForm()) return;
-    const { ciudad, depGeo, pais } = getCiudadInfo(form.idCiudad);
     const now = new Date().toISOString();
     createIglesia({
       nombre: form.nombre.trim(),
       fechaFundacion: form.fechaFundacion || null,
       estado: "activa",
-      idCiudad: form.idCiudad,
+      idCiudad: Number(form.idCiudad),
       creadoEn: now,
       actualizadoEn: now,
-      ciudadNombre: ciudad?.nombre,
-      departamentoGeoNombre: depGeo?.nombre,
-      paisNombre: pais?.nombre,
     });
     setShowCreate(false);
   };
@@ -118,18 +91,6 @@ export function ChurchesPage() {
       <div>
         <label className="text-sm text-muted-foreground mb-1 block">Fecha de Fundación</label>
         <Input type="date" value={form.fechaFundacion} onChange={(e) => updateField("fechaFundacion", e.target.value)} className="bg-input-background" />
-      </div>
-      <div>
-        <label className="text-sm text-muted-foreground mb-1 block">Ciudad <span className="text-destructive">*</span></label>
-        <select value={form.idCiudad} onChange={(e) => updateField("idCiudad", e.target.value)} className={`w-full border rounded-lg px-3 py-2 text-sm bg-input-background ${formErrors.idCiudad ? "border-destructive" : ""}`}>
-          <option value="">Seleccionar ciudad...</option>
-          {ciudades.map((c) => {
-            const dep = departamentosGeo.find((d) => d.idDepartamentoGeo === c.idDepartamentoGeo);
-            const p = dep ? paises.find((pa) => pa.idPais === dep.idPais) : null;
-            return <option key={c.idCiudad} value={c.idCiudad}>{c.nombre}, {dep?.nombre}, {p?.nombre}</option>;
-          })}
-        </select>
-        {formErrors.idCiudad && <p className="text-destructive text-xs mt-1">{formErrors.idCiudad}</p>}
       </div>
     </div>
   );
