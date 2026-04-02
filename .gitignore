@@ -19,3 +19,6 @@ pnpm-debug.log*
 .vscode/
 .DS_Store
 Thumbs.db
+
+# git worktrees
+.worktrees/
