@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import { useApp } from "../store/AppContext";
+import { useState } from "react";
+import { useTareas } from "@/hooks/useEventos";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { motion } from "motion/react";
-import { ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar, Users, ChevronRight, Flag, Inbox } from "lucide-react";
+import { ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar, ChevronRight, Inbox } from "lucide-react";
 
 const statusConfig = {
   pendiente: { label: "Pendiente", color: "bg-amber-100 text-amber-700", headerBg: "from-amber-500 to-orange-500", icon: <AlertCircle className="w-4 h-4" /> },
@@ -23,55 +23,33 @@ const prioridadConfig: Record<string, { label: string; color: string; dot: strin
 };
 
 export function TasksPage() {
-  const { tareas, updateTareaEstado, ministerios, miembrosMinisterio, user } = useApp();
+  const { data: tareas = [], isLoading } = useTareas();
   const [showCreate, setShowCreate] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<number | null>(null);
 
-  if (!user) return null;
-  const role = user.rol;
+  // Stub mutations — Phase 3
+  const updateTareaEstado = (_id: number, _estado: string) => { /* Phase 3 */ };
 
-  let visibleTasks = tareas;
-  let canCreate = false;
-  let pageTitle = "Tareas";
-  let pageSubtitle = "Gestion de tareas operativas";
+  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
-  if (role === "lider") {
-    visibleTasks = tareas.filter((t) => t.idMinisterio === user.idMinisterio);
-    canCreate = true;
-    pageTitle = "Tareas del Ministerio";
-    pageSubtitle = `Gestiona las tareas de ${ministerios.find((m) => m.idMinisterio === user.idMinisterio)?.nombre || "tu ministerio"}`;
-  } else if (role === "servidor") {
-    visibleTasks = tareas.filter((t) => t.asignados?.some((a) => a.idUsuario === user.idUsuario));
-    pageTitle = "Mis Tareas";
-    pageSubtitle = "Tus tareas asignadas";
-  } else {
-    visibleTasks = [];
-  }
-
-  const task = selectedTask ? visibleTasks.find((t) => t.idTarea === selectedTask) : null;
-  const nextStatus = (current: string) => {
-    if (current === "pendiente") return "en_progreso" as const;
-    if (current === "en_progreso") return "completada" as const;
+  const task = selectedTask ? tareas.find((t) => t.idTarea === selectedTask) : null;
+  const nextStatus = (current: string): "en_progreso" | "completada" | null => {
+    if (current === "pendiente") return "en_progreso";
+    if (current === "en_progreso") return "completada";
     return null;
   };
-  const tasksByStatus = (status: string) => visibleTasks.filter((t) => t.estado === status);
-  const canUpdateStatus = (taskItem: typeof tareas[0]) => {
-    if (role === "servidor") return taskItem.asignados?.some((a) => a.idUsuario === user.idUsuario) ?? false;
-    return role === "lider";
-  };
+  const tasksByStatus = (status: string) => tareas.filter((t) => t.estado === status);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1>{pageTitle}</h1>
-          <p className="text-muted-foreground text-sm">{pageSubtitle}</p>
+          <h1>Tareas</h1>
+          <p className="text-muted-foreground text-sm">Gestion de tareas operativas</p>
         </div>
-        {canCreate && (
-          <Button onClick={() => setShowCreate(true)} className="shrink-0">
-            <Plus className="w-4 h-4 mr-2" /> Nueva Tarea
-          </Button>
-        )}
+        <Button onClick={() => setShowCreate(true)} className="shrink-0">
+          <Plus className="w-4 h-4 mr-2" /> Nueva Tarea
+        </Button>
       </motion.div>
 
       {/* Summary Stats */}
@@ -105,7 +83,6 @@ export function TasksPage() {
               <div className="space-y-2 bg-muted/30 rounded-b-xl p-2.5 min-h-[220px] border border-t-0 border-border/50">
                 {statusTasks.map((t, tIdx) => {
                   const next = nextStatus(t.estado);
-                  const canUpdate = canUpdateStatus(t);
                   const prio = prioridadConfig[t.prioridad];
                   return (
                     <motion.div
@@ -133,19 +110,19 @@ export function TasksPage() {
                           )}
                           <Badge variant="outline" className={`text-[10px] ${prio.color} border-0 px-1.5 py-0`}>{prio.label}</Badge>
                         </div>
-                        {role !== "servidor" && t.asignados && t.asignados.length > 0 && (
+                        {t.asignados && t.asignados.length > 0 && (
                           <div className="flex items-center gap-1.5 mt-2">
                             <div className="flex -space-x-1.5">
                               {t.asignados.slice(0, 3).map((a) => (
                                 <div key={a.idTareaAsignada} className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] text-primary border-2 border-card" title={a.nombreCompleto}>
-                                  {a.nombreCompleto.charAt(0)}
+                                  {(a.nombreCompleto || "?").charAt(0)}
                                 </div>
                               ))}
                             </div>
-                            <span className="text-[10px] text-muted-foreground">{t.asignados.map((a) => a.nombreCompleto.split(" ")[0]).join(", ")}</span>
+                            <span className="text-[10px] text-muted-foreground">{t.asignados.map((a) => (a.nombreCompleto || "").split(" ")[0]).join(", ")}</span>
                           </div>
                         )}
-                        {next && canUpdate && (
+                        {next && (
                           <Button
                             size="sm"
                             variant="ghost"
@@ -171,11 +148,11 @@ export function TasksPage() {
         })}
       </div>
 
-      {role === "servidor" && visibleTasks.length === 0 && (
+      {tareas.length === 0 && (
         <Card className="p-16 text-center">
           <ListTodo className="w-16 h-16 mx-auto text-muted-foreground/20 mb-4" />
-          <h3 className="text-muted-foreground mb-2">Sin tareas asignadas</h3>
-          <p className="text-sm text-muted-foreground">Tu lider te asignara tareas cuando sea necesario.</p>
+          <h3 className="text-muted-foreground mb-2">Sin tareas</h3>
+          <p className="text-sm text-muted-foreground">Las tareas apareceran aqui cuando sean creadas.</p>
         </Card>
       )}
 
@@ -227,7 +204,7 @@ export function TasksPage() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSelectedTask(null)}>Cerrar</Button>
-                {nextStatus(task.estado) && canUpdateStatus(task) && (
+                {nextStatus(task.estado) && (
                   <Button onClick={() => { updateTareaEstado(task.idTarea, nextStatus(task.estado)!); setSelectedTask(null); }}>
                     Mover a {statusConfig[nextStatus(task.estado)!].label}
                   </Button>
@@ -239,50 +216,40 @@ export function TasksPage() {
       </Dialog>
 
       {/* Create Dialog */}
-      {canCreate && (
-        <Dialog open={showCreate} onOpenChange={setShowCreate}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader><DialogTitle>Nueva Tarea</DialogTitle></DialogHeader>
-            <div className="space-y-4">
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>Nueva Tarea</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm text-muted-foreground mb-1.5 block">Titulo</label>
+              <Input placeholder="Titulo de la tarea" className="bg-input-background h-11" />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1.5 block">Descripcion</label>
+              <textarea placeholder="Descripcion detallada" className="w-full border rounded-xl px-3 py-2.5 text-sm bg-input-background min-h-[80px] resize-y" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Titulo</label>
-                <Input placeholder="Titulo de la tarea" className="bg-input-background h-11" />
+                <label className="text-sm text-muted-foreground mb-1.5 block">Fecha limite</label>
+                <Input type="date" className="bg-input-background h-11" />
               </div>
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Descripcion</label>
-                <textarea placeholder="Descripcion detallada" className="w-full border rounded-xl px-3 py-2.5 text-sm bg-input-background min-h-[80px] resize-y" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm text-muted-foreground mb-1.5 block">Fecha limite</label>
-                  <Input type="date" className="bg-input-background h-11" />
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground mb-1.5 block">Prioridad</label>
-                  <select className="w-full border rounded-xl px-3 py-2.5 text-sm bg-input-background h-11">
-                    <option value="baja">Baja</option>
-                    <option value="media">Media</option>
-                    <option value="alta">Alta</option>
-                    <option value="urgente">Urgente</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Asignar a</label>
+                <label className="text-sm text-muted-foreground mb-1.5 block">Prioridad</label>
                 <select className="w-full border rounded-xl px-3 py-2.5 text-sm bg-input-background h-11">
-                  {miembrosMinisterio.filter((mm) => mm.idMinisterio === user.idMinisterio && mm.activo).map((mm) => (
-                    <option key={mm.idMiembroMinisterio} value={mm.idUsuario}>{mm.nombreCompleto} ({mm.rolEnMinisterio})</option>
-                  ))}
+                  <option value="baja">Baja</option>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                  <option value="urgente">Urgente</option>
                 </select>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
-              <Button onClick={() => setShowCreate(false)}>Crear Tarea</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
+            <Button onClick={() => setShowCreate(false)}>Crear Tarea</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
