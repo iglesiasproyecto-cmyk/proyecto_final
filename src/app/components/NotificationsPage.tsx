@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { useNotificaciones } from "@/hooks/useNotificaciones";
 import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { motion, AnimatePresence } from "motion/react";
-import { Bell, CalendarDays, ListTodo, ClipboardCheck, Info, AlertTriangle, BookOpen, CheckCheck, Check, Filter, Inbox } from "lucide-react";
+import { CalendarDays, ListTodo, Info, AlertTriangle, BookOpen, CheckCheck, Check, Inbox } from "lucide-react";
 
 const typeConfig: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   evento: { label: "Evento", color: "text-blue-700", bg: "bg-blue-100", icon: <CalendarDays className="w-4 h-4" /> },
@@ -16,9 +17,17 @@ const typeConfig: Record<string, { label: string; color: string; bg: string; ico
 };
 
 export function NotificationsPage() {
-  const { notificaciones, markNotificationRead, markAllNotificationsRead } = useApp();
-  const unreadCount = notificaciones.filter((n) => !n.leida).length;
+  const { usuarioActual } = useApp();
+  const { data: notificaciones = [], isLoading } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
   const [activeTab, setActiveTab] = useState("todas");
+
+  // Stub mutations — Phase 3
+  const markNotificationRead = (_id: number) => { /* Phase 3 */ };
+  const markAllNotificationsRead = () => { /* Phase 3 */ };
+
+  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+
+  const unreadCount = notificaciones.filter((n) => !n.leida).length;
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
