@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-import { useApp } from "../store/AppContext";
+import { useState } from "react";
+import { usePastores, useIglesias, useIglesiaPastores } from "@/hooks/useIglesias";
+import { useUsuarios } from "@/hooks/useUsuarios";
+import type { Pastor, IglesiaPastor } from "@/types/app.types";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -15,20 +17,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { UserCheck, Plus, Pencil, Trash2, Search, Link2, Church, Mail, Phone } from "lucide-react";
 
 export function PastoresPage() {
-  const { pastores, iglesiaPastores, iglesias, usuarios, addPastor, updatePastor, addIglesiaPastor, removeIglesiaPastor } = useApp();
+  const { data: pastores = [], isLoading } = usePastores();
+  const { data: iglesiaPastores = [] } = useIglesiaPastores();
+  const { data: iglesias = [] } = useIglesias();
+  const { data: usuarios = [] } = useUsuarios();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("pastores");
   const [dialogPastor, setDialogPastor] = useState(false);
   const [dialogAsign, setDialogAsign] = useState(false);
-  const [editingPastor, setEditingPastor] = useState<string | null>(null);
-  const [formP, setFormP] = useState({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: "" });
-  const [formA, setFormA] = useState({ idIglesia: "", idPastor: "", esPrincipal: false, fechaInicio: "", observaciones: "" });
-  const [confirmDeleteAsign, setConfirmDeleteAsign] = useState<{ id: string; pastorName: string; iglesiaName: string } | null>(null);
+  const [editingPastor, setEditingPastor] = useState<number | null>(null);
+  const [formP, setFormP] = useState({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
+  const [formA, setFormA] = useState({ idIglesia: 0, idPastor: 0, esPrincipal: false, fechaInicio: "", observaciones: "" });
+  const [confirmDeleteAsign, setConfirmDeleteAsign] = useState<{ id: number; pastorName: string; iglesiaName: string } | null>(null);
 
-  const openAddPastor = () => { setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: "" }); setEditingPastor(null); setDialogPastor(true); };
-  const openEditPastor = (id: string) => {
+  // Stub mutations — Phase 3
+  const addPastor = (_data: Omit<Pastor, "idPastor" | "creadoEn" | "actualizadoEn">) => { /* Phase 3 */ };
+  const updatePastor = (_id: number, _data: Partial<Pastor>) => { /* Phase 3 */ };
+  const addIglesiaPastor = (_data: Omit<IglesiaPastor, "idIglesiaPastor" | "creadoEn" | "actualizadoEn">) => { /* Phase 3 */ };
+  const removeIglesiaPastor = (_id: number) => { /* Phase 3 */ };
+
+  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+
+  const openAddPastor = () => { setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 }); setEditingPastor(null); setDialogPastor(true); };
+  const openEditPastor = (id: number) => {
     const p = pastores.find(x => x.idPastor === id); if (!p) return;
-    setFormP({ nombres: p.nombres, apellidos: p.apellidos, correo: p.correo, telefono: p.telefono || "", idUsuario: p.idUsuario || "" });
+    setFormP({ nombres: p.nombres, apellidos: p.apellidos, correo: p.correo, telefono: p.telefono || "", idUsuario: p.idUsuario || 0 });
     setEditingPastor(id); setDialogPastor(true);
   };
   const handleSubmitPastor = () => {
@@ -38,14 +51,14 @@ export function PastoresPage() {
     setDialogPastor(false);
   };
 
-  const openAsign = () => { setFormA({ idIglesia: "", idPastor: "", esPrincipal: false, fechaInicio: new Date().toISOString().split("T")[0], observaciones: "" }); setDialogAsign(true); };
+  const openAsign = () => { setFormA({ idIglesia: 0, idPastor: 0, esPrincipal: false, fechaInicio: new Date().toISOString().split("T")[0], observaciones: "" }); setDialogAsign(true); };
   const handleSubmitAsign = () => {
     if (!formA.idIglesia || !formA.idPastor || !formA.fechaInicio) return;
     addIglesiaPastor({ idIglesia: formA.idIglesia, idPastor: formA.idPastor, esPrincipal: formA.esPrincipal, fechaInicio: formA.fechaInicio, fechaFin: null, observaciones: formA.observaciones || null });
     setDialogAsign(false);
   };
 
-  const getIglesiasForPastor = (idPastor: string) => {
+  const getIglesiasForPastor = (idPastor: number) => {
     return iglesiaPastores.filter(ip => ip.idPastor === idPastor && !ip.fechaFin).map(ip => {
       const ig = iglesias.find(i => i.idIglesia === ip.idIglesia);
       return { ...ip, iglesiaNombre: ig?.nombre || "—" };
@@ -173,11 +186,11 @@ export function PastoresPage() {
             <div><label className="text-sm">Correo *</label><Input type="email" value={formP.correo} onChange={e => setFormP(f => ({ ...f, correo: e.target.value }))} className="mt-1" /></div>
             <div><label className="text-sm">Teléfono</label><Input value={formP.telefono} onChange={e => setFormP(f => ({ ...f, telefono: e.target.value }))} className="mt-1" /></div>
             <div><label className="text-sm">Vincular a Usuario (opcional)</label>
-              <Select value={formP.idUsuario || "none"} onValueChange={v => setFormP(f => ({ ...f, idUsuario: v === "none" ? "" : v }))}>
+              <Select value={formP.idUsuario ? String(formP.idUsuario) : "none"} onValueChange={v => setFormP(f => ({ ...f, idUsuario: v === "none" ? 0 : Number(v) }))}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Sin vincular" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sin vincular</SelectItem>
-                  {usuarios.map(u => <SelectItem key={u.idUsuario} value={u.idUsuario}>{u.nombres} {u.apellidos} ({u.correo})</SelectItem>)}
+                  {usuarios.map(u => <SelectItem key={u.idUsuario} value={String(u.idUsuario)}>{u.nombres} {u.apellidos} ({u.correo})</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -195,15 +208,15 @@ export function PastoresPage() {
           <DialogHeader><DialogTitle>Nueva Asignación Pastor-Iglesia</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><label className="text-sm">Pastor *</label>
-              <Select value={formA.idPastor} onValueChange={v => setFormA(f => ({ ...f, idPastor: v }))}>
+              <Select value={formA.idPastor ? String(formA.idPastor) : ""} onValueChange={v => setFormA(f => ({ ...f, idPastor: Number(v) }))}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                <SelectContent>{pastores.map(p => <SelectItem key={p.idPastor} value={p.idPastor}>{p.nombres} {p.apellidos}</SelectItem>)}</SelectContent>
+                <SelectContent>{pastores.map(p => <SelectItem key={p.idPastor} value={String(p.idPastor)}>{p.nombres} {p.apellidos}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><label className="text-sm">Iglesia *</label>
-              <Select value={formA.idIglesia} onValueChange={v => setFormA(f => ({ ...f, idIglesia: v }))}>
+              <Select value={formA.idIglesia ? String(formA.idIglesia) : ""} onValueChange={v => setFormA(f => ({ ...f, idIglesia: Number(v) }))}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                <SelectContent>{iglesias.map(i => <SelectItem key={i.idIglesia} value={i.idIglesia}>{i.nombre}</SelectItem>)}</SelectContent>
+                <SelectContent>{iglesias.map(i => <SelectItem key={i.idIglesia} value={String(i.idIglesia)}>{i.nombre}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><label className="text-sm">Fecha Inicio *</label><Input type="date" value={formA.fechaInicio} onChange={e => setFormA(f => ({ ...f, fechaInicio: e.target.value }))} className="mt-1" /></div>
