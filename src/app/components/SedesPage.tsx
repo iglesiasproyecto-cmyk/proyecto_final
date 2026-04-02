@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useSedes, useIglesias } from "@/hooks/useIglesias";
-import type { Sede } from "@/types/app.types";
+import { useSedes, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado } from "@/hooks/useIglesias";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -20,10 +19,9 @@ export function SedesPage() {
   const [editing, setEditing] = useState<number | null>(null);
   const [form, setForm] = useState({ nombre: "", direccion: "", idCiudad: 0, idIglesia: 0, estado: "activa" as "activa" | "inactiva" | "en_construccion" });
 
-  // Stub mutations — Phase 3
-  const addSede = (_data: Omit<Sede, "idSede" | "creadoEn" | "actualizadoEn">) => { /* Phase 3 */ };
-  const updateSede = (_id: number, _data: Partial<Sede>) => { /* Phase 3 */ };
-  const toggleSedeEstado = (_id: number) => { /* Phase 3 */ };
+  const createSedeMutation = useCreateSede()
+  const updateSedeMutation = useUpdateSede()
+  const toggleSedeMutation = useToggleSedeEstado()
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -35,9 +33,14 @@ export function SedesPage() {
   };
   const handleSubmit = () => {
     if (!form.nombre.trim() || !form.idCiudad || !form.idIglesia) return;
-    if (editing) updateSede(editing, { nombre: form.nombre, direccion: form.direccion || null, idCiudad: form.idCiudad, idIglesia: form.idIglesia, estado: form.estado });
-    else addSede({ nombre: form.nombre, direccion: form.direccion || null, idCiudad: form.idCiudad, idIglesia: form.idIglesia, estado: form.estado });
-    setDialog(false);
+    if (editing) updateSedeMutation.mutate(
+      { id: editing, data: { nombre: form.nombre, direccion: form.direccion || null, idCiudad: form.idCiudad, idIglesia: form.idIglesia, estado: form.estado } },
+      { onSuccess: () => { setEditing(null); setDialog(false); } }
+    );
+    else createSedeMutation.mutate(
+      { nombre: form.nombre, direccion: form.direccion || null, idCiudad: form.idCiudad, idIglesia: form.idIglesia, estado: form.estado },
+      { onSuccess: () => { setEditing(null); setDialog(false); } }
+    );
   };
 
   const lookupIglesia = (idIglesia: number) => iglesias.find(i => i.idIglesia === idIglesia)?.nombre || "-";
@@ -104,7 +107,7 @@ export function SedesPage() {
                 <TableCell className="text-right">
                   <div className="flex gap-1 justify-end">
                     <Button variant="ghost" size="sm" onClick={() => openEdit(s.idSede)}><Pencil className="w-3.5 h-3.5" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => toggleSedeEstado(s.idSede)}>
+                    <Button variant="ghost" size="sm" onClick={() => toggleSedeMutation.mutate(s.idSede)}>
                       {s.estado === "activa" ? <ToggleRight className="w-3.5 h-3.5 text-green-600" /> : <ToggleLeft className="w-3.5 h-3.5 text-muted-foreground" />}
                     </Button>
                   </div>
