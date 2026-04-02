@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { useApp } from "../store/AppContext";
+import { useIglesias } from "@/hooks/useIglesias";
 import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { motion, AnimatePresence } from "motion/react";
-import { SEILogo } from "./SEILogo";
 import {
   Church, LayoutDashboard, Building2, Users, CalendarDays, ListTodo,
   BookOpen, ClipboardCheck, Bell, User, LogOut, Menu, X, ChevronDown,
-  Settings, FolderHeart, Globe, UserCheck, Settings2, Search,
-  PanelLeftClose, PanelLeftOpen, ChevronRight, GraduationCap, Moon, Sun
+  Settings, FolderHeart, Globe, UserCheck, Settings2,
+  PanelLeftClose, PanelLeftOpen, GraduationCap, Moon, Sun
 } from "lucide-react";
 
 const roleLabels: Record<string, string> = {
@@ -124,25 +123,29 @@ function groupBySection(items: NavItem[]) {
 }
 
 export function AppLayout() {
-  const { user, logout, notificaciones, iglesias, setActiveChurch, sidebarOpen, toggleSidebar, darkMode, toggleDarkMode } = useApp();
+  const { usuarioActual, logout, notificacionesCount, sidebarOpen, toggleSidebar, darkMode, toggleDarkMode } = useApp();
+  const { data: iglesias = [] } = useIglesias();
   const navigate = useNavigate();
   const location = useLocation();
   const [showChurchSelector, setShowChurchSelector] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeChurchId, setActiveChurchId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!user) navigate("/login");
-  }, [user, navigate]);
+    if (!usuarioActual) navigate("/login");
+  }, [usuarioActual, navigate]);
 
-  if (!user) return null;
+  if (!usuarioActual) return null;
 
-  const unreadCount = notificaciones.filter((n) => !n.leida).length;
-  const activeChurch = iglesias.find((ig) => ig.idIglesia === user.idIglesiaActiva);
-  const navItems = getNavItemsForRole(user.rol);
+  // rol is not stored on Usuario; derive from session metadata when available
+  const rol = (usuarioActual as unknown as { rol?: string }).rol ?? "servidor";
+  const unreadCount = notificacionesCount;
+  const activeChurch = iglesias.find((ig) => ig.idIglesia === activeChurchId);
+  const navItems = getNavItemsForRole(rol);
   const navGroups = groupBySection(navItems);
-  const showChurchSelectorPanel = user.rol !== "super_admin";
-  const fullName = `${user.nombres} ${user.apellidos}`;
-  const initials = `${user.nombres.charAt(0)}${user.apellidos.charAt(0)}`;
+  const showChurchSelectorPanel = rol !== "super_admin";
+  const fullName = `${usuarioActual.nombres} ${usuarioActual.apellidos}`;
+  const initials = `${usuarioActual.nombres.charAt(0)}${usuarioActual.apellidos.charAt(0)}`;
   const currentPageTitle = pageTitles[location.pathname] || "S.E.I.";
 
   const sidebarWidth = isCollapsed ? "w-[72px]" : "w-64";
@@ -219,21 +222,21 @@ export function AppLayout() {
                       className="absolute top-full left-0 right-0 mt-1 bg-sidebar-accent rounded-lg border border-sidebar-border shadow-xl z-50 overflow-hidden origin-top"
                     >
                       {iglesias
-                        .filter((ig) => ig.estado === "activa" && user.iglesiasIds.includes(ig.idIglesia))
+                        .filter((ig) => ig.estado === "activa")
                         .map((ig) => (
                           <button
                             key={ig.idIglesia}
                             onClick={() => {
-                              setActiveChurch(ig.idIglesia);
+                              setActiveChurchId(ig.idIglesia);
                               setShowChurchSelector(false);
                             }}
                             className={`w-full text-left px-3 py-2.5 text-xs hover:bg-sidebar-border transition-colors flex items-center gap-2 ${
-                              ig.idIglesia === user.idIglesiaActiva
+                              ig.idIglesia === activeChurchId
                                 ? "text-sidebar-primary bg-sidebar-primary/10"
                                 : "text-sidebar-foreground"
                             }`}
                           >
-                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${ig.idIglesia === user.idIglesiaActiva ? "bg-sidebar-primary" : "bg-sidebar-foreground/30"}`} />
+                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${ig.idIglesia === activeChurchId ? "bg-sidebar-primary" : "bg-sidebar-foreground/30"}`} />
                             {ig.nombre}
                           </button>
                         ))}
@@ -259,7 +262,7 @@ export function AppLayout() {
                     const isActive =
                       location.pathname === item.path ||
                       (item.path !== "/" && location.pathname.startsWith(item.path));
-                    const isNotif = item.label === "Notificaciones" || item.label === "Notificaciones";
+                    const isNotif = item.label === "Notificaciones";
 
                     const navButtonContent = (
                       <>
@@ -350,7 +353,7 @@ export function AppLayout() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-white truncate">{fullName}</p>
-                  <p className="text-[10px] text-sidebar-foreground/50">{roleLabels[user.rol]}</p>
+                  <p className="text-[10px] text-sidebar-foreground/50">{roleLabels[rol] ?? rol}</p>
                 </div>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -410,9 +413,9 @@ export function AppLayout() {
             <div className="flex items-center gap-2">
               <Badge
                 variant="outline"
-                className={`hidden sm:inline-flex text-[10px] ${roleBadgeColors[user.rol]}`}
+                className={`hidden sm:inline-flex text-[10px] ${roleBadgeColors[rol] ?? ""}`}
               >
-                {roleLabels[user.rol]}
+                {roleLabels[rol] ?? rol}
               </Badge>
 
               <Tooltip>
@@ -456,7 +459,7 @@ export function AppLayout() {
                   {initials}
                 </div>
                 <span className="hidden md:block text-sm text-foreground truncate max-w-[120px]">
-                  {user.nombres}
+                  {usuarioActual.nombres}
                 </span>
                 <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden md:block" />
               </button>
