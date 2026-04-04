@@ -93,3 +93,109 @@ export async function getTareasAsignadas(idUsuario: number): Promise<TareaAsigna
   if (error) throw error
   return data.map(mapTareaAsignada)
 }
+
+// ── TipoEvento mutations ──
+
+export async function createTipoEvento(
+  nombre: string,
+  descripcion: string | null
+): Promise<TipoEvento> {
+  const { data: result, error } = await supabase
+    .from('tipo_evento')
+    .insert([{ nombre, descripcion }])
+    .select()
+    .single()
+  if (error) throw error
+  return mapTipoEvento(result)
+}
+
+export async function updateTipoEvento(
+  id: number,
+  nombre: string,
+  descripcion: string | null
+): Promise<TipoEvento> {
+  const { data: result, error } = await supabase
+    .from('tipo_evento')
+    .update({ nombre, descripcion })
+    .eq('id_tipo_evento', id)
+    .select()
+    .single()
+  if (error) throw error
+  return mapTipoEvento(result)
+}
+
+export async function deleteTipoEvento(id: number): Promise<void> {
+  const { error } = await supabase.from('tipo_evento').delete().eq('id_tipo_evento', id)
+  if (error) throw error
+}
+
+// ── Evento mutations ──
+
+export async function createEvento(
+  data: {
+    nombre: string
+    descripcion: string | null
+    idTipoEvento: number
+    fechaInicio: string
+    fechaFin: string
+    idIglesia: number
+    idSede: number | null
+    idMinisterio: number | null
+  }
+): Promise<Evento> {
+  const { data: result, error } = await supabase
+    .from('evento')
+    .insert([{
+      nombre: data.nombre,
+      descripcion: data.descripcion,
+      id_tipo_evento: data.idTipoEvento,
+      fecha_inicio: data.fechaInicio,
+      fecha_fin: data.fechaFin,
+      estado: 'programado',
+      id_iglesia: data.idIglesia,
+      id_sede: data.idSede,
+      id_ministerio: data.idMinisterio,
+    }])
+    .select()
+    .single()
+  if (error) throw error
+  return mapEvento(result)
+}
+
+// ── Tarea mutations ──
+
+export async function createTarea(
+  data: {
+    titulo: string
+    descripcion: string | null
+    fechaLimite: string | null
+    prioridad: Tarea['prioridad']
+    idUsuarioCreador: number
+  }
+): Promise<Tarea> {
+  const { data: result, error } = await supabase
+    .from('tarea')
+    .insert([{
+      titulo: data.titulo,
+      descripcion: data.descripcion,
+      fecha_limite: data.fechaLimite,
+      estado: 'pendiente',
+      prioridad: data.prioridad,
+      id_usuario_creador: data.idUsuarioCreador,
+    }])
+    .select()
+    .single()
+  if (error) throw error
+  return mapTarea(result)
+}
+
+export async function updateTareaEstado(id: number, estado: Tarea['estado']): Promise<Tarea> {
+  const { data: result, error } = await supabase
+    .from('tarea')
+    .update({ estado })
+    .eq('id_tarea', id)
+    .select()
+    .single()
+  if (error) throw error
+  return mapTarea(result)
+}
