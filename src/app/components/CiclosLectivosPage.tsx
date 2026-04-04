@@ -93,7 +93,7 @@ function CicloDetail({ ciclo, onBack }: { ciclo: ProcesoAsignadoCurso; onBack: (
 }
 
 export function CiclosLectivosPage() {
-  const { data: procesosAsignadoCurso = [], isLoading } = useProcesosAsignadoCurso();
+  const { data: procesosAsignadoCurso = [], isLoading, error } = useProcesosAsignadoCurso();
   const { data: cursos = [] } = useCursos();
   const [selectedCicloId, setSelectedCicloId] = useState<number | null>(null);
   const [estadoFilter, setEstadoFilter] = useState("all");
@@ -105,6 +105,13 @@ export function CiclosLectivosPage() {
   const deleteProcesoAsignadoCurso = (_id: number) => { /* Phase 3 */ };
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+
+  if (error) return (
+    <Card className="p-8 text-center text-destructive">
+      <h3 className="mb-2">Error cargando ciclos lectivos</h3>
+      <p className="text-sm text-muted-foreground">{String((error as any)?.message ?? JSON.stringify(error))}</p>
+    </Card>
+  );
 
   const selectedCiclo = selectedCicloId ? procesosAsignadoCurso.find((c) => c.idProcesoAsignadoCurso === selectedCicloId) : null;
 
