@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMinisterios, useMiembrosMinisterio } from "@/hooks/useMinisterios";
+import { useMinisterios, useMiembrosMinisterio, useCreateMiembroMinisterio } from "@/hooks/useMinisterios";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -17,6 +17,8 @@ export function MembersPage() {
   const [selectedMinisterioId, setSelectedMinisterioId] = useState<number>(0);
   const [showInvite, setShowInvite] = useState(false);
   const { data: miembros = [], isLoading: miembrosLoading } = useMiembrosMinisterio(selectedMinisterioId);
+  const createMiembroMutation = useCreateMiembroMinisterio();
+  const [inviteForm, setInviteForm] = useState({ idUsuario: 0, rolEnMinisterio: "servidor" });
 
   const isLoading = ministeriosLoading || miembrosLoading;
 
@@ -26,6 +28,24 @@ export function MembersPage() {
     const matchSearch = (mm.nombreCompleto || "").toLowerCase().includes(search.toLowerCase()) || (mm.correo || "").toLowerCase().includes(search.toLowerCase());
     return matchSearch;
   });
+
+  const handleInvite = () => {
+    if (!inviteForm.idUsuario || !selectedMinisterioId) return;
+    createMiembroMutation.mutate(
+      {
+        idUsuario: inviteForm.idUsuario,
+        idMinisterio: selectedMinisterioId,
+        rolEnMinisterio: inviteForm.rolEnMinisterio || null,
+        fechaIngreso: new Date().toISOString().split('T')[0],
+      },
+      {
+        onSuccess: () => {
+          setShowInvite(false);
+          setInviteForm({ idUsuario: 0, rolEnMinisterio: "servidor" });
+        },
+      }
+    );
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -100,28 +120,35 @@ export function MembersPage() {
 
       <Dialog open={showInvite} onOpenChange={setShowInvite}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Agregar Miembro al Ministerio</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><label className="text-sm">Nombre completo</label><Input placeholder="Nombre del miembro" className="mt-1" /></div>
-            <div><label className="text-sm">Correo electrónico</label><Input placeholder="correo@ejemplo.com" className="mt-1" /></div>
-            <div><label className="text-sm">Teléfono</label><Input placeholder="+502 5555-0000" className="mt-1" /></div>
+          <DialogHeader>
+            <DialogTitle>Agregar Miembro al Ministerio</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
             <div>
-              <label className="text-sm">Ministerio</label>
-              <select className="w-full border rounded-lg px-3 py-2 text-sm bg-card mt-1">
-                {ministerios.filter((m) => m.estado === "activo").map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
-              </select>
+              <label className="text-sm text-muted-foreground mb-1 block">ID de Usuario</label>
+              <Input
+                type="number"
+                value={inviteForm.idUsuario || ""}
+                onChange={(e) => setInviteForm(prev => ({ ...prev, idUsuario: Number(e.target.value) }))}
+                placeholder="ID numérico del usuario"
+                className="bg-input-background"
+              />
             </div>
             <div>
-              <label className="text-sm">Rol en Ministerio</label>
-              <select className="w-full border rounded-lg px-3 py-2 text-sm bg-card mt-1">
-                <option value="servidor">Servidor</option>
-                <option value="lider">Líder</option>
-              </select>
+              <label className="text-sm text-muted-foreground mb-1 block">Rol en Ministerio</label>
+              <Input
+                value={inviteForm.rolEnMinisterio}
+                onChange={(e) => setInviteForm(prev => ({ ...prev, rolEnMinisterio: e.target.value }))}
+                placeholder="servidor, lider, etc."
+                className="bg-input-background"
+              />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowInvite(false)}>Cancelar</Button>
-            <Button onClick={() => setShowInvite(false)}>Agregar</Button>
+            <Button onClick={handleInvite} disabled={createMiembroMutation.isPending}>
+              {createMiembroMutation.isPending ? "Agregando..." : "Agregar Miembro"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
