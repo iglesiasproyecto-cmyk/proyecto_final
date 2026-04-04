@@ -24,5 +24,11 @@
       "command": ["npx", "aceternityui-mcp"],
       "enabled": true
     }
+  },
+  "permission": {
+    "skill": {
+      "*": "allow",
+      "superpowers:*": "allow"
+    }
   }
 }
