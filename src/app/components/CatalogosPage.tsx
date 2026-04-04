@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRoles } from "@/hooks/useUsuarios";
-import { useTiposEvento } from "@/hooks/useEventos";
+import { useTiposEvento, useCreateTipoEvento, useUpdateTipoEvento, useDeleteTipoEvento } from "@/hooks/useEventos";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -25,10 +25,9 @@ export function CatalogosPage() {
   const [formTE, setFormTE] = useState({ nombre: "", descripcion: "" });
   const [confirmDeleteTE, setConfirmDeleteTE] = useState<{ id: number; name: string } | null>(null);
 
-  // Stub mutations — Phase 3
-  const addTipoEvento = (_nombre: string, _descripcion: string) => { /* Phase 3 */ };
-  const updateTipoEvento = (_id: number, _nombre: string, _descripcion: string) => { /* Phase 3 */ };
-  const deleteTipoEvento = (_id: number) => { /* Phase 3 */ };
+  const createTEMutation = useCreateTipoEvento();
+  const updateTEMutation = useUpdateTipoEvento();
+  const deleteTEMutation = useDeleteTipoEvento();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -40,9 +39,17 @@ export function CatalogosPage() {
   };
   const handleSubmitTE = () => {
     if (!formTE.nombre.trim()) return;
-    if (editingTE) updateTipoEvento(editingTE, formTE.nombre.trim(), formTE.descripcion.trim());
-    else addTipoEvento(formTE.nombre.trim(), formTE.descripcion.trim());
-    setDialogTE(false);
+    if (editingTE) {
+      updateTEMutation.mutate(
+        { id: editingTE, nombre: formTE.nombre.trim(), descripcion: formTE.descripcion.trim() || null },
+        { onSuccess: () => setDialogTE(false) }
+      );
+    } else {
+      createTEMutation.mutate(
+        { nombre: formTE.nombre.trim(), descripcion: formTE.descripcion.trim() || null },
+        { onSuccess: () => setDialogTE(false) }
+      );
+    }
   };
 
   return (
@@ -144,7 +151,7 @@ export function CatalogosPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => { if (confirmDeleteTE) { deleteTipoEvento(confirmDeleteTE.id); setConfirmDeleteTE(null); } }}
+              onClick={() => { if (confirmDeleteTE) { deleteTEMutation.mutate(confirmDeleteTE.id, { onSuccess: () => setConfirmDeleteTE(null) }); } }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Eliminar

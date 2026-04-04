@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useEventos, useTiposEvento } from "@/hooks/useEventos";
+import { useEventos, useTiposEvento, useCreateEvento } from "@/hooks/useEventos";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -24,7 +24,39 @@ const estadoColors: Record<string, string> = {
 export function EventsPage() {
   const { data: eventos = [], isLoading } = useEventos();
   const { data: tiposEvento = [] } = useTiposEvento();
+  const createEventoMutation = useCreateEvento();
   const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    nombre: "",
+    descripcion: "",
+    idTipoEvento: 0,
+    fechaInicio: "",
+    fechaFin: "",
+  });
+
+  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "" });
+
+  const handleCreateEvento = () => {
+    if (!createForm.nombre.trim() || !createForm.idTipoEvento || !createForm.fechaInicio || !createForm.fechaFin) return;
+    createEventoMutation.mutate(
+      {
+        nombre: createForm.nombre.trim(),
+        descripcion: createForm.descripcion.trim() || null,
+        idTipoEvento: createForm.idTipoEvento,
+        fechaInicio: createForm.fechaInicio,
+        fechaFin: createForm.fechaFin,
+        idIglesia: 1,
+        idSede: null,
+        idMinisterio: null,
+      },
+      {
+        onSuccess: () => {
+          setShowCreate(false);
+          resetCreateForm();
+        },
+      }
+    );
+  };
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -129,37 +161,68 @@ export function EventsPage() {
       )}
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>Nuevo Evento</DialogTitle></DialogHeader>
-          <div className="space-y-4">
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nuevo Evento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
             <div>
-              <label className="text-sm text-muted-foreground mb-1.5 block">Nombre</label>
-              <Input placeholder="Nombre del evento" className="bg-input-background h-11" />
+              <label className="text-sm text-muted-foreground mb-1 block">Nombre *</label>
+              <Input
+                value={createForm.nombre}
+                onChange={(e) => setCreateForm(p => ({ ...p, nombre: e.target.value }))}
+                placeholder="Nombre del evento"
+                className="bg-input-background"
+              />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground mb-1.5 block">Descripcion</label>
-              <textarea placeholder="Descripcion del evento" className="w-full border rounded-xl px-3 py-2.5 text-sm bg-input-background min-h-[80px] resize-y" />
-            </div>
-            <div>
-              <label className="text-sm text-muted-foreground mb-1.5 block">Tipo de Evento</label>
-              <select className="w-full border rounded-xl px-3 py-2.5 text-sm bg-input-background h-11">
-                {tiposEvento.map((te) => <option key={te.idTipoEvento} value={te.idTipoEvento}>{te.nombre}</option>)}
+              <label className="text-sm text-muted-foreground mb-1 block">Tipo de Evento *</label>
+              <select
+                className="w-full h-10 rounded-md border border-input bg-input-background px-3 text-sm"
+                value={createForm.idTipoEvento}
+                onChange={(e) => setCreateForm(p => ({ ...p, idTipoEvento: Number(e.target.value) }))}
+              >
+                <option value={0}>Seleccionar tipo...</option>
+                {tiposEvento.map(te => (
+                  <option key={te.idTipoEvento} value={te.idTipoEvento}>{te.nombre}</option>
+                ))}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Fecha inicio</label>
-                <Input type="datetime-local" className="bg-input-background h-11" />
+                <label className="text-sm text-muted-foreground mb-1 block">Inicio *</label>
+                <Input
+                  type="datetime-local"
+                  value={createForm.fechaInicio}
+                  onChange={(e) => setCreateForm(p => ({ ...p, fechaInicio: e.target.value }))}
+                  className="bg-input-background"
+                />
               </div>
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Fecha fin</label>
-                <Input type="datetime-local" className="bg-input-background h-11" />
+                <label className="text-sm text-muted-foreground mb-1 block">Fin *</label>
+                <Input
+                  type="datetime-local"
+                  value={createForm.fechaFin}
+                  onChange={(e) => setCreateForm(p => ({ ...p, fechaFin: e.target.value }))}
+                  className="bg-input-background"
+                />
               </div>
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Descripción</label>
+              <Input
+                value={createForm.descripcion}
+                onChange={(e) => setCreateForm(p => ({ ...p, descripcion: e.target.value }))}
+                placeholder="Descripción opcional"
+                className="bg-input-background"
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
-            <Button onClick={() => setShowCreate(false)}>Crear Evento</Button>
+            <Button variant="outline" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
+            <Button onClick={handleCreateEvento} disabled={createEventoMutation.isPending}>
+              {createEventoMutation.isPending ? "Creando..." : "Crear Evento"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
