@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useUsuarios, useRoles } from "@/hooks/useUsuarios";
+import { useUsuarios, useRoles, useToggleUsuarioActivo } from "@/hooks/useUsuarios";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -17,8 +17,7 @@ export function UsuariosPage() {
   const [filterRol, setFilterRol] = useState("all");
   const [detail, setDetail] = useState<number | null>(null);
 
-  // Stub mutations — Phase 3
-  const toggleUsuarioActivo = (_id: number) => { /* Phase 3 */ };
+  const toggleActivoMutation = useToggleUsuarioActivo();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -139,7 +138,7 @@ export function UsuariosPage() {
                 <TableCell className="text-right">
                   <div className="flex gap-1 justify-end">
                     <Button variant="ghost" size="sm" onClick={() => setDetail(u.idUsuario)}><Eye className="w-3.5 h-3.5" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => toggleUsuarioActivo(u.idUsuario)}>
+                    <Button variant="ghost" size="sm" disabled={toggleActivoMutation.isPending} onClick={() => toggleActivoMutation.mutate(u.idUsuario)}>
                       {u.activo ? <ToggleRight className="w-3.5 h-3.5 text-green-600" /> : <ToggleLeft className="w-3.5 h-3.5 text-muted-foreground" />}
                     </Button>
                   </div>

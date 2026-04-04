@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useCursos } from "@/hooks/useCursos";
+import { useCursos, useCreateCurso, useCreateModulo } from "@/hooks/useCursos";
 import { useMinisterios } from "@/hooks/useMinisterios";
+import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -18,6 +19,11 @@ export function ClassroomPage() {
   const [expandedCursos, setExpandedCursos] = useState<Set<number>>(new Set());
   const [showCreateCurso, setShowCreateCurso] = useState(false);
   const [showCreateModulo, setShowCreateModulo] = useState(false);
+  const { usuarioActual } = useApp();
+  const createCursoMutation = useCreateCurso();
+  const createModuloMutation = useCreateModulo();
+  const [cursoForm, setCursoForm] = useState({ nombre: "", descripcion: "", duracionHoras: "" });
+  const [moduloForm, setModuloForm] = useState({ titulo: "", descripcion: "" });
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -29,6 +35,43 @@ export function ClassroomPage() {
     const next = new Set(expandedCursos);
     if (next.has(id)) next.delete(id); else next.add(id);
     setExpandedCursos(next);
+  };
+
+  const handleCreateCurso = () => {
+    if (!cursoForm.nombre.trim() || !usuarioActual) return;
+    createCursoMutation.mutate(
+      {
+        nombre: cursoForm.nombre.trim(),
+        descripcion: cursoForm.descripcion.trim() || null,
+        duracionHoras: cursoForm.duracionHoras ? Number(cursoForm.duracionHoras) : null,
+        idUsuarioCreador: usuarioActual.idUsuario,
+        idMinisterio: actualMinId,
+      },
+      {
+        onSuccess: () => {
+          setCursoForm({ nombre: "", descripcion: "", duracionHoras: "" });
+          setShowCreateCurso(false);
+        },
+      }
+    );
+  };
+
+  const handleCreateModulo = (idCurso: number) => {
+    if (!moduloForm.titulo.trim()) return;
+    createModuloMutation.mutate(
+      {
+        titulo: moduloForm.titulo.trim(),
+        descripcion: moduloForm.descripcion.trim() || null,
+        orden: (cursos.find((c) => c.idCurso === idCurso)?.modulos?.length ?? 0) + 1,
+        idCurso,
+      },
+      {
+        onSuccess: () => {
+          setModuloForm({ titulo: "", descripcion: "" });
+          setShowCreateModulo(false);
+        },
+      }
+    );
   };
 
   if (selectedModulo && selectedCurso) {
@@ -130,14 +173,44 @@ export function ClassroomPage() {
       <Dialog open={showCreateCurso} onOpenChange={setShowCreateCurso}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Nuevo Curso</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><label className="text-sm">Nombre</label><Input placeholder="Nombre del curso" className="mt-1" /></div>
-            <div><label className="text-sm">Descripción</label><Input placeholder="Descripción breve" className="mt-1" /></div>
-            <div><label className="text-sm">Duración (horas)</label><Input type="number" placeholder="12" className="mt-1" /></div>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Nombre *</label>
+              <Input
+                value={cursoForm.nombre}
+                onChange={(e) => setCursoForm(p => ({ ...p, nombre: e.target.value }))}
+                placeholder="Nombre del curso"
+                className="bg-input-background"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Descripción</label>
+              <Input
+                value={cursoForm.descripcion}
+                onChange={(e) => setCursoForm(p => ({ ...p, descripcion: e.target.value }))}
+                placeholder="Descripción opcional"
+                className="bg-input-background"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Duración (horas)</label>
+              <Input
+                type="number"
+                value={cursoForm.duracionHoras}
+                onChange={(e) => setCursoForm(p => ({ ...p, duracionHoras: e.target.value }))}
+                placeholder="Ej: 40"
+                className="bg-input-background"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateCurso(false)}>Cancelar</Button>
-            <Button onClick={() => setShowCreateCurso(false)}>Crear Curso</Button>
+            <Button
+              onClick={handleCreateCurso}
+              disabled={createCursoMutation.isPending || !usuarioActual}
+            >
+              {createCursoMutation.isPending ? "Creando..." : "Crear Curso"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -145,13 +218,34 @@ export function ClassroomPage() {
       <Dialog open={showCreateModulo} onOpenChange={setShowCreateModulo}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Nuevo Módulo</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><label className="text-sm">Título</label><Input placeholder="Título del módulo" className="mt-1" /></div>
-            <div><label className="text-sm">Descripción/Contenido</label><textarea placeholder="Contenido del módulo..." className="w-full border rounded-lg px-3 py-2 text-sm bg-card mt-1 min-h-[120px] resize-y" /></div>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Título *</label>
+              <Input
+                value={moduloForm.titulo}
+                onChange={(e) => setModuloForm(p => ({ ...p, titulo: e.target.value }))}
+                placeholder="Título del módulo"
+                className="bg-input-background"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Descripción/Contenido</label>
+              <textarea
+                value={moduloForm.descripcion}
+                onChange={(e) => setModuloForm(p => ({ ...p, descripcion: e.target.value }))}
+                placeholder="Contenido del módulo..."
+                className="w-full border rounded-lg px-3 py-2 text-sm bg-card mt-1 min-h-[120px] resize-y"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateModulo(false)}>Cancelar</Button>
-            <Button onClick={() => setShowCreateModulo(false)}>Crear Módulo</Button>
+            <Button
+              onClick={() => selectedCursoId && handleCreateModulo(selectedCursoId)}
+              disabled={createModuloMutation.isPending || !selectedCursoId}
+            >
+              {createModuloMutation.isPending ? "Creando..." : "Crear Módulo"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

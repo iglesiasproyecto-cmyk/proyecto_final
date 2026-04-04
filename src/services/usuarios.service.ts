@@ -67,3 +67,14 @@ export async function getUsuarioRoles(idUsuario: number): Promise<UsuarioRol[]> 
   if (error) throw error
   return data.map(mapUsuarioRol)
 }
+
+// ── Usuario mutations ──
+
+export async function toggleUsuarioActivo(id: number): Promise<void> {
+  const { data: current, error: fetchError } = await supabase
+    .from('usuario').select('activo').eq('id_usuario', id).single()
+  if (fetchError) throw fetchError
+  const { error } = await supabase
+    .from('usuario').update({ activo: !current.activo }).eq('id_usuario', id)
+  if (error) throw error
+}

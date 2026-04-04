@@ -140,3 +140,42 @@ export async function getDetallesProcesoCurso(idProceso: number): Promise<Detall
   if (error) throw error
   return data.map(mapDetalle)
 }
+
+// ── Curso mutations ──
+
+export async function createCurso(
+  data: { nombre: string; descripcion: string | null; duracionHoras: number | null; idUsuarioCreador: number; idMinisterio: number }
+): Promise<Curso> {
+  const { data: result, error } = await supabase
+    .from('curso')
+    .insert([{
+      nombre: data.nombre,
+      descripcion: data.descripcion,
+      duracion_horas: data.duracionHoras,
+      estado: 'activo' as const,
+      id_usuario_creador: data.idUsuarioCreador,
+      id_ministerio: data.idMinisterio,
+    }])
+    .select()
+    .single()
+  if (error) throw error
+  return mapCurso(result)
+}
+
+export async function createModulo(
+  data: { titulo: string; descripcion: string | null; orden: number; idCurso: number }
+): Promise<Modulo> {
+  const { data: result, error } = await supabase
+    .from('modulo')
+    .insert([{
+      titulo: data.titulo,
+      descripcion: data.descripcion,
+      orden: data.orden,
+      estado: 'borrador' as const,
+      id_curso: data.idCurso,
+    }])
+    .select()
+    .single()
+  if (error) throw error
+  return mapModulo(result)
+}
