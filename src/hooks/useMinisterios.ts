@@ -1,5 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
-import { getMinisterios, getMiembrosMinisterio } from '@/services/ministerios.service'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  getMinisterios, getMiembrosMinisterio,
+  createMinisterio, updateMinisterio, toggleMinisterioEstado,
+  createMiembroMinisterio,
+} from '@/services/ministerios.service'
 
 export function useMinisterios(idSede?: number) {
   return useQuery({
@@ -11,9 +15,43 @@ export function useMinisterios(idSede?: number) {
 
 export function useMiembrosMinisterio(idMinisterio: number) {
   return useQuery({
-    queryKey: ['miembros', idMinisterio],
+    queryKey: ['miembros-ministerio', idMinisterio],
     queryFn: () => getMiembrosMinisterio(idMinisterio),
-    enabled: !!idMinisterio,
+    enabled: idMinisterio > 0,
     staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useCreateMinisterio() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createMinisterio,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ministerios'] }),
+  })
+}
+
+export function useUpdateMinisterio() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateMinisterio>[1] }) =>
+      updateMinisterio(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ministerios'] }),
+  })
+}
+
+export function useToggleMinisterioEstado() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => toggleMinisterioEstado(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ministerios'] }),
+  })
+}
+
+export function useCreateMiembroMinisterio() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createMiembroMinisterio,
+    onSuccess: (_data, variables) =>
+      qc.invalidateQueries({ queryKey: ['miembros-ministerio', variables.idMinisterio] }),
   })
 }

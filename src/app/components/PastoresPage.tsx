@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { usePastores, useIglesias, useIglesiaPastores } from "@/hooks/useIglesias";
+import {
+  usePastores, useIglesias, useIglesiaPastores,
+  useCreatePastor, useUpdatePastor,
+  useCreateIglesiaPastor, useCloseIglesiaPastor,
+} from "@/hooks/useIglesias";
 import { useUsuarios } from "@/hooks/useUsuarios";
-import type { Pastor, IglesiaPastor } from "@/types/app.types";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -30,11 +33,10 @@ export function PastoresPage() {
   const [formA, setFormA] = useState({ idIglesia: 0, idPastor: 0, esPrincipal: false, fechaInicio: "", observaciones: "" });
   const [confirmDeleteAsign, setConfirmDeleteAsign] = useState<{ id: number; pastorName: string; iglesiaName: string } | null>(null);
 
-  // Stub mutations — Phase 3
-  const addPastor = (_data: Omit<Pastor, "idPastor" | "creadoEn" | "actualizadoEn">) => { /* Phase 3 */ };
-  const updatePastor = (_id: number, _data: Partial<Pastor>) => { /* Phase 3 */ };
-  const addIglesiaPastor = (_data: Omit<IglesiaPastor, "idIglesiaPastor" | "creadoEn" | "actualizadoEn">) => { /* Phase 3 */ };
-  const removeIglesiaPastor = (_id: number) => { /* Phase 3 */ };
+  const createPastorMutation = useCreatePastor()
+  const updatePastorMutation = useUpdatePastor()
+  const createAsignMutation = useCreateIglesiaPastor()
+  const closeAsignMutation = useCloseIglesiaPastor()
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -46,16 +48,23 @@ export function PastoresPage() {
   };
   const handleSubmitPastor = () => {
     if (!formP.nombres.trim() || !formP.apellidos.trim() || !formP.correo.trim()) return;
-    if (editingPastor) updatePastor(editingPastor, { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null });
-    else addPastor({ nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null });
-    setDialogPastor(false);
+    if (editingPastor) updatePastorMutation.mutate(
+      { id: editingPastor, data: { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null } },
+      { onSuccess: () => setDialogPastor(false) }
+    );
+    else createPastorMutation.mutate(
+      { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null },
+      { onSuccess: () => setDialogPastor(false) }
+    );
   };
 
   const openAsign = () => { setFormA({ idIglesia: 0, idPastor: 0, esPrincipal: false, fechaInicio: new Date().toISOString().split("T")[0], observaciones: "" }); setDialogAsign(true); };
   const handleSubmitAsign = () => {
     if (!formA.idIglesia || !formA.idPastor || !formA.fechaInicio) return;
-    addIglesiaPastor({ idIglesia: formA.idIglesia, idPastor: formA.idPastor, esPrincipal: formA.esPrincipal, fechaInicio: formA.fechaInicio, fechaFin: null, observaciones: formA.observaciones || null });
-    setDialogAsign(false);
+    createAsignMutation.mutate(
+      { idIglesia: formA.idIglesia, idPastor: formA.idPastor, esPrincipal: formA.esPrincipal, fechaInicio: formA.fechaInicio, fechaFin: null, observaciones: formA.observaciones || null },
+      { onSuccess: () => setDialogAsign(false) }
+    );
   };
 
   const getIglesiasForPastor = (idPastor: number) => {
@@ -244,7 +253,7 @@ export function PastoresPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => { if (confirmDeleteAsign) { removeIglesiaPastor(confirmDeleteAsign.id); setConfirmDeleteAsign(null); } }}
+              onClick={() => { if (confirmDeleteAsign) { closeAsignMutation.mutate(confirmDeleteAsign.id); setConfirmDeleteAsign(null); } }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remover

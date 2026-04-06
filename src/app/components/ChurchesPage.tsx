@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useIglesias } from "@/hooks/useIglesias";
+import { useIglesias, useCreateIglesia, useUpdateIglesia, useToggleIglesiaEstado } from "@/hooks/useIglesias";
 import type { Iglesia } from "@/types/app.types";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -30,13 +30,11 @@ export function ChurchesPage() {
   const [editingIglesia, setEditingIglesia] = useState<Iglesia | null>(null);
   const [form, setForm] = useState<IglesiaFormData>({ nombre: "", fechaFundacion: "", idCiudad: 0 });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof IglesiaFormData, string>>>({});
+  const createIglesiaMutation = useCreateIglesia();
+  const updateIglesiaMutation = useUpdateIglesia();
+  const toggleEstadoMutation = useToggleIglesiaEstado();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
-
-  // Stub mutations — Phase 3
-  const toggleIglesiaEstado = (_id: number) => { /* Phase 3 */ };
-  const updateIglesia = (_id: number, _data: Partial<Iglesia>) => { /* Phase 3 */ };
-  const createIglesia = (_data: Omit<Iglesia, "idIglesia">) => { /* Phase 3 */ };
 
   const updateField = (field: keyof IglesiaFormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -53,26 +51,18 @@ export function ChurchesPage() {
 
   const handleSaveEdit = () => {
     if (!editingIglesia || !validateForm()) return;
-    updateIglesia(editingIglesia.idIglesia, {
-      nombre: form.nombre.trim(),
-      fechaFundacion: form.fechaFundacion || null,
-      actualizadoEn: new Date().toISOString(),
-    });
-    setEditingIglesia(null);
+    updateIglesiaMutation.mutate(
+      { id: editingIglesia.idIglesia, data: { nombre: form.nombre.trim(), fechaFundacion: form.fechaFundacion || null } },
+      { onSuccess: () => setEditingIglesia(null) }
+    );
   };
 
   const handleCreate = () => {
     if (!validateForm()) return;
-    const now = new Date().toISOString();
-    createIglesia({
-      nombre: form.nombre.trim(),
-      fechaFundacion: form.fechaFundacion || null,
-      estado: "activa",
-      idCiudad: Number(form.idCiudad),
-      creadoEn: now,
-      actualizadoEn: now,
-    });
-    setShowCreate(false);
+    createIglesiaMutation.mutate(
+      { nombre: form.nombre.trim(), fechaFundacion: form.fechaFundacion || null, estado: "activa", idCiudad: Number(form.idCiudad) },
+      { onSuccess: () => setShowCreate(false) }
+    );
   };
 
   const filtered = iglesias.filter((ig) => {
@@ -151,7 +141,7 @@ export function ChurchesPage() {
                 <Button variant="outline" size="sm" className="flex-1" onClick={() => setEditingIglesia(ig)}>
                   <Pencil className="w-3.5 h-3.5 mr-1.5" /> Editar
                 </Button>
-                <Button variant={ig.estado === "activa" ? "destructive" : "default"} size="sm" onClick={() => toggleIglesiaEstado(ig.idIglesia)} title={ig.estado === "activa" ? "Desactivar" : "Activar"}>
+                <Button variant={ig.estado === "activa" ? "destructive" : "default"} size="sm" onClick={() => toggleEstadoMutation.mutate(ig.idIglesia)} title={ig.estado === "activa" ? "Desactivar" : "Activar"}>
                   {ig.estado === "activa" ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                 </Button>
               </div>

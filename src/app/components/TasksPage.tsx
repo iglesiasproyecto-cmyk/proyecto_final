@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useTareas } from "@/hooks/useEventos";
+import { useTareas, useCreateTarea, useUpdateTareaEstado } from "@/hooks/useEventos";
+import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -23,12 +24,39 @@ const prioridadConfig: Record<string, { label: string; color: string; dot: strin
 };
 
 export function TasksPage() {
+  const { usuarioActual } = useApp();
   const { data: tareas = [], isLoading } = useTareas();
+  const createTareaMutation = useCreateTarea();
+  const updateEstadoMutation = useUpdateTareaEstado();
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState<number | null>(null);
+  const [createForm, setCreateForm] = useState({
+    titulo: "",
+    descripcion: "",
+    fechaLimite: "",
+    prioridad: "media" as "baja" | "media" | "alta" | "urgente",
+  });
 
-  // Stub mutations — Phase 3
-  const updateTareaEstado = (_id: number, _estado: string) => { /* Phase 3 */ };
+  const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" });
+
+  const handleCreateTarea = () => {
+    if (!createForm.titulo.trim() || !usuarioActual) return;
+    createTareaMutation.mutate(
+      {
+        titulo: createForm.titulo.trim(),
+        descripcion: createForm.descripcion.trim() || null,
+        fechaLimite: createForm.fechaLimite || null,
+        prioridad: createForm.prioridad,
+        idUsuarioCreador: usuarioActual.idUsuario,
+      },
+      {
+        onSuccess: () => {
+          setShowCreate(false);
+          resetCreateForm();
+        },
+      }
+    );
+  };
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -127,7 +155,7 @@ export function TasksPage() {
                             size="sm"
                             variant="ghost"
                             className="w-full mt-2.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => { e.stopPropagation(); updateTareaEstado(t.idTarea, next); }}
+                            onClick={(e) => { e.stopPropagation(); updateEstadoMutation.mutate({ id: t.idTarea, estado: next }); }}
                           >
                             Mover a {statusConfig[next].label} <ChevronRight className="w-3 h-3 ml-1" />
                           </Button>
@@ -205,7 +233,7 @@ export function TasksPage() {
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSelectedTask(null)}>Cerrar</Button>
                 {nextStatus(task.estado) && (
-                  <Button onClick={() => { updateTareaEstado(task.idTarea, nextStatus(task.estado)!); setSelectedTask(null); }}>
+                  <Button onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: nextStatus(task.estado)! }); setSelectedTask(null); }}>
                     Mover a {statusConfig[nextStatus(task.estado)!].label}
                   </Button>
                 )}
@@ -217,25 +245,46 @@ export function TasksPage() {
 
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>Nueva Tarea</DialogTitle></DialogHeader>
-          <div className="space-y-4">
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nueva Tarea</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
             <div>
-              <label className="text-sm text-muted-foreground mb-1.5 block">Titulo</label>
-              <Input placeholder="Titulo de la tarea" className="bg-input-background h-11" />
+              <label className="text-sm text-muted-foreground mb-1 block">Título *</label>
+              <Input
+                value={createForm.titulo}
+                onChange={(e) => setCreateForm(p => ({ ...p, titulo: e.target.value }))}
+                placeholder="Título de la tarea"
+                className="bg-input-background"
+              />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground mb-1.5 block">Descripcion</label>
-              <textarea placeholder="Descripcion detallada" className="w-full border rounded-xl px-3 py-2.5 text-sm bg-input-background min-h-[80px] resize-y" />
+              <label className="text-sm text-muted-foreground mb-1 block">Descripción</label>
+              <Input
+                value={createForm.descripcion}
+                onChange={(e) => setCreateForm(p => ({ ...p, descripcion: e.target.value }))}
+                placeholder="Descripción opcional"
+                className="bg-input-background"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Fecha limite</label>
-                <Input type="date" className="bg-input-background h-11" />
+                <label className="text-sm text-muted-foreground mb-1 block">Fecha Límite</label>
+                <Input
+                  type="date"
+                  value={createForm.fechaLimite}
+                  onChange={(e) => setCreateForm(p => ({ ...p, fechaLimite: e.target.value }))}
+                  className="bg-input-background"
+                />
               </div>
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Prioridad</label>
-                <select className="w-full border rounded-xl px-3 py-2.5 text-sm bg-input-background h-11">
+                <label className="text-sm text-muted-foreground mb-1 block">Prioridad</label>
+                <select
+                  className="w-full h-10 rounded-md border border-input bg-input-background px-3 text-sm"
+                  value={createForm.prioridad}
+                  onChange={(e) => setCreateForm(p => ({ ...p, prioridad: e.target.value as typeof createForm.prioridad }))}
+                >
                   <option value="baja">Baja</option>
                   <option value="media">Media</option>
                   <option value="alta">Alta</option>
@@ -245,8 +294,10 @@ export function TasksPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
-            <Button onClick={() => setShowCreate(false)}>Crear Tarea</Button>
+            <Button variant="outline" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
+            <Button onClick={handleCreateTarea} disabled={createTareaMutation.isPending || !usuarioActual}>
+              {createTareaMutation.isPending ? "Creando..." : "Crear Tarea"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
