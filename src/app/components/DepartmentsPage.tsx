@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMinisterios, useMiembrosMinisterio } from "@/hooks/useMinisterios";
+import { useMinisterios, useMiembrosMinisterio, useToggleMinisterioEstado } from "@/hooks/useMinisterios";
 import type { Ministerio } from "@/types/app.types";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -78,8 +78,7 @@ export function DepartmentsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [selectedMin, setSelectedMin] = useState<number | null>(null);
 
-  // Stub mutations — Phase 3
-  const toggleMinisterioEstado = (_id: number) => { /* Phase 3 */ };
+  const toggleEstadoMutation = useToggleMinisterioEstado();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -121,7 +120,7 @@ export function DepartmentsPage() {
               </div>
               <div className="mt-3 pt-3 border-t flex gap-2">
                 <Button variant="outline" size="sm" className="flex-1" onClick={(e) => { e.stopPropagation(); }}><BookOpen className="w-4 h-4 mr-1" /> Aula</Button>
-                <Button variant={m.estado === "activo" ? "ghost" : "default"} size="sm" onClick={(e) => { e.stopPropagation(); toggleMinisterioEstado(m.idMinisterio); }}>
+                <Button variant={m.estado === "activo" ? "ghost" : "default"} size="sm" onClick={(e) => { e.stopPropagation(); toggleEstadoMutation.mutate(m.idMinisterio); }}>
                   {m.estado === "activo" ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                 </Button>
               </div>

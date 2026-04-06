@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getCursos, getModulos, getRecursos, getEvaluaciones,
   getProcesosAsignadoCurso, getDetallesProcesoCurso,
+  createCurso, createModulo,
 } from '@/services/cursos.service'
 
 export function useCursos(idMinisterio?: number) {
@@ -52,5 +53,22 @@ export function useDetallesProcesoCurso(idProceso: number) {
     queryFn: () => getDetallesProcesoCurso(idProceso),
     enabled: !!idProceso,
     staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useCreateCurso() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createCurso,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cursos'] }),
+  })
+}
+
+export function useCreateModulo() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createModulo,
+    onSuccess: (_data, variables) =>
+      qc.invalidateQueries({ queryKey: ['modulos', variables.idCurso] }),
   })
 }

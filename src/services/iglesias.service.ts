@@ -84,3 +84,135 @@ export async function getSedes(idIglesia?: number): Promise<Sede[]> {
   if (error) throw error
   return data.map(mapSede)
 }
+
+// ── Iglesia mutations ──
+
+export async function createIglesia(
+  data: { nombre: string; fechaFundacion: string | null; idCiudad: number; estado: Iglesia['estado'] }
+): Promise<Iglesia> {
+  const { data: result, error } = await supabase
+    .from('iglesia')
+    .insert([{ nombre: data.nombre, fecha_fundacion: data.fechaFundacion, id_ciudad: data.idCiudad, estado: data.estado }])
+    .select()
+    .single()
+  if (error) throw error
+  return mapIglesia(result)
+}
+
+export async function updateIglesia(
+  id: number,
+  data: { nombre?: string; fechaFundacion?: string | null }
+): Promise<Iglesia> {
+  const patch: Record<string, unknown> = {}
+  if (data.nombre !== undefined) patch.nombre = data.nombre
+  if (data.fechaFundacion !== undefined) patch.fecha_fundacion = data.fechaFundacion
+  const { data: result, error } = await supabase
+    .from('iglesia')
+    .update(patch)
+    .eq('id_iglesia', id)
+    .select()
+    .single()
+  if (error) throw error
+  return mapIglesia(result)
+}
+
+export async function toggleIglesiaEstado(id: number): Promise<void> {
+  const { data: current, error: fetchError } = await supabase
+    .from('iglesia').select('estado').eq('id_iglesia', id).single()
+  if (fetchError) throw fetchError
+  const next = current.estado === 'activa' ? 'inactiva' : 'activa'
+  const { error } = await supabase.from('iglesia').update({ estado: next }).eq('id_iglesia', id)
+  if (error) throw error
+}
+
+// ── Sede mutations ──
+
+export async function createSede(
+  data: { nombre: string; direccion: string | null; idCiudad: number; idIglesia: number; estado: Sede['estado'] }
+): Promise<Sede> {
+  const { data: result, error } = await supabase
+    .from('sede')
+    .insert([{ nombre: data.nombre, direccion: data.direccion, id_ciudad: data.idCiudad, id_iglesia: data.idIglesia, estado: data.estado }])
+    .select()
+    .single()
+  if (error) throw error
+  return mapSede(result)
+}
+
+export async function updateSede(
+  id: number,
+  data: { nombre?: string; direccion?: string | null; idCiudad?: number; idIglesia?: number; estado?: Sede['estado'] }
+): Promise<Sede> {
+  const patch: Record<string, unknown> = {}
+  if (data.nombre !== undefined) patch.nombre = data.nombre
+  if (data.direccion !== undefined) patch.direccion = data.direccion
+  if (data.idCiudad !== undefined) patch.id_ciudad = data.idCiudad
+  if (data.idIglesia !== undefined) patch.id_iglesia = data.idIglesia
+  if (data.estado !== undefined) patch.estado = data.estado
+  const { data: result, error } = await supabase
+    .from('sede').update(patch).eq('id_sede', id).select().single()
+  if (error) throw error
+  return mapSede(result)
+}
+
+export async function toggleSedeEstado(id: number): Promise<void> {
+  const { data: current, error: fetchError } = await supabase
+    .from('sede').select('estado').eq('id_sede', id).single()
+  if (fetchError) throw fetchError
+  // Toggles between 'activa' and 'inactiva'. If estado is 'en_construccion', activates the sede.
+  const next = current.estado === 'activa' ? 'inactiva' : 'activa'
+  const { error } = await supabase.from('sede').update({ estado: next }).eq('id_sede', id)
+  if (error) throw error
+}
+
+// ── Pastor mutations ──
+
+export async function createPastor(
+  data: { nombres: string; apellidos: string; correo: string; telefono: string | null; idUsuario: number | null }
+): Promise<Pastor> {
+  const { data: result, error } = await supabase
+    .from('pastor')
+    .insert([{ nombres: data.nombres, apellidos: data.apellidos, correo: data.correo, telefono: data.telefono, id_usuario: data.idUsuario }])
+    .select()
+    .single()
+  if (error) throw error
+  return mapPastor(result)
+}
+
+export async function updatePastor(
+  id: number,
+  data: { nombres?: string; apellidos?: string; correo?: string; telefono?: string | null; idUsuario?: number | null }
+): Promise<Pastor> {
+  const patch: Record<string, unknown> = {}
+  if (data.nombres !== undefined) patch.nombres = data.nombres
+  if (data.apellidos !== undefined) patch.apellidos = data.apellidos
+  if (data.correo !== undefined) patch.correo = data.correo
+  if (data.telefono !== undefined) patch.telefono = data.telefono
+  if (data.idUsuario !== undefined) patch.id_usuario = data.idUsuario
+  const { data: result, error } = await supabase
+    .from('pastor').update(patch).eq('id_pastor', id).select().single()
+  if (error) throw error
+  return mapPastor(result)
+}
+
+// ── IglesiaPastor mutations ──
+
+export async function createIglesiaPastor(
+  data: { idIglesia: number; idPastor: number; esPrincipal: boolean; fechaInicio: string; fechaFin: string | null; observaciones: string | null }
+): Promise<IglesiaPastor> {
+  const { data: result, error } = await supabase
+    .from('iglesia_pastor')
+    .insert([{ id_iglesia: data.idIglesia, id_pastor: data.idPastor, es_principal: data.esPrincipal, fecha_inicio: data.fechaInicio, fecha_fin: data.fechaFin, observaciones: data.observaciones }])
+    .select()
+    .single()
+  if (error) throw error
+  return mapIglesiaPastor(result)
+}
+
+export async function closeIglesiaPastor(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('iglesia_pastor')
+    .update({ fecha_fin: new Date().toISOString().split('T')[0] })
+    .eq('id_iglesia_pastor', id)
+  if (error) throw error
+}
