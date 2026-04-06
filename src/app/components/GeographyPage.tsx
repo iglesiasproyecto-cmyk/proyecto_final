@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { usePaises, useDepartamentos, useCiudades } from "@/hooks/useGeografia";
+import {
+  usePaises, useDepartamentos, useCiudades,
+  useCreatePais, useUpdatePais, useDeletePais,
+  useCreateDepartamento, useUpdateDepartamento, useDeleteDepartamento,
+  useCreateCiudad, useUpdateCiudad, useDeleteCiudad,
+} from "@/hooks/useGeografia";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -24,16 +29,15 @@ export function GeographyPage() {
   const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: number; name: string } | null>(null);
   const [formNombre, setFormNombre] = useState("");
 
-  // Phase 3 stubs — mutations will be implemented in the next phase
-  const addPais = (_nombre: string) => { /* Phase 3 */ };
-  const updatePais = (_id: number, _nombre: string) => { /* Phase 3 */ };
-  const deletePais = (_id: number) => { /* Phase 3 */ };
-  const addDepartamentoGeo = (_nombre: string, _idPais: number) => { /* Phase 3 */ };
-  const updateDepartamentoGeo = (_id: number, _nombre: string) => { /* Phase 3 */ };
-  const deleteDepartamentoGeo = (_id: number) => { /* Phase 3 */ };
-  const addCiudad = (_nombre: string, _idDepartamentoGeo: number) => { /* Phase 3 */ };
-  const updateCiudad = (_id: number, _nombre: string) => { /* Phase 3 */ };
-  const deleteCiudad = (_id: number) => { /* Phase 3 */ };
+  const createPaisMutation = useCreatePais();
+  const updatePaisMutation = useUpdatePais();
+  const deletePaisMutation = useDeletePais();
+  const createDeptoMutation = useCreateDepartamento();
+  const updateDeptoMutation = useUpdateDepartamento();
+  const deleteDeptoMutation = useDeleteDepartamento();
+  const createCiudadMutation = useCreateCiudad();
+  const updateCiudadMutation = useUpdateCiudad();
+  const deleteCiudadMutation = useDeleteCiudad();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando geografía...</div>;
 
@@ -49,22 +53,35 @@ export function GeographyPage() {
     setDialog({ type, mode, id, parentId });
   };
 
+  const isMutating =
+    createPaisMutation.isPending || updatePaisMutation.isPending ||
+    createDeptoMutation.isPending || updateDeptoMutation.isPending ||
+    createCiudadMutation.isPending || updateCiudadMutation.isPending;
+
   const handleSubmit = () => {
     if (!formNombre.trim() || !dialog) return;
     const { type, mode, id, parentId } = dialog;
-    if (type === "pais") { mode === "add" ? addPais(formNombre.trim()) : updatePais(id!, formNombre.trim()); }
-    if (type === "dep") { mode === "add" ? addDepartamentoGeo(formNombre.trim(), parentId!) : updateDepartamentoGeo(id!, formNombre.trim()); }
-    if (type === "ciudad") { mode === "add" ? addCiudad(formNombre.trim(), parentId!) : updateCiudad(id!, formNombre.trim()); }
-    setDialog(null);
+    if (type === "pais") {
+      if (mode === "add") createPaisMutation.mutate(formNombre.trim(), { onSuccess: () => setDialog(null) });
+      else if (id !== undefined) updatePaisMutation.mutate({ id, nombre: formNombre.trim() }, { onSuccess: () => setDialog(null) });
+    }
+    if (type === "dep") {
+      if (mode === "add" && parentId !== undefined) createDeptoMutation.mutate({ nombre: formNombre.trim(), idPais: parentId }, { onSuccess: () => setDialog(null) });
+      else if (mode === "edit" && id !== undefined) updateDeptoMutation.mutate({ id, nombre: formNombre.trim() }, { onSuccess: () => setDialog(null) });
+    }
+    if (type === "ciudad") {
+      if (mode === "add" && parentId !== undefined) createCiudadMutation.mutate({ nombre: formNombre.trim(), idDepartamento: parentId }, { onSuccess: () => setDialog(null) });
+      else if (mode === "edit" && id !== undefined) updateCiudadMutation.mutate({ id, nombre: formNombre.trim() }, { onSuccess: () => setDialog(null) });
+    }
   };
 
   const handleDelete = () => {
     if (!confirmDelete) return;
     const { type, id } = confirmDelete;
-    if (type === "pais") deletePais(id);
-    if (type === "dep") deleteDepartamentoGeo(id);
-    if (type === "ciudad") deleteCiudad(id);
-    setConfirmDelete(null);
+    const opts = { onSuccess: () => setConfirmDelete(null) };
+    if (type === "pais") deletePaisMutation.mutate(id, opts);
+    if (type === "dep") deleteDeptoMutation.mutate(id, opts);
+    if (type === "ciudad") deleteCiudadMutation.mutate(id, opts);
   };
 
   const filteredPaises = search
@@ -168,7 +185,7 @@ export function GeographyPage() {
           <div><label className="text-sm">Nombre</label><Input value={formNombre} onChange={e => setFormNombre(e.target.value)} placeholder="Nombre" className="mt-1" onKeyDown={e => e.key === "Enter" && handleSubmit()} /></div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(null)}>Cancelar</Button>
-            <Button onClick={handleSubmit} disabled={!formNombre.trim()}>Guardar</Button>
+            <Button onClick={handleSubmit} disabled={!formNombre.trim() || isMutating}>Guardar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -183,7 +200,7 @@ export function GeographyPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={deletePaisMutation.isPending || deleteDeptoMutation.isPending || deleteCiudadMutation.isPending}>
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
