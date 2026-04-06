@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { useMinisterios, useMiembrosMinisterio, useToggleMinisterioEstado } from "@/hooks/useMinisterios";
+import {
+  useMinisterios, useMiembrosMinisterio, useToggleMinisterioEstado, useCreateMinisterio,
+} from "@/hooks/useMinisterios";
 import type { Ministerio } from "@/types/app.types";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -79,6 +81,8 @@ export function DepartmentsPage() {
   const [selectedMin, setSelectedMin] = useState<number | null>(null);
 
   const toggleEstadoMutation = useToggleMinisterioEstado();
+  const createMinisterioMutation = useCreateMinisterio();
+  const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "" });
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -88,6 +92,24 @@ export function DepartmentsPage() {
   if (selectedMin && min) {
     return <MinisterioDetail min={min} onBack={() => setSelectedMin(null)} />;
   }
+
+  const handleCreateMinisterio = () => {
+    if (!createForm.nombre.trim()) return;
+    createMinisterioMutation.mutate(
+      {
+        nombre: createForm.nombre.trim(),
+        descripcion: createForm.descripcion.trim() || null,
+        idSede: 1, // MVP: single-sede demo
+        estado: 'activo',
+      },
+      {
+        onSuccess: () => {
+          setShowCreate(false);
+          setCreateForm({ nombre: "", descripcion: "" });
+        },
+      }
+    );
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -120,7 +142,7 @@ export function DepartmentsPage() {
               </div>
               <div className="mt-3 pt-3 border-t flex gap-2">
                 <Button variant="outline" size="sm" className="flex-1" onClick={(e) => { e.stopPropagation(); }}><BookOpen className="w-4 h-4 mr-1" /> Aula</Button>
-                <Button variant={m.estado === "activo" ? "ghost" : "default"} size="sm" onClick={(e) => { e.stopPropagation(); toggleEstadoMutation.mutate(m.idMinisterio); }}>
+                <Button variant={m.estado === "activo" ? "ghost" : "default"} size="sm" disabled={toggleEstadoMutation.isPending} onClick={(e) => { e.stopPropagation(); toggleEstadoMutation.mutate(m.idMinisterio); }}>
                   {m.estado === "activo" ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                 </Button>
               </div>
@@ -133,13 +155,32 @@ export function DepartmentsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Nuevo Ministerio</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><label className="text-sm">Nombre</label><Input placeholder="Nombre del ministerio" className="mt-1" /></div>
-            <div><label className="text-sm">Descripción</label><Input placeholder="Descripción breve" className="mt-1" /></div>
-            <div><label className="text-sm">Líder Asignado</label><Input placeholder="Seleccionar miembro" className="mt-1" /></div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Nombre *</label>
+              <Input
+                value={createForm.nombre}
+                onChange={(e) => setCreateForm(p => ({ ...p, nombre: e.target.value }))}
+                placeholder="Nombre del ministerio"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Descripción</label>
+              <Input
+                value={createForm.descripcion}
+                onChange={(e) => setCreateForm(p => ({ ...p, descripcion: e.target.value }))}
+                placeholder="Descripción breve"
+                className="mt-1"
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
-            <Button onClick={() => setShowCreate(false)}>Crear</Button>
+            <Button variant="outline" onClick={() => { setShowCreate(false); setCreateForm({ nombre: "", descripcion: "" }); }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateMinisterio} disabled={!createForm.nombre.trim() || createMinisterioMutation.isPending}>
+              {createMinisterioMutation.isPending ? "Creando..." : "Crear"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
