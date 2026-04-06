@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useProcesosAsignadoCurso, useCursos, useDetallesProcesoCurso } from "@/hooks/useCursos";
+import { useProcesosAsignadoCurso, useCursos, useDetallesProcesoCurso, useDeleteProcesoAsignadoCurso } from "@/hooks/useCursos";
 import type { ProcesoAsignadoCurso } from "@/types/app.types";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -101,8 +101,7 @@ export function CiclosLectivosPage() {
   const [showCreateCiclo, setShowCreateCiclo] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState<number | null>(null);
 
-  // Stub mutations — Phase 3
-  const deleteProcesoAsignadoCurso = (_id: number) => { /* Phase 3 */ };
+  const deleteProcesaMutation = useDeleteProcesoAsignadoCurso();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -144,10 +143,10 @@ export function CiclosLectivosPage() {
   const getCursoNombre = (idCurso: number) => cursos.find((c) => c.idCurso === idCurso)?.nombre || "Curso desconocido";
 
   const handleDelete = () => {
-    if (showConfirmDelete) {
-      deleteProcesoAsignadoCurso(showConfirmDelete);
-      setShowConfirmDelete(null);
-    }
+    if (!showConfirmDelete) return;
+    deleteProcesaMutation.mutate(showConfirmDelete, {
+      onSuccess: () => setShowConfirmDelete(null),
+    });
   };
 
   return (
@@ -265,7 +264,7 @@ export function CiclosLectivosPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} disabled={deleteProcesaMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
