@@ -56,3 +56,66 @@ export async function getCiudades(idDepartamento?: number): Promise<Ciudad[]> {
   if (error) throw error
   return data.map(mapCiudad)
 }
+
+// ── Pais mutations ──
+
+export async function createPais(nombre: string): Promise<Pais> {
+  const { data: result, error } = await supabase
+    .from('pais').insert([{ nombre }]).select().single()
+  if (error) throw error
+  return mapPais(result)
+}
+
+export async function updatePais(id: number, nombre: string): Promise<Pais> {
+  const { data: result, error } = await supabase
+    .from('pais').update({ nombre }).eq('id_pais', id).select().single()
+  if (error) throw error
+  return mapPais(result)
+}
+
+export async function deletePais(id: number): Promise<void> {
+  const { error } = await supabase.from('pais').delete().eq('id_pais', id)
+  if (error) throw error
+}
+
+// ── Departamento mutations ──
+
+export async function createDepartamento(nombre: string, idPais: number): Promise<DepartamentoGeo> {
+  const { data: result, error } = await supabase
+    .from('departamento').insert([{ nombre, id_pais: idPais }]).select().single()
+  if (error) throw error
+  return mapDepto(result)
+}
+
+export async function updateDepartamento(id: number, nombre: string): Promise<DepartamentoGeo> {
+  const { data: result, error } = await supabase
+    .from('departamento').update({ nombre }).eq('id_departamento', id).select().single()
+  if (error) throw error
+  return mapDepto(result)
+}
+
+export async function deleteDepartamento(id: number): Promise<void> {
+  const { error } = await supabase.from('departamento').delete().eq('id_departamento', id)
+  if (error) throw error
+}
+
+// ── Ciudad mutations ──
+
+export async function createCiudad(nombre: string, idDepartamento: number): Promise<Ciudad> {
+  const { data: result, error } = await supabase
+    .from('ciudad').insert([{ nombre, id_departamento: idDepartamento }]).select().single()
+  if (error) throw error
+  return mapCiudad(result)
+}
+
+export async function updateCiudad(id: number, nombre: string): Promise<Ciudad> {
+  const { data: result, error } = await supabase
+    .from('ciudad').update({ nombre }).eq('id_ciudad', id).select().single()
+  if (error) throw error
+  return mapCiudad(result)
+}
+
+export async function deleteCiudad(id: number): Promise<void> {
+  const { error } = await supabase.from('ciudad').delete().eq('id_ciudad', id)
+  if (error) throw error
+}
