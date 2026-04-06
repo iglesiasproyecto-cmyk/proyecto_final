@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSedes, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado } from "@/hooks/useIglesias";
+import { useCiudades } from "@/hooks/useGeografia";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -12,6 +13,7 @@ import { Building2, Plus, Pencil, Search, ToggleLeft, ToggleRight } from "lucide
 export function SedesPage() {
   const { data: sedes = [], isLoading } = useSedes();
   const { data: iglesias = [] } = useIglesias();
+  const { data: ciudades = [] } = useCiudades();
   const [search, setSearch] = useState("");
   const [filterIglesia, setFilterIglesia] = useState("all");
   const [filterEstado, setFilterEstado] = useState("all");
@@ -133,8 +135,19 @@ export function SedesPage() {
                 <SelectContent>{iglesias.map(i => <SelectItem key={i.idIglesia} value={String(i.idIglesia)}>{i.nombre}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><label className="text-sm">Ciudad * (Phase 3: populated via useCiudades)</label>
-              <Input type="number" value={form.idCiudad || ""} onChange={e => setForm(f => ({ ...f, idCiudad: Number(e.target.value) }))} className="mt-1" placeholder="ID de ciudad" />
+            <div>
+              <label className="text-sm">Ciudad *</label>
+              <Select
+                value={form.idCiudad ? String(form.idCiudad) : ""}
+                onValueChange={v => setForm(f => ({ ...f, idCiudad: Number(v) }))}
+              >
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Seleccionar ciudad" /></SelectTrigger>
+                <SelectContent>
+                  {ciudades.map(c => (
+                    <SelectItem key={c.idCiudad} value={String(c.idCiudad)}>{c.nombre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div><label className="text-sm">Estado</label>
               <Select value={form.estado} onValueChange={v => setForm(f => ({ ...f, estado: v as "activa" | "inactiva" | "en_construccion" }))}>

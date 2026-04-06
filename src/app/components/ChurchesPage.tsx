@@ -6,6 +6,8 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { useCiudades } from "@/hooks/useGeografia";
 import { motion } from "motion/react";
 import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar } from "lucide-react";
 
@@ -19,7 +21,7 @@ const estadoLabels: Record<string, string> = {
 interface IglesiaFormData {
   nombre: string;
   fechaFundacion: string;
-  idCiudad: number; // Phase 3: populate from useCiudades()
+  idCiudad: number;
 }
 
 export function ChurchesPage() {
@@ -33,6 +35,7 @@ export function ChurchesPage() {
   const createIglesiaMutation = useCreateIglesia();
   const updateIglesiaMutation = useUpdateIglesia();
   const toggleEstadoMutation = useToggleIglesiaEstado();
+  const { data: ciudades = [] } = useCiudades();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -81,6 +84,23 @@ export function ChurchesPage() {
       <div>
         <label className="text-sm text-muted-foreground mb-1 block">Fecha de Fundación</label>
         <Input type="date" value={form.fechaFundacion} onChange={(e) => updateField("fechaFundacion", e.target.value)} className="bg-input-background" />
+      </div>
+      <div>
+        <label className="text-sm text-muted-foreground mb-1 block">Ciudad <span className="text-destructive">*</span></label>
+        <Select
+          value={form.idCiudad ? String(form.idCiudad) : ""}
+          onValueChange={v => setForm(prev => ({ ...prev, idCiudad: Number(v) }))}
+        >
+          <SelectTrigger className={`bg-input-background ${formErrors.idCiudad ? "border-destructive" : ""}`}>
+            <SelectValue placeholder="Seleccionar ciudad" />
+          </SelectTrigger>
+          <SelectContent>
+            {ciudades.map(c => (
+              <SelectItem key={c.idCiudad} value={String(c.idCiudad)}>{c.nombre}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {formErrors.idCiudad && <p className="text-destructive text-xs mt-1">{formErrors.idCiudad}</p>}
       </div>
     </div>
   );
