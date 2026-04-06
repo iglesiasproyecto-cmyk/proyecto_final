@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNotificaciones } from "@/hooks/useNotificaciones";
+import { useNotificaciones, useMarkNotificacionRead, useMarkAllNotificacionesRead } from "@/hooks/useNotificaciones";
 import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -21,9 +21,8 @@ export function NotificationsPage() {
   const { data: notificaciones = [], isLoading } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
   const [activeTab, setActiveTab] = useState("todas");
 
-  // Stub mutations — Phase 3
-  const markNotificationRead = (_id: number) => { /* Phase 3 */ };
-  const markAllNotificationsRead = () => { /* Phase 3 */ };
+  const markReadMutation = useMarkNotificacionRead();
+  const markAllReadMutation = useMarkAllNotificacionesRead();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -53,7 +52,7 @@ export function NotificationsPage() {
           </p>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" size="sm" onClick={markAllNotificationsRead} className="shrink-0">
+          <Button variant="outline" size="sm" onClick={() => usuarioActual && markAllReadMutation.mutate(usuarioActual.idUsuario)} disabled={markAllReadMutation.isPending} className="shrink-0">
             <CheckCheck className="w-4 h-4 mr-2" /> Marcar todas
           </Button>
         )}
@@ -89,7 +88,7 @@ export function NotificationsPage() {
                   className={`p-4 transition-all duration-200 hover:shadow-md cursor-pointer group ${
                     !n.leida ? "border-l-4 border-l-primary bg-primary/[0.02] hover:bg-primary/[0.04]" : "hover:bg-accent/30"
                   }`}
-                  onClick={() => !n.leida && markNotificationRead(n.idNotificacion)}
+                  onClick={() => !n.leida && markReadMutation.mutate(n.idNotificacion)}
                 >
                   <div className="flex gap-3.5">
                     <div className={`w-10 h-10 rounded-xl ${cfg.bg} ${cfg.color} flex items-center justify-center shrink-0`}>

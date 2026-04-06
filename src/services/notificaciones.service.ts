@@ -27,3 +27,20 @@ export async function getNotificaciones(idUsuario: number): Promise<Notificacion
   if (error) throw error
   return data.map(mapNotificacion)
 }
+
+export async function markNotificacionRead(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('notificacion')
+    .update({ leida: true, fecha_lectura: new Date().toISOString() })
+    .eq('id_notificacion', id)
+  if (error) throw error
+}
+
+export async function markAllNotificacionesRead(idUsuario: number): Promise<void> {
+  const { error } = await supabase
+    .from('notificacion')
+    .update({ leida: true, fecha_lectura: new Date().toISOString() })
+    .eq('id_usuario', idUsuario)
+    .eq('leida', false)
+  if (error) throw error
+}
