@@ -3,6 +3,7 @@ import {
   getCursos, getModulos, getRecursos, getEvaluaciones,
   getProcesosAsignadoCurso, getDetallesProcesoCurso,
   createCurso, createModulo,
+  deleteEvaluacion, deleteProcesoAsignadoCurso,
 } from '@/services/cursos.service'
 
 export function useCursos(idMinisterio?: number) {
@@ -70,5 +71,21 @@ export function useCreateModulo() {
     mutationFn: createModulo,
     onSuccess: (_data, variables) =>
       qc.invalidateQueries({ queryKey: ['modulos', variables.idCurso] }),
+  })
+}
+
+export function useDeleteEvaluacion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteEvaluacion(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['evaluaciones'] }),
+  })
+}
+
+export function useDeleteProcesoAsignadoCurso() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteProcesoAsignadoCurso(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['procesos-curso'] }),
   })
 }

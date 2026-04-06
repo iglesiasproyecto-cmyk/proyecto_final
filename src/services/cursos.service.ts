@@ -179,3 +179,15 @@ export async function createModulo(
   if (error) throw error
   return mapModulo(result)
 }
+
+export async function deleteEvaluacion(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('evaluacion').delete().eq('id_evaluacion', id)
+  if (error) throw error
+}
+
+export async function deleteProcesoAsignadoCurso(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('proceso_asignado_curso').delete().eq('id_proceso_asignado_curso', id)
+  if (error) throw error
+}

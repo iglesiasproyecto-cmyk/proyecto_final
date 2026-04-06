@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useEvaluaciones } from "@/hooks/useCursos";
+import { useEvaluaciones, useDeleteEvaluacion } from "@/hooks/useCursos";
 import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -38,8 +38,7 @@ export function EvaluationsPage() {
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [cursoFilter, setCursoFilter] = useState("all");
 
-  // Stub mutations — Phase 3
-  const deleteEvaluacion = (_id: number) => { /* Phase 3 */ };
+  const deleteEvaluacionMutation = useDeleteEvaluacion();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -61,10 +60,10 @@ export function EvaluationsPage() {
   };
 
   const handleDelete = () => {
-    if (deleteTarget) {
-      deleteEvaluacion(deleteTarget);
-      setDeleteTarget(null);
-    }
+    if (!deleteTarget) return;
+    deleteEvaluacionMutation.mutate(deleteTarget, {
+      onSuccess: () => setDeleteTarget(null),
+    });
   };
 
   return (
@@ -159,7 +158,7 @@ export function EvaluationsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleDelete} disabled={deleteEvaluacionMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
