@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useEventos, useTiposEvento, useCreateEvento } from "@/hooks/useEventos";
+import { useApp } from "@/app/store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -22,6 +23,7 @@ const estadoColors: Record<string, string> = {
 };
 
 export function EventsPage() {
+  const { iglesiaActual } = useApp();
   const { data: eventos = [], isLoading } = useEventos();
   const { data: tiposEvento = [] } = useTiposEvento();
   const createEventoMutation = useCreateEvento();
@@ -45,7 +47,7 @@ export function EventsPage() {
         idTipoEvento: createForm.idTipoEvento,
         fechaInicio: createForm.fechaInicio,
         fechaFin: createForm.fechaFin,
-        idIglesia: 1,
+        idIglesia: iglesiaActual?.id ?? 0,
         idSede: null,
         idMinisterio: null,
       },
@@ -134,7 +136,7 @@ export function EventsPage() {
           <h1>Eventos de la Iglesia</h1>
           <p className="text-muted-foreground text-sm">Gestiona los eventos de la iglesia</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="shrink-0">
+        <Button onClick={() => setShowCreate(true)} disabled={!iglesiaActual} className="shrink-0">
           <Plus className="w-4 h-4 mr-2" /> Nuevo Evento
         </Button>
       </motion.div>
