@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getIglesias, getPastores, getIglesiaPastores, getSedes,
-  createIglesia, updateIglesia, toggleIglesiaEstado,
-  createSede, updateSede, toggleSedeEstado,
-  createPastor, updatePastor,
+  getIglesiasEnriquecidas, getPastoresEnriquecidos, getSedesEnriquecidas,
+  createIglesia, updateIglesia, toggleIglesiaEstado, deleteIglesia,
+  createSede, updateSede, toggleSedeEstado, deleteSede,
+  createPastor, updatePastor, deletePastor,
   createIglesiaPastor, closeIglesiaPastor,
 } from '@/services/iglesias.service'
 
@@ -23,6 +24,22 @@ export function useSedes(idIglesia?: number) {
   return useQuery({
     queryKey: ['sedes', idIglesia],
     queryFn: () => getSedes(idIglesia),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useIglesiasEnriquecidas() {
+  return useQuery({ queryKey: ['iglesias-enriquecidas'], queryFn: getIglesiasEnriquecidas, staleTime: 5 * 60 * 1000 })
+}
+
+export function usePastoresEnriquecidos() {
+  return useQuery({ queryKey: ['pastores-enriquecidos'], queryFn: getPastoresEnriquecidos, staleTime: 5 * 60 * 1000 })
+}
+
+export function useSedesEnriquecidas(idIglesia?: number) {
+  return useQuery({
+    queryKey: ['sedes-enriquecidas', idIglesia],
+    queryFn: () => getSedesEnriquecidas(idIglesia),
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -107,5 +124,39 @@ export function useCloseIglesiaPastor() {
   return useMutation({
     mutationFn: (id: number) => closeIglesiaPastor(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['iglesia-pastores'] }),
+  })
+}
+
+export function useDeleteIglesia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteIglesia(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['iglesias'] })
+      qc.invalidateQueries({ queryKey: ['iglesias-enriquecidas'] })
+    },
+  })
+}
+
+export function useDeleteSede() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteSede(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sedes'] })
+      qc.invalidateQueries({ queryKey: ['sedes-enriquecidas'] })
+      qc.invalidateQueries({ queryKey: ['iglesias-enriquecidas'] })
+    },
+  })
+}
+
+export function useDeletePastor() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deletePastor(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pastores'] })
+      qc.invalidateQueries({ queryKey: ['pastores-enriquecidos'] })
+    },
   })
 }
