@@ -88,6 +88,46 @@ function mapDetalle(r: DetalleRow): DetalleProcesoCurso {
   }
 }
 
+export interface CursoEnriquecido extends Curso {
+  cantidadModulos: number
+  cantidadInscritos: number
+}
+
+export interface EvaluacionEnriquecida extends Evaluacion {
+  moduloNombre: string
+  cursoNombre: string
+}
+
+export async function getCursosEnriquecidos(idSede?: number): Promise<CursoEnriquecido[]> {
+  let q = supabase
+    .from('curso')
+    .select('*, modulo(count), proceso_asignado_curso(count)')
+    .order('nombre')
+  if (idSede !== undefined) q = q.eq('id_sede', idSede)
+  const { data, error } = await q
+  if (error) throw error
+  return (data as any[]).map(r => ({
+    ...mapCurso(r),
+    cantidadModulos: Array.isArray(r.modulo) ? r.modulo[0]?.count ?? 0 : 0,
+    cantidadInscritos: Array.isArray(r.proceso_asignado_curso) ? r.proceso_asignado_curso[0]?.count ?? 0 : 0,
+  }))
+}
+
+export async function getEvaluacionesEnriquecidas(idModulo?: number): Promise<EvaluacionEnriquecida[]> {
+  let q = supabase
+    .from('evaluacion')
+    .select('*, modulo(titulo, curso(titulo))')
+    .order('created_at', { ascending: false })
+  if (idModulo !== undefined) q = q.eq('id_modulo', idModulo)
+  const { data, error } = await q
+  if (error) throw error
+  return (data as any[]).map(r => ({
+    ...mapEvaluacion(r),
+    moduloNombre: r.modulo?.titulo ?? '',
+    cursoNombre: r.modulo?.curso?.titulo ?? '',
+  }))
+}
+
 export async function getCursos(idMinisterio?: number): Promise<Curso[]> {
   let q = supabase
     .from('curso')
@@ -170,6 +210,29 @@ export async function createCurso(
   return mapCurso(result)
 }
 
+export async function updateCurso(
+  id: number,
+  data: { titulo?: string; descripcion?: string | null; estado?: string }
+): Promise<Curso> {
+  const patch: Record<string, unknown> = {}
+  if (data.titulo !== undefined) patch.titulo = data.titulo
+  if (data.descripcion !== undefined) patch.descripcion = data.descripcion
+  if (data.estado !== undefined) patch.estado = data.estado
+  const { data: result, error } = await supabase
+    .from('curso')
+    .update(patch)
+    .eq('id_curso', id)
+    .select()
+    .single()
+  if (error) throw error
+  return mapCurso(result)
+}
+
+export async function deleteCurso(id: number): Promise<void> {
+  const { error } = await supabase.from('curso').delete().eq('id_curso', id)
+  if (error) throw error
+}
+
 export async function createModulo(
   data: { titulo: string; descripcion: string | null; orden: number; idCurso: number }
 ): Promise<Modulo> {
@@ -186,6 +249,144 @@ export async function createModulo(
     .single()
   if (error) throw error
   return mapModulo(result)
+}
+
+export async function updateModulo(
+  id: number,
+  data: { titulo?: string; descripcion?: string | null; orden?: number }
+): Promise<Modulo> {
+  const patch: Record<string, unknown> = {}
+  if (data.titulo !== undefined) patch.titulo = data.titulo
+  if (data.descripcion !== undefined) patch.descripcion = data.descripcion
+  if (data.orden !== undefined) patch.orden = data.orden
+  const { data: result, error } = await supabase
+    .from('modulo')
+    .update(patch)
+    .eq('id_modulo', id)
+    .select()
+    .single()
+  if (error) throw error
+  return mapModulo(result)
+}
+
+export async function deleteModulo(id: number): Promise<void> {
+  const { error } = await supabase.from('modulo').delete().eq('id_modulo', id)
+  if (error) throw error
+}
+
+export async function createEvaluacion(data: {
+  idModulo: number
+  pregunta: string
+  opcionA: string
+  opcionB: string
+  opcionC: string
+  opcionD: string
+  respuestaCorrecta: string
+}): Promise<Evaluacion> {
+  const { data: result, error } = await supabase
+    .from('evaluacion')
+    .insert({
+      id_modulo: data.idModulo,
+      pregunta: data.pregunta,
+      opcion_a: data.opcionA,
+      opcion_b: data.opcionB,
+      opcion_c: data.opcionC,
+      opcion_d: data.opcionD,
+      respuesta_correcta: data.respuestaCorrecta,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return mapEvaluacion(result)
+}
+
+export async function updateEvaluacion(
+  id: number,
+  data: {
+    pregunta?: string
+    opcionA?: string
+    opcionB?: string
+    opcionC?: string
+    opcionD?: string
+    respuestaCorrecta?: string
+  }
+): Promise<Evaluacion> {
+  const patch: Record<string, unknown> = {}
+  if (data.pregunta !== undefined) patch.pregunta = data.pregunta
+  if (data.opcionA !== undefined) patch.opcion_a = data.opcionA
+  if (data.opcionB !== undefined) patch.opcion_b = data.opcionB
+  if (data.opcionC !== undefined) patch.opcion_c = data.opcionC
+  if (data.opcionD !== undefined) patch.opcion_d = data.opcionD
+  if (data.respuestaCorrecta !== undefined) patch.respuesta_correcta = data.respuestaCorrecta
+  const { data: result, error } = await supabase
+    .from('evaluacion')
+    .update(patch)
+    .eq('id_evaluacion', id)
+    .select()
+    .single()
+  if (error) throw error
+  return mapEvaluacion(result)
+}
+
+export async function createRecurso(data: {
+  idModulo: number
+  titulo: string
+  tipo: string
+  url: string
+}): Promise<Recurso> {
+  const { data: result, error } = await supabase
+    .from('recurso')
+    .insert({
+      id_modulo: data.idModulo,
+      titulo: data.titulo,
+      tipo: data.tipo,
+      url: data.url,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return mapRecurso(result)
+}
+
+export async function updateRecurso(
+  id: number,
+  data: { titulo?: string; tipo?: string; url?: string }
+): Promise<Recurso> {
+  const patch: Record<string, unknown> = {}
+  if (data.titulo !== undefined) patch.titulo = data.titulo
+  if (data.tipo !== undefined) patch.tipo = data.tipo
+  if (data.url !== undefined) patch.url = data.url
+  const { data: result, error } = await supabase
+    .from('recurso')
+    .update(patch)
+    .eq('id_recurso', id)
+    .select()
+    .single()
+  if (error) throw error
+  return mapRecurso(result)
+}
+
+export async function deleteRecurso(id: number): Promise<void> {
+  const { error } = await supabase.from('recurso').delete().eq('id_recurso', id)
+  if (error) throw error
+}
+
+export async function updateProcesoAsignadoCurso(
+  id: number,
+  data: { estado?: string; progreso?: number; fechaFin?: string | null }
+): Promise<ProcesoAsignadoCurso> {
+  const patch: Record<string, unknown> = {}
+  if (data.estado !== undefined) patch.estado = data.estado
+  if (data.progreso !== undefined) patch.progreso = data.progreso
+  if (data.fechaFin !== undefined) patch.fecha_fin = data.fechaFin
+  const { data: result, error } = await supabase
+    .from('proceso_asignado_curso')
+    .update(patch)
+    .eq('id_proceso_asignado_curso', id)
+    .select()
+    .single()
+  if (error) throw error
+  return mapProceso(result)
 }
 
 export async function deleteEvaluacion(id: number): Promise<void> {
