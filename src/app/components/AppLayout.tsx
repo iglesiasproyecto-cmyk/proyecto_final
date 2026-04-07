@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { useApp } from "../store/AppContext";
-import { useIglesias } from "@/hooks/useIglesias";
 import { Badge } from "./ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { motion, AnimatePresence } from "motion/react";
@@ -123,13 +122,11 @@ function groupBySection(items: NavItem[]) {
 }
 
 export function AppLayout() {
-  const { usuarioActual, logout, notificacionesCount, sidebarOpen, toggleSidebar, darkMode, toggleDarkMode, authLoading } = useApp();
-  const { data: iglesias = [] } = useIglesias();
+  const { usuarioActual, logout, notificacionesCount, sidebarOpen, toggleSidebar, darkMode, toggleDarkMode, authLoading, iglesiaActual, setIglesiaActual, iglesiasDelUsuario, rolActual } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [showChurchSelector, setShowChurchSelector] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeChurchId, setActiveChurchId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!authLoading && !usuarioActual) navigate("/login");
@@ -145,10 +142,9 @@ export function AppLayout() {
 
   if (!usuarioActual) return null;
 
-  // rol is not stored on Usuario; derive from session metadata when available
-  const rol = (usuarioActual as unknown as { rol?: string }).rol ?? "servidor";
+  const rol = rolActual;
   const unreadCount = notificacionesCount;
-  const activeChurch = iglesias.find((ig) => ig.idIglesia === activeChurchId);
+  const activeChurch = iglesiaActual;
   const navItems = getNavItemsForRole(rol);
   const navGroups = groupBySection(navItems);
   const showChurchSelectorPanel = rol !== "super_admin";
@@ -216,7 +212,7 @@ export function AppLayout() {
                 >
                   <Building2 className="w-4 h-4 text-sidebar-primary shrink-0" />
                   <span className="flex-1 text-left truncate text-xs">
-                    {activeChurch?.nombre || "Seleccionar iglesia"}
+                    {iglesiaActual?.nombre || "Seleccionar iglesia"}
                   </span>
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showChurchSelector ? "rotate-180" : ""}`} />
                 </button>
@@ -229,25 +225,23 @@ export function AppLayout() {
                       transition={{ duration: 0.15 }}
                       className="absolute top-full left-0 right-0 mt-1 bg-sidebar-accent rounded-lg border border-sidebar-border shadow-xl z-50 overflow-hidden origin-top"
                     >
-                      {iglesias
-                        .filter((ig) => ig.estado === "activa")
-                        .map((ig) => (
-                          <button
-                            key={ig.idIglesia}
-                            onClick={() => {
-                              setActiveChurchId(ig.idIglesia);
-                              setShowChurchSelector(false);
-                            }}
-                            className={`w-full text-left px-3 py-2.5 text-xs hover:bg-sidebar-border transition-colors flex items-center gap-2 ${
-                              ig.idIglesia === activeChurchId
-                                ? "text-sidebar-primary bg-sidebar-primary/10"
-                                : "text-sidebar-foreground"
-                            }`}
-                          >
-                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${ig.idIglesia === activeChurchId ? "bg-sidebar-primary" : "bg-sidebar-foreground/30"}`} />
-                            {ig.nombre}
-                          </button>
-                        ))}
+                      {iglesiasDelUsuario.map((ig) => (
+                        <button
+                          key={ig.id}
+                          onClick={() => {
+                            setIglesiaActual(ig);
+                            setShowChurchSelector(false);
+                          }}
+                          className={`w-full text-left px-3 py-2.5 text-xs hover:bg-sidebar-border transition-colors flex items-center gap-2 ${
+                            ig.id === iglesiaActual?.id
+                              ? "text-sidebar-primary bg-sidebar-primary/10"
+                              : "text-sidebar-foreground"
+                          }`}
+                        >
+                          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${ig.id === iglesiaActual?.id ? "bg-sidebar-primary" : "bg-sidebar-foreground/30"}`} />
+                          {ig.nombre}
+                        </button>
+                      ))}
                     </motion.div>
                   )}
                 </AnimatePresence>
