@@ -102,6 +102,81 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
 
 // ── Usuario mutations ──
 
+export async function updateUsuario(
+  id: number,
+  data: {
+    nombres?: string
+    apellidos?: string
+    telefono?: string | null
+  }
+): Promise<Usuario> {
+  const patch: Record<string, unknown> = {}
+  if (data.nombres !== undefined) patch.nombres = data.nombres
+  if (data.apellidos !== undefined) patch.apellidos = data.apellidos
+  if (data.telefono !== undefined) patch.telefono = data.telefono
+  const { data: result, error } = await supabase
+    .from('usuario')
+    .update(patch)
+    .eq('id_usuario', id)
+    .select()
+    .single()
+  if (error) throw error
+  return mapUsuario(result)
+}
+
+export async function assignRol(data: {
+  idUsuario: number
+  idRol: number
+  idIglesia: number
+  idSede?: number | null
+}): Promise<void> {
+  const { error } = await supabase
+    .from('usuario_rol')
+    .insert({
+      id_usuario: data.idUsuario,
+      id_rol: data.idRol,
+      id_iglesia: data.idIglesia,
+      id_sede: data.idSede ?? null,
+      fecha_inicio: new Date().toISOString().split('T')[0],
+      fecha_fin: null,
+    })
+  if (error) throw error
+}
+
+export async function removeRol(idUsuarioRol: number): Promise<void> {
+  const { error } = await supabase
+    .from('usuario_rol')
+    .update({ fecha_fin: new Date().toISOString().split('T')[0] })
+    .eq('id_usuario_rol', idUsuarioRol)
+  if (error) throw error
+}
+
+export async function inviteUser(data: {
+  correo: string
+  nombres: string
+  apellidos: string
+  idIglesia: number
+  idRol: number
+}): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('No hay sesión activa')
+  const res = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(data),
+    }
+  )
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }))
+    throw new Error(err.message ?? 'Error al invitar usuario')
+  }
+}
+
 export async function toggleUsuarioActivo(id: number): Promise<void> {
   const { data: current, error: fetchError } = await supabase
     .from('usuario').select('activo').eq('id_usuario', id).single()
