@@ -2,7 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getCursos, getModulos, getRecursos, getEvaluaciones,
   getProcesosAsignadoCurso, getDetallesProcesoCurso,
+  getCursosEnriquecidos, getEvaluacionesEnriquecidas,
   createCurso, createModulo,
+  updateCurso, deleteCurso, updateModulo, deleteModulo,
+  createEvaluacion, updateEvaluacion,
+  createRecurso, updateRecurso, deleteRecurso,
+  updateProcesoAsignadoCurso,
   deleteEvaluacion, deleteProcesoAsignadoCurso,
 } from '@/services/cursos.service'
 
@@ -57,6 +62,22 @@ export function useDetallesProcesoCurso(idProceso: number) {
   })
 }
 
+export function useCursosEnriquecidos(idSede?: number) {
+  return useQuery({
+    queryKey: ['cursos-enriquecidos', idSede],
+    queryFn: () => getCursosEnriquecidos(idSede),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useEvaluacionesEnriquecidas(idModulo?: number) {
+  return useQuery({
+    queryKey: ['evaluaciones-enriquecidas', idModulo],
+    queryFn: () => getEvaluacionesEnriquecidas(idModulo),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 export function useCreateCurso() {
   const qc = useQueryClient()
   return useMutation({
@@ -87,5 +108,116 @@ export function useDeleteProcesoAsignadoCurso() {
   return useMutation({
     mutationFn: (id: number) => deleteProcesoAsignadoCurso(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['procesos-curso'] }),
+  })
+}
+
+export function useUpdateCurso() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateCurso>[1] }) =>
+      updateCurso(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cursos'] })
+      qc.invalidateQueries({ queryKey: ['cursos-enriquecidos'] })
+    },
+  })
+}
+
+export function useDeleteCurso() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteCurso(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cursos'] })
+      qc.invalidateQueries({ queryKey: ['cursos-enriquecidos'] })
+    },
+  })
+}
+
+export function useUpdateModulo() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateModulo>[1] }) =>
+      updateModulo(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['modulos'] })
+      qc.invalidateQueries({ queryKey: ['cursos-enriquecidos'] })
+    },
+  })
+}
+
+export function useDeleteModulo() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteModulo(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['modulos'] })
+      qc.invalidateQueries({ queryKey: ['cursos-enriquecidos'] })
+    },
+  })
+}
+
+export function useCreateEvaluacion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof createEvaluacion>[0]) => createEvaluacion(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['evaluaciones'] })
+      qc.invalidateQueries({ queryKey: ['evaluaciones-enriquecidas'] })
+    },
+  })
+}
+
+export function useUpdateEvaluacion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateEvaluacion>[1] }) =>
+      updateEvaluacion(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['evaluaciones'] })
+      qc.invalidateQueries({ queryKey: ['evaluaciones-enriquecidas'] })
+    },
+  })
+}
+
+export function useCreateRecurso() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof createRecurso>[0]) => createRecurso(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recursos'] })
+    },
+  })
+}
+
+export function useUpdateRecurso() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateRecurso>[1] }) =>
+      updateRecurso(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recursos'] })
+    },
+  })
+}
+
+export function useDeleteRecurso() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteRecurso(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recursos'] })
+    },
+  })
+}
+
+export function useUpdateProcesoAsignadoCurso() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateProcesoAsignadoCurso>[1] }) =>
+      updateProcesoAsignadoCurso(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['procesos-curso'] })
+    },
   })
 }
