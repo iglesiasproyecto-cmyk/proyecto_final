@@ -199,3 +199,146 @@ export async function updateTareaEstado(id: number, estado: Tarea['estado']): Pr
   if (error) throw error
   return mapTarea(result)
 }
+
+// ── Enriched interfaces ──
+
+export interface EventoEnriquecido extends Evento {
+  tipoEventoNombre: string
+  cantidadTareas: number
+}
+
+export interface TareaEnriquecida extends Tarea {
+  eventoNombre: string
+  asignadosCount: number
+}
+
+// ── Enriched queries ──
+
+export async function getEventosEnriquecidos(idIglesia?: number): Promise<EventoEnriquecido[]> {
+  let q = supabase
+    .from('evento')
+    .select('*, tipo_evento(nombre), tarea(count)')
+    .order('fecha_inicio', { ascending: false })
+  if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
+  const { data, error } = await q
+  if (error) throw error
+  return (data as any[]).map(r => ({
+    ...mapEvento(r),
+    tipoEventoNombre: r.tipo_evento?.nombre ?? '',
+    cantidadTareas: Array.isArray(r.tarea) ? r.tarea[0]?.count ?? 0 : 0,
+  }))
+}
+
+export async function getTareasEnriquecidas(idEvento?: number): Promise<TareaEnriquecida[]> {
+  let q = supabase
+    .from('tarea')
+    .select('*, evento(nombre), tarea_asignada(count)')
+    .order('created_at', { ascending: false })
+  if (idEvento !== undefined) q = q.eq('id_evento', idEvento)
+  const { data, error } = await q
+  if (error) throw error
+  return (data as any[]).map(r => ({
+    ...mapTarea(r),
+    eventoNombre: r.evento?.nombre ?? '',
+    asignadosCount: Array.isArray(r.tarea_asignada) ? r.tarea_asignada[0]?.count ?? 0 : 0,
+  }))
+}
+
+// ── Evento update/delete ──
+
+export async function updateEvento(
+  id: number,
+  data: {
+    nombre?: string
+    descripcion?: string | null
+    fechaInicio?: string
+    fechaFin?: string | null
+    idTipoEvento?: number
+    estado?: string
+  }
+): Promise<Evento> {
+  const patch: Record<string, unknown> = {}
+  if (data.nombre !== undefined) patch.nombre = data.nombre
+  if (data.descripcion !== undefined) patch.descripcion = data.descripcion
+  if (data.fechaInicio !== undefined) patch.fecha_inicio = data.fechaInicio
+  if (data.fechaFin !== undefined) patch.fecha_fin = data.fechaFin
+  if (data.idTipoEvento !== undefined) patch.id_tipo_evento = data.idTipoEvento
+  if (data.estado !== undefined) patch.estado = data.estado
+  const { data: result, error } = await supabase
+    .from('evento')
+    .update(patch)
+    .eq('id_evento', id)
+    .select()
+    .single()
+  if (error) throw error
+  return mapEvento(result)
+}
+
+export async function deleteEvento(id: number): Promise<void> {
+  const { error } = await supabase.from('evento').delete().eq('id_evento', id)
+  if (error) throw error
+}
+
+// ── Tarea update/delete ──
+
+export async function updateTarea(
+  id: number,
+  data: {
+    titulo?: string
+    descripcion?: string | null
+    fechaLimite?: string | null
+    estado?: string
+    prioridad?: string
+  }
+): Promise<Tarea> {
+  const patch: Record<string, unknown> = {}
+  if (data.titulo !== undefined) patch.titulo = data.titulo
+  if (data.descripcion !== undefined) patch.descripcion = data.descripcion
+  if (data.fechaLimite !== undefined) patch.fecha_limite = data.fechaLimite
+  if (data.estado !== undefined) patch.estado = data.estado
+  if (data.prioridad !== undefined) patch.prioridad = data.prioridad
+  const { data: result, error } = await supabase
+    .from('tarea')
+    .update(patch)
+    .eq('id_tarea', id)
+    .select()
+    .single()
+  if (error) throw error
+  return mapTarea(result)
+}
+
+export async function deleteTarea(id: number): Promise<void> {
+  const { error } = await supabase.from('tarea').delete().eq('id_tarea', id)
+  if (error) throw error
+}
+
+// ── TareaAsignada CRUD ──
+
+export async function createTareaAsignada(data: {
+  idTarea: number
+  idUsuario: number
+}): Promise<void> {
+  const { error } = await supabase
+    .from('tarea_asignada')
+    .insert({ id_tarea: data.idTarea, id_usuario: data.idUsuario })
+  if (error) throw error
+}
+
+export async function updateTareaAsignada(
+  id: number,
+  data: { estado?: string; comentario?: string | null }
+): Promise<void> {
+  const patch: Record<string, unknown> = {}
+  if (data.estado !== undefined) patch.estado = data.estado
+  if (data.comentario !== undefined) patch.comentario = data.comentario
+  const { error } = await supabase
+    .from('tarea_asignada')
+    .update(patch)
+    .eq('id_tarea_asignada', id)
+  if (error) throw error
+}
+
+export async function deleteTareaAsignada(id: number): Promise<void> {
+  const { error } = await supabase.from('tarea_asignada').delete().eq('id_tarea_asignada', id)
+  if (error) throw error
+}
