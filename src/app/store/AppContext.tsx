@@ -7,6 +7,7 @@ interface AppState {
   session: Session | null
   usuarioActual: Usuario | null
   isAuthenticated: boolean
+  authLoading: boolean
   sidebarOpen: boolean
   notificacionesCount: number
   darkMode: boolean
@@ -20,6 +21,7 @@ const AppContext = createContext<AppState | undefined>(undefined)
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [usuarioActual, setUsuarioActual] = useState<Usuario | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [notificacionesCount, setNotificacionesCount] = useState(0)
   const [darkMode, setDarkMode] = useState(() => {
@@ -37,13 +39,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [darkMode])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
+    let callCounter = 0
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const callId = ++callCounter
       setSession(session)
       if (session) {
         const { data } = await supabase
@@ -51,6 +52,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           .select('*')
           .eq('auth_user_id', session.user.id)
           .single()
+        if (callId !== callCounter) return
         if (data) {
           setUsuarioActual({
             idUsuario: data.id_usuario,
@@ -70,12 +72,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             .select('*', { count: 'exact', head: true })
             .eq('id_usuario', data.id_usuario)
             .eq('leida', false)
+          if (callId !== callCounter) return
           setNotificacionesCount(count ?? 0)
         }
       } else {
+        if (callId !== callCounter) return
         setUsuarioActual(null)
         setNotificacionesCount(0)
       }
+      setAuthLoading(false)
     })
 
     return () => subscription.unsubscribe()
@@ -91,6 +96,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         session,
         usuarioActual,
         isAuthenticated: !!session,
+        authLoading,
         sidebarOpen,
         notificacionesCount,
         darkMode,

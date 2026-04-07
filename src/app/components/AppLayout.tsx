@@ -123,7 +123,7 @@ function groupBySection(items: NavItem[]) {
 }
 
 export function AppLayout() {
-  const { usuarioActual, logout, notificacionesCount, sidebarOpen, toggleSidebar, darkMode, toggleDarkMode } = useApp();
+  const { usuarioActual, logout, notificacionesCount, sidebarOpen, toggleSidebar, darkMode, toggleDarkMode, authLoading } = useApp();
   const { data: iglesias = [] } = useIglesias();
   const navigate = useNavigate();
   const location = useLocation();
@@ -132,8 +132,16 @@ export function AppLayout() {
   const [activeChurchId, setActiveChurchId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!usuarioActual) navigate("/login");
-  }, [usuarioActual, navigate]);
+    if (!authLoading && !usuarioActual) navigate("/login");
+  }, [authLoading, usuarioActual, navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   if (!usuarioActual) return null;
 
