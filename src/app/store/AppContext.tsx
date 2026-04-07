@@ -8,6 +8,10 @@ interface AppState {
   usuarioActual: Usuario | null
   isAuthenticated: boolean
   authLoading: boolean
+  iglesiaActual: { id: number; nombre: string } | null
+  setIglesiaActual: (ig: { id: number; nombre: string } | null) => void
+  iglesiasDelUsuario: { id: number; nombre: string }[]
+  rolActual: string
   sidebarOpen: boolean
   notificacionesCount: number
   darkMode: boolean
@@ -22,6 +26,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [usuarioActual, setUsuarioActual] = useState<Usuario | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [iglesiaActual, setIglesiaActual] = useState<{ id: number; nombre: string } | null>(null)
+  const [iglesiasDelUsuario, setIglesiasDelUsuario] = useState<{ id: number; nombre: string }[]>([])
+  const [rolActual, setRolActual] = useState<string>('servidor')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [notificacionesCount, setNotificacionesCount] = useState(0)
   const [darkMode, setDarkMode] = useState(() => {
@@ -74,11 +81,49 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             .eq('leida', false)
           if (callId !== callCounter) return
           setNotificacionesCount(count ?? 0)
+
+          // Fetch roles and iglesias for this user
+          const { data: roles } = await supabase
+            .from('usuario_rol')
+            .select('id_rol, fecha_fin, rol(nombre), iglesia(id_iglesia, nombre)')
+            .eq('id_usuario', data.id_usuario)
+            .is('fecha_fin', null)
+          if (callId !== callCounter) return
+
+          const rolesData = (roles as any[]) || []
+
+          // Derive highest role: super_admin > admin_iglesia > lider > servidor
+          const roleNames = rolesData.map((r: any) => r.rol?.nombre ?? '')
+          let derivedRol = 'servidor'
+          if (roleNames.includes('Super Administrador')) derivedRol = 'super_admin'
+          else if (roleNames.includes('Administrador de Iglesia')) derivedRol = 'admin_iglesia'
+          else if (roleNames.includes('Líder')) derivedRol = 'lider'
+          setRolActual(derivedRol)
+
+          // Build unique iglesia list from roles
+          const iglesiasMap = new Map<number, string>()
+          rolesData.forEach((r: any) => {
+            if (r.iglesia?.id_iglesia) {
+              iglesiasMap.set(r.iglesia.id_iglesia, r.iglesia.nombre)
+            }
+          })
+          const iglesias = Array.from(iglesiasMap.entries()).map(([id, nombre]) => ({ id, nombre }))
+          setIglesiasDelUsuario(iglesias)
+
+          // Auto-select if only one iglesia
+          if (iglesias.length === 1) {
+            setIglesiaActual(iglesias[0])
+          } else {
+            setIglesiaActual(null)
+          }
         }
       } else {
         if (callId !== callCounter) return
         setUsuarioActual(null)
         setNotificacionesCount(0)
+        setIglesiaActual(null)
+        setIglesiasDelUsuario([])
+        setRolActual('servidor')
       }
       setAuthLoading(false)
     })
@@ -97,6 +142,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         usuarioActual,
         isAuthenticated: !!session,
         authLoading,
+        iglesiaActual,
+        setIglesiaActual,
+        iglesiasDelUsuario,
+        rolActual,
         sidebarOpen,
         notificacionesCount,
         darkMode,
