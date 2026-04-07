@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getRoles, getUsuarios, getUsuarioRoles, toggleUsuarioActivo } from '@/services/usuarios.service'
+import { getRoles, getUsuarios, getUsuarioRoles, getUsuariosEnriquecidos, toggleUsuarioActivo } from '@/services/usuarios.service'
 
 export function useRoles() {
   return useQuery({
@@ -26,10 +26,21 @@ export function useUsuarioRoles(idUsuario: number) {
   })
 }
 
+export function useUsuariosEnriquecidos() {
+  return useQuery({
+    queryKey: ['usuarios-enriquecidos'],
+    queryFn: getUsuariosEnriquecidos,
+    staleTime: 60 * 1000,
+  })
+}
+
 export function useToggleUsuarioActivo() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => toggleUsuarioActivo(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['usuarios'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['usuarios'] })
+      qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })
+    },
   })
 }

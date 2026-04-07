@@ -68,6 +68,38 @@ export async function getUsuarioRoles(idUsuario: number): Promise<UsuarioRol[]> 
   return data.map(mapUsuarioRol)
 }
 
+export interface UsuarioEnriquecido extends Usuario {
+  roleNames: { rolNombre: string; iglesiaNombre: string }[]
+  minNames: { nombre: string; rol: string }[]
+}
+
+export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
+  const { data, error } = await supabase
+    .from('usuario')
+    .select(`
+      *,
+      usuario_rol ( id_usuario_rol, fecha_fin, rol ( nombre ), iglesia ( nombre ) ),
+      miembro_ministerio ( id_miembro_ministerio, activo, rol_en_ministerio, ministerio ( nombre ) )
+    `)
+    .order('apellidos')
+  if (error) throw error
+  return (data as any[]).map(r => ({
+    ...mapUsuario(r),
+    roleNames: ((r.usuario_rol as any[]) || [])
+      .filter((ur: any) => ur.fecha_fin === null)
+      .map((ur: any) => ({
+        rolNombre: ur.rol?.nombre ?? '',
+        iglesiaNombre: ur.iglesia?.nombre ?? '',
+      })),
+    minNames: ((r.miembro_ministerio as any[]) || [])
+      .filter((mm: any) => mm.activo)
+      .map((mm: any) => ({
+        nombre: mm.ministerio?.nombre ?? '',
+        rol: mm.rol_en_ministerio ?? '',
+      })),
+  }))
+}
+
 // ── Usuario mutations ──
 
 export async function toggleUsuarioActivo(id: number): Promise<void> {
