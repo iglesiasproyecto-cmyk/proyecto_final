@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  useMinisterios, useMiembrosMinisterio, useToggleMinisterioEstado, useCreateMinisterio,
+  useMinisteriosEnriquecidos, useDeleteMinisterio, useMiembrosMinisterio, useToggleMinisterioEstado, useCreateMinisterio,
 } from "@/hooks/useMinisterios";
 import type { Ministerio } from "@/types/app.types";
 import { Card } from "./ui/card";
@@ -10,7 +10,7 @@ import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
-import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound } from "lucide-react";
+import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2 } from "lucide-react";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-700", servidor: "bg-gray-100 text-gray-700" };
@@ -75,13 +75,19 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
 }
 
 export function DepartmentsPage() {
-  const { data: ministerios = [], isLoading } = useMinisterios();
+  const { data: ministerios = [], isLoading } = useMinisteriosEnriquecidos();
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedMin, setSelectedMin] = useState<number | null>(null);
 
   const toggleEstadoMutation = useToggleMinisterioEstado();
   const createMinisterioMutation = useCreateMinisterio();
+  const deleteMinisterioMutation = useDeleteMinisterio();
+
+  function handleDeleteMinisterio(id: number, nombre: string) {
+    if (!confirm(`¿Eliminar ministerio "${nombre}"? Esta acción no se puede deshacer.`)) return;
+    deleteMinisterioMutation.mutate(id);
+  }
   const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "" });
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
@@ -134,16 +140,24 @@ export function DepartmentsPage() {
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"><Users className="w-5 h-5 text-primary" /></div>
                 <Badge variant={m.estado === "activo" ? "default" : "secondary"} className="text-[10px]">{m.estado === "activo" ? "Activo" : "Inactivo"}</Badge>
               </div>
-              <h3 className="mb-1">{m.nombre}</h3>
+              <h3 className="mb-0.5">{m.nombre}</h3>
+              {m.sedeNombre && <p className="text-xs text-primary/70 mb-1">{m.sedeNombre}</p>}
               <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{m.descripcion}</p>
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-1 text-muted-foreground"><UserCog className="w-3.5 h-3.5" /><span className="text-xs">{m.liderNombre}</span></div>
-                <div className="flex items-center gap-1 text-muted-foreground"><UsersRound className="w-3.5 h-3.5" /><span className="text-xs">{m.cantidadMiembros}</span></div>
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <UsersRound className="w-3.5 h-3.5" />
+                  <span className="text-xs">{m.cantidadMiembros}</span>
+                  {m.cantidadMiembros > 0 && <Badge variant="secondary" className="text-[10px] px-1 py-0 ml-1">{m.cantidadMiembros} miembros</Badge>}
+                </div>
               </div>
               <div className="mt-3 pt-3 border-t flex gap-2">
                 <Button variant="outline" size="sm" className="flex-1" onClick={(e) => { e.stopPropagation(); }}><BookOpen className="w-4 h-4 mr-1" /> Aula</Button>
                 <Button variant={m.estado === "activo" ? "ghost" : "default"} size="sm" disabled={toggleEstadoMutation.isPending} onClick={(e) => { e.stopPropagation(); toggleEstadoMutation.mutate(m.idMinisterio); }}>
                   {m.estado === "activo" ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                </Button>
+                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={deleteMinisterioMutation.isPending} onClick={(e) => { e.stopPropagation(); handleDeleteMinisterio(m.idMinisterio, m.nombre); }}>
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </Card>
