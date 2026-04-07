@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCursos, useCreateCurso, useCreateModulo } from "@/hooks/useCursos";
+import { useCursosEnriquecidos, useDeleteCurso, useCreateCurso, useCreateModulo } from "@/hooks/useCursos";
 import { useMinisterios } from "@/hooks/useMinisterios";
 import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
@@ -13,7 +13,8 @@ export function ClassroomPage() {
   const { data: ministerios = [] } = useMinisterios();
   const [selectedMinId, setSelectedMinId] = useState<number | null>(null);
   const actualMinId = selectedMinId ?? ministerios[0]?.idMinisterio ?? 0;
-  const { data: cursos = [], isLoading } = useCursos(actualMinId || undefined);
+  const { data: cursos = [], isLoading } = useCursosEnriquecidos();
+  const deleteCursoMutation = useDeleteCurso();
   const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null);
   const [selectedModuloId, setSelectedModuloId] = useState<number | null>(null);
   const [expandedCursos, setExpandedCursos] = useState<Set<number>>(new Set());
@@ -55,6 +56,11 @@ export function ClassroomPage() {
       }
     );
   };
+
+  function handleDeleteCurso(id: number, nombre: string) {
+    if (!confirm(`¿Eliminar curso "${nombre}"? Se eliminarán todos sus módulos y evaluaciones.`)) return;
+    deleteCursoMutation.mutate(id);
+  }
 
   const handleCreateModulo = (idCurso: number) => {
     if (!moduloForm.titulo.trim()) return;
@@ -143,8 +149,17 @@ export function ClassroomPage() {
                     <p className="text-xs text-muted-foreground mt-0.5">{curso.descripcion}</p>
                   </div>
                   <Badge variant="secondary" className="text-xs shrink-0">{curso.estado}</Badge>
-                  <span className="text-xs text-muted-foreground shrink-0">{curso.modulos?.length || 0} módulos</span>
+                  {curso.cantidadModulos > 0 && <Badge variant="outline" className="text-xs shrink-0">{curso.cantidadModulos} módulos</Badge>}
+                  {curso.cantidadInscritos > 0 && <Badge variant="outline" className="text-xs shrink-0">{curso.cantidadInscritos} inscritos</Badge>}
                   {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteCurso(curso.idCurso, curso.nombre); }}
+                    disabled={deleteCursoMutation.isPending}
+                    className="ml-1 p-1 rounded hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors disabled:opacity-50"
+                    title="Eliminar curso"
+                  >
+                    <span className="text-xs">✕</span>
+                  </button>
                 </button>
                 {isExpanded && (
                   <div className="border-t bg-muted/20">
