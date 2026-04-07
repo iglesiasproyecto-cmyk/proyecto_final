@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useUsuarios, useRoles, useToggleUsuarioActivo } from "@/hooks/useUsuarios";
+import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo } from "@/hooks/useUsuarios";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, Phone } from "lucide-react";
 
 export function UsuariosPage() {
-  const { data: usuarios = [], isLoading } = useUsuarios();
+  const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
   const [search, setSearch] = useState("");
   const [filterEstado, setFilterEstado] = useState("all");
@@ -20,13 +20,6 @@ export function UsuariosPage() {
   const toggleActivoMutation = useToggleUsuarioActivo();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
-
-  // Role/ministry enrichment deferred to Phase 3 (requires per-user queries)
-  const enriched = usuarios.map(u => ({
-    ...u,
-    roleNames: [] as { rolNombre: string; iglesiaNombre: string }[],
-    minNames: [] as { nombre: string; rol: string }[],
-  }));
 
   const filtered = enriched.filter(u => {
     if (search) {
@@ -50,19 +43,19 @@ export function UsuariosPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card className="p-3 text-center">
-          <p className="text-2xl text-primary">{usuarios.length}</p>
+          <p className="text-2xl text-primary">{enriched.length}</p>
           <p className="text-xs text-muted-foreground">Total Usuarios</p>
         </Card>
         <Card className="p-3 text-center">
-          <p className="text-2xl text-green-600">{usuarios.filter(u => u.activo).length}</p>
+          <p className="text-2xl text-green-600">{enriched.filter(u => u.activo).length}</p>
           <p className="text-xs text-muted-foreground">Activos</p>
         </Card>
         <Card className="p-3 text-center">
-          <p className="text-2xl text-red-600">{usuarios.filter(u => !u.activo).length}</p>
+          <p className="text-2xl text-red-600">{enriched.filter(u => !u.activo).length}</p>
           <p className="text-xs text-muted-foreground">Inactivos</p>
         </Card>
         <Card className="p-3 text-center">
-          <p className="text-2xl text-blue-600">{usuarios.filter(u => u.ultimoAcceso).length}</p>
+          <p className="text-2xl text-blue-600">{enriched.filter(u => u.ultimoAcceso).length}</p>
           <p className="text-xs text-muted-foreground">Con acceso reciente</p>
         </Card>
       </div>
