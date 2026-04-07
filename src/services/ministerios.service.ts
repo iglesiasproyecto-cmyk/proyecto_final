@@ -30,6 +30,45 @@ function mapMiembro(r: MiembroRow): MiembroMinisterio {
   }
 }
 
+export interface MinisterioEnriquecido extends Ministerio {
+  cantidadMiembros: number
+  sedeNombre: string
+}
+
+export interface MiembroMinisterioEnriquecido extends MiembroMinisterio {
+  usuarioNombre: string
+  usuarioCorreo: string
+}
+
+export async function getMinisteriosEnriquecidos(idSede?: number): Promise<MinisterioEnriquecido[]> {
+  let q = supabase
+    .from('ministerio')
+    .select('*, miembro_ministerio(count), sede(nombre)')
+    .order('nombre')
+  if (idSede !== undefined) q = q.eq('id_sede', idSede)
+  const { data, error } = await q
+  if (error) throw error
+  return (data as any[]).map(r => ({
+    ...mapMinisterio(r),
+    cantidadMiembros: Array.isArray(r.miembro_ministerio) ? r.miembro_ministerio[0]?.count ?? 0 : 0,
+    sedeNombre: r.sede?.nombre ?? '',
+  }))
+}
+
+export async function getMiembrosMinisterioEnriquecidos(idMinisterio: number): Promise<MiembroMinisterioEnriquecido[]> {
+  const { data, error } = await supabase
+    .from('miembro_ministerio')
+    .select('*, usuario(nombres, apellidos, correo)')
+    .eq('id_ministerio', idMinisterio)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data as any[]).map(r => ({
+    ...mapMiembro(r),
+    usuarioNombre: `${r.usuario?.nombres ?? ''} ${r.usuario?.apellidos ?? ''}`.trim(),
+    usuarioCorreo: r.usuario?.correo ?? '',
+  }))
+}
+
 export async function getMinisterios(idSede?: number): Promise<Ministerio[]> {
   let q = supabase.from('ministerio').select('*').order('nombre')
   if (idSede !== undefined) q = q.eq('id_sede', idSede)
@@ -94,6 +133,33 @@ export async function createMiembroMinisterio(
   const { data: result, error } = await supabase
     .from('miembro_ministerio')
     .insert([{ id_usuario: data.idUsuario, id_ministerio: data.idMinisterio, rol_en_ministerio: data.rolEnMinisterio, fecha_ingreso: data.fechaIngreso }])
+    .select()
+    .single()
+  if (error) throw error
+  return mapMiembro(result)
+}
+
+export async function deleteMinisterio(id: number): Promise<void> {
+  const { error } = await supabase.from('ministerio').delete().eq('id_ministerio', id)
+  if (error) throw error
+}
+
+export async function deleteMiembroMinisterio(id: number): Promise<void> {
+  const { error } = await supabase.from('miembro_ministerio').delete().eq('id_miembro_ministerio', id)
+  if (error) throw error
+}
+
+export async function updateMiembroMinisterio(
+  id: number,
+  data: { cargo?: string | null; fechaFin?: string | null }
+): Promise<MiembroMinisterio> {
+  const patch: Record<string, unknown> = {}
+  if (data.cargo !== undefined) patch.rol_en_ministerio = data.cargo
+  if (data.fechaFin !== undefined) patch.fecha_salida = data.fechaFin
+  const { data: result, error } = await supabase
+    .from('miembro_ministerio')
+    .update(patch)
+    .eq('id_miembro_ministerio', id)
     .select()
     .single()
   if (error) throw error
