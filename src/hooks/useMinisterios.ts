@@ -1,8 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getMinisterios, getMiembrosMinisterio,
+  getMinisteriosEnriquecidos, getMiembrosMinisterioEnriquecidos,
   createMinisterio, updateMinisterio, toggleMinisterioEstado,
   createMiembroMinisterio,
+  deleteMinisterio, deleteMiembroMinisterio, updateMiembroMinisterio,
 } from '@/services/ministerios.service'
 
 export function useMinisterios(idSede?: number) {
@@ -18,6 +20,22 @@ export function useMiembrosMinisterio(idMinisterio: number) {
     queryKey: ['miembros-ministerio', idMinisterio],
     queryFn: () => getMiembrosMinisterio(idMinisterio),
     enabled: idMinisterio > 0,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useMinisteriosEnriquecidos(idSede?: number) {
+  return useQuery({
+    queryKey: ['ministerios-enriquecidos', idSede],
+    queryFn: () => getMinisteriosEnriquecidos(idSede),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useMiembrosMinisterioEnriquecidos(idMinisterio: number) {
+  return useQuery({
+    queryKey: ['miembros-ministerio-enriquecidos', idMinisterio],
+    queryFn: () => getMiembrosMinisterioEnriquecidos(idMinisterio),
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -53,5 +71,40 @@ export function useCreateMiembroMinisterio() {
     mutationFn: createMiembroMinisterio,
     onSuccess: (_data, variables) =>
       qc.invalidateQueries({ queryKey: ['miembros-ministerio', variables.idMinisterio] }),
+  })
+}
+
+export function useDeleteMinisterio() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteMinisterio(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ministerios'] })
+      qc.invalidateQueries({ queryKey: ['ministerios-enriquecidos'] })
+    },
+  })
+}
+
+export function useDeleteMiembroMinisterio() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteMiembroMinisterio(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['miembros-ministerio'] })
+      qc.invalidateQueries({ queryKey: ['miembros-ministerio-enriquecidos'] })
+      qc.invalidateQueries({ queryKey: ['ministerios-enriquecidos'] })
+    },
+  })
+}
+
+export function useUpdateMiembroMinisterio() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateMiembroMinisterio>[1] }) =>
+      updateMiembroMinisterio(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['miembros-ministerio'] })
+      qc.invalidateQueries({ queryKey: ['miembros-ministerio-enriquecidos'] })
+    },
   })
 }
