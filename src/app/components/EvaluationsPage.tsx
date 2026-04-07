@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useEvaluaciones, useDeleteEvaluacion } from "@/hooks/useCursos";
-import { useApp } from "../store/AppContext";
+import { useEvaluacionesEnriquecidas, useDeleteEvaluacion } from "@/hooks/useCursos";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -32,8 +31,7 @@ const estadoEvalLabels: Record<string, string> = {
 };
 
 export function EvaluationsPage() {
-  const { usuarioActual } = useApp();
-  const { data: evaluaciones = [], isLoading } = useEvaluaciones(usuarioActual?.idUsuario);
+  const { data: evaluaciones = [], isLoading } = useEvaluacionesEnriquecidas();
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [cursoFilter, setCursoFilter] = useState("all");
@@ -42,10 +40,10 @@ export function EvaluationsPage() {
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
-  const uniqueCursos = [...new Set(evaluaciones.map((e) => e.nombreCurso).filter(Boolean))] as string[];
+  const uniqueCursos = [...new Set(evaluaciones.map((e) => e.cursoNombre).filter(Boolean))] as string[];
 
   const filtered = evaluaciones.filter((ev) => {
-    const matchCurso = cursoFilter === "all" || ev.nombreCurso === cursoFilter;
+    const matchCurso = cursoFilter === "all" || ev.cursoNombre === cursoFilter;
     return matchCurso;
   });
 
@@ -84,7 +82,7 @@ export function EvaluationsPage() {
             <p className="text-xs text-muted-foreground mt-1">{evaluaciones.length} evaluacion(es)</p>
           </Card>
           {uniqueCursos.map((c) => {
-            const cursoEvals = evaluaciones.filter((e) => e.nombreCurso === c && e.calificacion !== null);
+            const cursoEvals = evaluaciones.filter((e) => e.cursoNombre === c && e.calificacion !== null);
             const avg = cursoEvals.length > 0 ? cursoEvals.reduce((sum, e) => sum + (e.calificacion || 0), 0) / cursoEvals.length : 0;
             return (
               <Card key={c} className="p-4">
@@ -126,8 +124,8 @@ export function EvaluationsPage() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="secondary" className="text-xs">{ev.nombreCurso}</Badge>
-                      <span className="text-xs text-muted-foreground">{ev.tituloModulo}</span>
+                      <Badge variant="secondary" className="text-xs">{ev.cursoNombre}</Badge>
+                      <span className="text-xs text-muted-foreground">{ev.moduloNombre}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       {renderCalificacion(ev.calificacion)}

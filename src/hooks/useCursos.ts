@@ -99,7 +99,10 @@ export function useDeleteEvaluacion() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => deleteEvaluacion(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['evaluaciones'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['evaluaciones'] })
+      qc.invalidateQueries({ queryKey: ['evaluaciones-enriquecidas'] })
+    },
   })
 }
 
