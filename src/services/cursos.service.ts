@@ -89,11 +89,19 @@ function mapDetalle(r: DetalleRow): DetalleProcesoCurso {
 }
 
 export async function getCursos(idMinisterio?: number): Promise<Curso[]> {
-  let q = supabase.from('curso').select('*').order('nombre')
+  let q = supabase
+    .from('curso')
+    .select('*, modulo(*)')
+    .order('nombre')
   if (idMinisterio !== undefined) q = q.eq('id_ministerio', idMinisterio)
   const { data, error } = await q
   if (error) throw error
-  return data.map(mapCurso)
+  return (data as any[]).map(r => ({
+    ...mapCurso(r),
+    modulos: Array.isArray(r.modulo)
+      ? (r.modulo as any[]).map(mapModulo)
+      : [],
+  }))
 }
 
 export async function getModulos(idCurso: number): Promise<Modulo[]> {
