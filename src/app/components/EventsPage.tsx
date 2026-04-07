@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useEventos, useTiposEvento, useCreateEvento } from "@/hooks/useEventos";
+import { useEventosEnriquecidos, useDeleteEvento, useTiposEvento, useCreateEvento } from "@/hooks/useEventos";
 import { useApp } from "@/app/store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -24,9 +24,10 @@ const estadoColors: Record<string, string> = {
 
 export function EventsPage() {
   const { iglesiaActual } = useApp();
-  const { data: eventos = [], isLoading } = useEventos();
+  const { data: eventos = [], isLoading } = useEventosEnriquecidos(iglesiaActual?.id);
   const { data: tiposEvento = [] } = useTiposEvento();
   const createEventoMutation = useCreateEvento();
+  const deleteEventoMutation = useDeleteEvento();
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({
     nombre: "",
@@ -59,6 +60,11 @@ export function EventsPage() {
       }
     );
   };
+
+  function handleDeleteEvento(id: number, nombre: string) {
+    if (!confirm(`¿Eliminar evento "${nombre}"? Se eliminarán sus tareas asociadas.`)) return;
+    deleteEventoMutation.mutate(id);
+  }
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -99,11 +105,20 @@ export function EventsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="text-sm">{evento.nombre}</h4>
-                        <div className="flex gap-1.5 shrink-0">
+                        <div className="flex gap-1.5 shrink-0 items-center">
                           <Badge variant="outline" className={`${scope.color} border-0 text-[10px] flex items-center gap-1`}>
                             {scope.icon} {isGlobal ? "Global" : evento.ministerioNombre}
                           </Badge>
                           <Badge variant="outline" className={`${estadoColors[evento.estado]} border-0 text-[10px]`}>{evento.estado}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                            disabled={deleteEventoMutation.isPending}
+                            onClick={() => handleDeleteEvento(evento.idEvento, evento.nombre)}
+                          >
+                            ×
+                          </Button>
                         </div>
                       </div>
                       {evento.descripcion && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{evento.descripcion}</p>}
@@ -117,6 +132,11 @@ export function EventsPage() {
                           <Clock className="w-3 h-3" /> {formatDateTime(evento.fechaInicio)}
                         </span>
                         {evento.tipoEventoNombre && <Badge variant="secondary" className="text-[10px]">{evento.tipoEventoNombre}</Badge>}
+                        {evento.cantidadTareas > 0 && (
+                          <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-accent/50 px-2 py-0.5 rounded-full">
+                            {evento.cantidadTareas} tareas
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
