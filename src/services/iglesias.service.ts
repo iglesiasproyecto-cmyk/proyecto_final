@@ -59,6 +59,64 @@ function mapSede(r: SedeRow): Sede {
   }
 }
 
+export interface IglesiaEnriquecida extends Iglesia {
+  cantidadSedes: number
+  ciudadNombre: string
+  departamentoNombre: string
+}
+
+export interface PastorEnriquecido extends Pastor {
+  iglesiasActivas: string[]
+}
+
+export interface SedeEnriquecida extends Sede {
+  cantidadMinisterios: number
+  ciudadNombre: string
+}
+
+export async function getIglesiasEnriquecidas(): Promise<IglesiaEnriquecida[]> {
+  const { data, error } = await supabase
+    .from('iglesia')
+    .select('*, sede(count), ciudad(nombre, departamento(nombre))')
+    .order('nombre')
+  if (error) throw error
+  return (data as any[]).map(r => ({
+    ...mapIglesia(r),
+    cantidadSedes: Array.isArray(r.sede) ? r.sede[0]?.count ?? 0 : 0,
+    ciudadNombre: r.ciudad?.nombre ?? '',
+    departamentoNombre: r.ciudad?.departamento?.nombre ?? '',
+  }))
+}
+
+export async function getPastoresEnriquecidos(): Promise<PastorEnriquecido[]> {
+  const { data, error } = await supabase
+    .from('pastor')
+    .select('*, iglesia_pastor(fecha_fin, iglesia(nombre))')
+    .order('apellidos')
+  if (error) throw error
+  return (data as any[]).map(r => ({
+    ...mapPastor(r),
+    iglesiasActivas: ((r.iglesia_pastor as any[]) || [])
+      .filter((ip: any) => ip.fecha_fin === null)
+      .map((ip: any) => ip.iglesia?.nombre ?? ''),
+  }))
+}
+
+export async function getSedesEnriquecidas(idIglesia?: number): Promise<SedeEnriquecida[]> {
+  let q = supabase
+    .from('sede')
+    .select('*, ministerio(count), ciudad(nombre)')
+    .order('nombre')
+  if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
+  const { data, error } = await q
+  if (error) throw error
+  return (data as any[]).map(r => ({
+    ...mapSede(r),
+    cantidadMinisterios: Array.isArray(r.ministerio) ? r.ministerio[0]?.count ?? 0 : 0,
+    ciudadNombre: r.ciudad?.nombre ?? '',
+  }))
+}
+
 export async function getIglesias(): Promise<Iglesia[]> {
   const { data, error } = await supabase.from('iglesia').select('*').order('nombre')
   if (error) throw error
@@ -214,5 +272,20 @@ export async function closeIglesiaPastor(id: number): Promise<void> {
     .from('iglesia_pastor')
     .update({ fecha_fin: new Date().toISOString().split('T')[0] })
     .eq('id_iglesia_pastor', id)
+  if (error) throw error
+}
+
+export async function deleteIglesia(id: number): Promise<void> {
+  const { error } = await supabase.from('iglesia').delete().eq('id_iglesia', id)
+  if (error) throw error
+}
+
+export async function deleteSede(id: number): Promise<void> {
+  const { error } = await supabase.from('sede').delete().eq('id_sede', id)
+  if (error) throw error
+}
+
+export async function deletePastor(id: number): Promise<void> {
+  const { error } = await supabase.from('pastor').delete().eq('id_pastor', id)
   if (error) throw error
 }
