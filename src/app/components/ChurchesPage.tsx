@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useIglesias, useCreateIglesia, useUpdateIglesia, useToggleIglesiaEstado } from "@/hooks/useIglesias";
+import { useIglesiasEnriquecidas, useCreateIglesia, useUpdateIglesia, useToggleIglesiaEstado, useDeleteIglesia } from "@/hooks/useIglesias";
 import type { Iglesia } from "@/types/app.types";
+import type { IglesiaEnriquecida } from "@/services/iglesias.service";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -25,16 +26,17 @@ interface IglesiaFormData {
 }
 
 export function ChurchesPage() {
-  const { data: iglesias = [], isLoading } = useIglesias();
+  const { data: iglesias = [], isLoading } = useIglesiasEnriquecidas();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "activa" | "inactiva">("all");
   const [showCreate, setShowCreate] = useState(false);
-  const [editingIglesia, setEditingIglesia] = useState<Iglesia | null>(null);
+  const [editingIglesia, setEditingIglesia] = useState<IglesiaEnriquecida | null>(null);
   const [form, setForm] = useState<IglesiaFormData>({ nombre: "", fechaFundacion: "", idCiudad: 0 });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof IglesiaFormData, string>>>({});
   const createIglesiaMutation = useCreateIglesia();
   const updateIglesiaMutation = useUpdateIglesia();
   const toggleEstadoMutation = useToggleIglesiaEstado();
+  const deleteIglesiaMutation = useDeleteIglesia();
   const { data: ciudades = [] } = useCiudades();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
@@ -66,6 +68,11 @@ export function ChurchesPage() {
       { nombre: form.nombre.trim(), fechaFundacion: form.fechaFundacion || null, estado: "activa", idCiudad: Number(form.idCiudad) },
       { onSuccess: () => setShowCreate(false) }
     );
+  };
+
+  const handleDeleteIglesia = (id: number, nombre: string) => {
+    if (!confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`)) return;
+    deleteIglesiaMutation.mutate(id);
   };
 
   const filtered = iglesias.filter((ig) => {
@@ -137,7 +144,12 @@ export function ChurchesPage() {
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                   <Building2 className="w-6 h-6 text-primary" />
                 </div>
-                <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className="text-[10px]">{estadoLabels[ig.estado]}</Badge>
+                <div className="flex items-center gap-1.5">
+                  {ig.cantidadSedes > 0 && (
+                    <Badge variant="outline" className="text-[10px]">{ig.cantidadSedes} {ig.cantidadSedes === 1 ? "sede" : "sedes"}</Badge>
+                  )}
+                  <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className="text-[10px]">{estadoLabels[ig.estado]}</Badge>
+                </div>
               </div>
               <h3 className="mb-1">{ig.nombre}</h3>
               {ig.fechaFundacion && (
@@ -148,9 +160,12 @@ export function ChurchesPage() {
               <div className="space-y-1.5 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">{ig.ciudadNombre || "--"}</span>
+                  <span className="truncate">
+                    {ig.ciudadNombre || "--"}
+                    {ig.departamentoNombre ? `, ${ig.departamentoNombre}` : ""}
+                  </span>
                 </div>
-                {ig.departamentoGeoNombre && (
+                {ig.departamentoGeoNombre && !ig.departamentoNombre && (
                   <div className="flex items-center gap-2">
                     <Globe className="w-3.5 h-3.5 shrink-0" />
                     <span>{ig.departamentoGeoNombre}, {ig.paisNombre}</span>
@@ -163,6 +178,16 @@ export function ChurchesPage() {
                 </Button>
                 <Button variant={ig.estado === "activa" ? "destructive" : "default"} size="sm" onClick={() => toggleEstadoMutation.mutate(ig.idIglesia)} title={ig.estado === "activa" ? "Desactivar" : "Activar"}>
                   {ig.estado === "activa" ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive/10"
+                  onClick={() => handleDeleteIglesia(ig.idIglesia, ig.nombre)}
+                  disabled={deleteIglesiaMutation.isPending}
+                  title="Eliminar iglesia"
+                >
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
             </Card>
