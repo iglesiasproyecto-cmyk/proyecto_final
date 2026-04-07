@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useMinisterios, useMiembrosMinisterio, useCreateMiembroMinisterio } from "@/hooks/useMinisterios";
+import { useMinisterios, useMiembrosMinisterioEnriquecidos, useCreateMiembroMinisterio, useDeleteMiembroMinisterio, useUpdateMiembroMinisterio } from "@/hooks/useMinisterios";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { motion } from "motion/react";
-import { Plus, Search, Mail, Phone, Filter, Inbox } from "lucide-react";
+import { Plus, Search, Mail, Phone, Filter, Inbox, Trash2 } from "lucide-react";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-700", servidor: "bg-gray-100 text-gray-700" };
@@ -16,8 +16,10 @@ export function MembersPage() {
   const [search, setSearch] = useState("");
   const [selectedMinisterioId, setSelectedMinisterioId] = useState<number>(0);
   const [showInvite, setShowInvite] = useState(false);
-  const { data: miembros = [], isLoading: miembrosLoading } = useMiembrosMinisterio(selectedMinisterioId);
+  const { data: miembros = [], isLoading: miembrosLoading } = useMiembrosMinisterioEnriquecidos(selectedMinisterioId);
   const createMiembroMutation = useCreateMiembroMinisterio();
+  const deleteMiembroMutation = useDeleteMiembroMinisterio();
+  const updateMiembroMutation = useUpdateMiembroMinisterio();
   const [inviteForm, setInviteForm] = useState({ idUsuario: 0, rolEnMinisterio: "servidor" });
 
   const isLoading = ministeriosLoading || miembrosLoading;
@@ -25,9 +27,14 @@ export function MembersPage() {
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
   const filtered = miembros.filter((mm) => {
-    const matchSearch = (mm.nombreCompleto || "").toLowerCase().includes(search.toLowerCase()) || (mm.correo || "").toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (mm.usuarioNombre || mm.nombreCompleto || "").toLowerCase().includes(search.toLowerCase()) || (mm.usuarioCorreo || mm.correo || "").toLowerCase().includes(search.toLowerCase());
     return matchSearch;
   });
+
+  function handleDeleteMiembro(id: number, nombre: string) {
+    if (!confirm(`¿Eliminar a "${nombre}" del ministerio?`)) return;
+    deleteMiembroMutation.mutate(id);
+  }
 
   const handleInvite = () => {
     if (!inviteForm.idUsuario || !selectedMinisterioId) return;
@@ -79,6 +86,7 @@ export function MembersPage() {
                 <th className="text-left px-4 py-3 text-xs text-muted-foreground uppercase tracking-wider hidden md:table-cell">Contacto</th>
                 <th className="text-left px-4 py-3 text-xs text-muted-foreground uppercase tracking-wider">Rol</th>
                 <th className="text-left px-4 py-3 text-xs text-muted-foreground uppercase tracking-wider">Estado</th>
+                <th className="px-4 py-3 text-xs text-muted-foreground uppercase tracking-wider text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -86,16 +94,16 @@ export function MembersPage() {
                 <tr key={mm.idMiembroMinisterio} className="border-b last:border-0 hover:bg-accent/30 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm shrink-0">{(mm.nombreCompleto || "?").charAt(0)}</div>
+                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm shrink-0">{(mm.usuarioNombre || mm.nombreCompleto || "?").charAt(0)}</div>
                       <div>
-                        <p className="text-sm">{mm.nombreCompleto}</p>
-                        <p className="text-xs text-muted-foreground md:hidden">{mm.correo}</p>
+                        <p className="text-sm">{mm.usuarioNombre || mm.nombreCompleto}</p>
+                        <p className="text-xs text-muted-foreground md:hidden">{mm.usuarioCorreo || mm.correo}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell">
                     <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Mail className="w-3 h-3" /> {mm.correo}</div>
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Mail className="w-3 h-3" /> {mm.usuarioCorreo || mm.correo}</div>
                       <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Phone className="w-3 h-3" /> {mm.telefono}</div>
                     </div>
                   </td>
@@ -104,6 +112,18 @@ export function MembersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant={mm.activo ? "secondary" : "outline"} className="text-xs">{mm.activo ? "Activo" : "Inactivo"}</Badge>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDeleteMiembro(mm.idMiembroMinisterio, mm.usuarioNombre || mm.nombreCompleto || String(mm.idMiembroMinisterio))}
+                      disabled={deleteMiembroMutation.isPending}
+                      title="Eliminar miembro"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </td>
                 </tr>
               ))}
