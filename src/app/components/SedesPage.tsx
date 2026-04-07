@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useSedes, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado } from "@/hooks/useIglesias";
+import { useSedesEnriquecidas, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado, useDeleteSede } from "@/hooks/useIglesias";
+import { useApp } from "@/app/store/AppContext";
 import { useCiudades } from "@/hooks/useGeografia";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -8,10 +9,11 @@ import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Building2, Plus, Pencil, Search, ToggleLeft, ToggleRight } from "lucide-react";
+import { Building2, Plus, Pencil, Search, ToggleLeft, ToggleRight, Trash2 } from "lucide-react";
 
 export function SedesPage() {
-  const { data: sedes = [], isLoading } = useSedes();
+  const { iglesiaActual } = useApp();
+  const { data: sedes = [], isLoading } = useSedesEnriquecidas(iglesiaActual?.id);
   const { data: iglesias = [] } = useIglesias();
   const { data: ciudades = [] } = useCiudades();
   const [search, setSearch] = useState("");
@@ -24,6 +26,7 @@ export function SedesPage() {
   const createSedeMutation = useCreateSede()
   const updateSedeMutation = useUpdateSede()
   const toggleSedeMutation = useToggleSedeEstado()
+  const deleteSedeMutation = useDeleteSede()
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -43,6 +46,11 @@ export function SedesPage() {
       { nombre: form.nombre, direccion: form.direccion || null, idCiudad: form.idCiudad, idIglesia: form.idIglesia, estado: form.estado },
       { onSuccess: () => { setEditing(null); setDialog(false); } }
     );
+  };
+
+  const handleDeleteSede = (id: number, nombre: string) => {
+    if (!confirm(`¿Eliminar sede "${nombre}"?`)) return;
+    deleteSedeMutation.mutate(id);
   };
 
   const lookupIglesia = (idIglesia: number) => iglesias.find(i => i.idIglesia === idIglesia)?.nombre || "-";
@@ -94,6 +102,8 @@ export function SedesPage() {
             <TableRow>
               <TableHead>Sede</TableHead>
               <TableHead>Iglesia</TableHead>
+              <TableHead>Ciudad</TableHead>
+              <TableHead>Ministerios</TableHead>
               <TableHead>Direccion</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -104,6 +114,8 @@ export function SedesPage() {
               <TableRow key={s.idSede}>
                 <TableCell className="text-sm">{s.nombre}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{lookupIglesia(s.idIglesia)}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{s.ciudadNombre || "-"}</TableCell>
+                <TableCell className="text-xs text-center">{s.cantidadMinisterios}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{s.direccion || "-"}</TableCell>
                 <TableCell><Badge className={`text-xs ${estadoColor(s.estado)}`}>{s.estado}</Badge></TableCell>
                 <TableCell className="text-right">
@@ -112,12 +124,13 @@ export function SedesPage() {
                     <Button variant="ghost" size="sm" onClick={() => toggleSedeMutation.mutate(s.idSede)}>
                       {s.estado === "activa" ? <ToggleRight className="w-3.5 h-3.5 text-green-600" /> : <ToggleLeft className="w-3.5 h-3.5 text-muted-foreground" />}
                     </Button>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteSede(s.idSede, s.nombre)} disabled={deleteSedeMutation.isPending}><Trash2 className="w-3.5 h-3.5" /></Button>
                   </div>
                 </TableCell>
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-8">No se encontraron sedes</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">No se encontraron sedes</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

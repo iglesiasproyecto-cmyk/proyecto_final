@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  usePastores, useIglesias, useIglesiaPastores,
-  useCreatePastor, useUpdatePastor,
+  usePastoresEnriquecidos, useIglesias, useIglesiaPastores,
+  useCreatePastor, useUpdatePastor, useDeletePastor,
   useCreateIglesiaPastor, useCloseIglesiaPastor,
 } from "@/hooks/useIglesias";
 import { useUsuarios } from "@/hooks/useUsuarios";
@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { UserCheck, Plus, Pencil, Trash2, Search, Link2, Church, Mail, Phone } from "lucide-react";
 
 export function PastoresPage() {
-  const { data: pastores = [], isLoading } = usePastores();
+  const { data: pastores = [], isLoading } = usePastoresEnriquecidos();
   const { data: iglesiaPastores = [] } = useIglesiaPastores();
   const { data: iglesias = [] } = useIglesias();
   const { data: usuarios = [] } = useUsuarios();
@@ -35,10 +35,16 @@ export function PastoresPage() {
 
   const createPastorMutation = useCreatePastor()
   const updatePastorMutation = useUpdatePastor()
+  const deletePastorMutation = useDeletePastor()
   const createAsignMutation = useCreateIglesiaPastor()
   const closeAsignMutation = useCloseIglesiaPastor()
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+
+  const handleDeletePastor = (id: number, nombre: string) => {
+    if (!confirm(`¿Eliminar pastor "${nombre}"?`)) return;
+    deletePastorMutation.mutate(id);
+  };
 
   const openAddPastor = () => { setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 }); setEditingPastor(null); setDialogPastor(true); };
   const openEditPastor = (id: number) => {
@@ -121,8 +127,20 @@ export function PastoresPage() {
                         {p.telefono && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Phone className="w-3 h-3" /> {p.telefono}</div>}
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => openEditPastor(p.idPastor)}><Pencil className="w-3.5 h-3.5" /></Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => openEditPastor(p.idPastor)}><Pencil className="w-3.5 h-3.5" /></Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeletePastor(p.idPastor, `${p.nombres} ${p.apellidos}`)} disabled={deletePastorMutation.isPending}><Trash2 className="w-3.5 h-3.5" /></Button>
+                    </div>
                   </div>
+                  {p.iglesiasActivas.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {p.iglesiasActivas.map((nombre, i) => (
+                        <Badge key={i} variant="secondary" className="text-xs">
+                          <Church className="w-3 h-3 mr-1" /> {nombre}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {asignaciones.map(a => (
                       <Badge key={a.idIglesiaPastor} variant={a.esPrincipal ? "default" : "secondary"} className="text-xs">
