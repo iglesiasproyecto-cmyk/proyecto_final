@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTareas, useCreateTarea, useUpdateTareaEstado } from "@/hooks/useEventos";
+import { useTareasEnriquecidas, useCreateTarea, useUpdateTareaEstado, useDeleteTarea } from "@/hooks/useEventos";
 import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -7,7 +7,7 @@ import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { motion } from "motion/react";
-import { ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar, ChevronRight, Inbox } from "lucide-react";
+import { ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar, ChevronRight, Inbox, Trash2, Users } from "lucide-react";
 
 const statusConfig = {
   pendiente: { label: "Pendiente", color: "bg-amber-100 text-amber-700", headerBg: "from-amber-500 to-orange-500", icon: <AlertCircle className="w-4 h-4" /> },
@@ -25,9 +25,10 @@ const prioridadConfig: Record<string, { label: string; color: string; dot: strin
 
 export function TasksPage() {
   const { usuarioActual } = useApp();
-  const { data: tareas = [], isLoading } = useTareas();
+  const { data: tareas = [], isLoading } = useTareasEnriquecidas();
   const createTareaMutation = useCreateTarea();
   const updateEstadoMutation = useUpdateTareaEstado();
+  const deleteTareaMutation = useDeleteTarea();
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState<number | null>(null);
   const [createForm, setCreateForm] = useState({
@@ -38,6 +39,11 @@ export function TasksPage() {
   });
 
   const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" });
+
+  const handleDeleteTarea = (id: number, titulo: string) => {
+    if (!confirm(`¿Eliminar tarea "${titulo}"?`)) return;
+    deleteTareaMutation.mutate(id);
+  };
 
   const handleCreateTarea = () => {
     if (!createForm.titulo.trim() || !usuarioActual) return;
@@ -127,8 +133,20 @@ export function TasksPage() {
                           <h4 className="text-sm leading-snug">{t.titulo}</h4>
                           <div className="flex items-center gap-1 shrink-0">
                             <span className={`w-2 h-2 rounded-full ${prio.dot}`} title={prio.label} />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="w-5 h-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteTarea(t.idTarea, t.titulo); }}
+                              disabled={deleteTareaMutation.isPending}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
                           </div>
                         </div>
+                        {t.eventoNombre && (
+                          <p className="text-[10px] text-primary/70 mb-1 truncate">{t.eventoNombre}</p>
+                        )}
                         <p className="text-xs text-muted-foreground mb-2.5 line-clamp-2">{t.descripcion}</p>
                         <div className="flex items-center gap-2 flex-wrap">
                           {t.fechaLimite && (
@@ -137,6 +155,11 @@ export function TasksPage() {
                             </span>
                           )}
                           <Badge variant="outline" className={`text-[10px] ${prio.color} border-0 px-1.5 py-0`}>{prio.label}</Badge>
+                          {t.asignadosCount > 0 && (
+                            <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-accent/50 px-2 py-0.5 rounded-full ml-auto">
+                              <Users className="w-3 h-3" />{t.asignadosCount}
+                            </span>
+                          )}
                         </div>
                         {t.asignados && t.asignados.length > 0 && (
                           <div className="flex items-center gap-1.5 mt-2">
@@ -189,7 +212,10 @@ export function TasksPage() {
         <DialogContent className="sm:max-w-md">
           {task && (
             <>
-              <DialogHeader><DialogTitle>{task.titulo}</DialogTitle></DialogHeader>
+              <DialogHeader>
+                <DialogTitle>{task.titulo}</DialogTitle>
+                {task.eventoNombre && <p className="text-xs text-primary/70 mt-0.5">{task.eventoNombre}</p>}
+              </DialogHeader>
               <div className="space-y-4">
                 <div>
                   <label className="text-xs text-muted-foreground">Descripcion</label>
@@ -231,6 +257,15 @@ export function TasksPage() {
                 )}
               </div>
               <DialogFooter>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="mr-auto"
+                  disabled={deleteTareaMutation.isPending}
+                  onClick={() => { handleDeleteTarea(task.idTarea, task.titulo); setSelectedTask(null); }}
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1" /> Eliminar
+                </Button>
                 <Button variant="outline" onClick={() => setSelectedTask(null)}>Cerrar</Button>
                 {nextStatus(task.estado) && (
                   <Button onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: nextStatus(task.estado)! }); setSelectedTask(null); }}>
