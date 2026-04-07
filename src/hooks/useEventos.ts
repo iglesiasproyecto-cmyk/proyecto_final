@@ -1,8 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getTiposEvento, getEventos, getTareas, getTareasAsignadas,
+  getEventosEnriquecidos, getTareasEnriquecidas,
   createTipoEvento, updateTipoEvento, deleteTipoEvento,
   createEvento, createTarea, updateTareaEstado,
+  updateEvento, deleteEvento, updateTarea, deleteTarea,
+  createTareaAsignada, updateTareaAsignada, deleteTareaAsignada,
 } from '@/services/eventos.service'
 import type { Tarea } from '@/types/app.types'
 
@@ -79,5 +82,109 @@ export function useUpdateTareaEstado() {
     mutationFn: ({ id, estado }: { id: number; estado: Tarea['estado'] }) =>
       updateTareaEstado(id, estado),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tareas'] }),
+  })
+}
+
+// ── Enriched query hooks ──
+
+export function useEventosEnriquecidos(idIglesia?: number) {
+  return useQuery({
+    queryKey: ['eventos-enriquecidos', idIglesia],
+    queryFn: () => getEventosEnriquecidos(idIglesia),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useTareasEnriquecidas(idEvento?: number) {
+  return useQuery({
+    queryKey: ['tareas-enriquecidas', idEvento],
+    queryFn: () => getTareasEnriquecidas(idEvento),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ── Evento update/delete mutations ──
+
+export function useUpdateEvento() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateEvento>[1] }) =>
+      updateEvento(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['eventos'] })
+      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
+    },
+  })
+}
+
+export function useDeleteEvento() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteEvento(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['eventos'] })
+      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
+    },
+  })
+}
+
+// ── Tarea update/delete mutations ──
+
+export function useUpdateTarea() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateTarea>[1] }) =>
+      updateTarea(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+    },
+  })
+}
+
+export function useDeleteTarea() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteTarea(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
+    },
+  })
+}
+
+// ── TareaAsignada mutations ──
+
+export function useCreateTareaAsignada() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof createTareaAsignada>[0]) => createTareaAsignada(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+    },
+  })
+}
+
+export function useUpdateTareaAsignada() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateTareaAsignada>[1] }) =>
+      updateTareaAsignada(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
+    },
+  })
+}
+
+export function useDeleteTareaAsignada() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteTareaAsignada(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+    },
   })
 }
