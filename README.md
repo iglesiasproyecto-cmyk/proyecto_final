@@ -3,6 +3,8 @@
 
   This is a code bundle for MVP Scope Definition. The original project is available at https://www.figma.com/design/jy7hLIjvbUtii9LKZlJZXQ/MVP-Scope-Definition.
 
+  **Last updated**: April 10, 2026
+
   ## Running the code
 
   Run `npm i` to install the dependencies.
