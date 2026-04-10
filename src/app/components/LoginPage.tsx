@@ -18,7 +18,7 @@ const testCredentials = [
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { session, authLoading } = useApp()
+  const { session, usuarioActual, authLoading } = useApp()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -26,8 +26,8 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    if (!authLoading && session) navigate("/app")
-  }, [authLoading, session, navigate])
+    if (!authLoading && session && usuarioActual) navigate("/app")
+  }, [authLoading, session, usuarioActual, navigate])
 
   if (authLoading) {
     return (
