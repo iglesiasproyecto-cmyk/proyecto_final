@@ -1,5 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getRoles, getUsuarios, getUsuarioRoles, getUsuariosEnriquecidos, toggleUsuarioActivo } from '@/services/usuarios.service'
+import {
+  getRoles,
+  getUsuarios,
+  getUsuarioRoles,
+  getUsuariosEnriquecidos,
+  toggleUsuarioActivo,
+  updateUsuario,
+  assignRol,
+  removeRol,
+  inviteUser,
+} from '@/services/usuarios.service'
 
 export function useRoles() {
   return useQuery({
@@ -41,6 +51,47 @@ export function useToggleUsuarioActivo() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['usuarios'] })
       qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })
+    },
+  })
+}
+
+export function useUpdateUsuario() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateUsuario>[1] }) =>
+      updateUsuario(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['usuarios'] })
+    },
+  })
+}
+
+export function useAssignRol() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof assignRol>[0]) => assignRol(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['usuarios'] })
+    },
+  })
+}
+
+export function useRemoveRol() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (idUsuarioRol: number) => removeRol(idUsuarioRol),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['usuarios'] })
+    },
+  })
+}
+
+export function useInviteUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof inviteUser>[0]) => inviteUser(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['usuarios'] })
     },
   })
 }
