@@ -5,7 +5,6 @@ import {
   useCreateIglesiaPastor, useCloseIglesiaPastor,
 } from "@/hooks/useIglesias";
 import { useUsuarios } from "@/hooks/useUsuarios";
-import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -17,7 +16,28 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { UserCheck, Plus, Pencil, Trash2, Search, Link2, Church, Mail, Phone } from "lucide-react";
+import { motion } from "motion/react";
+import { UserCheck, Plus, Pencil, Trash2, Search, Link2, Church, Mail, Phone, Save, X } from "lucide-react";
+
+function GlassCard({ children, index = 0 }: { children: React.ReactNode; index?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.05, ease: [0.23, 1, 0.32, 1] }}
+      className="h-full"
+    >
+      <div 
+        className="h-full relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] transition-all duration-300 dark:border-white/10 dark:bg-card/20 hover:shadow-lg hover:bg-card/60 hover:-translate-y-1"
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent dark:from-white/5 opacity-50 pointer-events-none" />
+        <div className="relative z-10 p-5 flex flex-col h-full">
+          {children}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export function PastoresPage() {
   const { data: pastores = [], isLoading } = usePastoresEnriquecidos();
@@ -33,16 +53,23 @@ export function PastoresPage() {
   const [formA, setFormA] = useState({ idIglesia: 0, idPastor: 0, esPrincipal: false, fechaInicio: "", observaciones: "" });
   const [confirmDeleteAsign, setConfirmDeleteAsign] = useState<{ id: number; pastorName: string; iglesiaName: string } | null>(null);
 
-  const createPastorMutation = useCreatePastor()
-  const updatePastorMutation = useUpdatePastor()
-  const deletePastorMutation = useDeletePastor()
-  const createAsignMutation = useCreateIglesiaPastor()
-  const closeAsignMutation = useCloseIglesiaPastor()
+  const createPastorMutation = useCreatePastor();
+  const updatePastorMutation = useUpdatePastor();
+  const deletePastorMutation = useDeletePastor();
+  const createAsignMutation = useCreateIglesiaPastor();
+  const closeAsignMutation = useCloseIglesiaPastor();
 
-  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+  if (isLoading) return (
+    <div className="max-w-7xl mx-auto flex items-center justify-center p-12">
+      <div className="animate-pulse flex flex-col items-center gap-4">
+        <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+        <p className="text-muted-foreground text-sm font-medium">Cargando pastores...</p>
+      </div>
+    </div>
+  );
 
   const handleDeletePastor = (id: number, nombre: string) => {
-    if (!confirm(`¿Eliminar pastor "${nombre}"?`)) return;
+    if (!confirm(`¿Eliminar pastor "${nombre}"? Esta acción es irreversible.`)) return;
     deletePastorMutation.mutate(id);
   };
 
@@ -87,134 +114,200 @@ export function PastoresPage() {
   });
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="flex items-center gap-2"><UserCheck className="w-6 h-6 text-primary" /> Gestión de Pastores</h1>
-          <p className="text-muted-foreground text-sm mt-1">Administra pastores y sus asignaciones a iglesias (Tablas: Pastor, IglesiaPastor)</p>
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+      {/* HEADER */}
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-primary flex items-center justify-center shadow-lg shadow-violet-600/20">
+            <UserCheck className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
+            <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Pastores</h1>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-card">
-          <TabsTrigger value="pastores">Pastores ({pastores.length})</TabsTrigger>
-          <TabsTrigger value="asignaciones">Asignaciones ({iglesiaPastores.filter(ip => !ip.fechaFin).length})</TabsTrigger>
-        </TabsList>
+        <div className="flex justify-start">
+          <TabsList className="bg-card/40 backdrop-blur-xl border border-white/20 dark:border-white/10 dark:bg-card/20 rounded-2xl h-14 px-1.5 shadow-sm">
+            <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-foreground">
+              Directorio ({pastores.length})
+            </TabsTrigger>
+            <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-foreground">
+              Asignaciones ({iglesiaPastores.filter(ip => !ip.fechaFin).length})
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="pastores" className="space-y-4 mt-4">
-          <div className="flex gap-3">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar pastores..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-card" />
+        <TabsContent value="pastores" className="space-y-6 mt-6">
+          {/* ACTION BAR */}
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
+            <div className="p-3 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm flex flex-col sm:flex-row justify-between gap-3 dark:border-white/10 dark:bg-card/20">
+              <div className="relative flex-1 md:max-w-md">
+                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar pastores por nombre o correo..." 
+                  value={search} 
+                  onChange={e => setSearch(e.target.value)} 
+                  className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-violet-600/20 h-11 rounded-xl" 
+                />
+              </div>
+              <Button onClick={openAddPastor} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-6 bg-violet-600 hover:bg-violet-700 text-white h-11">
+                <Plus className="w-4 h-4 mr-2" /> Nuevo Pastor
+              </Button>
             </div>
-            <Button onClick={openAddPastor}><Plus className="w-4 h-4 mr-2" /> Nuevo Pastor</Button>
-          </div>
+          </motion.div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {filteredPastores.map(p => {
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+            {filteredPastores.map((p, i) => {
               const asignaciones = getIglesiasForPastor(p.idPastor);
               const linkedUser = p.idUsuario ? usuarios.find(u => u.idUsuario === p.idUsuario) : null;
               return (
-                <Card key={p.idPastor} className="p-4">
-                  <div className="flex items-start justify-between">
+                <GlassCard key={p.idPastor} index={i}>
+                  <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm text-primary">{p.nombres[0]}{p.apellidos[0]}</div>
-                      <div>
-                        <p className="text-sm">{p.nombres} {p.apellidos}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                          <Mail className="w-3 h-3" /> {p.correo}
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600/20 to-primary/10 flex items-center justify-center text-lg font-bold text-violet-700 dark:text-violet-400 border border-violet-600/10 shadow-sm">
+                        {p.nombres[0]}{p.apellidos[0]}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground truncate">{p.nombres} {p.apellidos}</p>
+                        <div className="flex flex-col gap-0.5 mt-1">
+                          <p className="flex items-center gap-1.5 text-xs font-medium text-primary/70"><Mail className="w-3 h-3" /> <span className="truncate">{p.correo}</span></p>
+                          {p.telefono && <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Phone className="w-3 h-3" /> {p.telefono}</p>}
                         </div>
-                        {p.telefono && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Phone className="w-3 h-3" /> {p.telefono}</div>}
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => openEditPastor(p.idPastor)}><Pencil className="w-3.5 h-3.5" /></Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeletePastor(p.idPastor, `${p.nombres} ${p.apellidos}`)} disabled={deletePastorMutation.isPending}><Trash2 className="w-3.5 h-3.5" /></Button>
-                    </div>
                   </div>
-                  {p.iglesiasActivas.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {p.iglesiasActivas.map((nombre, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          <Church className="w-3 h-3 mr-1" /> {nombre}
-                        </Badge>
-                      ))}
+                  
+                  <div className="flex-1 space-y-4">
+                    {p.iglesiasActivas.length > 0 && (
+                      <div className="p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-primary/60 mb-2">Miembro en:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {p.iglesiasActivas.map((nombre, i) => (
+                            <Badge key={i} variant="secondary" className="bg-white/60 dark:bg-black/20 text-xs font-medium border-0 tracking-wide text-muted-foreground">
+                              <Church className="w-3 h-3 mr-1.5 opacity-70" /> {nombre}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-violet-600/60 dark:text-violet-400/60 mb-2">Asignaciones de Liderazgo:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {asignaciones.map(a => (
+                          <Badge key={a.idIglesiaPastor} variant={a.esPrincipal ? "default" : "outline"} className={`text-[11px] font-semibold border ${a.esPrincipal ? "bg-violet-600 hover:bg-violet-700 border-violet-600 text-white shadow-sm" : "bg-card border-violet-200 text-violet-700 dark:border-violet-900/50 dark:text-violet-400"}`}>
+                            <Church className="w-3 h-3 mr-1.5 opacity-80" /> {a.iglesiaNombre} {a.esPrincipal && "(Principal)"}
+                          </Badge>
+                        ))}
+                        {asignaciones.length === 0 && <span className="text-xs text-muted-foreground italic px-1">Sin asignaciones de liderazgo</span>}
+                      </div>
                     </div>
-                  )}
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {asignaciones.map(a => (
-                      <Badge key={a.idIglesiaPastor} variant={a.esPrincipal ? "default" : "secondary"} className="text-xs">
-                        <Church className="w-3 h-3 mr-1" /> {a.iglesiaNombre} {a.esPrincipal && "(Principal)"}
-                      </Badge>
-                    ))}
-                    {asignaciones.length === 0 && <span className="text-xs text-muted-foreground italic">Sin asignaciones activas</span>}
+
+                    {linkedUser && (
+                      <div className="flex items-center gap-2 pt-2 px-1">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                          <Link2 className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <p className="text-[11px] font-medium text-blue-700 dark:text-blue-300 truncate">Usuario: {linkedUser.nombres} {linkedUser.apellidos}</p>
+                      </div>
+                    )}
                   </div>
-                  {linkedUser && (
-                    <div className="mt-2 flex items-center gap-1 text-xs text-blue-600"><Link2 className="w-3 h-3" /> Vinculado a usuario: {linkedUser.nombres} {linkedUser.apellidos}</div>
-                  )}
-                </Card>
+
+                  <div className="mt-4 pt-4 border-t border-border/40 flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10" onClick={() => openEditPastor(p.idPastor)}>
+                      <Pencil className="w-4 h-4 text-foreground/70" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10" onClick={() => handleDeletePastor(p.idPastor, `${p.nombres} ${p.apellidos}`)} disabled={deletePastorMutation.isPending}>
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                </GlassCard>
               );
             })}
+            
+            {filteredPastores.length === 0 && (
+              <div className="col-span-full py-16 text-center rounded-3xl bg-card/30 border border-dashed border-border mt-4">
+                <UserCheck className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-base font-medium text-foreground">No se encontraron pastores</p>
+                <p className="text-sm text-muted-foreground mt-1">Prueba con otros nombres o correos</p>
+              </div>
+            )}
           </div>
         </TabsContent>
 
-        <TabsContent value="asignaciones" className="space-y-4 mt-4">
-          <div className="flex justify-end">
-            <Button onClick={openAsign}><Plus className="w-4 h-4 mr-2" /> Nueva Asignación</Button>
-          </div>
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Pastor</TableHead>
-                  <TableHead>Iglesia</TableHead>
-                  <TableHead>Principal</TableHead>
-                  <TableHead>Fecha Inicio</TableHead>
-                  <TableHead>Observaciones</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {iglesiaPastores.filter(ip => !ip.fechaFin).map(ip => {
-                  const pa = pastores.find(p => p.idPastor === ip.idPastor);
-                  const ig = iglesias.find(i => i.idIglesia === ip.idIglesia);
-                  return (
-                    <TableRow key={ip.idIglesiaPastor}>
-                      <TableCell className="text-sm">{pa ? `${pa.nombres} ${pa.apellidos}` : "—"}</TableCell>
-                      <TableCell className="text-sm">{ig?.nombre || "—"}</TableCell>
-                      <TableCell>{ip.esPrincipal ? <Badge className="bg-green-100 text-green-800 text-xs">Sí</Badge> : <span className="text-xs text-muted-foreground">No</span>}</TableCell>
-                      <TableCell className="text-xs">{ip.fechaInicio}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-48 truncate">{ip.observaciones || "—"}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => {
-                          const paName = pa ? `${pa.nombres} ${pa.apellidos}` : "Pastor";
-                          const igName = ig?.nombre || "Iglesia";
-                          setConfirmDeleteAsign({ id: ip.idIglesiaPastor, pastorName: paName, iglesiaName: igName });
-                        }}><Trash2 className="w-3.5 h-3.5" /></Button>
-                      </TableCell>
+        <TabsContent value="asignaciones" className="space-y-4 mt-6">
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
+            <div className="flex justify-end mb-4">
+              <Button onClick={openAsign} className="shadow-md shadow-primary/20 rounded-full px-6 bg-violet-600 hover:bg-violet-700 text-white h-11">
+                <Plus className="w-4 h-4 mr-2" /> Nueva Asignación
+              </Button>
+            </div>
+            
+            <div className="rounded-2xl bg-card/50 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden dark:border-white/10 dark:bg-card/20">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-muted/30">
+                    <TableRow className="hover:bg-transparent border-border/40">
+                      <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Dignatario Pastor</TableHead>
+                      <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Iglesia Destino</TableHead>
+                      <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Pastor Principal</TableHead>
+                      <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Fecha Inicio</TableHead>
+                      <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Observaciones</TableHead>
+                      <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70 text-right">Acciones</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {iglesiaPastores.filter(ip => !ip.fechaFin).map(ip => {
+                      const pa = pastores.find(p => p.idPastor === ip.idPastor);
+                      const ig = iglesias.find(i => i.idIglesia === ip.idIglesia);
+                      return (
+                        <TableRow key={ip.idIglesiaPastor} className="transition-colors hover:bg-white/40 dark:hover:bg-white/5 border-border/40">
+                          <TableCell className="py-4 font-medium text-foreground">{pa ? `${pa.nombres} ${pa.apellidos}` : "—"}</TableCell>
+                          <TableCell className="py-4 text-sm font-medium text-muted-foreground flex items-center gap-1.5"><Church className="w-3.5 h-3.5"/>{ig?.nombre || "—"}</TableCell>
+                          <TableCell className="py-4">{ip.esPrincipal ? <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800 tracking-wide font-semibold">SÍ P. PRINCIPAL</Badge> : <span className="text-xs font-medium text-muted-foreground ml-2">No</span>}</TableCell>
+                          <TableCell className="py-4 text-xs font-medium text-foreground/80">{new Date(ip.fechaInicio).toLocaleDateString("es", { month: "short", year: "numeric", day: "numeric" })}</TableCell>
+                          <TableCell className="py-4 text-xs text-muted-foreground max-w-48 truncate">{ip.observaciones || "—"}</TableCell>
+                          <TableCell className="py-4 text-right">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10 text-destructive" onClick={() => {
+                              const paName = pa ? `${pa.nombres} ${pa.apellidos}` : "Pastor";
+                              const igName = ig?.nombre || "Iglesia";
+                              setConfirmDeleteAsign({ id: ip.idIglesiaPastor, pastorName: paName, iglesiaName: igName });
+                            }}><Trash2 className="w-3.5 h-3.5" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {iglesiaPastores.filter(ip => !ip.fechaFin).length === 0 && (
+                      <TableRow><TableCell colSpan={6} className="text-center py-12 text-sm text-muted-foreground">Sin asignaciones de pastores activas</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </motion.div>
         </TabsContent>
       </Tabs>
 
       {/* Dialog Pastor */}
       <Dialog open={dialogPastor} onOpenChange={setDialogPastor}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>{editingPastor ? "Editar" : "Nuevo"} Pastor</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-sm">Nombres *</label><Input value={formP.nombres} onChange={e => setFormP(f => ({ ...f, nombres: e.target.value }))} className="mt-1" /></div>
-              <div><label className="text-sm">Apellidos *</label><Input value={formP.apellidos} onChange={e => setFormP(f => ({ ...f, apellidos: e.target.value }))} className="mt-1" /></div>
+        <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
+          <div className="px-6 py-4 bg-muted/30 border-b border-border/40">
+            <DialogHeader><DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">{editingPastor ? <Pencil className="w-5 h-5 text-violet-600" /> : <Plus className="w-5 h-5 text-violet-600" />} {editingPastor ? "Editar Pastor" : "Registrar Nuevo Pastor"}</DialogTitle></DialogHeader>
+          </div>
+          <div className="px-6 py-5 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nombres <span className="text-destructive">*</span></label><Input value={formP.nombres} onChange={e => setFormP(f => ({ ...f, nombres: e.target.value }))} className="bg-input-background focus-visible:ring-violet-600/30" /></div>
+              <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Apellidos <span className="text-destructive">*</span></label><Input value={formP.apellidos} onChange={e => setFormP(f => ({ ...f, apellidos: e.target.value }))} className="bg-input-background focus-visible:ring-violet-600/30" /></div>
             </div>
-            <div><label className="text-sm">Correo *</label><Input type="email" value={formP.correo} onChange={e => setFormP(f => ({ ...f, correo: e.target.value }))} className="mt-1" /></div>
-            <div><label className="text-sm">Teléfono</label><Input value={formP.telefono} onChange={e => setFormP(f => ({ ...f, telefono: e.target.value }))} className="mt-1" /></div>
-            <div><label className="text-sm">Vincular a Usuario (opcional)</label>
+            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Correo Electrónico <span className="text-destructive">*</span></label><Input type="email" value={formP.correo} onChange={e => setFormP(f => ({ ...f, correo: e.target.value }))} className="bg-input-background focus-visible:ring-violet-600/30" /></div>
+            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Teléfono Móvil</label><Input value={formP.telefono} onChange={e => setFormP(f => ({ ...f, telefono: e.target.value }))} className="bg-input-background focus-visible:ring-violet-600/30" /></div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block flex items-center gap-1.5"><Link2 className="w-3 h-3 text-blue-500" /> Vincular a Usuario Sist. (Opcional)</label>
               <Select value={formP.idUsuario ? String(formP.idUsuario) : "none"} onValueChange={v => setFormP(f => ({ ...f, idUsuario: v === "none" ? 0 : Number(v) }))}>
-                <SelectTrigger className="mt-1"><SelectValue placeholder="Sin vincular" /></SelectTrigger>
+                <SelectTrigger className="bg-input-background focus:ring-violet-600/30"><SelectValue placeholder="Sin vincular" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sin vincular</SelectItem>
                   {usuarios.map(u => <SelectItem key={u.idUsuario} value={String(u.idUsuario)}>{u.nombres} {u.apellidos} ({u.correo})</SelectItem>)}
@@ -222,59 +315,73 @@ export function PastoresPage() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogPastor(false)}>Cancelar</Button>
-            <Button onClick={handleSubmitPastor} disabled={!formP.nombres.trim() || !formP.apellidos.trim() || !formP.correo.trim()}>Guardar</Button>
-          </DialogFooter>
+          <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setDialogPastor(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
+            <Button onClick={handleSubmitPastor} disabled={!formP.nombres.trim() || !formP.apellidos.trim() || !formP.correo.trim()} className="rounded-full px-5 bg-violet-600 hover:bg-violet-700 text-white shadow-sm shadow-violet-600/20"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Dialog Asignación */}
       <Dialog open={dialogAsign} onOpenChange={setDialogAsign}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Nueva Asignación Pastor-Iglesia</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><label className="text-sm">Pastor *</label>
+        <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
+          <div className="px-6 py-4 bg-muted/30 border-b border-border/40">
+            <DialogHeader><DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground"><Plus className="w-5 h-5 text-violet-600" /> Nueva Asignación de Liderazgo</DialogTitle></DialogHeader>
+          </div>
+          <div className="px-6 py-5 space-y-4">
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Dignatario Pastor <span className="text-destructive">*</span></label>
               <Select value={formA.idPastor ? String(formA.idPastor) : ""} onValueChange={v => setFormA(f => ({ ...f, idPastor: Number(v) }))}>
-                <SelectTrigger className="mt-1"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                <SelectTrigger className="bg-input-background focus:ring-violet-600/30"><SelectValue placeholder="Seleccionar Pastor" /></SelectTrigger>
                 <SelectContent>{pastores.map(p => <SelectItem key={p.idPastor} value={String(p.idPastor)}>{p.nombres} {p.apellidos}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><label className="text-sm">Iglesia *</label>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Iglesia Destino <span className="text-destructive">*</span></label>
               <Select value={formA.idIglesia ? String(formA.idIglesia) : ""} onValueChange={v => setFormA(f => ({ ...f, idIglesia: Number(v) }))}>
-                <SelectTrigger className="mt-1"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                <SelectTrigger className="bg-input-background focus:ring-violet-600/30"><SelectValue placeholder="Seleccionar Iglesia" /></SelectTrigger>
                 <SelectContent>{iglesias.map(i => <SelectItem key={i.idIglesia} value={String(i.idIglesia)}>{i.nombre}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><label className="text-sm">Fecha Inicio *</label><Input type="date" value={formA.fechaInicio} onChange={e => setFormA(f => ({ ...f, fechaInicio: e.target.value }))} className="mt-1" /></div>
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={formA.esPrincipal} onChange={e => setFormA(f => ({ ...f, esPrincipal: e.target.checked }))} className="rounded" />
-              <label className="text-sm">Es pastor principal</label>
+            <div className="grid grid-cols-2 gap-4">
+               <div>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Fecha Inicio <span className="text-destructive">*</span></label>
+                  <Input type="date" value={formA.fechaInicio} onChange={e => setFormA(f => ({ ...f, fechaInicio: e.target.value }))} className="bg-input-background focus-visible:ring-violet-600/30" />
+               </div>
+               <div className="flex flex-col justify-end pb-2">
+                 <div className="flex items-center gap-2.5 p-2 rounded-xl border border-border/50 bg-white/50 dark:bg-black/10">
+                   <input type="checkbox" id="es-principal" checked={formA.esPrincipal} onChange={e => setFormA(f => ({ ...f, esPrincipal: e.target.checked }))} className="rounded border-border text-violet-600 focus:ring-violet-600/30 w-4 h-4" />
+                   <label htmlFor="es-principal" className="text-xs font-semibold text-foreground/80 cursor-pointer">Pastor Principal</label>
+                 </div>
+               </div>
             </div>
-            <div><label className="text-sm">Observaciones</label><Input value={formA.observaciones} onChange={e => setFormA(f => ({ ...f, observaciones: e.target.value }))} className="mt-1" /></div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Observaciones Adicionales</label>
+              <Input value={formA.observaciones} onChange={e => setFormA(f => ({ ...f, observaciones: e.target.value }))} className="bg-input-background focus-visible:ring-violet-600/30" placeholder="Ej. Encargado temporal, nombramiento 2024..." />
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogAsign(false)}>Cancelar</Button>
-            <Button onClick={handleSubmitAsign} disabled={!formA.idIglesia || !formA.idPastor || !formA.fechaInicio}>Guardar</Button>
-          </DialogFooter>
+          <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setDialogAsign(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
+            <Button onClick={handleSubmitAsign} disabled={!formA.idIglesia || !formA.idPastor || !formA.fechaInicio} className="rounded-full px-5 bg-violet-600 hover:bg-violet-700 text-white shadow-sm shadow-violet-600/20"><Save className="w-4 h-4 mr-1.5" /> Misionar Pastor</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={!!confirmDeleteAsign} onOpenChange={(open) => !open && setConfirmDeleteAsign(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border border-white/20">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover Asignación</AlertDialogTitle>
-            <AlertDialogDescription>
-              Se removera la asignacion de {confirmDeleteAsign?.pastorName} de {confirmDeleteAsign?.iglesiaName}. Esta accion no se puede deshacer.
+            <AlertDialogTitle className="text-xl">Remover Asignación</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              ¿Seguro que deseas terminar la asignación de <strong className="text-foreground">{confirmDeleteAsign?.pastorName}</strong> en la iglesia <strong className="text-foreground">{confirmDeleteAsign?.iglesiaName}</strong>? Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="mt-2">
+            <AlertDialogCancel className="rounded-full">Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => { if (confirmDeleteAsign) { closeAsignMutation.mutate(confirmDeleteAsign.id); setConfirmDeleteAsign(null); } }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm"
             >
-              Remover
+              Remover Asignación
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
