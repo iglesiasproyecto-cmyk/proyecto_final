@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useTareasEnriquecidas, useCreateTarea, useUpdateTareaEstado, useDeleteTarea } from "@/hooks/useEventos";
+import { useTareasEnriquecidas, useCreateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada } from "@/hooks/useEventos";
+import { useUsuarios } from "@/hooks/useUsuarios";
 import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -7,7 +8,7 @@ import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { motion } from "motion/react";
-import { ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar, ChevronRight, Inbox, Trash2, Users } from "lucide-react";
+import { ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar, ChevronRight, Inbox, Trash2, Users, UserPlus, X } from "lucide-react";
 
 const statusConfig = {
   pendiente: { label: "Pendiente", color: "bg-amber-100 text-amber-700", headerBg: "from-amber-500 to-orange-500", icon: <AlertCircle className="w-4 h-4" /> },
@@ -29,8 +30,12 @@ export function TasksPage() {
   const createTareaMutation = useCreateTarea();
   const updateEstadoMutation = useUpdateTareaEstado();
   const deleteTareaMutation = useDeleteTarea();
+  const createAsignadaMutation = useCreateTareaAsignada();
+  const deleteAsignadaMutation = useDeleteTareaAsignada();
+  const { data: usuarios = [] } = useUsuarios();
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState<number | null>(null);
+  const [assignUserId, setAssignUserId] = useState(0);
   const [createForm, setCreateForm] = useState({
     titulo: "",
     descripcion: "",
@@ -250,11 +255,47 @@ export function TasksPage() {
                     <label className="text-xs text-muted-foreground">Asignados</label>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {task.asignados.map((a) => (
-                        <Badge key={a.idTareaAsignada} variant="secondary" className="text-xs">{a.nombreCompleto}</Badge>
+                        <Badge key={a.idTareaAsignada} variant="secondary" className="text-xs flex items-center gap-1">
+                          {a.nombreCompleto}
+                          <button
+                            onClick={() => { if (confirm(`¿Remover a ${a.nombreCompleto} de esta tarea?`)) deleteAsignadaMutation.mutate(a.idTareaAsignada); }}
+                            className="ml-0.5 text-muted-foreground hover:text-destructive"
+                            disabled={deleteAsignadaMutation.isPending}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
                       ))}
                     </div>
                   </div>
                 )}
+                {/* Assign user section */}
+                <div className="border-t pt-3">
+                  <label className="text-xs text-muted-foreground flex items-center gap-1 mb-2"><UserPlus className="w-3.5 h-3.5" /> Asignar usuario</label>
+                  <div className="flex gap-2">
+                    <select
+                      className="flex-1 h-9 rounded-md border border-input bg-input-background px-3 text-sm"
+                      value={assignUserId}
+                      onChange={e => setAssignUserId(Number(e.target.value))}
+                    >
+                      <option value={0}>Seleccionar usuario...</option>
+                      {usuarios
+                        .filter(u => u.activo && !(task?.asignados || []).some(a => a.idUsuario === u.idUsuario))
+                        .map(u => <option key={u.idUsuario} value={u.idUsuario}>{u.nombres} {u.apellidos}</option>)
+                      }
+                    </select>
+                    <Button
+                      size="sm"
+                      disabled={!assignUserId || createAsignadaMutation.isPending || !task}
+                      onClick={() => {
+                        if (!task || !assignUserId) return;
+                        createAsignadaMutation.mutate({ idTarea: task.idTarea, idUsuario: assignUserId }, { onSuccess: () => setAssignUserId(0) });
+                      }}
+                    >
+                      {createAsignadaMutation.isPending ? "..." : <UserPlus className="w-3.5 h-3.5" />}
+                    </Button>
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button

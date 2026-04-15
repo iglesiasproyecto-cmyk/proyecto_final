@@ -21,6 +21,7 @@ import { UsuariosPage } from "./components/UsuariosPage";
 import { CatalogosPage } from "./components/CatalogosPage";
 import { CiclosLectivosPage } from "./components/CiclosLectivosPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
+import { SitemapPage } from "./components/SitemapPage";
 
 export const router = createBrowserRouter([
   {
@@ -59,6 +60,7 @@ export const router = createBrowserRouter([
           { path: "pastores", Component: PastoresPage, ErrorBoundary: ErrorPage },
           { path: "usuarios", Component: UsuariosPage, ErrorBoundary: ErrorPage },
           { path: "catalogos", Component: CatalogosPage, ErrorBoundary: ErrorPage },
+          { path: "sitemap", Component: SitemapPage, ErrorBoundary: ErrorPage },
         ],
       },
     ],

@@ -60,7 +60,7 @@ export async function getMiembrosMinisterioEnriquecidos(idMinisterio: number): P
     .from('miembro_ministerio')
     .select('*, usuario(nombres, apellidos, correo)')
     .eq('id_ministerio', idMinisterio)
-    .order('created_at', { ascending: false })
+    .order('creado_en', { ascending: false })
   if (error) throw error
   return (data as any[]).map(r => ({
     ...mapMiembro(r),

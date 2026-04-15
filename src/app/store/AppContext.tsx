@@ -18,6 +18,11 @@ interface AppState {
   toggleSidebar: () => void
   toggleDarkMode: () => void
   logout: () => Promise<void>
+  // MOCK MODE FOR UI DESIGN
+  isMockMode: boolean
+  setMockMode: (val: boolean) => void
+  mockRol: string
+  setMockRol: (rol: string) => void
 }
 
 const AppContext = createContext<AppState | undefined>(undefined)
@@ -154,6 +159,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return false
   })
 
+  // Mock Mode state
+  const [isMockMode, setIsMockMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sei-mock-mode') === 'true'
+    }
+    return false
+  })
+  const [mockRol, setMockRol] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sei-mock-rol') || 'super_admin'
+    }
+    return 'super_admin'
+  })
+
+  useEffect(() => {
+    localStorage.setItem('sei-mock-mode', String(isMockMode))
+  }, [isMockMode])
+
+  useEffect(() => {
+    localStorage.setItem('sei-mock-rol', mockRol)
+  }, [mockRol])
+
   useEffect(() => {
     const root = document.documentElement
     if (darkMode) root.classList.add('dark')
@@ -286,8 +313,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const logout = async () => {
+    setIsMockMode(false)
     await supabase.auth.signOut()
   }
+
+  // Effect to set a mock user if in mock mode and no real user
+  useEffect(() => {
+    if (isMockMode && !usuarioActual && !authLoading) {
+      setUsuarioActual({
+        idUsuario: 999,
+        nombres: 'Usuario',
+        apellidos: 'Mock',
+        correo: 'mock@ejemplo.com',
+        contrasenaHash: '',
+        telefono: '12345678',
+        activo: true,
+        ultimoAcceso: new Date().toISOString(),
+        authUserId: 'mock-id',
+        creadoEn: new Date().toISOString(),
+        actualizadoEn: new Date().toISOString(),
+      })
+      setRolActual(mockRol)
+      setIglesiasDelUsuario([{ id: 1, nombre: 'Iglesia Mock' }])
+      setIglesiaActual({ id: 1, nombre: 'Iglesia Mock' })
+    }
+  }, [isMockMode, usuarioActual, authLoading, mockRol])
 
   return (
     <AppContext.Provider
@@ -306,6 +356,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         toggleSidebar: () => setSidebarOpen((p) => !p),
         toggleDarkMode: () => setDarkMode((p) => !p),
         logout,
+        isMockMode,
+        setMockMode: setIsMockMode,
+        mockRol,
+        setMockRol,
       }}
     >
       {children}

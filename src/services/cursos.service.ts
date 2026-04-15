@@ -98,12 +98,12 @@ export interface EvaluacionEnriquecida extends Evaluacion {
   cursoNombre: string
 }
 
-export async function getCursosEnriquecidos(idSede?: number): Promise<CursoEnriquecido[]> {
+export async function getCursosEnriquecidos(idMinisterio?: number): Promise<CursoEnriquecido[]> {
   let q = supabase
     .from('curso')
     .select('*, modulo(count), proceso_asignado_curso(count)')
     .order('nombre')
-  if (idSede !== undefined) q = q.eq('id_sede', idSede)
+  if (idMinisterio !== undefined) q = q.eq('id_ministerio', idMinisterio)
   const { data, error } = await q
   if (error) throw error
   return (data as any[]).map(r => ({
@@ -116,15 +116,15 @@ export async function getCursosEnriquecidos(idSede?: number): Promise<CursoEnriq
 export async function getEvaluacionesEnriquecidas(idModulo?: number): Promise<EvaluacionEnriquecida[]> {
   let q = supabase
     .from('evaluacion')
-    .select('*, modulo(titulo, curso(titulo))')
-    .order('created_at', { ascending: false })
+    .select('*, modulo(titulo, curso(nombre))')
+    .order('creado_en', { ascending: false })
   if (idModulo !== undefined) q = q.eq('id_modulo', idModulo)
   const { data, error } = await q
   if (error) throw error
   return (data as any[]).map(r => ({
     ...mapEvaluacion(r),
     moduloNombre: r.modulo?.titulo ?? '',
-    cursoNombre: r.modulo?.curso?.titulo ?? '',
+    cursoNombre: r.modulo?.curso?.nombre ?? '',
   }))
 }
 
@@ -212,10 +212,10 @@ export async function createCurso(
 
 export async function updateCurso(
   id: number,
-  data: { titulo?: string; descripcion?: string | null; estado?: string }
+  data: { nombre?: string; descripcion?: string | null; estado?: string }
 ): Promise<Curso> {
   const patch: Record<string, unknown> = {}
-  if (data.titulo !== undefined) patch.titulo = data.titulo
+  if (data.nombre !== undefined) patch.nombre = data.nombre
   if (data.descripcion !== undefined) patch.descripcion = data.descripcion
   if (data.estado !== undefined) patch.estado = data.estado
   const { data: result, error } = await supabase
@@ -276,23 +276,21 @@ export async function deleteModulo(id: number): Promise<void> {
 
 export async function createEvaluacion(data: {
   idModulo: number
-  pregunta: string
-  opcionA: string
-  opcionB: string
-  opcionC: string
-  opcionD: string
-  respuestaCorrecta: string
+  idUsuario: number
+  calificacion?: number | null
+  estado?: Evaluacion['estado']
+  observaciones?: string | null
+  fechaEvaluacion?: string | null
 }): Promise<Evaluacion> {
   const { data: result, error } = await supabase
     .from('evaluacion')
     .insert({
       id_modulo: data.idModulo,
-      pregunta: data.pregunta,
-      opcion_a: data.opcionA,
-      opcion_b: data.opcionB,
-      opcion_c: data.opcionC,
-      opcion_d: data.opcionD,
-      respuesta_correcta: data.respuestaCorrecta,
+      id_usuario: data.idUsuario,
+      calificacion: data.calificacion ?? null,
+      estado: data.estado ?? 'pendiente',
+      observaciones: data.observaciones ?? null,
+      fecha_evaluacion: data.fechaEvaluacion ?? null,
     })
     .select()
     .single()
@@ -303,21 +301,17 @@ export async function createEvaluacion(data: {
 export async function updateEvaluacion(
   id: number,
   data: {
-    pregunta?: string
-    opcionA?: string
-    opcionB?: string
-    opcionC?: string
-    opcionD?: string
-    respuestaCorrecta?: string
+    calificacion?: number | null
+    estado?: Evaluacion['estado']
+    observaciones?: string | null
+    fechaEvaluacion?: string | null
   }
 ): Promise<Evaluacion> {
   const patch: Record<string, unknown> = {}
-  if (data.pregunta !== undefined) patch.pregunta = data.pregunta
-  if (data.opcionA !== undefined) patch.opcion_a = data.opcionA
-  if (data.opcionB !== undefined) patch.opcion_b = data.opcionB
-  if (data.opcionC !== undefined) patch.opcion_c = data.opcionC
-  if (data.opcionD !== undefined) patch.opcion_d = data.opcionD
-  if (data.respuestaCorrecta !== undefined) patch.respuesta_correcta = data.respuestaCorrecta
+  if (data.calificacion !== undefined) patch.calificacion = data.calificacion
+  if (data.estado !== undefined) patch.estado = data.estado
+  if (data.observaciones !== undefined) patch.observaciones = data.observaciones
+  if (data.fechaEvaluacion !== undefined) patch.fecha_evaluacion = data.fechaEvaluacion
   const { data: result, error } = await supabase
     .from('evaluacion')
     .update(patch)
@@ -330,7 +324,7 @@ export async function updateEvaluacion(
 
 export async function createRecurso(data: {
   idModulo: number
-  titulo: string
+  nombre: string
   tipo: string
   url: string
 }): Promise<Recurso> {
@@ -338,7 +332,7 @@ export async function createRecurso(data: {
     .from('recurso')
     .insert({
       id_modulo: data.idModulo,
-      titulo: data.titulo,
+      nombre: data.nombre,
       tipo: data.tipo,
       url: data.url,
     })
@@ -350,10 +344,10 @@ export async function createRecurso(data: {
 
 export async function updateRecurso(
   id: number,
-  data: { titulo?: string; tipo?: string; url?: string }
+  data: { nombre?: string; tipo?: string; url?: string }
 ): Promise<Recurso> {
   const patch: Record<string, unknown> = {}
-  if (data.titulo !== undefined) patch.titulo = data.titulo
+  if (data.nombre !== undefined) patch.nombre = data.nombre
   if (data.tipo !== undefined) patch.tipo = data.tipo
   if (data.url !== undefined) patch.url = data.url
   const { data: result, error } = await supabase
@@ -373,11 +367,10 @@ export async function deleteRecurso(id: number): Promise<void> {
 
 export async function updateProcesoAsignadoCurso(
   id: number,
-  data: { estado?: string; progreso?: number; fechaFin?: string | null }
+  data: { estado?: string; fechaFin?: string | null }
 ): Promise<ProcesoAsignadoCurso> {
   const patch: Record<string, unknown> = {}
   if (data.estado !== undefined) patch.estado = data.estado
-  if (data.progreso !== undefined) patch.progreso = data.progreso
   if (data.fechaFin !== undefined) patch.fecha_fin = data.fechaFin
   const { data: result, error } = await supabase
     .from('proceso_asignado_curso')

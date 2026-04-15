@@ -72,6 +72,8 @@ export function useAssignRol() {
     mutationFn: (data: Parameters<typeof assignRol>[0]) => assignRol(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['usuarios'] })
+      qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })
+      qc.invalidateQueries({ queryKey: ['usuario-rol'] })
     },
   })
 }
@@ -82,6 +84,8 @@ export function useRemoveRol() {
     mutationFn: (idUsuarioRol: number) => removeRol(idUsuarioRol),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['usuarios'] })
+      qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })
+      qc.invalidateQueries({ queryKey: ['usuario-rol'] })
     },
   })
 }
@@ -92,6 +96,7 @@ export function useInviteUser() {
     mutationFn: (data: Parameters<typeof inviteUser>[0]) => inviteUser(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['usuarios'] })
+      qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })
     },
   })
 }

@@ -45,6 +45,8 @@ Deno.serve(async (req) => {
     }
 
     // Invite user via Supabase Auth Admin API
+    // NOTE: The handle_new_user trigger automatically creates the usuario record.
+    // We must NOT insert manually — that would cause a duplicate.
     const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       correo,
       {
@@ -54,25 +56,39 @@ Deno.serve(async (req) => {
     )
     if (inviteError) throw inviteError
 
-    // Create usuario record linked to new auth user
-    const { data: usuarioData, error: usuarioError } = await supabaseAdmin
-      .from('usuario')
-      .insert({
-        nombres,
-        apellidos,
-        correo,
-        auth_user_id: inviteData.user.id,
-        activo: true,
-      })
-      .select('id_usuario')
-      .single()
-    if (usuarioError) throw usuarioError
+    const authUserId = inviteData.user.id
+
+    // Poll up to 5 seconds for the trigger to create the usuario record
+    let usuarioId: number | null = null
+    for (let attempt = 0; attempt < 10; attempt++) {
+      await new Promise(resolve => setTimeout(resolve, 500))
+      const { data: rows } = await supabaseAdmin
+        .from('usuario')
+        .select('id_usuario')
+        .eq('auth_user_id', authUserId)
+        .limit(1)
+      if (rows && rows.length > 0) {
+        usuarioId = rows[0].id_usuario
+        break
+      }
+    }
+
+    if (!usuarioId) {
+      // Trigger did not fire in time — create the record manually as fallback
+      const { data: newUsuario, error: usuarioError } = await supabaseAdmin
+        .from('usuario')
+        .insert({ nombres, apellidos, correo, auth_user_id: authUserId, activo: true, contrasena_hash: '' })
+        .select('id_usuario')
+        .single()
+      if (usuarioError) throw usuarioError
+      usuarioId = newUsuario.id_usuario
+    }
 
     // Assign rol
     const { error: rolError } = await supabaseAdmin
       .from('usuario_rol')
       .insert({
-        id_usuario: usuarioData.id_usuario,
+        id_usuario: usuarioId,
         id_rol: idRol,
         id_iglesia: idIglesia,
         fecha_inicio: new Date().toISOString().split('T')[0],

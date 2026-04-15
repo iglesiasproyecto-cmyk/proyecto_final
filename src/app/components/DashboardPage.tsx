@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router";
 import { useApp } from "../store/AppContext";
+import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
 import { useIglesias, usePastores, useSedes } from "@/hooks/useIglesias";
 import { useEventos } from "@/hooks/useEventos";
 import { useMinisterios, useMiembrosMinisterio } from "@/hooks/useMinisterios";
@@ -86,10 +87,9 @@ function SectionHeader({ icon, title, action, actionLabel = "Ver todos" }: {
 }
 
 export function DashboardPage() {
-  const { usuarioActual } = useApp();
+  const { usuarioActual, rolActual } = useApp();
   if (!usuarioActual) return null;
-  const rol = (usuarioActual as unknown as { rol?: string }).rol;
-  switch (rol) {
+  switch (rolActual) {
     case "super_admin": return <SuperAdminDashboard />;
     case "admin_iglesia": return <AdminIglesiaDashboard />;
     case "lider": return <LiderDashboard />;
@@ -107,6 +107,7 @@ function SuperAdminDashboard() {
   const { data: sedes = [] } = useSedes();
   const { data: pastores = [] } = usePastores();
   const { data: usuarios = [] } = useUsuarios();
+  const { data: enrichedUsuarios = [] } = useUsuariosEnriquecidos();
   const { data: ministerios = [] } = useMinisterios();
   const { data: eventos = [] } = useEventos();
   const { data: cursos = [] } = useCursos();
@@ -128,11 +129,18 @@ function SuperAdminDashboard() {
     eventos: eventos.filter((e) => e.idIglesia === ig.idIglesia).length,
   }));
 
-  const roleDistribution = [
-    { name: "Admins", value: 2 },
-    { name: "Lideres", value: 3 },
-    { name: "Servidores", value: 6 },
-  ];
+  // Compute role distribution from real enriched user data
+  const roleCounts = new Map<string, number>();
+  enrichedUsuarios.forEach(u => {
+    u.roleNames.forEach(rn => {
+      const name = rn.rolNombre || "Sin rol";
+      roleCounts.set(name, (roleCounts.get(name) || 0) + 1);
+    });
+  });
+  // Include users without any role
+  const usersWithoutRole = enrichedUsuarios.filter(u => u.roleNames.length === 0).length;
+  if (usersWithoutRole > 0) roleCounts.set("Sin rol", usersWithoutRole);
+  const roleDistribution = Array.from(roleCounts.entries()).map(([name, value]) => ({ name, value }));
 
   const recentUsers = [...usuarios].filter((u) => u.ultimoAcceso).sort((a, b) => (b.ultimoAcceso || "").localeCompare(a.ultimoAcceso || "")).slice(0, 5);
 
@@ -266,11 +274,11 @@ function SuperAdminDashboard() {
 
 /* ======== ADMIN IGLESIA ======== */
 function AdminIglesiaDashboard() {
-  const { usuarioActual, notificacionesCount } = useApp();
+  const { usuarioActual, notificacionesCount, iglesiaActual } = useApp();
   const navigate = useNavigate();
   const { data: ministerios = [] } = useMinisterios();
   const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(0);
-  const { data: eventos = [] } = useEventos();
+  const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: notificaciones = [] } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
 
   if (!usuarioActual) return null;
@@ -367,11 +375,11 @@ function AdminIglesiaDashboard() {
 
 /* ======== LIDER ======== */
 function LiderDashboard() {
-  const { usuarioActual } = useApp();
+  const { usuarioActual, iglesiaActual } = useApp();
   const navigate = useNavigate();
   const { data: ministerios = [] } = useMinisterios();
   const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(ministerios[0]?.idMinisterio ?? 0);
-  const { data: eventos = [] } = useEventos();
+  const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: tareas = [] } = useTareas();
   const { data: cursos = [] } = useCursos(ministerios[0]?.idMinisterio);
   const { data: evaluaciones = [] } = useEvaluaciones(usuarioActual?.idUsuario);
@@ -474,10 +482,10 @@ function LiderDashboard() {
 
 /* ======== SERVIDOR ======== */
 function ServidorDashboard() {
-  const { usuarioActual, notificacionesCount } = useApp();
+  const { usuarioActual, notificacionesCount, iglesiaActual } = useApp();
   const navigate = useNavigate();
   const { data: ministerios = [] } = useMinisterios();
-  const { data: eventos = [] } = useEventos();
+  const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: tareas = [] } = useTareas();
   const { data: cursos = [] } = useCursos(ministerios[0]?.idMinisterio);
   const { data: evaluaciones = [] } = useEvaluaciones(usuarioActual?.idUsuario);

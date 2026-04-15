@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useEvaluacionesEnriquecidas, useDeleteEvaluacion } from "@/hooks/useCursos";
+import { useEvaluacionesEnriquecidas, useDeleteEvaluacion, useCreateEvaluacion, useUpdateEvaluacion, useCursos } from "@/hooks/useCursos";
+import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -15,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
-import { ClipboardCheck, Plus, Filter, TrendingUp, Trash2 } from "lucide-react";
+import { ClipboardCheck, Plus, Filter, TrendingUp, Trash2, Pencil } from "lucide-react";
 
 const estadoEvalColors: Record<string, string> = {
   pendiente: "bg-amber-100 text-amber-700",
@@ -31,12 +32,19 @@ const estadoEvalLabels: Record<string, string> = {
 };
 
 export function EvaluationsPage() {
+  const { usuarioActual } = useApp();
   const { data: evaluaciones = [], isLoading } = useEvaluacionesEnriquecidas();
+  const { data: cursos = [] } = useCursos();
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [cursoFilter, setCursoFilter] = useState("all");
+  const [editTarget, setEditTarget] = useState<{ id: number; calificacion: string; estado: string; observaciones: string } | null>(null);
+  const [createForm, setCreateForm] = useState({ idModulo: 0, calificacion: "", estado: "pendiente" as string, observaciones: "", fechaEvaluacion: "" });
+  const resetCreateForm = () => setCreateForm({ idModulo: 0, calificacion: "", estado: "pendiente", observaciones: "", fechaEvaluacion: "" });
 
   const deleteEvaluacionMutation = useDeleteEvaluacion();
+  const createEvaluacionMutation = useCreateEvaluacion();
+  const updateEvaluacionMutation = useUpdateEvaluacion();
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -63,6 +71,41 @@ export function EvaluationsPage() {
       onSuccess: () => setDeleteTarget(null),
     });
   };
+
+  const handleCreate = () => {
+    if (!createForm.idModulo || !usuarioActual) return;
+    createEvaluacionMutation.mutate(
+      {
+        idModulo: createForm.idModulo,
+        idUsuario: usuarioActual.idUsuario,
+        calificacion: createForm.calificacion ? Number(createForm.calificacion) : null,
+        estado: createForm.estado as any,
+        observaciones: createForm.observaciones.trim() || null,
+        fechaEvaluacion: createForm.fechaEvaluacion || null,
+      },
+      { onSuccess: () => { setShowCreate(false); resetCreateForm(); } }
+    );
+  };
+
+  const handleUpdate = () => {
+    if (!editTarget) return;
+    updateEvaluacionMutation.mutate(
+      {
+        id: editTarget.id,
+        data: {
+          calificacion: editTarget.calificacion ? Number(editTarget.calificacion) : null,
+          estado: editTarget.estado as any,
+          observaciones: editTarget.observaciones.trim() || null,
+        },
+      },
+      { onSuccess: () => setEditTarget(null) }
+    );
+  };
+
+  // Build module options from cursos
+  const moduleOptions = cursos.flatMap(c =>
+    (c.modulos || []).map(m => ({ idModulo: m.idModulo, label: `${c.nombre} — ${m.titulo}` }))
+  );
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -131,6 +174,9 @@ export function EvaluationsPage() {
                       {renderCalificacion(ev.calificacion)}
                       <Badge variant="outline" className={`${estadoEvalColors[ev.estado]} border-0 text-xs`}>{estadoEvalLabels[ev.estado]}</Badge>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => setEditTarget({ id: ev.idEvaluacion, calificacion: ev.calificacion?.toString() ?? "", estado: ev.estado, observaciones: ev.observaciones ?? "" })} className="p-1 rounded hover:bg-blue-50" title="Editar">
+                          <Pencil className="w-3.5 h-3.5 text-blue-500" />
+                        </button>
                         <button onClick={() => setDeleteTarget(ev.idEvaluacion)} className="p-1 rounded hover:bg-red-50" title="Eliminar">
                           <Trash2 className="w-3.5 h-3.5 text-red-500" />
                         </button>
@@ -164,26 +210,67 @@ export function EvaluationsPage() {
       </AlertDialog>
 
       {/* Create Dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+      <Dialog open={showCreate} onOpenChange={o => { if (!o) { setShowCreate(false); resetCreateForm(); } }}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Nueva Evaluacion</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><label className="text-sm">Calificacion (0-100)</label><Input type="number" min="0" max="100" step="0.5" placeholder="85.00" className="mt-1" /></div>
+          <DialogHeader><DialogTitle>Nueva Evaluación</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
             <div>
-              <label className="text-sm">Estado</label>
-              <select className="w-full border rounded-lg px-3 py-2 text-sm bg-card mt-1">
-                <option value="pendiente">Pendiente</option>
-                <option value="aprobado">Aprobado</option>
-                <option value="reprobado">Reprobado</option>
-                <option value="en_revision">En Revision</option>
+              <label className="text-sm text-muted-foreground mb-1 block">Módulo *</label>
+              <select className="w-full h-10 rounded-md border border-input bg-input-background px-3 text-sm" value={createForm.idModulo} onChange={e => setCreateForm(p => ({ ...p, idModulo: Number(e.target.value) }))}>
+                <option value={0}>Seleccionar módulo...</option>
+                {moduleOptions.map(mo => <option key={mo.idModulo} value={mo.idModulo}>{mo.label}</option>)}
               </select>
             </div>
-            <div><label className="text-sm">Observaciones</label><textarea placeholder="Retroalimentacion..." className="w-full border rounded-lg px-3 py-2 text-sm bg-card mt-1 min-h-[80px] resize-y" /></div>
-            <div><label className="text-sm">Fecha de Evaluacion</label><Input type="date" className="mt-1" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-sm text-muted-foreground mb-1 block">Calificación (0-100)</label><Input type="number" min="0" max="100" step="0.5" value={createForm.calificacion} onChange={e => setCreateForm(p => ({ ...p, calificacion: e.target.value }))} placeholder="85.00" className="bg-input-background" /></div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Estado</label>
+                <select className="w-full h-10 rounded-md border border-input bg-input-background px-3 text-sm" value={createForm.estado} onChange={e => setCreateForm(p => ({ ...p, estado: e.target.value }))}>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="aprobado">Aprobado</option>
+                  <option value="reprobado">Reprobado</option>
+                  <option value="en_revision">En Revisión</option>
+                </select>
+              </div>
+            </div>
+            <div><label className="text-sm text-muted-foreground mb-1 block">Observaciones</label><textarea value={createForm.observaciones} onChange={e => setCreateForm(p => ({ ...p, observaciones: e.target.value }))} placeholder="Retroalimentación..." className="w-full border rounded-lg px-3 py-2 text-sm bg-input-background min-h-[80px] resize-y" /></div>
+            <div><label className="text-sm text-muted-foreground mb-1 block">Fecha</label><Input type="date" value={createForm.fechaEvaluacion} onChange={e => setCreateForm(p => ({ ...p, fechaEvaluacion: e.target.value }))} className="bg-input-background" /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
-            <Button onClick={() => setShowCreate(false)}>Registrar Evaluacion</Button>
+            <Button variant="outline" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
+            <Button onClick={handleCreate} disabled={createEvaluacionMutation.isPending || !createForm.idModulo}>
+              {createEvaluacionMutation.isPending ? "Registrando..." : "Registrar Evaluación"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editTarget} onOpenChange={o => { if (!o) setEditTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Editar Evaluación</DialogTitle></DialogHeader>
+          {editTarget && (
+            <div className="space-y-3 py-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-sm text-muted-foreground mb-1 block">Calificación</label><Input type="number" min="0" max="100" step="0.5" value={editTarget.calificacion} onChange={e => setEditTarget(p => p ? { ...p, calificacion: e.target.value } : p)} className="bg-input-background" /></div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">Estado</label>
+                  <select className="w-full h-10 rounded-md border border-input bg-input-background px-3 text-sm" value={editTarget.estado} onChange={e => setEditTarget(p => p ? { ...p, estado: e.target.value } : p)}>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="aprobado">Aprobado</option>
+                    <option value="reprobado">Reprobado</option>
+                    <option value="en_revision">En Revisión</option>
+                  </select>
+                </div>
+              </div>
+              <div><label className="text-sm text-muted-foreground mb-1 block">Observaciones</label><textarea value={editTarget.observaciones} onChange={e => setEditTarget(p => p ? { ...p, observaciones: e.target.value } : p)} className="w-full border rounded-lg px-3 py-2 text-sm bg-input-background min-h-[80px] resize-y" /></div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>Cancelar</Button>
+            <Button onClick={handleUpdate} disabled={updateEvaluacionMutation.isPending}>
+              {updateEvaluacionMutation.isPending ? "Guardando..." : "Guardar Cambios"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

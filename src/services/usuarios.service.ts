@@ -92,7 +92,7 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
         iglesiaNombre: ur.iglesia?.nombre ?? '',
       })),
     minNames: ((r.miembro_ministerio as any[]) || [])
-      .filter((mm: any) => mm.activo)
+      .filter((mm: any) => mm.fecha_salida === null)
       .map((mm: any) => ({
         nombre: mm.ministerio?.nombre ?? '',
         rol: mm.rol_en_ministerio ?? '',
