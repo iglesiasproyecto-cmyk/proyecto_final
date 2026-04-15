@@ -5,7 +5,6 @@ import {
   useCreateDepartamento, useUpdateDepartamento, useDeleteDepartamento,
   useCreateCiudad, useUpdateCiudad, useDeleteCiudad,
 } from "@/hooks/useGeografia";
-import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -14,7 +13,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "./ui/alert-dialog";
-import { Globe, MapPin, Building, Plus, Pencil, Trash2, ChevronRight, ChevronDown, Search } from "lucide-react";
+import { Globe, MapPin, Building, Plus, Pencil, Trash2, ChevronRight, ChevronDown, Search, X, Layers, Flag } from "lucide-react";
+import { motion } from "motion/react";
 
 export function GeographyPage() {
   const { data: paises = [], isLoading: paisesLoading } = usePaises();
@@ -39,7 +39,14 @@ export function GeographyPage() {
   const updateCiudadMutation = useUpdateCiudad();
   const deleteCiudadMutation = useDeleteCiudad();
 
-  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando geografía...</div>;
+  if (isLoading) return (
+    <div className="max-w-7xl mx-auto flex items-center justify-center p-12">
+      <div className="animate-pulse flex flex-col items-center gap-4">
+        <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+        <p className="text-muted-foreground text-sm font-medium">Cargando geografía...</p>
+      </div>
+    </div>
+  );
 
   const togglePais = (id: number) => { const s = new Set(expandedPais); s.has(id) ? s.delete(id) : s.add(id); setExpandedPais(s); };
   const toggleDep = (id: number) => { const s = new Set(expandedDep); s.has(id) ? s.delete(id) : s.add(id); setExpandedDep(s); };
@@ -98,110 +105,194 @@ export function GeographyPage() {
   const dialogTitle = dialog ? `${dialog.mode === "add" ? "Nuevo" : "Editar"} ${dialog.type === "pais" ? "País" : dialog.type === "dep" ? "Departamento" : "Ciudad"}` : "";
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="flex items-center gap-2"><Globe className="w-6 h-6 text-primary" /> Gestión Geográfica</h1>
-          <p className="text-muted-foreground text-sm mt-1">Administra países, departamentos y ciudades (Tablas: Pais, Departamento, Ciudad)</p>
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+      {/* HEADER */}
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+            <Globe className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Catálogos</p>
+            <h1 className="text-3xl font-light tracking-tight">Gestión Geográfica</h1>
+          </div>
         </div>
-        <Button onClick={() => openDialog("pais", "add")}><Plus className="w-4 h-4 mr-2" /> Nuevo País</Button>
-      </div>
+        <Button onClick={() => openDialog("pais", "add")} className="shrink-0 shadow-md shadow-cyan-600/20 rounded-full px-6 bg-cyan-600 hover:bg-cyan-700 text-white h-11"><Plus className="w-4 h-4 mr-2" /> Nuevo País</Button>
+      </motion.div>
 
-      <div className="flex gap-3 items-center">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-card" />
+      {/* STATS ROW */}
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }} className="grid grid-cols-3 gap-4">
+        <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm dark:border-white/10 dark:bg-card/20 flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
+          <p className="text-3xl font-light text-cyan-600 dark:text-cyan-400">{paises.length}</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5"/> Países</p>
         </div>
-        <div className="flex gap-2 text-xs text-muted-foreground">
-          <Badge variant="outline">{paises.length} países</Badge>
-          <Badge variant="outline">{departamentosGeo.length} departamentos</Badge>
-          <Badge variant="outline">{ciudades.length} ciudades</Badge>
+        <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm dark:border-white/10 dark:bg-card/20 flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
+          <p className="text-3xl font-light text-violet-600 dark:text-violet-400">{departamentosGeo.length}</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5"/> Departamentos</p>
         </div>
-      </div>
+        <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm dark:border-white/10 dark:bg-card/20 flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
+          <p className="text-3xl font-light text-emerald-600 dark:text-emerald-400">{ciudades.length}</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 flex items-center gap-1.5"><Building className="w-3.5 h-3.5"/> Ciudades</p>
+        </div>
+      </motion.div>
 
-      <div className="space-y-2">
+      {/* ACTION BAR */}
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
+        <div className="p-3 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm flex dark:border-white/10 dark:bg-card/20">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input 
+              placeholder="Buscar países, departamentos o ciudades..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-cyan-600/20 h-11 rounded-xl w-full" 
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* LISTA GEOGRÁFICA */}
+      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="space-y-4">
         {filteredPaises.map(pais => {
           const deps = departamentosGeo.filter(d => d.idPais === pais.idPais);
           const isExpP = expandedPais.has(pais.idPais);
           return (
-            <Card key={pais.idPais} className="overflow-hidden">
-              <div className="flex items-center gap-3 p-4 cursor-pointer hover:bg-accent/30" onClick={() => togglePais(pais.idPais)}>
-                <Globe className="w-5 h-5 text-blue-500 shrink-0" />
-                <span className="flex-1 text-sm">{pais.nombre}</span>
-                <Badge variant="secondary" className="text-xs">{deps.length} dep.</Badge>
-                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                  <Button variant="ghost" size="sm" onClick={() => openDialog("dep", "add", undefined, pais.idPais)}><Plus className="w-3.5 h-3.5" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => openDialog("pais", "edit", pais.idPais)}><Pencil className="w-3.5 h-3.5" /></Button>
-                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setConfirmDelete({ type: "pais", id: pais.idPais, name: pais.nombre })}><Trash2 className="w-3.5 h-3.5" /></Button>
+             <div key={pais.idPais} className="rounded-2xl bg-card/50 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden dark:border-white/10 dark:bg-card/20 transition-all">
+                <div className="flex items-center gap-4 p-4 md:px-6 cursor-pointer hover:bg-white/40 dark:hover:bg-white/5 transition-colors" onClick={() => togglePais(pais.idPais)}>
+                   <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shrink-0">
+                      <Globe className="w-5 h-5" />
+                   </div>
+                   <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground text-lg truncate">{pais.nombre}</p>
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mt-0.5">{deps.length} {deps.length === 1 ? 'Departamento' : 'Departamentos'}</p>
+                   </div>
+                   <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-emerald-600 shrink-0 border border-emerald-500/20 bg-emerald-500/5 shadow-sm" onClick={() => openDialog("dep", "add", undefined, pais.idPais)} title="Agregar Departamento">
+                         <Plus className="w-4 h-4" />
+                      </Button>
+                      <div className="w-px h-6 bg-border/60 mx-1 hidden sm:block" />
+                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-foreground/70 shrink-0" onClick={() => openDialog("pais", "edit", pais.idPais)}>
+                         <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-full hover:bg-destructive/10 text-destructive shrink-0" onClick={() => setConfirmDelete({ type: "pais", id: pais.idPais, name: pais.nombre })}>
+                         <Trash2 className="w-4 h-4" />
+                      </Button>
+                   </div>
+                   <div className="ml-1 sm:ml-2">
+                       {isExpP ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+                   </div>
                 </div>
-                {isExpP ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-              </div>
-              {isExpP && (
-                <div className="border-t bg-muted/10">
-                  {deps.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sin departamentos</p>}
-                  {deps.map(dep => {
-                    const cius = ciudades.filter(c => c.idDepartamentoGeo === dep.idDepartamentoGeo);
-                    const isExpD = expandedDep.has(dep.idDepartamentoGeo);
-                    return (
-                      <div key={dep.idDepartamentoGeo}>
-                        <div className="flex items-center gap-3 px-4 py-3 pl-10 cursor-pointer hover:bg-accent/20 border-b last:border-0" onClick={() => toggleDep(dep.idDepartamentoGeo)}>
-                          <MapPin className="w-4 h-4 text-purple-500 shrink-0" />
-                          <span className="flex-1 text-sm">{dep.nombre}</span>
-                          <Badge variant="outline" className="text-xs">{cius.length} ciudades</Badge>
-                          <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                            <Button variant="ghost" size="sm" onClick={() => openDialog("ciudad", "add", undefined, dep.idDepartamentoGeo)}><Plus className="w-3 h-3" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => openDialog("dep", "edit", dep.idDepartamentoGeo)}><Pencil className="w-3 h-3" /></Button>
-                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setConfirmDelete({ type: "dep", id: dep.idDepartamentoGeo, name: dep.nombre })}><Trash2 className="w-3 h-3" /></Button>
-                          </div>
-                          {isExpD ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
-                        </div>
-                        {isExpD && cius.length > 0 && (
-                          <div className="bg-muted/20">
-                            {cius.map(ci => (
-                              <div key={ci.idCiudad} className="flex items-center gap-3 px-4 py-2 pl-16 border-b last:border-0 hover:bg-accent/10">
-                                <Building className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                                <span className="flex-1 text-sm">{ci.nombre}</span>
-                                <div className="flex gap-1">
-                                  <Button variant="ghost" size="sm" onClick={() => openDialog("ciudad", "edit", ci.idCiudad)}><Pencil className="w-3 h-3" /></Button>
-                                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setConfirmDelete({ type: "ciudad", id: ci.idCiudad, name: ci.nombre })}><Trash2 className="w-3 h-3" /></Button>
-                                </div>
+
+                {isExpP && (
+                  <div className="bg-white/20 dark:bg-black/10 border-t border-white/20 dark:border-white/5">
+                    {deps.length === 0 && <p className="text-sm text-muted-foreground text-center py-6 italic">Sin departamentos registrados en este país.</p>}
+                    <div className="flex flex-col">
+                      {deps.map(dep => {
+                        const cius = ciudades.filter(c => c.idDepartamentoGeo === dep.idDepartamentoGeo);
+                        const isExpD = expandedDep.has(dep.idDepartamentoGeo);
+                        return (
+                           <div key={dep.idDepartamentoGeo}>
+                              <div className="flex items-center gap-4 py-3 px-4 md:px-6 md:pl-12 cursor-pointer hover:bg-white/40 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 last:border-0 transition-colors" onClick={() => toggleDep(dep.idDepartamentoGeo)}>
+                                 <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
+                                    <MapPin className="w-4 h-4" />
+                                 </div>
+                                 <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-foreground/90 text-sm md:text-base truncate">{dep.nombre}</p>
+                                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-0.5">{cius.length} {cius.length === 1 ? 'Ciudad' : 'Ciudades'}</p>
+                                 </div>
+                                 <div className="flex items-center gap-1.5 md:gap-2" onClick={e => e.stopPropagation()}>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-emerald-600 shrink-0 border border-emerald-500/20 bg-emerald-500/5 shadow-sm" onClick={() => openDialog("ciudad", "add", undefined, dep.idDepartamentoGeo)} title="Agregar Ciudad">
+                                       <Plus className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <div className="w-px h-5 bg-border/60 mx-1 hidden sm:block" />
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-foreground/70 shrink-0" onClick={() => openDialog("dep", "edit", dep.idDepartamentoGeo)}>
+                                       <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10 text-destructive shrink-0" onClick={() => setConfirmDelete({ type: "dep", id: dep.idDepartamentoGeo, name: dep.nombre })}>
+                                       <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                 </div>
+                                 <div className="ml-2 w-5 flex justify-center">
+                                    {isExpD ? <ChevronDown className="w-4 h-4 text-muted-foreground/60" /> : <ChevronRight className="w-4 h-4 text-muted-foreground/60" />}
+                                 </div>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </Card>
+                              
+                              {isExpD && cius.length > 0 && (
+                                 <div className="bg-muted/10">
+                                   {cius.map(ci => (
+                                     <div key={ci.idCiudad} className="flex items-center gap-4 py-2.5 px-4 md:px-6 md:pl-[5.5rem] border-b border-border/30 last:border-0 hover:bg-white/30 dark:hover:bg-white/5 transition-colors">
+                                       <div className="flex items-center gap-3 flex-1 min-w-0">
+                                         <Building className="w-4 h-4 text-emerald-500/80 shrink-0" />
+                                         <span className="text-sm font-medium text-foreground/80 truncate">{ci.nombre}</span>
+                                       </div>
+                                       <div className="flex gap-1.5 pr-8">
+                                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-foreground/70 shrink-0" onClick={() => openDialog("ciudad", "edit", ci.idCiudad)}>
+                                             <Pencil className="w-3.5 h-3.5" />
+                                          </Button>
+                                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-full hover:bg-destructive/10 text-destructive shrink-0" onClick={() => setConfirmDelete({ type: "ciudad", id: ci.idCiudad, name: ci.nombre })}>
+                                             <Trash2 className="w-3.5 h-3.5" />
+                                          </Button>
+                                       </div>
+                                     </div>
+                                   ))}
+                                 </div>
+                              )}
+                           </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+             </div>
           );
         })}
-      </div>
+        {filteredPaises.length === 0 && (
+          <div className="col-span-full py-16 text-center rounded-3xl bg-card/30 border border-dashed border-border mt-4">
+             <Globe className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+             <p className="text-base font-medium text-foreground">No se encontraron resultados</p>
+             <p className="text-sm text-muted-foreground mt-1">Prueba con otras palabras de búsqueda</p>
+          </div>
+        )}
+      </motion.div>
 
+      {/* DIALOG CREAR/EDITAR */}
       <Dialog open={!!dialog} onOpenChange={o => !o && setDialog(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>{dialogTitle}</DialogTitle></DialogHeader>
-          <div><label className="text-sm">Nombre</label><Input value={formNombre} onChange={e => setFormNombre(e.target.value)} placeholder="Nombre" className="mt-1" onKeyDown={e => e.key === "Enter" && handleSubmit()} /></div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialog(null)}>Cancelar</Button>
-            <Button onClick={handleSubmit} disabled={!formNombre.trim() || isMutating}>Guardar</Button>
-          </DialogFooter>
+        <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
+          <div className="px-6 py-4 bg-muted/30 border-b border-border/40">
+             <DialogHeader><DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
+               {dialog?.mode === "edit" ? <Pencil className="w-5 h-5 text-cyan-600" /> : <Plus className="w-5 h-5 text-cyan-600" />} {dialogTitle}
+             </DialogTitle></DialogHeader>
+          </div>
+          <div className="px-6 py-5">
+            <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nombre <span className="text-destructive">*</span></label>
+            <Input 
+              value={formNombre} 
+              onChange={e => setFormNombre(e.target.value)} 
+              placeholder={`Ej. ${dialog?.type === 'pais' ? 'Colombia' : dialog?.type === 'dep' ? 'Antioquia' : 'Medellín'}`} 
+              className="bg-input-background focus-visible:ring-cyan-600/30 h-11" 
+              onKeyDown={e => e.key === "Enter" && handleSubmit()} 
+            />
+          </div>
+          <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
+             <Button variant="ghost" onClick={() => setDialog(null)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
+             <Button onClick={handleSubmit} disabled={!formNombre.trim() || isMutating} className="rounded-full px-5 bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm shadow-cyan-600/20">Guardar</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
+      {/* ALERT DIALOG ELIMINAR */}
       <AlertDialog open={!!confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border border-white/20">
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar {confirmDelete?.type === "pais" ? "País" : confirmDelete?.type === "dep" ? "Departamento" : "Ciudad"}</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta accion eliminara permanentemente "{confirmDelete?.name}". Esta accion no se puede deshacer.
+            <AlertDialogTitle className="text-xl">Eliminar {confirmDelete?.type === "pais" ? "País" : confirmDelete?.type === "dep" ? "Departamento" : "Ciudad"}</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              ¿Seguro que deseas eliminar "<strong className="text-foreground">{confirmDelete?.name}</strong>"? Esta acción es irreversible y podría afectar datos que dependan de esta ubicación.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={deletePaisMutation.isPending || deleteDeptoMutation.isPending || deleteCiudadMutation.isPending}>
-              Eliminar
+          <AlertDialogFooter className="mt-2 text-right">
+            <AlertDialogCancel className="rounded-full">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm" disabled={deletePaisMutation.isPending || deleteDeptoMutation.isPending || deleteCiudadMutation.isPending}>
+              Eliminar Definitivamente
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

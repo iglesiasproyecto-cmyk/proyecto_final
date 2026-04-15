@@ -54,9 +54,16 @@ export function CatalogosPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h1 className="flex items-center gap-2"><Settings2 className="w-6 h-6 text-primary" /> Catálogos del Sistema</h1>
-        <p className="text-muted-foreground text-sm mt-1">Gestiona los catálogos y tablas de referencia de la plataforma</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+            <Settings2 className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-light tracking-tight">Catálogos del Sistema</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">Gestiona los catálogos y tablas de referencia de la plataforma</p>
+          </div>
+        </div>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
