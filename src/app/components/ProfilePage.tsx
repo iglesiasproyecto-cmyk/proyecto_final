@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useApp } from "../store/AppContext";
-import { useIglesias } from "@/hooks/useIglesias";
+import { useUpdateUsuario } from "@/hooks/useUsuarios";
+import { supabase } from "@/lib/supabaseClient";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
-import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, CheckCircle2, Loader2 } from "lucide-react";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -24,18 +26,58 @@ const roleGradients: Record<string, string> = {
 };
 
 export function ProfilePage() {
-  const { usuarioActual, logout } = useApp();
-  const { data: iglesias = [] } = useIglesias();
+  const { usuarioActual, logout, rolActual, iglesiaActual, setIglesiaActual, iglesiasDelUsuario } = useApp();
+  const updateUsuarioMutation = useUpdateUsuario();
+
+  // Profile form state
+  const [nombres, setNombres] = useState(usuarioActual?.nombres ?? "");
+  const [apellidos, setApellidos] = useState(usuarioActual?.apellidos ?? "");
+  const [telefono, setTelefono] = useState(usuarioActual?.telefono ?? "");
+
+  // Password form state
   const [showPassword, setShowPassword] = useState(false);
-  const [activeChurchId, setActiveChurchId] = useState<number | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   if (!usuarioActual) return null;
   const fullName = `${usuarioActual.nombres} ${usuarioActual.apellidos}`;
   const initials = `${usuarioActual.nombres.charAt(0)}${usuarioActual.apellidos.charAt(0)}`;
-  // rol is not stored on Usuario; default to "servidor" for display
-  const rol = "servidor";
+  const rol = rolActual;
   const gradient = roleGradients[rol] || "from-gray-500 to-gray-600";
-  const activeIglesias = iglesias.filter((ig) => ig.estado === "activa");
+
+  const handleSaveProfile = () => {
+    updateUsuarioMutation.mutate(
+      { id: usuarioActual.idUsuario, data: { nombres, apellidos, telefono: telefono || null } },
+      {
+        onSuccess: () => toast.success("Perfil actualizado correctamente"),
+        onError: (err) => toast.error(`Error al guardar: ${err.message}`),
+      }
+    );
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 8) {
+      toast.error("La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Las contraseñas no coinciden");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success("Contraseña actualizada correctamente");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -79,11 +121,11 @@ export function ProfilePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-muted-foreground mb-1.5 block">Nombres</label>
-                  <Input defaultValue={usuarioActual.nombres} className="bg-input-background h-11" />
+                  <Input value={nombres} onChange={(e) => setNombres(e.target.value)} className="bg-input-background h-11" />
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground mb-1.5 block">Apellidos</label>
-                  <Input defaultValue={usuarioActual.apellidos} className="bg-input-background h-11" />
+                  <Input value={apellidos} onChange={(e) => setApellidos(e.target.value)} className="bg-input-background h-11" />
                 </div>
               </div>
               <div>
@@ -97,11 +139,12 @@ export function ProfilePage() {
                 <label className="text-sm text-muted-foreground mb-1.5 flex items-center gap-1.5">
                   <Phone className="w-3.5 h-3.5" /> Telefono
                 </label>
-                <Input defaultValue={usuarioActual.telefono || ""} className="bg-input-background h-11" placeholder="+502 5555-0000" />
+                <Input value={telefono} onChange={(e) => setTelefono(e.target.value)} className="bg-input-background h-11" placeholder="+502 5555-0000" />
               </div>
               <div className="pt-2 flex gap-3">
-                <Button className="h-10">
-                  <Save className="w-4 h-4 mr-2" /> Guardar Cambios
+                <Button className="h-10" onClick={handleSaveProfile} disabled={updateUsuarioMutation.isPending}>
+                  {updateUsuarioMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                  Guardar Cambios
                 </Button>
                 <Button variant="outline" className="h-10" onClick={() => logout()}>
                   Cerrar Sesion
@@ -119,25 +162,37 @@ export function ProfilePage() {
                 <h3>Cambiar Contrasena</h3>
               </div>
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Contrasena actual</label>
+                <label className="text-sm text-muted-foreground mb-1.5 block">Nueva contrasena</label>
                 <div className="relative">
-                  <Input type={showPassword ? "text" : "password"} placeholder="Tu contrasena actual" className="pr-10 bg-input-background h-11" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Minimo 8 caracteres"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pr-10 bg-input-background h-11"
+                  />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Nueva contrasena</label>
-                <Input type="password" placeholder="Minimo 8 caracteres" className="bg-input-background h-11" />
-              </div>
-              <div>
                 <label className="text-sm text-muted-foreground mb-1.5 block">Confirmar nueva contrasena</label>
-                <Input type="password" placeholder="Repite la nueva contrasena" className="bg-input-background h-11" />
+                <Input
+                  type="password"
+                  placeholder="Repite la nueva contrasena"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-input-background h-11"
+                />
               </div>
+              {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-xs text-red-500">Las contraseñas no coinciden</p>
+              )}
               <div className="pt-2">
-                <Button className="h-10">
-                  <Lock className="w-4 h-4 mr-2" /> Actualizar Contrasena
+                <Button className="h-10" onClick={handleChangePassword} disabled={changingPassword || !newPassword || !confirmPassword}>
+                  {changingPassword ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
+                  Actualizar Contrasena
                 </Button>
               </div>
             </Card>
@@ -153,17 +208,17 @@ export function ProfilePage() {
               </div>
               <p className="text-sm text-muted-foreground">Selecciona la iglesia activa para tu sesion actual.</p>
               <div className="space-y-2">
-                {activeIglesias.map((ig) => {
-                  const isActive = ig.idIglesia === activeChurchId;
+                {iglesiasDelUsuario.map((ig) => {
+                  const isActive = ig.id === iglesiaActual?.id;
                   return (
                     <div
-                      key={ig.idIglesia}
+                      key={ig.id}
                       className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                         isActive
                           ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
                           : "border-transparent bg-accent/30 hover:bg-accent/50 hover:border-border"
                       }`}
-                      onClick={() => setActiveChurchId(ig.idIglesia)}
+                      onClick={() => setIglesiaActual(ig)}
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
                         isActive ? "bg-primary text-white shadow-md" : "bg-primary/10 text-primary"
@@ -172,7 +227,6 @@ export function ProfilePage() {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm">{ig.nombre}</p>
-                        <p className="text-xs text-muted-foreground">{ig.ciudadNombre}, {ig.paisNombre}</p>
                       </div>
                       {isActive && (
                         <Badge variant="default" className="text-xs flex items-center gap-1">
@@ -182,7 +236,7 @@ export function ProfilePage() {
                     </div>
                   );
                 })}
-                {activeIglesias.length === 0 && (
+                {iglesiasDelUsuario.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-6">No hay iglesias disponibles</p>
                 )}
               </div>

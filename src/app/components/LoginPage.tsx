@@ -13,7 +13,10 @@ import {
 } from 'lucide-react'
 
 const testCredentials = [
-  { email: 'admin@iglesiabd.com', label: 'Admin', desc: 'Gestión global', icon: Shield, color: 'from-red-500 to-orange-500' },
+  { email: 'admin@iglesiabd.com',    label: 'Super Admin',    desc: 'Gestión global',       icon: Crown,     color: 'from-red-500 to-orange-500' },
+  { email: 'pastor@iglesiabd.com',   label: 'Admin Iglesia',  desc: 'Gestión de iglesia',   icon: Building2, color: 'from-indigo-500 to-violet-500' },
+  { email: 'lider@iglesiabd.com',    label: 'Líder',          desc: 'Ministerio & equipo',  icon: Shield,    color: 'from-amber-500 to-yellow-500' },
+  { email: 'servidor@iglesiabd.com', label: 'Servidor',       desc: 'Vista personal',       icon: User,      color: 'from-cyan-500 to-teal-500' },
 ]
 
 export function LoginPage() {
@@ -164,7 +167,7 @@ export function LoginPage() {
           </div>
 
           {/* Quick Login Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+          <div className="grid grid-cols-2 gap-2 mb-6">
             {testCredentials.map((cred, i) => {
               const Icon = cred.icon;
               return (
@@ -253,8 +256,21 @@ export function LoginPage() {
           </form>
 
           <p className="text-center text-xs text-muted-foreground mt-6">
-            Contrasena de prueba: <code className="bg-muted px-1.5 py-0.5 rounded text-foreground">cualquiera</code>
+            Contraseña de prueba: <code className="bg-muted px-1.5 py-0.5 rounded text-foreground">Password123!</code>
           </p>
+
+          <div className="mt-8 pt-6 border-t border-border">
+            <button
+              onClick={() => {
+                localStorage.setItem('sei-mock-mode', 'true');
+                window.location.href = '/app/sitemap';
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-dashed border-primary/30 text-primary hover:bg-primary/5 transition-colors text-xs font-semibold shadow-sm"
+            >
+              <Sparkles className="w-4 h-4" />
+              Explorar UI (Mock Mode)
+            </button>
+          </div>
         </motion.div>
       </div>
     </div>

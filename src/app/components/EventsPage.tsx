@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { useEventosEnriquecidos, useDeleteEvento, useTiposEvento, useCreateEvento } from "@/hooks/useEventos";
+import { useEventosEnriquecidos, useDeleteEvento, useTiposEvento, useCreateEvento, useUpdateEvento } from "@/hooks/useEventos";
+import type { EventoEnriquecido } from "@/services/eventos.service";
 import { useApp } from "@/app/store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
-import { CalendarDays, Plus, MapPin, Clock, Globe, Users } from "lucide-react";
+import { CalendarDays, Plus, MapPin, Clock, Globe, Users, Pencil } from "lucide-react";
 
 const scopeConfig = {
   global: { label: "Global", color: "bg-indigo-100 text-indigo-700", icon: <Globe className="w-3.5 h-3.5" /> },
@@ -28,7 +30,9 @@ export function EventsPage() {
   const { data: tiposEvento = [] } = useTiposEvento();
   const createEventoMutation = useCreateEvento();
   const deleteEventoMutation = useDeleteEvento();
+  const updateEventoMutation = useUpdateEvento();
   const [showCreate, setShowCreate] = useState(false);
+  const [editEvento, setEditEvento] = useState<EventoEnriquecido | null>(null);
   const [createForm, setCreateForm] = useState({
     nombre: "",
     descripcion: "",
@@ -36,8 +40,28 @@ export function EventsPage() {
     fechaInicio: "",
     fechaFin: "",
   });
+  const [editForm, setEditForm] = useState({
+    nombre: "",
+    descripcion: "",
+    idTipoEvento: 0,
+    fechaInicio: "",
+    fechaFin: "",
+    estado: "programado" as string,
+  });
 
   const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "" });
+
+  const openEditDialog = (ev: EventoEnriquecido) => {
+    setEditEvento(ev);
+    setEditForm({
+      nombre: ev.nombre,
+      descripcion: ev.descripcion ?? "",
+      idTipoEvento: ev.idTipoEvento,
+      fechaInicio: ev.fechaInicio?.slice(0, 16) ?? "",
+      fechaFin: ev.fechaFin?.slice(0, 16) ?? "",
+      estado: ev.estado,
+    });
+  };
 
   const handleCreateEvento = () => {
     if (!createForm.nombre.trim() || !createForm.idTipoEvento || !createForm.fechaInicio || !createForm.fechaFin) return;
@@ -57,6 +81,26 @@ export function EventsPage() {
           setShowCreate(false);
           resetCreateForm();
         },
+      }
+    );
+  };
+
+  const handleUpdateEvento = () => {
+    if (!editEvento || !editForm.nombre.trim()) return;
+    updateEventoMutation.mutate(
+      {
+        id: editEvento.idEvento,
+        data: {
+          nombre: editForm.nombre.trim(),
+          descripcion: editForm.descripcion.trim() || null,
+          idTipoEvento: editForm.idTipoEvento,
+          fechaInicio: editForm.fechaInicio,
+          fechaFin: editForm.fechaFin || null,
+          estado: editForm.estado,
+        },
+      },
+      {
+        onSuccess: () => setEditEvento(null),
       }
     );
   };
@@ -110,6 +154,14 @@ export function EventsPage() {
                             {scope.icon} {isGlobal ? "Global" : evento.ministerioNombre}
                           </Badge>
                           <Badge variant="outline" className={`${estadoColors[evento.estado]} border-0 text-[10px]`}>{evento.estado}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-primary"
+                            onClick={() => openEditDialog(evento)}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -244,6 +296,86 @@ export function EventsPage() {
             <Button variant="outline" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
             <Button onClick={handleCreateEvento} disabled={createEventoMutation.isPending}>
               {createEventoMutation.isPending ? "Creando..." : "Crear Evento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Event Dialog ── */}
+      <Dialog open={!!editEvento} onOpenChange={o => { if (!o) setEditEvento(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Evento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Nombre *</label>
+              <Input
+                value={editForm.nombre}
+                onChange={(e) => setEditForm(p => ({ ...p, nombre: e.target.value }))}
+                placeholder="Nombre del evento"
+                className="bg-input-background"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Tipo de Evento *</label>
+              <select
+                className="w-full h-10 rounded-md border border-input bg-input-background px-3 text-sm"
+                value={editForm.idTipoEvento}
+                onChange={(e) => setEditForm(p => ({ ...p, idTipoEvento: Number(e.target.value) }))}
+              >
+                <option value={0}>Seleccionar tipo...</option>
+                {tiposEvento.map(te => (
+                  <option key={te.idTipoEvento} value={te.idTipoEvento}>{te.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Inicio *</label>
+                <Input
+                  type="datetime-local"
+                  value={editForm.fechaInicio}
+                  onChange={(e) => setEditForm(p => ({ ...p, fechaInicio: e.target.value }))}
+                  className="bg-input-background"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Fin *</label>
+                <Input
+                  type="datetime-local"
+                  value={editForm.fechaFin}
+                  onChange={(e) => setEditForm(p => ({ ...p, fechaFin: e.target.value }))}
+                  className="bg-input-background"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Estado</label>
+              <Select value={editForm.estado} onValueChange={v => setEditForm(p => ({ ...p, estado: v }))}>
+                <SelectTrigger className="bg-input-background"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="programado">Programado</SelectItem>
+                  <SelectItem value="en_curso">En Curso</SelectItem>
+                  <SelectItem value="finalizado">Finalizado</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Descripción</label>
+              <Input
+                value={editForm.descripcion}
+                onChange={(e) => setEditForm(p => ({ ...p, descripcion: e.target.value }))}
+                placeholder="Descripción opcional"
+                className="bg-input-background"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditEvento(null)}>Cancelar</Button>
+            <Button onClick={handleUpdateEvento} disabled={updateEventoMutation.isPending}>
+              {updateEventoMutation.isPending ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </DialogFooter>
         </DialogContent>

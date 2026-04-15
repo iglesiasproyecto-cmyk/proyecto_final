@@ -233,7 +233,7 @@ export async function getTareasEnriquecidas(idEvento?: number): Promise<TareaEnr
   let q = supabase
     .from('tarea')
     .select('*, evento(nombre), tarea_asignada(count)')
-    .order('created_at', { ascending: false })
+    .order('creado_en', { ascending: false })
   if (idEvento !== undefined) q = q.eq('id_evento', idEvento)
   const { data, error } = await q
   if (error) throw error
