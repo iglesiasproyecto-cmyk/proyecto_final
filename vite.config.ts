@@ -10,6 +10,16 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    port: 5173,
+    strictPort: true,
+    middlewareMode: false,
+    open: 'http://localhost:5173/app',
+    hmr: {
+      host: 'localhost',
+      port: 5173,
+    },
+  },
   resolve: {
     alias: {
       // Alias @ to the src directory
