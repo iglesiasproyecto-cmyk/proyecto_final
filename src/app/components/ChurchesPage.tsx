@@ -237,9 +237,9 @@ export function ChurchesPage() {
                 <Pencil className="w-3.5 h-3.5 mr-1.5" /> Editar
               </Button>
               <Button 
-                variant={ig.estado === "activa" ? "outline" : "default"} 
+                variant="ghost" 
                 size="sm" 
-                className={`rounded-xl px-3 transition-colors ${ig.estado === "activa" ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200 dark:border-amber-900/30" : ""}`}
+                className={`rounded-xl px-3 transition-all ${ig.estado === "activa" ? "text-amber-500 hover:bg-amber-500/10" : "text-emerald-500 hover:bg-emerald-500/10"}`}
                 onClick={() => toggleEstadoMutation.mutate(ig.idIglesia)} 
                 title={ig.estado === "activa" ? "Desactivar" : "Activar"}
               >

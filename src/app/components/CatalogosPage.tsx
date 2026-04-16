@@ -53,80 +53,97 @@ export function CatalogosPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
-            <Settings2 className="w-6 h-6 text-white" />
+          <div className="w-14 h-14 rounded-3xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-xl shadow-cyan-600/30 shrink-0">
+            <Settings2 className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-light tracking-tight">Catálogos del Sistema</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Gestiona los catálogos y tablas de referencia de la plataforma</p>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Configuraciones</p>
+            <h1 className="text-3xl md:text-4xl font-light tracking-tight text-foreground">Catálogos del Sistema</h1>
+            <p className="text-muted-foreground text-[13px] font-medium mt-1">Gestiona los catálogos y tablas de referencia de la plataforma</p>
           </div>
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-card">
-          <TabsTrigger value="tipos_evento"><Calendar className="w-3.5 h-3.5 mr-1.5" /> Tipos de Evento ({tiposEvento.length})</TabsTrigger>
-          <TabsTrigger value="roles"><ShieldCheck className="w-3.5 h-3.5 mr-1.5" /> Roles ({roles.length})</TabsTrigger>
+      <Tabs value={tab} onValueChange={setTab} className="mt-8">
+        <TabsList className="bg-card/40 backdrop-blur-xl border border-white/10 p-1.5 h-auto rounded-2xl w-full sm:w-auto inline-flex shadow-xl shadow-black/5">
+          <TabsTrigger value="tipos_evento" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><Calendar className="w-4 h-4 mr-2" /> Tipos de Evento ({tiposEvento.length})</TabsTrigger>
+          <TabsTrigger value="roles" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><ShieldCheck className="w-4 h-4 mr-2" /> Roles ({roles.length})</TabsTrigger>
         </TabsList>
 
         {/* Tipos de Evento */}
-        <TabsContent value="tipos_evento" className="space-y-4 mt-4">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">Define los tipos de evento disponibles para todas las iglesias (Tabla: TipoEvento)</p>
-            <Button onClick={openAddTE}><Plus className="w-4 h-4 mr-2" /> Nuevo Tipo</Button>
+        <TabsContent value="tipos_evento" className="space-y-6 mt-8">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-card/20 p-5 rounded-3xl border border-white/10 backdrop-blur-xl shadow-sm">
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-foreground tracking-tight">Registro de Tipos</h3>
+              <p className="text-[12px] font-medium text-muted-foreground mt-0.5">Define los tipos de evento disponibles para todas las iglesias (Tabla: TipoEvento)</p>
+            </div>
+            <Button onClick={openAddTE} className="bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 rounded-xl px-6 hover:scale-105 transition-all text-xs font-semibold h-11 tracking-wide"><Plus className="w-4 h-4 mr-2" /> Nuevo Tipo</Button>
           </div>
-          <Card>
+
+          <div className="rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-2xl overflow-hidden">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Creado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+              <TableHeader className="bg-blue-600/5">
+                <TableRow className="hover:bg-transparent border-white/10">
+                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 p-5">Nombre</TableHead>
+                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 p-5">Descripción</TableHead>
+                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 p-5">Creado</TableHead>
+                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 p-5 text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tiposEvento.map(te => (
-                  <TableRow key={te.idTipoEvento}>
-                    <TableCell className="text-sm">{te.nombre}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-64 truncate">{te.descripcion || "—"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{new Date(te.creadoEn).toLocaleDateString("es")}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-1 justify-end">
-                        <Button variant="ghost" size="sm" onClick={() => openEditTE(te.idTipoEvento)}><Pencil className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setConfirmDeleteTE({ id: te.idTipoEvento, name: te.nombre })}><Trash2 className="w-3.5 h-3.5" /></Button>
+                  <TableRow key={te.idTipoEvento} className="group hover:bg-blue-600/5 border-white/5 transition-colors">
+                    <TableCell className="p-5">
+                      <span className="text-[14px] font-black tracking-tight text-foreground/90 group-hover:text-blue-600 transition-colors py-1">{te.nombre}</span>
+                    </TableCell>
+                    <TableCell className="p-5 text-[12px] font-medium text-muted-foreground max-w-[16rem] xl:max-w-md truncate">{te.descripcion || "—"}</TableCell>
+                    <TableCell className="p-5">
+                      <Badge variant="outline" className="text-[10px] bg-muted/30 border-0 font-medium tracking-wide">{new Date(te.creadoEn).toLocaleDateString("es")}</Badge>
+                    </TableCell>
+                    <TableCell className="p-5 text-right">
+                      <div className="flex gap-2 justify-end">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-blue-600 hover:bg-blue-600/10 hover:text-blue-700 hover:rotate-12 transition-all shadow-sm bg-background/50" onClick={() => openEditTE(te.idTipoEvento)}><Pencil className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-red-500 hover:bg-red-500/10 hover:text-red-600 hover:-rotate-12 transition-all shadow-sm bg-background/50" onClick={() => setConfirmDeleteTE({ id: te.idTipoEvento, name: te.nombre })}><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
+                {tiposEvento.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-32 text-center">
+                      <p className="text-[13px] font-medium text-muted-foreground">No se encontraron tipos de evento</p>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
-          </Card>
+          </div>
         </TabsContent>
 
         {/* Roles (read-only) */}
-        <TabsContent value="roles" className="space-y-4 mt-4">
-          <p className="text-sm text-muted-foreground">Roles definidos en el sistema (Tabla: Rol). Los roles son fijos en el MVP.</p>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <TabsContent value="roles" className="space-y-6 mt-8">
+          <div className="flex flex-col bg-card/20 p-5 rounded-3xl border border-white/10 backdrop-blur-xl shadow-sm">
+            <h3 className="text-sm font-bold text-foreground tracking-tight">Roles del Sistema</h3>
+            <p className="text-[12px] font-medium text-muted-foreground mt-0.5">Definidos en el sistema (Tabla: Rol). Los roles base son fijos para la correcta seguridad del MVP.</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {roles.map(r => (
-              <Card key={r.idRol} className="p-4">
+              <div key={r.idRol} className="group flex flex-col p-5 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all cursor-default">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><ShieldCheck className="w-5 h-5 text-primary" /></div>
-                    <div>
-                      <p className="text-sm">{r.nombre}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{r.descripcion}</p>
-                    </div>
-                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600/20 to-blue-600/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform mb-4"><ShieldCheck className="w-6 h-6 text-blue-600" /></div>
                 </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <Badge variant="secondary" className="text-xs">Rol activo</Badge>
-                  <span className="text-[10px] text-muted-foreground">ID: {r.idRol}</span>
+                <div>
+                  <p className="text-[16px] font-black text-foreground/90 group-hover:text-blue-600 transition-colors tracking-tight">{r.nombre}</p>
+                  <p className="text-[12px] font-medium text-muted-foreground mt-1.5 line-clamp-3 leading-relaxed">{r.descripcion}</p>
                 </div>
-              </Card>
+                <div className="mt-8 flex items-center justify-between pt-4 border-t border-white/5">
+                  <Badge variant="outline" className="text-[9px] px-2 py-0 border-blue-600/20 bg-blue-600/5 text-blue-700 dark:text-blue-400 uppercase tracking-widest font-bold">Rol Base</Badge>
+                  <span className="text-[10px] text-muted-foreground font-black tracking-widest uppercase opacity-50">ID: {r.idRol}</span>
+                </div>
+              </div>
             ))}
           </div>
         </TabsContent>
@@ -141,8 +158,8 @@ export function CatalogosPage() {
             <div><label className="text-sm">Descripción</label><Textarea value={formTE.descripcion} onChange={e => setFormTE(f => ({ ...f, descripcion: e.target.value }))} className="mt-1" rows={3} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogTE(false)}>Cancelar</Button>
-            <Button onClick={handleSubmitTE} disabled={!formTE.nombre.trim()}>Guardar</Button>
+            <Button variant="outline" className="rounded-xl border-white/10" onClick={() => setDialogTE(false)}>Cancelar</Button>
+            <Button onClick={handleSubmitTE} disabled={!formTE.nombre.trim()} className="rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 shadow-lg text-white">Guardar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

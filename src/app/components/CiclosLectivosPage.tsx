@@ -1,97 +1,149 @@
 import { useState } from "react";
 import { useProcesosAsignadoCurso, useCursos, useDetallesProcesoCurso, useDeleteProcesoAsignadoCurso } from "@/hooks/useCursos";
 import type { ProcesoAsignadoCurso } from "@/types/app.types";
-import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
+import { Card } from "./ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { Progress } from "./ui/progress";
+import { motion, AnimatePresence } from "motion/react";
 import {
-  GraduationCap, Plus, Calendar, Filter, Users, ArrowLeft, BookOpen, Trash2, ChevronRight,
+  GraduationCap, Plus, Calendar, Filter, Users, ArrowLeft,
+  BookOpen, Trash2, ChevronRight, CheckCircle2, PlayCircle, BookMarked, XCircle,
 } from "lucide-react";
 
-const estadoCicloColors: Record<string, string> = {
-  programado: "bg-blue-100 text-blue-700",
-  en_curso: "bg-green-100 text-green-700",
-  finalizado: "bg-gray-100 text-gray-700",
-  cancelado: "bg-red-100 text-red-700",
-};
-const estadoCicloLabels: Record<string, string> = {
-  programado: "Programado",
-  en_curso: "En Curso",
-  finalizado: "Finalizado",
-  cancelado: "Cancelado",
+const estadoCicloConfig: Record<string, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
+  programado: { label: "Programado", color: "bg-blue-500/10 text-blue-400 border-blue-500/20",      dot: "bg-blue-400",    icon: <BookMarked className="w-3 h-3" /> },
+  en_curso:   { label: "En Curso",   color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-400", icon: <PlayCircle className="w-3 h-3" /> },
+  finalizado: { label: "Finalizado", color: "bg-slate-500/10 text-slate-400 border-slate-500/20",   dot: "bg-slate-400",   icon: <CheckCircle2 className="w-3 h-3" /> },
+  cancelado:  { label: "Cancelado",  color: "bg-rose-500/10 text-rose-400 border-rose-500/20",      dot: "bg-rose-400",    icon: <XCircle className="w-3 h-3" /> },
 };
 
-const estadoInscripcionColors: Record<string, string> = {
-  inscrito: "bg-blue-100 text-blue-700",
-  en_progreso: "bg-amber-100 text-amber-700",
-  completado: "bg-green-100 text-green-700",
-  retirado: "bg-red-100 text-red-700",
-};
-const estadoInscripcionLabels: Record<string, string> = {
-  inscrito: "Inscrito",
-  en_progreso: "En Progreso",
-  completado: "Completado",
-  retirado: "Retirado",
+const estadoInscripcionConfig: Record<string, { label: string; color: string }> = {
+  inscrito:    { label: "Inscrito",    color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  en_progreso: { label: "En Progreso", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  completado:  { label: "Completado",  color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  retirado:    { label: "Retirado",    color: "bg-rose-500/10 text-rose-400 border-rose-500/20" },
 };
 
-function CicloDetail({ ciclo, onBack }: { ciclo: ProcesoAsignadoCurso; onBack: () => void }) {
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground block mb-2">{children}</label>;
+}
+
+// ── Detail View ──────────────────────────────────────────────────────────────
+function CicloDetail({ ciclo, onBack, cursoNombre }: { ciclo: ProcesoAsignadoCurso; onBack: () => void; cursoNombre: string }) {
   const { data: detalles = [] } = useDetallesProcesoCurso(ciclo.idProcesoAsignadoCurso);
-  const { data: cursos = [] } = useCursos();
-  const selectedCurso = cursos.find((c) => c.idCurso === ciclo.idCurso);
-
-  const completados = detalles.filter((d) => d.estado === "completado").length;
+  const completados = detalles.filter(d => d.estado === "completado").length;
   const progressPct = detalles.length > 0 ? Math.round((completados / detalles.length) * 100) : 0;
+  const cfg = estadoCicloConfig[ciclo.estado] ?? estadoCicloConfig.programado;
+
+  const formatDate = (d: string) => new Date(d).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <button onClick={onBack} className="flex items-center gap-2 text-primary hover:underline text-sm"><ArrowLeft className="w-4 h-4" /> Volver a ciclos</button>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex-1">
-          <h1>{selectedCurso?.nombre || "Curso"}</h1>
-          <p className="text-muted-foreground text-sm">{ciclo.fechaInicio} — {ciclo.fechaFin}</p>
-        </div>
-        <Badge className={`${estadoCicloColors[ciclo.estado]} border-0 text-xs px-3 py-1.5`}>{estadoCicloLabels[ciclo.estado]}</Badge>
-      </div>
-
-      {detalles.length > 0 && (
-        <Card className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Progreso: {completados}/{detalles.length} completados</span>
-            <span className="text-sm text-primary">{progressPct}%</span>
+    <div className="space-y-5 max-w-4xl mx-auto">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden flex flex-col md:flex-row md:items-center gap-4"
+      >
+        <div className="absolute top-0 right-0 w-64 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
+        <button
+          onClick={onBack}
+          className="w-10 h-10 rounded-xl bg-background/50 border border-white/5 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all hover:-translate-x-0.5 shrink-0"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/15 flex items-center justify-center shrink-0">
+            <BookOpen className="w-6 h-6 text-primary" />
           </div>
-          <Progress value={progressPct} className="h-2" />
-        </Card>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight leading-none mb-1 truncate">{cursoNombre}</h1>
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Calendar className="w-3 h-3" />
+              {formatDate(ciclo.fechaInicio)} — {formatDate(ciclo.fechaFin)}
+            </p>
+          </div>
+        </div>
+        <Badge variant="outline" className={`${cfg.color} border flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider shrink-0`}>
+          {cfg.icon} {cfg.label}
+        </Badge>
+      </motion.div>
+
+      {/* Progress card */}
+      {detalles.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-2xl"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-sm font-bold">Progreso del Ciclo</p>
+              <p className="text-xs text-muted-foreground">{completados} de {detalles.length} participantes completaron el curso</p>
+            </div>
+            <span className="text-3xl font-black text-primary">{progressPct}%</span>
+          </div>
+          <Progress value={progressPct} className="h-2 bg-background/50" />
+        </motion.div>
       )}
 
-      <Card className="p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="flex items-center gap-2"><Users className="w-5 h-5 text-primary" /> Participantes ({detalles.length})</h3>
-        </div>
-        <div className="space-y-2">
-          {detalles.map((d) => (
-            <div key={d.idDetalleProcesoCurso} className="flex items-center gap-3 p-3 rounded-lg bg-accent/30">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs shrink-0">{(d.nombreCompleto || "?").charAt(0)}</div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm">{d.nombreCompleto || `Usuario ${d.idUsuario}`}</p>
-                <p className="text-xs text-muted-foreground">{d.correo}</p>
-              </div>
-              <Badge variant="outline" className={`${estadoInscripcionColors[d.estado]} border-0 text-xs`}>{estadoInscripcionLabels[d.estado]}</Badge>
+      {/* Participants */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-2xl p-0 overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-border/40 bg-card/20 flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-sm flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Participantes inscritos</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">{detalles.length} personas en este ciclo lectivo</p>
             </div>
-          ))}
-          {detalles.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No hay participantes inscritos</p>}
-        </div>
-      </Card>
+          </div>
+          <div className="divide-y divide-border/30">
+            {detalles.map((d, i) => {
+              const inscConfig = estadoInscripcionConfig[d.estado] ?? estadoInscripcionConfig.inscrito;
+              return (
+                <motion.div
+                  key={d.idDetalleProcesoCurso}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="group flex items-center gap-4 px-5 py-3.5 hover:bg-accent/20 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/15 flex items-center justify-center text-primary text-xs font-bold shrink-0">
+                    {(d.nombreCompleto || "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{d.nombreCompleto || `Usuario ${d.idUsuario}`}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{d.correo}</p>
+                  </div>
+                  <Badge variant="outline" className={`${inscConfig.color} border text-[9px] uppercase font-bold tracking-wider px-2 py-0.5`}>
+                    {inscConfig.label}
+                  </Badge>
+                </motion.div>
+              );
+            })}
+            {detalles.length === 0 && (
+              <div className="py-12 flex flex-col items-center gap-3 text-muted-foreground">
+                <div className="w-12 h-12 rounded-2xl bg-accent/40 flex items-center justify-center">
+                  <Users className="w-5 h-5 opacity-40" />
+                </div>
+                <p className="text-sm font-medium">Sin participantes inscritos</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      </motion.div>
     </div>
   );
 }
 
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export function CiclosLectivosPage() {
   const { data: procesosAsignadoCurso = [], isLoading, error } = useProcesosAsignadoCurso();
   const { data: cursos = [] } = useCursos();
@@ -100,171 +152,233 @@ export function CiclosLectivosPage() {
   const [cursoFilter, setCursoFilter] = useState("all");
   const [showCreateCiclo, setShowCreateCiclo] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState<number | null>(null);
-
   const deleteProcesaMutation = useDeleteProcesoAsignadoCurso();
 
-  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+  const getCursoNombre = (idCurso: number) => cursos.find(c => c.idCurso === idCurso)?.nombre || "Curso";
 
-  if (error) return (
-    <Card className="p-8 text-center text-destructive">
-      <h3 className="mb-2">Error cargando ciclos lectivos</h3>
-      <p className="text-sm text-muted-foreground">{String((error as any)?.message ?? JSON.stringify(error))}</p>
-    </Card>
+  if (isLoading) return (
+    <div className="flex items-center justify-center h-48">
+      <div className="flex flex-col items-center gap-3 text-muted-foreground">
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        <span className="text-sm">Cargando ciclos lectivos...</span>
+      </div>
+    </div>
   );
 
-  const selectedCiclo = selectedCicloId ? procesosAsignadoCurso.find((c) => c.idProcesoAsignadoCurso === selectedCicloId) : null;
+  if (error) return (
+    <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-6 rounded-2xl text-sm">
+      Error cargando ciclos lectivos: {String((error as any)?.message ?? "")}
+    </div>
+  );
 
-  if (selectedCiclo) {
-    return <CicloDetail ciclo={selectedCiclo} onBack={() => setSelectedCicloId(null)} />;
-  }
+  const selectedCiclo = selectedCicloId ? procesosAsignadoCurso.find(c => c.idProcesoAsignadoCurso === selectedCicloId) : null;
+  if (selectedCiclo) return <CicloDetail ciclo={selectedCiclo} onBack={() => setSelectedCicloId(null)} cursoNombre={getCursoNombre(selectedCiclo.idCurso)} />;
 
-  const uniqueCursoIds = [...new Set(procesosAsignadoCurso.map((c) => c.idCurso))];
-
-  const ciclosFiltrados = procesosAsignadoCurso.filter((c) => {
-    const matchEstado = estadoFilter === "all" || c.estado === estadoFilter;
-    const matchCurso = cursoFilter === "all" || c.idCurso === Number(cursoFilter);
-    return matchEstado && matchCurso;
-  });
-
+  const uniqueCursoIds = [...new Set(procesosAsignadoCurso.map(c => c.idCurso))];
   const estadoOrder: Record<string, number> = { en_curso: 0, programado: 1, finalizado: 2, cancelado: 3 };
-  const ciclosOrdenados = [...ciclosFiltrados].sort((a, b) => {
-    const orderDiff = (estadoOrder[a.estado] ?? 9) - (estadoOrder[b.estado] ?? 9);
-    if (orderDiff !== 0) return orderDiff;
-    return new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime();
-  });
 
-  const stats = {
-    total: procesosAsignadoCurso.length,
-    enCurso: procesosAsignadoCurso.filter((c) => c.estado === "en_curso").length,
-    programados: procesosAsignadoCurso.filter((c) => c.estado === "programado").length,
-    finalizados: procesosAsignadoCurso.filter((c) => c.estado === "finalizado").length,
-  };
-
-  const getCursoNombre = (idCurso: number) => cursos.find((c) => c.idCurso === idCurso)?.nombre || "Curso desconocido";
-
-  const handleDelete = () => {
-    if (!showConfirmDelete) return;
-    deleteProcesaMutation.mutate(showConfirmDelete, {
-      onSuccess: () => setShowConfirmDelete(null),
+  const ciclosOrdenados = [...procesosAsignadoCurso]
+    .filter(c => (estadoFilter === "all" || c.estado === estadoFilter) && (cursoFilter === "all" || c.idCurso === Number(cursoFilter)))
+    .sort((a, b) => {
+      const diff = (estadoOrder[a.estado] ?? 9) - (estadoOrder[b.estado] ?? 9);
+      return diff !== 0 ? diff : new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime();
     });
-  };
+
+  const stats = [
+    { label: "Total",       value: procesosAsignadoCurso.length,                               color: "text-primary",     bg: "border-primary/15" },
+    { label: "En Curso",    value: procesosAsignadoCurso.filter(c => c.estado === "en_curso").length,   color: "text-emerald-400", bg: "border-emerald-500/15" },
+    { label: "Programados", value: procesosAsignadoCurso.filter(c => c.estado === "programado").length, color: "text-blue-400",    bg: "border-blue-500/15" },
+    { label: "Finalizados", value: procesosAsignadoCurso.filter(c => c.estado === "finalizado").length, color: "text-slate-400",   bg: "border-slate-500/15" },
+  ];
+
+  const formatDate = (d: string) => new Date(d).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="flex items-center gap-2"><GraduationCap className="w-6 h-6 text-primary" /> Ciclos Lectivos</h1>
-          <p className="text-muted-foreground text-sm">Gestiona los procesos de formación académica</p>
+    <div className="space-y-5 max-w-7xl mx-auto">
+
+      {/* ── Header ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden"
+      >
+        <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+            <GraduationCap className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
+              Ciclos Lectivos
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">Gestiona los procesos de formación académica</p>
+          </div>
         </div>
-        <Button onClick={() => setShowCreateCiclo(true)}><Plus className="w-4 h-4 mr-2" /> Nuevo Ciclo</Button>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="p-3 text-center"><p className="text-2xl text-primary">{stats.total}</p><p className="text-xs text-muted-foreground">Total</p></Card>
-        <Card className="p-3 text-center"><p className="text-2xl text-green-600">{stats.enCurso}</p><p className="text-xs text-muted-foreground">En Curso</p></Card>
-        <Card className="p-3 text-center"><p className="text-2xl text-blue-600">{stats.programados}</p><p className="text-xs text-muted-foreground">Programados</p></Card>
-        <Card className="p-3 text-center"><p className="text-2xl text-gray-600">{stats.finalizados}</p><p className="text-xs text-muted-foreground">Finalizados</p></Card>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-muted-foreground" />
-          <select value={estadoFilter} onChange={(e) => setEstadoFilter(e.target.value)} className="border rounded-lg px-3 py-2 text-sm bg-card">
-            <option value="all">Todos los estados</option>
-            <option value="programado">Programado</option>
-            <option value="en_curso">En Curso</option>
-            <option value="finalizado">Finalizado</option>
-            <option value="cancelado">Cancelado</option>
-          </select>
+        {/* Filtros + botón en el header */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 bg-background/50 border border-white/5 rounded-xl px-3 h-10">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
+            <select value={estadoFilter} onChange={e => setEstadoFilter(e.target.value)} className="text-xs bg-transparent border-0 outline-none text-foreground/80 cursor-pointer">
+              <option value="all">Todos los estados</option>
+              <option value="programado">Programado</option>
+              <option value="en_curso">En Curso</option>
+              <option value="finalizado">Finalizado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2 bg-background/50 border border-white/5 rounded-xl px-3 h-10">
+            <BookOpen className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
+            <select value={cursoFilter} onChange={e => setCursoFilter(e.target.value)} className="text-xs bg-transparent border-0 outline-none text-foreground/80 cursor-pointer">
+              <option value="all">Todos los cursos</option>
+              {uniqueCursoIds.map(id => <option key={id} value={id}>{getCursoNombre(id)}</option>)}
+            </select>
+          </div>
+          <Button onClick={() => setShowCreateCiclo(true)} className="h-10 rounded-xl font-medium shrink-0">
+            <Plus className="w-4 h-4 mr-1.5" /> Nuevo Ciclo
+          </Button>
         </div>
-        <select value={cursoFilter} onChange={(e) => setCursoFilter(e.target.value)} className="border rounded-lg px-3 py-2 text-sm bg-card">
-          <option value="all">Todos los cursos</option>
-          {uniqueCursoIds.map((id) => <option key={id} value={id}>{getCursoNombre(id)}</option>)}
-        </select>
-      </div>
+      </motion.div>
 
-      {/* Ciclos list */}
-      {ciclosOrdenados.length === 0 ? (
-        <Card className="p-12 text-center">
-          <GraduationCap className="w-16 h-16 mx-auto text-muted-foreground/20 mb-4" />
-          <h3 className="text-muted-foreground mb-2">Sin ciclos lectivos</h3>
-          <p className="text-sm text-muted-foreground">Crea un ciclo lectivo para comenzar a gestionar la formacion.</p>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {ciclosOrdenados.map((ciclo) => (
-            <Card key={ciclo.idProcesoAsignadoCurso} className="p-4 hover:shadow-md transition-shadow group cursor-pointer" onClick={() => setSelectedCicloId(ciclo.idProcesoAsignadoCurso)}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <BookOpen className="w-6 h-6 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-sm">{getCursoNombre(ciclo.idCurso)}</h4>
-                    <Badge className={`${estadoCicloColors[ciclo.estado]} border-0 text-xs`}>{estadoCicloLabels[ciclo.estado]}</Badge>
-                  </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {ciclo.fechaInicio} — {ciclo.fechaFin}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                    onClick={(e) => { e.stopPropagation(); setShowConfirmDelete(ciclo.idProcesoAsignadoCurso); }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </div>
+      {/* ── Stats row ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.06 }}
+        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+      >
+        {stats.map(s => (
+          <div key={s.label} className={`bg-card/40 backdrop-blur-xl border ${s.bg} border rounded-2xl p-4 flex items-center gap-3`}>
+            <span className={`text-3xl font-black ${s.color} leading-none`}>{s.value}</span>
+            <span className="text-[11px] font-bold text-muted-foreground leading-tight">{s.label}</span>
+          </div>
+        ))}
+      </motion.div>
+
+      {/* ── Ciclos list ── */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-2.5">
+        <AnimatePresence>
+          {ciclosOrdenados.length === 0 ? (
+            <div className="py-20 flex flex-col items-center gap-3 text-muted-foreground">
+              <div className="w-16 h-16 rounded-2xl bg-accent/40 flex items-center justify-center">
+                <GraduationCap className="w-7 h-7 opacity-40" />
               </div>
-            </Card>
-          ))}
-        </div>
-      )}
+              <p className="font-semibold text-sm">Sin ciclos lectivos</p>
+              <p className="text-xs">Crea un ciclo para comenzar a gestionar la formación.</p>
+            </div>
+          ) : (
+            ciclosOrdenados.map((ciclo, i) => {
+              const cfg = estadoCicloConfig[ciclo.estado] ?? estadoCicloConfig.programado;
+              return (
+                <motion.div
+                  key={ciclo.idProcesoAsignadoCurso}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ delay: i * 0.04 }}
+                  className="group relative bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl px-5 py-4 flex items-center gap-4 cursor-pointer hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+                  onClick={() => setSelectedCicloId(ciclo.idProcesoAsignadoCurso)}
+                >
+                  {/* hover glow */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                  {/* status dot bar */}
+                  <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-full ${cfg.dot}`} />
 
-      {/* Create Dialog */}
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600/20 to-primary/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-blue-600/10">
+                    <BookOpen className="w-5 h-5 text-blue-700 dark:text-blue-400" />
+                  </div>
+
+                  <div className="flex-1 min-w-0 relative z-10">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <h4 className="text-sm font-bold tracking-tight group-hover:text-primary transition-colors">{getCursoNombre(ciclo.idCurso)}</h4>
+                      <Badge variant="outline" className={`${cfg.color} border text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 flex items-center gap-1`}>
+                        {cfg.icon} {cfg.label}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                      <span className="flex items-center gap-1"><Calendar className="w-3 h-3 text-primary/40" />{formatDate(ciclo.fechaInicio)} — {formatDate(ciclo.fechaFin)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 relative z-10 shrink-0">
+                    <button
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                      onClick={e => { e.stopPropagation(); setShowConfirmDelete(ciclo.idProcesoAsignadoCurso); }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* ── Create Dialog ── */}
       <Dialog open={showCreateCiclo} onOpenChange={setShowCreateCiclo}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Nuevo Ciclo Lectivo</DialogTitle></DialogHeader>
-          <div className="space-y-3">
+        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+              Nuevo Ciclo Lectivo
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Asocia un curso con fechas de inicio y fin.</p>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
             <div>
-              <label className="text-sm">Curso *</label>
-              <select className="w-full border rounded-lg px-3 py-2 text-sm bg-card mt-1">
+              <FieldLabel>Curso</FieldLabel>
+              <select className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
                 <option value="">— Seleccionar curso —</option>
-                {cursos.map((c) => <option key={c.idCurso} value={c.idCurso}>{c.nombre}</option>)}
+                {cursos.map(c => <option key={c.idCurso} value={c.idCurso}>{c.nombre}</option>)}
               </select>
             </div>
-            <div><label className="text-sm">Fecha de Inicio *</label><Input type="date" className="mt-1" /></div>
-            <div><label className="text-sm">Fecha de Fin *</label><Input type="date" className="mt-1" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <FieldLabel>Fecha de Inicio</FieldLabel>
+                <Input type="date" className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+              </div>
+              <div>
+                <FieldLabel>Fecha de Fin</FieldLabel>
+                <Input type="date" className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+              </div>
+            </div>
             <div>
-              <label className="text-sm">Estado</label>
-              <select className="w-full border rounded-lg px-3 py-2 text-sm bg-card mt-1">
-                <option value="programado">Programado</option>
-                <option value="en_curso">En Curso</option>
-              </select>
+              <FieldLabel>Estado Inicial</FieldLabel>
+              <div className="grid grid-cols-2 gap-2">
+                {["programado", "en_curso"].map(s => (
+                  <button key={s} className="h-10 rounded-xl border border-white/10 bg-background/50 text-sm font-semibold text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all capitalize">
+                    {estadoCicloConfig[s].label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateCiclo(false)}>Cancelar</Button>
-            <Button onClick={() => setShowCreateCiclo(false)}>Crear Ciclo</Button>
+          <DialogFooter className="border-t border-border/50 pt-4 mt-2">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setShowCreateCiclo(false)}>Cancelar</Button>
+            <Button className="rounded-xl" onClick={() => setShowCreateCiclo(false)}>Crear Ciclo</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!showConfirmDelete} onOpenChange={(open) => !open && setShowConfirmDelete(null)}>
-        <AlertDialogContent>
+      {/* ── Delete Confirm ── */}
+      <AlertDialog open={!!showConfirmDelete} onOpenChange={o => !o && setShowConfirmDelete(null)}>
+        <AlertDialogContent className="rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar Ciclo Lectivo</AlertDialogTitle>
-            <AlertDialogDescription>Esta accion eliminara permanentemente este ciclo y sus inscripciones. No se puede deshacer.</AlertDialogDescription>
+            <AlertDialogTitle className="text-lg font-bold">Eliminar Ciclo Lectivo</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-muted-foreground">
+              Esta acción eliminará permanentemente este ciclo y todas sus inscripciones. <strong className="text-foreground">No se puede deshacer.</strong>
+            </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleteProcesaMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (showConfirmDelete) deleteProcesaMutation.mutate(showConfirmDelete, { onSuccess: () => setShowConfirmDelete(null) }); }}
+              disabled={deleteProcesaMutation.isPending}
+              className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white border-0"
+            >
+              {deleteProcesaMutation.isPending ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
