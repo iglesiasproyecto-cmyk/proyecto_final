@@ -14,7 +14,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     middlewareMode: false,
-    open: 'http://localhost:5173/app',
+    open: '/',
     hmr: {
       host: 'localhost',
       port: 5173,
