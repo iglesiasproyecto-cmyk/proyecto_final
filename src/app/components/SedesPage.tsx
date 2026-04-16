@@ -175,8 +175,14 @@ export function SedesPage() {
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10" onClick={() => openEdit(s.idSede)}>
                           <Pencil className="w-3.5 h-3.5 text-foreground/70" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10" onClick={() => toggleSedeMutation.mutate(s.idSede)} title={s.estado === "activa" ? "Desactivar" : "Activar"}>
-                          {s.estado === "activa" ? <PowerOff className="w-3.5 h-3.5 text-amber-500" /> : <Power className="w-3.5 h-3.5 text-emerald-500" />}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className={`h-8 w-8 p-0 rounded-full transition-all ${s.estado === "activa" ? "text-amber-500 hover:bg-amber-500/10" : "text-emerald-500 hover:bg-emerald-500/10"}`} 
+                          onClick={() => toggleSedeMutation.mutate(s.idSede)} 
+                          title={s.estado === "activa" ? "Desactivar" : "Activar"}
+                        >
+                          {s.estado === "activa" ? <PowerOff className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
                         </Button>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10" onClick={() => handleDeleteSede(s.idSede, s.nombre)} disabled={deleteSedeMutation.isPending}>
                           <Trash2 className="w-3.5 h-3.5 text-destructive" />
