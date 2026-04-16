@@ -8,12 +8,14 @@ import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { motion, AnimatePresence } from "motion/react";
 import { CalendarDays, ListTodo, Info, AlertTriangle, BookOpen, CheckCheck, Check, Inbox } from "lucide-react";
 
+import { Bell } from "lucide-react";
+
 const typeConfig: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  evento: { label: "Evento", color: "text-blue-700", bg: "bg-blue-100", icon: <CalendarDays className="w-4 h-4" /> },
-  tarea: { label: "Tarea", color: "text-amber-700", bg: "bg-amber-100", icon: <ListTodo className="w-4 h-4" /> },
-  curso: { label: "Curso", color: "text-purple-700", bg: "bg-purple-100", icon: <BookOpen className="w-4 h-4" /> },
-  alerta: { label: "Alerta", color: "text-red-700", bg: "bg-red-100", icon: <AlertTriangle className="w-4 h-4" /> },
-  informacion: { label: "Info", color: "text-gray-700", bg: "bg-gray-100", icon: <Info className="w-4 h-4" /> },
+  evento: { label: "Evento", color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-600/10", icon: <CalendarDays className="w-5 h-5" /> },
+  tarea: { label: "Tarea", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-500/10", icon: <ListTodo className="w-5 h-5" /> },
+  curso: { label: "Curso", color: "text-cyan-700 dark:text-cyan-400", bg: "bg-cyan-600/10", icon: <BookOpen className="w-5 h-5" /> },
+  alerta: { label: "Alerta", color: "text-red-700 dark:text-red-400", bg: "bg-red-500/10", icon: <AlertTriangle className="w-5 h-5" /> },
+  informacion: { label: "Info", color: "text-indigo-700 dark:text-indigo-400", bg: "bg-indigo-600/10", icon: <Info className="w-5 h-5" /> },
 };
 
 export function NotificationsPage() {
@@ -43,32 +45,38 @@ export function NotificationsPage() {
   const filtered = activeTab === "todas" ? notificaciones : activeTab === "no_leidas" ? notificaciones.filter(n => !n.leida) : notificaciones.filter(n => n.tipo === activeTab);
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto pb-10">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1>Notificaciones</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {unreadCount > 0 ? `${unreadCount} sin leer` : "Todas leidas"}
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-3xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-xl shadow-cyan-600/30 shrink-0">
+            <Bell className="w-7 h-7 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Mi Bandeja</p>
+            <h1 className="text-3xl md:text-4xl font-light tracking-tight text-foreground">Notificaciones</h1>
+            <p className="text-muted-foreground text-[13px] font-medium mt-1">
+              {unreadCount > 0 ? `${unreadCount} notificaciones sin leer` : "Estás al día con tus notificaciones"}
+            </p>
+          </div>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" size="sm" onClick={() => usuarioActual && markAllReadMutation.mutate(usuarioActual.idUsuario)} disabled={markAllReadMutation.isPending} className="shrink-0">
+          <Button variant="outline" onClick={() => usuarioActual && markAllReadMutation.mutate(usuarioActual.idUsuario)} disabled={markAllReadMutation.isPending} className="shrink-0 rounded-xl bg-card/40 backdrop-blur-xl border border-blue-600/20 text-blue-700 dark:text-blue-400 hover:bg-blue-600/10 font-bold shadow-sm transition-all">
             <CheckCheck className="w-4 h-4 mr-2" /> Marcar todas
           </Button>
         )}
       </motion.div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full justify-start">
-          <TabsTrigger value="todas">Todas</TabsTrigger>
-          <TabsTrigger value="no_leidas">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
+        <TabsList className="bg-card/40 backdrop-blur-xl border border-white/10 p-1.5 h-auto rounded-2xl w-full sm:w-auto inline-flex shadow-xl shadow-black/5 flex-wrap gap-1">
+          <TabsTrigger value="todas" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Todas</TabsTrigger>
+          <TabsTrigger value="no_leidas" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
             Sin leer
             {unreadCount > 0 && (
-              <span className="ml-1.5 bg-red-500 text-white text-[10px] rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">{unreadCount}</span>
+              <span className="ml-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow-sm">{unreadCount}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="evento">Eventos</TabsTrigger>
-          <TabsTrigger value="tarea">Tareas</TabsTrigger>
+          <TabsTrigger value="evento" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Eventos</TabsTrigger>
+          <TabsTrigger value="tarea" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Tareas</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -84,38 +92,36 @@ export function NotificationsPage() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.2, delay: i * 0.02 }}
               >
-                <Card
-                  className={`p-4 transition-all duration-200 hover:shadow-md cursor-pointer group ${
-                    !n.leida ? "border-l-4 border-l-primary bg-primary/[0.02] hover:bg-primary/[0.04]" : "hover:bg-accent/30"
+                <div
+                  className={`group flex items-start gap-4 p-5 rounded-3xl backdrop-blur-2xl border transition-all duration-300 cursor-pointer hover:-translate-y-1 ${
+                    !n.leida ? "bg-blue-600/5 border-blue-600/20 shadow-lg shadow-blue-900/5" : "bg-card/40 border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl"
                   }`}
                   onClick={() => !n.leida && markReadMutation.mutate(n.idNotificacion)}
                 >
-                  <div className="flex gap-3.5">
-                    <div className={`w-10 h-10 rounded-xl ${cfg.bg} ${cfg.color} flex items-center justify-center shrink-0`}>
-                      {cfg.icon}
+                  <div className={`w-12 h-12 rounded-2xl ${cfg.bg} flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform ${cfg.color}`}>
+                    {cfg.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className={`text-[15px] tracking-tight ${!n.leida ? "font-bold text-foreground" : "font-semibold text-foreground/80 group-hover:text-blue-600 transition-colors"}`}>{n.titulo}</p>
+                        <p className={`text-[13px] mt-1 line-clamp-2 leading-relaxed ${!n.leida ? "font-medium text-foreground/90" : "text-muted-foreground"}`}>{n.mensaje}</p>
+                      </div>
+                      {!n.leida && (
+                        <div className="w-3 h-3 rounded-full bg-cyan-500 shrink-0 mt-1.5 shadow-[0_0_10px_rgba(6,182,212,0.5)] animate-pulse" />
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm">{n.titulo}</p>
-                          <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{n.mensaje}</p>
-                        </div>
-                        {!n.leida && (
-                          <div className="w-2.5 h-2.5 rounded-full bg-primary shrink-0 mt-1.5 animate-pulse" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mt-2.5">
-                        <Badge variant="outline" className={`${cfg.bg} ${cfg.color} border-0 text-[10px]`}>{cfg.label}</Badge>
-                        <span className="text-[11px] text-muted-foreground">{formatDate(n.creadoEn)}</span>
-                        {n.leida && (
-                          <span className="text-[11px] text-muted-foreground flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Check className="w-3 h-3" /> Leida
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-3 mt-4 pt-3 border-t border-white/5">
+                      <Badge variant="outline" className={`${cfg.bg} ${cfg.color} border-0 text-[9px] uppercase tracking-widest font-bold px-2 py-0`}>{cfg.label}</Badge>
+                      <span className="text-[11px] font-medium text-muted-foreground">{formatDate(n.creadoEn)}</span>
+                      {n.leida && (
+                        <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-auto tracking-widest uppercase">
+                          <Check className="w-3 h-3 text-cyan-600" /> Leida
+                        </span>
+                      )}
                     </div>
                   </div>
-                </Card>
+                </div>
               </motion.div>
             );
           })}
@@ -124,13 +130,15 @@ export function NotificationsPage() {
 
       {filtered.length === 0 && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-          <Card className="p-16 text-center">
-            <Inbox className="w-16 h-16 mx-auto text-muted-foreground/20 mb-4" />
-            <h3 className="text-muted-foreground mb-1">Sin notificaciones</h3>
-            <p className="text-sm text-muted-foreground">
-              {activeTab === "no_leidas" ? "Has leido todas tus notificaciones" : "No tienes notificaciones en esta categoria"}
+          <div className="p-16 text-center rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-600/10 to-blue-600/5 flex items-center justify-center mx-auto mb-6">
+              <Inbox className="w-10 h-10 text-blue-600/50" />
+            </div>
+            <h3 className="text-lg font-bold text-foreground/90 tracking-tight mb-2">Bandeja Vacía</h3>
+            <p className="text-[13px] font-medium text-muted-foreground">
+              {activeTab === "no_leidas" ? "Has leído todas tus notificaciones" : "No tienes notificaciones en esta categoría"}
             </p>
-          </Card>
+          </div>
         </motion.div>
       )}
     </div>
