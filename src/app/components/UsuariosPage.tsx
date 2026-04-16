@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "motion/react";
 import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUsuarioRoles } from "@/hooks/useUsuarios";
 import { useIglesias } from "@/hooks/useIglesias";
 import { useApp } from "@/app/store/AppContext";
@@ -115,15 +116,20 @@ export function UsuariosPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="flex items-center gap-2"><Users className="w-6 h-6 text-primary" /> Gestión de Usuarios</h1>
-          <p className="text-muted-foreground text-sm mt-1">Vista global de todos los usuarios registrados en la plataforma</p>
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+            <Users className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Directorio</p>
+            <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Usuarios</h1>
+          </div>
         </div>
-        <Button onClick={() => setShowInvite(true)} className="shrink-0">
+        <Button onClick={() => setShowInvite(true)} className="shrink-0 shadow-md shadow-blue-600/20 rounded-full px-6 bg-blue-600 hover:bg-blue-700 text-white h-11">
           <UserPlus className="w-4 h-4 mr-2" /> Invitar Usuario
         </Button>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card className="p-3 text-center">
@@ -218,8 +224,14 @@ export function UsuariosPage() {
                     <Button variant="ghost" size="sm" title="Asignar rol" onClick={() => { setShowAssignRol(u.idUsuario); resetAssignForm(); }}>
                       <ShieldPlus className="w-3.5 h-3.5 text-blue-600" />
                     </Button>
-                    <Button variant="ghost" size="sm" disabled={toggleActivoMutation.isPending} onClick={() => toggleActivoMutation.mutate(u.idUsuario)}>
-                      {u.activo ? <ToggleRight className="w-3.5 h-3.5 text-green-600" /> : <ToggleLeft className="w-3.5 h-3.5 text-muted-foreground" />}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className={`h-8 w-8 p-0 rounded-full transition-all ${u.activo ? "text-amber-500 hover:bg-amber-500/10" : "text-emerald-500 hover:bg-emerald-500/10"}`}
+                      disabled={toggleActivoMutation.isPending} 
+                      onClick={() => toggleActivoMutation.mutate(u.idUsuario)}
+                    >
+                      {u.activo ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                     </Button>
                   </div>
                 </TableCell>

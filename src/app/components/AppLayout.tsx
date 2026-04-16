@@ -178,25 +178,36 @@ export function AppLayout() {
           }`}
         >
           {/* Sidebar Header */}
-          <div className="h-16 flex items-center px-4 border-b border-sidebar-border shrink-0">
+          <div className="h-20 flex items-center px-5 border-b border-sidebar-border shrink-0 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
             {!isCollapsed ? (
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1a7fa8] to-[#2596be] flex items-center justify-center shrink-0 shadow-lg shadow-[#1a7fa8]/20">
-                  <Church className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-4 flex-1 min-w-0 relative z-10">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(100,116,139,0.3)] relative overflow-hidden group-hover:shadow-[0_0_25px_rgba(100,116,139,0.5)] transition-all duration-500">
+                   <motion.div 
+                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12"
+                     animate={{ x: ["-200%", "300%"] }}
+                     transition={{ repeat: Infinity, duration: 3, ease: "linear", repeatDelay: 1 }}
+                   />
+                  <Church className="w-6 h-6 text-white relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm text-white truncate tracking-tight">S.E.I.</h3>
-                  <p className="text-[10px] text-sidebar-foreground/50 truncate">Soporte Estructural</p>
+                  <h3 className="text-[17px] font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-200 tracking-tight drop-shadow-sm">S.E.I.</h3>
+                  <p className="text-[10px] font-bold text-cyan-400/80 uppercase tracking-[0.2em] mt-0.5">Soporte Estr.</p>
                 </div>
               </div>
             ) : (
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1a7fa8] to-[#2596be] flex items-center justify-center mx-auto shadow-lg shadow-[#1a7fa8]/20">
-                <Church className="w-5 h-5 text-white" />
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(100,116,139,0.3)] relative overflow-hidden group-hover:shadow-[0_0_25px_rgba(100,116,139,0.5)] transition-all duration-500">
+                   <motion.div 
+                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12"
+                     animate={{ x: ["-200%", "300%"] }}
+                     transition={{ repeat: Infinity, duration: 3, ease: "linear", repeatDelay: 1 }}
+                   />
+                <Church className="w-6 h-6 text-white relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
               </div>
             )}
             <button
               onClick={toggleSidebar}
-              className="lg:hidden text-sidebar-foreground/60 hover:text-white ml-2"
+              className="lg:hidden text-sidebar-foreground/60 hover:text-white ml-2 relative z-10"
             >
               <X className="w-5 h-5" />
             </button>
@@ -250,16 +261,16 @@ export function AppLayout() {
           )}
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4 scrollbar-thin">
-            {navGroups.map((group) => (
+          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+            {navGroups.map((group, groupIndex) => (
               <div key={group.section}>
                 {group.section && !isCollapsed && (
-                  <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 px-3 mb-1.5">
+                  <p className={`text-[10px] font-black uppercase tracking-[0.25em] text-sidebar-foreground/40 px-3 mb-2 ${groupIndex > 0 ? "mt-6" : ""}`}>
                     {group.section}
                   </p>
                 )}
-                {isCollapsed && group.section && <div className="h-px bg-sidebar-border mx-2 mb-2" />}
-                <div className="space-y-0.5">
+                {isCollapsed && group.section && groupIndex > 0 && <div className="w-8 h-[2px] rounded-full bg-sidebar-foreground/10 mx-auto my-4" />}
+                <div className="space-y-1">
                   {group.items.map((item) => {
                     const isActive =
                       location.pathname === item.path ||
@@ -291,23 +302,46 @@ export function AppLayout() {
                       return (
                         <Tooltip key={item.path}>
                           <TooltipTrigger asChild>
-                            <div className="relative">
+                            <div className="relative group/nav mb-1 w-full">
                               <button
                                 onClick={() => {
                                   navigate(item.path);
                                   if (window.innerWidth < 1024) toggleSidebar();
                                 }}
-                                className={`w-full flex items-center gap-3 px-2 py-2 rounded-lg text-sm transition-all duration-150 justify-center ${
-                                  isActive
-                                    ? "bg-sidebar-primary text-white shadow-md shadow-sidebar-primary/20"
-                                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white"
+                                className={`w-full flex items-center justify-center gap-3 px-2 py-3 rounded-2xl text-sm transition-all duration-300 relative overflow-hidden focus:outline-none ${
+                                  isActive ? "text-white" : "text-sidebar-foreground/60"
                                 }`}
                               >
-                                {navButtonContent}
+                                {isActive && (
+                                  <motion.div
+                                    layoutId="active-nav-bg"
+                                    className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-700 rounded-2xl z-0 shadow-[0_4px_25px_rgba(6,182,212,0.5)] overflow-hidden"
+                                    initial={false}
+                                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                                  >
+                                     <div className="absolute top-0 left-0 bottom-0 w-1 bg-white/40 shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
+                                     <motion.div 
+                                       className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                                       animate={{ x: ["-200%", "300%"] }}
+                                       transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut", repeatDelay: 1 }}
+                                     />
+                                  </motion.div>
+                                )}
+                                {!isActive && (
+                                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-900/30 to-blue-900/10 opacity-0 group-hover/nav:opacity-100 transition-all duration-500 rounded-2xl z-0 border border-cyan-500/0 group-hover/nav:border-cyan-500/20 scale-95 group-hover/nav:scale-100" />
+                                )}
+                                <span className={`relative z-10 shrink-0 transition-transform duration-500 ${isActive ? "scale-125 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" : "group-hover/nav:scale-125 group-hover/nav:text-cyan-400 group-hover/nav:drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"}`}>
+                                  {item.icon}
+                                </span>
+                                {isCollapsed && isNotif && unreadCount > 0 && (
+                                  <span className="absolute top-1.5 right-1.5 z-10 bg-red-500 outline outline-2 outline-sidebar text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                                    {unreadCount}
+                                  </span>
+                                )}
                               </button>
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent side="right" className="text-xs">
+                          <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-700 text-white border-none shadow-[0_0_20px_rgba(6,182,212,0.4)]">
                             {item.label}
                           </TooltipContent>
                         </Tooltip>
@@ -320,13 +354,39 @@ export function AppLayout() {
                           navigate(item.path);
                           if (window.innerWidth < 1024) toggleSidebar();
                         }}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-                          isActive
-                            ? "bg-sidebar-primary text-white shadow-md shadow-sidebar-primary/20"
-                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white"
+                        className={`group/nav w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm transition-all duration-300 relative overflow-hidden focus:outline-none ${
+                          isActive ? "text-white" : "text-sidebar-foreground/60"
                         }`}
                       >
-                        {navButtonContent}
+                        {isActive && (
+                          <motion.div
+                            layoutId="active-nav-bg"
+                            className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-700 rounded-2xl z-0 shadow-[0_4px_25px_rgba(6,182,212,0.5)] overflow-hidden"
+                            initial={false}
+                            transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                          >
+                             <div className="absolute top-0 left-0 bottom-0 w-1 bg-white/40 shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
+                             <motion.div 
+                               className="absolute inset-y-0 w-[40%] bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[20deg]"
+                               animate={{ x: ["-200%", "400%"] }}
+                               transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut", repeatDelay: 0.5 }}
+                             />
+                          </motion.div>
+                        )}
+                        {!isActive && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-cyan-900/30 to-blue-900/10 opacity-0 group-hover/nav:opacity-100 transition-all duration-500 rounded-2xl z-0 border border-cyan-500/0 group-hover/nav:border-cyan-500/20 scale-95 group-hover/nav:scale-100" />
+                        )}
+                        <span className={`relative z-10 shrink-0 transition-transform duration-500 ${isActive ? "scale-125 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" : "group-hover/nav:scale-125 group-hover/nav:text-cyan-400 group-hover/nav:drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"}`}>
+                          {item.icon}
+                        </span>
+                        <span className={`relative z-10 flex-1 text-left truncate transition-all duration-500 ${isActive ? "font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70" : "font-semibold tracking-wide group-hover/nav:translate-x-1.5 group-hover/nav:text-white"}`}>
+                          {item.label}
+                        </span>
+                        {isNotif && unreadCount > 0 && (
+                          <span className="relative z-10 bg-red-500 text-white text-[10px] rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 font-bold shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">
+                            {unreadCount}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -336,62 +396,20 @@ export function AppLayout() {
           </nav>
 
           {/* Collapse Toggle (desktop only) */}
-          <div className="hidden lg:flex px-3 py-2 border-t border-sidebar-border">
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
-            >
-              {isCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-              {!isCollapsed && <span>Colapsar</span>}
-            </button>
-          </div>
-
-          {/* User Section */}
-          <div className="p-3 border-t border-sidebar-border">
-            {!isCollapsed ? (
-              <div className="flex items-center gap-3 px-2 py-2">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1a7fa8] to-[#2596be] flex items-center justify-center text-white text-xs shrink-0 shadow-md">
-                  {initials}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{fullName}</p>
-                  <p className="text-[10px] text-sidebar-foreground/50">{roleLabels[rol] ?? rol}</p>
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => {
-                        logout();
-                        navigate("/login");
-                      }}
-                      className="text-sidebar-foreground/40 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-500/10"
-                    >
-                      <LogOut className="w-4 h-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="text-xs">
-                    Cerrar sesion
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => {
-                      logout();
-                      navigate("/login");
-                    }}
-                    className="w-full flex items-center justify-center p-2 rounded-lg text-sidebar-foreground/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="text-xs">
-                  Cerrar sesion ({fullName})
-                </TooltipContent>
-              </Tooltip>
-            )}
+          <div className={`hidden lg:flex py-4 border-t border-sidebar-border mt-auto shrink-0 transition-all ${isCollapsed ? "justify-center" : "px-4"}`}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setIsCollapsed(!isCollapsed)}
+                  className="w-10 h-10 rounded-xl bg-sidebar-accent/30 flex items-center justify-center text-sidebar-foreground/60 hover:text-white hover:bg-sidebar-accent transition-all duration-300 outline-none"
+                >
+                  {isCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5">
+                {isCollapsed ? "Expandir Menú" : "Ocultar Menú"}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </aside>
 
@@ -453,17 +471,36 @@ export function AppLayout() {
                 </TooltipContent>
               </Tooltip>
 
+              <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => {
+                      logout();
+                      navigate("/login");
+                    }}
+                    className="p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-red-500 transition-colors"
+                  >
+                    <LogOut className="w-5 h-5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="text-xs font-bold">Cerrar Sesión</TooltipContent>
+              </Tooltip>
+
               <button
                 onClick={() => navigate("/app/perfil")}
-                className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl hover:bg-accent transition-colors"
+                className="flex items-center gap-3 p-1.5 pr-4 rounded-xl hover:bg-accent transition-colors border border-transparent hover:border-border"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-[#2596be] flex items-center justify-center text-primary-foreground text-xs shadow-sm">
+                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center text-white text-[11px] font-bold shadow-sm">
                   {initials}
                 </div>
-                <span className="hidden md:block text-sm text-foreground truncate max-w-[120px]">
-                  {usuarioActual.nombres}
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden md:block" />
+                <div className="hidden md:flex flex-col items-start min-w-0">
+                  <span className="text-[13px] font-bold text-foreground truncate max-w-[120px] leading-tight transition-colors">
+                    {usuarioActual.nombres.split(" ")[0]} {usuarioActual.apellidos.split(" ")[0]}
+                  </span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-primary/70 truncate">{roleLabels[rol] ?? rol}</span>
+                </div>
               </button>
             </div>
           </header>

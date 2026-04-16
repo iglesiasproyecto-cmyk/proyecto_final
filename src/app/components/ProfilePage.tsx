@@ -19,10 +19,10 @@ const roleLabels: Record<string, string> = {
 };
 
 const roleGradients: Record<string, string> = {
-  super_admin: "from-red-500 to-orange-500",
-  admin_iglesia: "from-indigo-500 to-blue-500",
-  lider: "from-amber-500 to-yellow-500",
-  servidor: "from-cyan-500 to-sky-500",
+  super_admin:   "from-slate-400 to-slate-600",
+  admin_iglesia: "from-slate-400 to-slate-600",
+  lider:         "from-slate-400 to-slate-600",
+  servidor:      "from-slate-400 to-slate-600",
 };
 
 export function ProfilePage() {
@@ -80,183 +80,183 @@ export function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto pb-10">
       {/* Profile Header */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="overflow-hidden">
-          <div className={`h-24 bg-gradient-to-r ${gradient} relative`}>
-            <div className="absolute inset-0 bg-black/10" />
+        <div className="p-8 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl flex flex-col sm:flex-row items-center sm:items-start gap-6 relative overflow-hidden">
+          <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${gradient} rounded-full blur-[100px] opacity-20 -mr-10 -mt-10 pointer-events-none`} />
+          <div className={`w-28 h-28 rounded-3xl bg-gradient-to-br ${gradient} p-[2px] shadow-lg shrink-0`}>
+             <div className="w-full h-full rounded-[22px] bg-card flex items-center justify-center text-4xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/50">
+               {initials}
+             </div>
           </div>
-          <div className="px-6 pb-5 -mt-10 relative">
-            <div className="flex items-end gap-4">
-              <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-2xl border-4 border-card shadow-xl`}>
-                {initials}
-              </div>
-              <div className="flex-1 pb-1">
-                <h1 className="text-xl">{fullName}</h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="default" className="text-xs">{roleLabels[rol]}</Badge>
-                  <span className="text-xs text-muted-foreground">{usuarioActual.correo}</span>
-                </div>
-              </div>
+          <div className="flex-1 pb-1 z-10 text-center sm:text-left mt-2 sm:mt-0">
+            <h1 className="text-3xl font-light tracking-tight text-foreground">{fullName}</h1>
+            <div className="flex flex-col sm:flex-row items-center gap-3 mt-3">
+              <Badge variant="outline" className="px-3 py-1 border-0 bg-muted/50 text-foreground uppercase tracking-widest font-bold text-[10px]">{roleLabels[rol]}</Badge>
+              <span className="text-[13px] font-medium text-muted-foreground flex items-center gap-1.5"><Mail className="w-4 h-4" /> {usuarioActual.correo}</span>
             </div>
           </div>
-        </Card>
+        </div>
       </motion.div>
 
-      <Tabs defaultValue="perfil">
-        <TabsList>
-          <TabsTrigger value="perfil"><User className="w-4 h-4 mr-1.5" /> Perfil</TabsTrigger>
-          <TabsTrigger value="seguridad"><Lock className="w-4 h-4 mr-1.5" /> Seguridad</TabsTrigger>
-          <TabsTrigger value="iglesias"><Building2 className="w-4 h-4 mr-1.5" /> Mis Iglesias</TabsTrigger>
+      <Tabs defaultValue="perfil" className="mt-8">
+        <TabsList className="bg-card/40 backdrop-blur-xl border border-white/10 p-1.5 h-auto rounded-2xl w-full sm:w-auto inline-flex shadow-xl shadow-black/5 flex-wrap gap-1">
+          <TabsTrigger value="perfil" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><User className="w-4 h-4 mr-2" /> Perfil</TabsTrigger>
+          <TabsTrigger value="seguridad" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><Lock className="w-4 h-4 mr-2" /> Seguridad</TabsTrigger>
+          <TabsTrigger value="iglesias" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><Building2 className="w-4 h-4 mr-2" /> Mis Iglesias</TabsTrigger>
         </TabsList>
 
         <TabsContent value="perfil">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <Card className="p-6 mt-4 space-y-5">
-              <div className="flex items-center gap-2 mb-2">
-                <User className="w-5 h-5 text-primary" />
-                <h3>Informacion Personal</h3>
+            <div className="p-8 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl mt-6 space-y-6">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+                <div className="w-10 h-10 rounded-xl bg-slate-500/10 flex items-center justify-center shadow-inner"><User className="w-5 h-5 text-slate-500" /></div>
+                <h3 className="text-lg font-bold tracking-tight text-foreground/90">Información Personal</h3>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-muted-foreground mb-1.5 block">Nombres</label>
-                  <Input value={nombres} onChange={(e) => setNombres(e.target.value)} className="bg-input-background h-11" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground px-1">Nombres</label>
+                  <Input value={nombres} onChange={(e) => setNombres(e.target.value)} className="bg-card/30 border-white/10 h-12 rounded-xl text-[13px] px-4 focus-visible:ring-slate-500/30" />
                 </div>
-                <div>
-                  <label className="text-sm text-muted-foreground mb-1.5 block">Apellidos</label>
-                  <Input value={apellidos} onChange={(e) => setApellidos(e.target.value)} className="bg-input-background h-11" />
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground px-1">Apellidos</label>
+                  <Input value={apellidos} onChange={(e) => setApellidos(e.target.value)} className="bg-card/30 border-white/10 h-12 rounded-xl text-[13px] px-4 focus-visible:ring-slate-500/30" />
                 </div>
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5" /> Correo electronico
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground px-1 flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5" /> Correo electrónico
                 </label>
-                <Input value={usuarioActual.correo} disabled className="bg-muted h-11" />
-                <p className="text-xs text-muted-foreground mt-1.5">El correo no puede modificarse</p>
+                <Input value={usuarioActual.correo} disabled className="bg-muted/50 border-0 h-12 rounded-xl text-[13px] px-4 text-muted-foreground" />
+                <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70 px-1 mt-1">El correo no puede modificarse</p>
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5" /> Telefono
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground px-1 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5" /> Teléfono
                 </label>
-                <Input value={telefono} onChange={(e) => setTelefono(e.target.value)} className="bg-input-background h-11" placeholder="+502 5555-0000" />
+                <Input value={telefono} onChange={(e) => setTelefono(e.target.value)} className="bg-card/30 border-white/10 h-12 rounded-xl text-[13px] px-4 focus-visible:ring-slate-500/30" placeholder="+502 5555-0000" />
               </div>
-              <div className="pt-2 flex gap-3">
-                <Button className="h-10" onClick={handleSaveProfile} disabled={updateUsuarioMutation.isPending}>
+              <div className="pt-6 mt-4 border-t border-white/5 flex gap-3">
+                <Button className="h-11 px-6 rounded-xl bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-400 hover:to-slate-500 text-white shadow-lg transition-all" onClick={handleSaveProfile} disabled={updateUsuarioMutation.isPending}>
                   {updateUsuarioMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   Guardar Cambios
                 </Button>
-                <Button variant="outline" className="h-10" onClick={() => logout()}>
-                  Cerrar Sesion
+                <Button variant="outline" className="h-11 px-6 rounded-xl border-white/10 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 transition-all font-semibold" onClick={() => logout()}>
+                  Cerrar Sesión
                 </Button>
               </div>
-            </Card>
+            </div>
           </motion.div>
         </TabsContent>
 
         <TabsContent value="seguridad">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <Card className="p-6 mt-4 space-y-5">
-              <div className="flex items-center gap-2 mb-2">
-                <Lock className="w-5 h-5 text-primary" />
-                <h3>Cambiar Contrasena</h3>
+            <div className="p-8 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl mt-6 space-y-6">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+                <div className="w-10 h-10 rounded-xl bg-slate-500/10 flex items-center justify-center shadow-inner"><Lock className="w-5 h-5 text-slate-500" /></div>
+                <h3 className="text-lg font-bold tracking-tight text-foreground/90">Cambiar Contraseña</h3>
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Nueva contrasena</label>
-                <div className="relative">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground px-1 block">Nueva contraseña</label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Mínimo 8 caracteres"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="pr-10 bg-card/30 border-white/10 h-12 rounded-xl text-[13px] px-4 focus-visible:ring-slate-500/30"
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-slate-500/10 hover:text-foreground transition-colors">
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground px-1 block">Confirmar nueva contraseña</label>
                   <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Minimo 8 caracteres"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="pr-10 bg-input-background h-11"
+                    type="password"
+                    placeholder="Repite la nueva contraseña"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="bg-card/30 border-white/10 h-12 rounded-xl text-[13px] px-4 focus-visible:ring-slate-500/30"
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-red-500 mt-2 px-1">Las contraseñas no coinciden</p>
+                  )}
                 </div>
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Confirmar nueva contrasena</label>
-                <Input
-                  type="password"
-                  placeholder="Repite la nueva contrasena"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="bg-input-background h-11"
-                />
-              </div>
-              {newPassword && confirmPassword && newPassword !== confirmPassword && (
-                <p className="text-xs text-red-500">Las contraseñas no coinciden</p>
-              )}
-              <div className="pt-2">
-                <Button className="h-10" onClick={handleChangePassword} disabled={changingPassword || !newPassword || !confirmPassword}>
+              <div className="pt-6 mt-4 border-t border-white/5">
+                <Button className="h-11 px-6 rounded-xl bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-400 hover:to-slate-500 text-white shadow-lg transition-all" onClick={handleChangePassword} disabled={changingPassword || !newPassword || !confirmPassword}>
                   {changingPassword ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
-                  Actualizar Contrasena
+                  Actualizar Contraseña
                 </Button>
               </div>
-            </Card>
+            </div>
           </motion.div>
         </TabsContent>
 
         <TabsContent value="iglesias">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-4">
-            <Card className="p-6 space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Building2 className="w-5 h-5 text-primary" />
-                <h3>Mis Iglesias</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">Selecciona la iglesia activa para tu sesion actual.</p>
-              <div className="space-y-2">
-                {iglesiasDelUsuario.map((ig) => {
-                  const isActive = ig.id === iglesiaActual?.id;
-                  return (
-                    <div
-                      key={ig.id}
-                      className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                        isActive
-                          ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
-                          : "border-transparent bg-accent/30 hover:bg-accent/50 hover:border-border"
-                      }`}
-                      onClick={() => setIglesiaActual(ig)}
-                    >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                        isActive ? "bg-primary text-white shadow-md" : "bg-primary/10 text-primary"
-                      }`}>
-                        <Building2 className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm">{ig.nombre}</p>
-                      </div>
-                      {isActive && (
-                        <Badge variant="default" className="text-xs flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Activa
-                        </Badge>
-                      )}
-                    </div>
-                  );
-                })}
-                {iglesiasDelUsuario.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-6">No hay iglesias disponibles</p>
-                )}
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Shield className="w-5 h-5 text-primary" />
-                <h3>Roles y Permisos</h3>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between p-3 rounded-xl bg-accent/30">
-                  <span className="text-muted-foreground">Rol actual</span>
-                  <Badge variant="secondary">{roleLabels[rol]}</Badge>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div className="p-8 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+                  <div className="w-10 h-10 rounded-xl bg-slate-500/10 flex items-center justify-center shadow-inner"><Building2 className="w-5 h-5 text-slate-500" /></div>
+                  <h3 className="text-lg font-bold tracking-tight text-foreground/90">Mis Iglesias</h3>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3">
-                  Los roles se asignan por iglesia y sede a traves de la tabla UsuarioRol.
-                </p>
+                <p className="text-[12px] font-medium text-muted-foreground mb-4">Selecciona la iglesia activa para tu sesión actual.</p>
+                <div className="space-y-3">
+                  {iglesiasDelUsuario.map((ig) => {
+                    const isActive = ig.id === iglesiaActual?.id;
+                    return (
+                      <div
+                        key={ig.id}
+                        className={`group flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-300 ${
+                          isActive
+                            ? "bg-slate-500/10 border border-slate-500/30 shadow-md transform scale-[1.02]"
+                            : "bg-card/20 border border-white/5 hover:bg-slate-500/5 hover:border-slate-500/20"
+                        }`}
+                        onClick={() => setIglesiaActual(ig)}
+                      >
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-inner transition-colors ${
+                          isActive ? "bg-gradient-to-br from-slate-500 to-slate-600 text-white" : "bg-card text-muted-foreground group-hover:text-slate-500 group-hover:scale-110 transition-transform"
+                        }`}>
+                          <Building2 className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-[14px] truncate ${isActive ? "font-bold text-foreground" : "font-semibold text-foreground/80 group-hover:text-foreground"}`}>{ig.nombre}</p>
+                        </div>
+                        {isActive && (
+                          <Badge variant="outline" className="text-[9px] uppercase tracking-widest flex items-center gap-1 bg-slate-500 text-white border-0 py-0.5">
+                            <CheckCircle2 className="w-3 h-3" /> Activa
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {iglesiasDelUsuario.length === 0 && (
+                    <p className="text-[12px] font-medium text-muted-foreground text-center py-6 bg-card/20 rounded-2xl border border-white/5">No hay iglesias disponibles</p>
+                  )}
+                </div>
               </div>
-            </Card>
+
+              <div className="p-8 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl h-fit">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+                  <div className="w-10 h-10 rounded-xl bg-slate-500/10 flex items-center justify-center shadow-inner"><Shield className="w-5 h-5 text-slate-500" /></div>
+                  <h3 className="text-lg font-bold tracking-tight text-foreground/90">Roles y Permisos</h3>
+                </div>
+                <div className="space-y-4 text-sm">
+                  <div className="flex flex-col gap-2 p-5 rounded-2xl bg-card/30 border border-white/5 shadow-sm">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Rol activo actual</span>
+                    <Badge variant="outline" className="w-fit text-[11px] font-bold tracking-wider px-3 py-1 bg-slate-500/10 text-foreground border-slate-500/20">{roleLabels[rol]}</Badge>
+                  </div>
+                  <p className="text-[12px] font-medium text-muted-foreground leading-relaxed px-1">
+                    Los roles se asignan por iglesia y sede a través de la configuración de roles del sistema. Tu nivel de acceso depende de la iglesia seleccionada.
+                  </p>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </TabsContent>
       </Tabs>
