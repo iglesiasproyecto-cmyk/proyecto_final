@@ -476,6 +476,7 @@ export type Database = {
       }
       modulo: {
         Row: {
+          contenido_md: string | null
           creado_en: string
           descripcion: string | null
           estado: Database["public"]["Enums"]["estado_modulo"]
@@ -486,6 +487,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          contenido_md?: string | null
           creado_en?: string
           descripcion?: string | null
           estado?: Database["public"]["Enums"]["estado_modulo"]
@@ -496,6 +498,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          contenido_md?: string | null
           creado_en?: string
           descripcion?: string | null
           estado?: Database["public"]["Enums"]["estado_modulo"]
@@ -1065,10 +1068,165 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_companeros_ciclo: {
+        Row: {
+          apellidos: string | null
+          estado: Database["public"]["Enums"]["estado_detalle"] | null
+          id_detalle_proceso_curso: number | null
+          id_proceso_asignado_curso: number | null
+          id_usuario: number | null
+          nombres: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "detalle_proceso_curso_id_proceso_asignado_curso_fkey"
+            columns: ["id_proceso_asignado_curso"]
+            isOneToOne: false
+            referencedRelation: "proceso_asignado_curso"
+            referencedColumns: ["id_proceso_asignado_curso"]
+          },
+          {
+            foreignKeyName: "detalle_proceso_curso_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      can_assign_role: { Args: { target_role_id: number }; Returns: boolean }
+      can_enroll_in_ciclo: {
+        Args: { target_ciclo_id: number }
+        Returns: boolean
+      }
+      can_manage_curso_scope: {
+        Args: { target_curso_id: number }
+        Returns: boolean
+      }
+      can_manage_ministerio_scope: {
+        Args: { target_ministerio_id: number }
+        Returns: boolean
+      }
+      can_read_modulo_as_student: {
+        Args: { p_id_modulo: number }
+        Returns: boolean
+      }
+      current_usuario_id: { Args: never; Returns: number }
+      delete_usuario_super_admin: {
+        Args: { target_usuario_id: number }
+        Returns: string
+      }
+      enroll_users: {
+        Args: {
+          p_ciclo_id: number
+          p_override_ministerio?: boolean
+          p_user_ids: number[]
+        }
+        Returns: {
+          estado: string
+          id_detalle: number
+          id_usuario: number
+        }[]
+      }
+      get_all_usuarios_enriquecidos: {
+        Args: never
+        Returns: {
+          activo: boolean
+          apellidos: string
+          auth_user_id: string
+          correo: string
+          creado_en: string
+          id_usuario: number
+          ministerios: Json
+          nombres: string
+          roles: Json
+          telefono: string
+          ultimo_acceso: string
+          updated_at: string
+        }[]
+      }
+      get_enrollment_candidates: {
+        Args: { p_ciclo_id: number; p_override_ministerio?: boolean }
+        Returns: {
+          apellidos: string
+          correo: string
+          id_usuario: number
+          ministerio_principal: string
+          nombres: string
+          ya_inscrito_activo_en_curso: boolean
+        }[]
+      }
+      get_iglesia_for_curso: {
+        Args: { target_curso_id: number }
+        Returns: number
+      }
+      get_iglesia_for_ministerio: {
+        Args: { target_ministerio_id: number }
+        Returns: number
+      }
+      get_my_highest_role: { Args: never; Returns: string }
+      get_my_roles: {
+        Args: never
+        Returns: {
+          fecha_fin: string
+          id_rol: number
+          iglesia_id: number
+          iglesia_nombre: string
+          rol_nombre: string
+        }[]
+      }
+      get_my_unread_notifications_count: { Args: never; Returns: number }
+      get_my_usuario: {
+        Args: never
+        Returns: {
+          activo: boolean
+          apellidos: string
+          auth_user_id: string | null
+          contrasena_hash: string
+          correo: string
+          creado_en: string
+          id_usuario: number
+          nombres: string
+          telefono: string | null
+          ultimo_acceso: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "usuario"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_user_iglesias: {
+        Args: never
+        Returns: {
+          id_iglesia: number
+        }[]
+      }
+      get_user_ministerios: {
+        Args: never
+        Returns: {
+          id_ministerio: number
+        }[]
+      }
+      is_admin_iglesia: { Args: never; Returns: boolean }
+      is_admin_of_iglesia: {
+        Args: { target_iglesia_id: number }
+        Returns: boolean
+      }
+      is_lider: { Args: never; Returns: boolean }
+      is_lider_of_ministerio: {
+        Args: { target_ministerio_id: number }
+        Returns: boolean
+      }
+      is_super_admin: { Args: never; Returns: boolean }
+      is_super_admin_role: {
+        Args: { target_role_id: number }
+        Returns: boolean
+      }
     }
     Enums: {
       estado_curso: "borrador" | "activo" | "inactivo" | "archivado"
@@ -1227,3 +1385,4 @@ export const Constants = {
     },
   },
 } as const
+

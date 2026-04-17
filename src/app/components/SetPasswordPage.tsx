@@ -64,7 +64,10 @@ export function SetPasswordPage() {
       return;
     }
 
-    navigate(next, { replace: true });
+    const fallbackNext = type === "recovery" ? "/login" : "/app";
+    const safeNext = next === "/auth/set-password" ? fallbackNext : next;
+
+    navigate(safeNext, { replace: true });
   };
 
   return (

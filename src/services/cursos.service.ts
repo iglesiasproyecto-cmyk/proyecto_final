@@ -31,6 +31,7 @@ function mapModulo(r: ModuloRow): Modulo {
     idModulo: r.id_modulo,
     titulo: r.titulo,
     descripcion: r.descripcion,
+    contenidoMd: r.contenido_md,
     orden: r.orden,
     estado: r.estado as Modulo['estado'],
     idCurso: r.id_curso,
@@ -101,14 +102,22 @@ export interface EvaluacionEnriquecida extends Evaluacion {
 export async function getCursosEnriquecidos(idMinisterio?: number): Promise<CursoEnriquecido[]> {
   let q = supabase
     .from('curso')
-    .select('*, modulo(count), proceso_asignado_curso(count)')
+    .select('*, modulo(*, recurso(*)), proceso_asignado_curso(count)')
     .order('nombre')
   if (idMinisterio !== undefined) q = q.eq('id_ministerio', idMinisterio)
   const { data, error } = await q
   if (error) throw error
   return (data as any[]).map(r => ({
     ...mapCurso(r),
-    cantidadModulos: Array.isArray(r.modulo) ? r.modulo[0]?.count ?? 0 : 0,
+    modulos: Array.isArray(r.modulo)
+      ? (r.modulo as any[])
+          .map((m) => ({
+            ...mapModulo(m),
+            recursos: Array.isArray(m.recurso) ? (m.recurso as any[]).map(mapRecurso) : [],
+          }))
+          .sort((a, b) => a.orden - b.orden)
+      : [],
+    cantidadModulos: Array.isArray(r.modulo) ? r.modulo.length : 0,
     cantidadInscritos: Array.isArray(r.proceso_asignado_curso) ? r.proceso_asignado_curso[0]?.count ?? 0 : 0,
   }))
 }
@@ -152,6 +161,16 @@ export async function getModulos(idCurso: number): Promise<Modulo[]> {
     .order('orden')
   if (error) throw error
   return data.map(mapModulo)
+}
+
+export async function getModulo(idModulo: number): Promise<Modulo> {
+  const { data, error } = await supabase
+    .from('modulo')
+    .select('*')
+    .eq('id_modulo', idModulo)
+    .single()
+  if (error) throw error
+  return mapModulo(data)
 }
 
 export async function getRecursos(idModulo: number): Promise<Recurso[]> {
@@ -234,14 +253,14 @@ export async function deleteCurso(id: number): Promise<void> {
 }
 
 export async function createModulo(
-  data: { titulo: string; descripcion: string | null; orden: number; idCurso: number }
+  data: { titulo: string; descripcion: string | null; idCurso: number; orden?: number | null }
 ): Promise<Modulo> {
   const { data: result, error } = await supabase
     .from('modulo')
     .insert([{
       titulo: data.titulo,
       descripcion: data.descripcion,
-      orden: data.orden,
+      orden: data.orden ?? null,
       estado: 'borrador' as const,
       id_curso: data.idCurso,
     }])
@@ -267,6 +286,20 @@ export async function updateModulo(
     .single()
   if (error) throw error
   return mapModulo(result)
+}
+
+export async function updateModuloContenido(
+  idModulo: number,
+  contenidoMd: string | null
+): Promise<Modulo> {
+  const { data, error } = await supabase
+    .from('modulo')
+    .update({ contenido_md: contenidoMd })
+    .eq('id_modulo', idModulo)
+    .select()
+    .single()
+  if (error) throw error
+  return mapModulo(data)
 }
 
 export async function deleteModulo(id: number): Promise<void> {
@@ -340,6 +373,37 @@ export async function createRecurso(data: {
     .single()
   if (error) throw error
   return mapRecurso(result)
+}
+
+export async function uploadRecursoArchivo(data: {
+  idModulo: number
+  file: File
+}): Promise<string> {
+  const safeName = data.file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const rand = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
+  const objectPath = `modulo-${data.idModulo}/${Date.now()}-${rand}-${safeName}`
+
+  const { data: uploaded, error: uploadError } = await supabase.storage
+    .from('aula-recursos')
+    .upload(objectPath, data.file, {
+      upsert: false,
+      contentType: data.file.type || undefined,
+      cacheControl: '3600',
+    })
+
+  if (uploadError) throw uploadError
+
+  const { data: publicData } = supabase.storage
+    .from('aula-recursos')
+    .getPublicUrl(uploaded.path)
+
+  if (!publicData.publicUrl) {
+    throw new Error('No se pudo obtener URL pública del archivo')
+  }
+
+  return publicData.publicUrl
 }
 
 export async function createProcesoAsignadoCurso(data: {

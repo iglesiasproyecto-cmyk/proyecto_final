@@ -68,7 +68,10 @@ export function AuthCallbackPage() {
       }
 
       if (otpType === "invite" || otpType === "recovery") {
-        navigate(`/auth/set-password?next=${encodeURIComponent(next)}&type=${otpType}`, {
+        const fallbackNext = otpType === "recovery" ? "/login" : "/app";
+        const safeNext = next === "/auth/set-password" ? fallbackNext : next;
+
+        navigate(`/auth/set-password?next=${encodeURIComponent(safeNext)}&type=${otpType}`, {
           replace: true,
         });
         return;

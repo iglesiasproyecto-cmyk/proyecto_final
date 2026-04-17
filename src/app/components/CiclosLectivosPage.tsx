@@ -1,10 +1,20 @@
 import { useState } from "react";
-import { useProcesosAsignadoCurso, useCursos, useDetallesProcesoCurso, useDeleteProcesoAsignadoCurso } from "@/hooks/useCursos";
+import {
+  useProcesosAsignadoCurso,
+  useCursos,
+  useDetallesProcesoCurso,
+  useDeleteProcesoAsignadoCurso,
+  useCreateProcesoAsignadoCurso,
+} from "@/hooks/useCursos";
+import { useRetirarInscripcion, useReactivarInscripcion } from "@/hooks/useInscripciones";
+import { useMinisterios } from "@/hooks/useMinisterios";
 import type { ProcesoAsignadoCurso } from "@/types/app.types";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
+import { EnrollmentPickerModal } from "./classroom/EnrollmentPickerModal";
+import { useApp } from "../store/AppContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -14,7 +24,7 @@ import { Progress } from "./ui/progress";
 import { motion, AnimatePresence } from "motion/react";
 import {
   GraduationCap, Plus, Calendar, Filter, Users, ArrowLeft,
-  BookOpen, Trash2, ChevronRight, CheckCircle2, PlayCircle, BookMarked, XCircle,
+  BookOpen, Trash2, ChevronRight, CheckCircle2, PlayCircle, BookMarked, XCircle, UserPlus, Undo2,
 } from "lucide-react";
 
 const estadoCicloConfig: Record<string, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
@@ -36,8 +46,35 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 // ── Detail View ──────────────────────────────────────────────────────────────
-function CicloDetail({ ciclo, onBack, cursoNombre }: { ciclo: ProcesoAsignadoCurso; onBack: () => void; cursoNombre: string }) {
+function CicloDetail({
+  ciclo,
+  onBack,
+  cursoNombre,
+  cursoMinisterioId,
+}: {
+  ciclo: ProcesoAsignadoCurso;
+  onBack: () => void;
+  cursoNombre: string;
+  cursoMinisterioId: number | null;
+}) {
   const { data: detalles = [] } = useDetallesProcesoCurso(ciclo.idProcesoAsignadoCurso);
+  const { rolActual, iglesiaActual } = useApp();
+  const { data: ministerios = [] } = useMinisterios();
+  const [showPicker, setShowPicker] = useState(false);
+  const [pendingRetiro, setPendingRetiro] = useState<number | null>(null);
+  const retirarMutation = useRetirarInscripcion();
+  const reactivarMutation = useReactivarInscripcion();
+
+  const misMinisterios = ministerios.map((m) => m.idMinisterio);
+  const cicloCerrado = ciclo.estado === "finalizado" || ciclo.estado === "cancelado";
+  const canEnroll =
+    !cicloCerrado &&
+    (
+      rolActual === "super_admin" ||
+      (rolActual === "admin_iglesia" && iglesiaActual?.id === ciclo.idIglesia) ||
+      (rolActual === "lider" && cursoMinisterioId != null && misMinisterios.includes(cursoMinisterioId))
+    );
+
   const completados = detalles.filter(d => d.estado === "completado").length;
   const progressPct = detalles.length > 0 ? Math.round((completados / detalles.length) * 100) : 0;
   const cfg = estadoCicloConfig[ciclo.estado] ?? estadoCicloConfig.programado;
@@ -103,10 +140,16 @@ function CicloDetail({ ciclo, onBack, cursoNombre }: { ciclo: ProcesoAsignadoCur
               <h3 className="font-bold text-sm flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Participantes inscritos</h3>
               <p className="text-xs text-muted-foreground mt-0.5">{detalles.length} personas en este ciclo lectivo</p>
             </div>
+            {canEnroll && (
+              <Button size="sm" className="h-9 rounded-xl" onClick={() => setShowPicker(true)}>
+                <UserPlus className="w-4 h-4 mr-1.5" /> Inscribir
+              </Button>
+            )}
           </div>
           <div className="divide-y divide-border/30">
             {detalles.map((d, i) => {
               const inscConfig = estadoInscripcionConfig[d.estado] ?? estadoInscripcionConfig.inscrito;
+              const mutating = retirarMutation.isPending || reactivarMutation.isPending;
               return (
                 <motion.div
                   key={d.idDetalleProcesoCurso}
@@ -125,6 +168,26 @@ function CicloDetail({ ciclo, onBack, cursoNombre }: { ciclo: ProcesoAsignadoCur
                   <Badge variant="outline" className={`${inscConfig.color} border text-[9px] uppercase font-bold tracking-wider px-2 py-0.5`}>
                     {inscConfig.label}
                   </Badge>
+                  {canEnroll && d.estado !== "retirado" && (
+                    <button
+                      title="Retirar"
+                      disabled={mutating}
+                      onClick={() => setPendingRetiro(d.idDetalleProcesoCurso)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-rose-400 hover:bg-rose-500/10 transition-all disabled:opacity-40"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {canEnroll && d.estado === "retirado" && (
+                    <button
+                      title="Reactivar"
+                      disabled={mutating}
+                      onClick={() => reactivarMutation.mutate(d.idDetalleProcesoCurso)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all disabled:opacity-40"
+                    >
+                      <Undo2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </motion.div>
               );
             })}
@@ -139,6 +202,38 @@ function CicloDetail({ ciclo, onBack, cursoNombre }: { ciclo: ProcesoAsignadoCur
           </div>
         </Card>
       </motion.div>
+
+      <EnrollmentPickerModal
+        ciclo={ciclo}
+        cursoNombre={cursoNombre}
+        open={showPicker}
+        onOpenChange={setShowPicker}
+      />
+
+      <AlertDialog open={pendingRetiro !== null} onOpenChange={(o) => !o && setPendingRetiro(null)}>
+        <AlertDialogContent className="rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-bold">Retirar inscripción</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-muted-foreground">
+              El participante quedará marcado como <strong>retirado</strong>. Podrás reactivarlo más tarde.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingRetiro) {
+                  retirarMutation.mutate(pendingRetiro, { onSuccess: () => setPendingRetiro(null) });
+                }
+              }}
+              disabled={retirarMutation.isPending}
+              className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white border-0"
+            >
+              {retirarMutation.isPending ? "Retirando..." : "Retirar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -153,6 +248,47 @@ export function CiclosLectivosPage() {
   const [showCreateCiclo, setShowCreateCiclo] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState<number | null>(null);
   const deleteProcesaMutation = useDeleteProcesoAsignadoCurso();
+  const createMutation = useCreateProcesoAsignadoCurso();
+  const { iglesiaActual } = useApp();
+  const [cicloForm, setCicloForm] = useState<{
+    idCurso: string;
+    fechaInicio: string;
+    fechaFin: string;
+    estadoInicial: "programado" | "en_curso";
+  }>({ idCurso: "", fechaInicio: "", fechaFin: "", estadoInicial: "programado" });
+  const [cicloError, setCicloError] = useState<string | null>(null);
+
+  const resetCicloForm = () => {
+    setCicloForm({ idCurso: "", fechaInicio: "", fechaFin: "", estadoInicial: "programado" });
+    setCicloError(null);
+  };
+
+  const handleCreateCiclo = () => {
+    setCicloError(null);
+    if (!cicloForm.idCurso) return setCicloError("Selecciona un curso.");
+    if (!cicloForm.fechaInicio || !cicloForm.fechaFin) return setCicloError("Fechas requeridas.");
+    if (cicloForm.fechaInicio > cicloForm.fechaFin) {
+      return setCicloError("La fecha de inicio no puede ser posterior a la de fin.");
+    }
+    if (!iglesiaActual) return setCicloError("No hay iglesia seleccionada.");
+
+    createMutation.mutate(
+      {
+        idCurso: Number(cicloForm.idCurso),
+        idIglesia: iglesiaActual.id,
+        fechaInicio: cicloForm.fechaInicio,
+        fechaFin: cicloForm.fechaFin,
+        estado: cicloForm.estadoInicial,
+      },
+      {
+        onSuccess: () => {
+          resetCicloForm();
+          setShowCreateCiclo(false);
+        },
+        onError: (err) => setCicloError(String((err as Error).message ?? err)),
+      }
+    );
+  };
 
   const getCursoNombre = (idCurso: number) => cursos.find(c => c.idCurso === idCurso)?.nombre || "Curso";
 
@@ -172,7 +308,17 @@ export function CiclosLectivosPage() {
   );
 
   const selectedCiclo = selectedCicloId ? procesosAsignadoCurso.find(c => c.idProcesoAsignadoCurso === selectedCicloId) : null;
-  if (selectedCiclo) return <CicloDetail ciclo={selectedCiclo} onBack={() => setSelectedCicloId(null)} cursoNombre={getCursoNombre(selectedCiclo.idCurso)} />;
+  if (selectedCiclo) {
+    const curso = cursos.find((c) => c.idCurso === selectedCiclo.idCurso);
+    return (
+      <CicloDetail
+        ciclo={selectedCiclo}
+        onBack={() => setSelectedCicloId(null)}
+        cursoNombre={getCursoNombre(selectedCiclo.idCurso)}
+        cursoMinisterioId={curso?.idMinisterio ?? null}
+      />
+    );
+  }
 
   const uniqueCursoIds = [...new Set(procesosAsignadoCurso.map(c => c.idCurso))];
   const estadoOrder: Record<string, number> = { en_curso: 0, programado: 1, finalizado: 2, cancelado: 3 };
@@ -317,7 +463,13 @@ export function CiclosLectivosPage() {
       </motion.div>
 
       {/* ── Create Dialog ── */}
-      <Dialog open={showCreateCiclo} onOpenChange={setShowCreateCiclo}>
+      <Dialog
+        open={showCreateCiclo}
+        onOpenChange={(o) => {
+          if (!o) resetCicloForm();
+          setShowCreateCiclo(o);
+        }}
+      >
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
@@ -328,7 +480,11 @@ export function CiclosLectivosPage() {
           <div className="space-y-4 py-2">
             <div>
               <FieldLabel>Curso</FieldLabel>
-              <select className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
+              <select
+                value={cicloForm.idCurso}
+                onChange={(e) => setCicloForm((f) => ({ ...f, idCurso: e.target.value }))}
+                className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              >
                 <option value="">— Seleccionar curso —</option>
                 {cursos.map(c => <option key={c.idCurso} value={c.idCurso}>{c.nombre}</option>)}
               </select>
@@ -336,27 +492,60 @@ export function CiclosLectivosPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <FieldLabel>Fecha de Inicio</FieldLabel>
-                <Input type="date" className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+                <Input
+                  type="date"
+                  value={cicloForm.fechaInicio}
+                  onChange={(e) => setCicloForm((f) => ({ ...f, fechaInicio: e.target.value }))}
+                  className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
+                />
               </div>
               <div>
                 <FieldLabel>Fecha de Fin</FieldLabel>
-                <Input type="date" className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+                <Input
+                  type="date"
+                  value={cicloForm.fechaFin}
+                  onChange={(e) => setCicloForm((f) => ({ ...f, fechaFin: e.target.value }))}
+                  className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
+                />
               </div>
             </div>
             <div>
               <FieldLabel>Estado Inicial</FieldLabel>
               <div className="grid grid-cols-2 gap-2">
-                {["programado", "en_curso"].map(s => (
-                  <button key={s} className="h-10 rounded-xl border border-white/10 bg-background/50 text-sm font-semibold text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all capitalize">
-                    {estadoCicloConfig[s].label}
-                  </button>
-                ))}
+                {(["programado", "en_curso"] as const).map((s) => {
+                  const active = cicloForm.estadoInicial === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setCicloForm((f) => ({ ...f, estadoInicial: s }))}
+                      className={`h-10 rounded-xl border text-sm font-semibold transition-all capitalize ${
+                        active
+                          ? "bg-primary/10 border-primary/40 text-primary"
+                          : "border-white/10 bg-background/50 text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5"
+                      }`}
+                    >
+                      {estadoCicloConfig[s].label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
+            {cicloError && (
+              <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
+                {cicloError}
+              </p>
+            )}
           </div>
           <DialogFooter className="border-t border-border/50 pt-4 mt-2">
             <Button variant="ghost" className="rounded-xl" onClick={() => setShowCreateCiclo(false)}>Cancelar</Button>
-            <Button className="rounded-xl" onClick={() => setShowCreateCiclo(false)}>Crear Ciclo</Button>
+            <Button
+              className="rounded-xl"
+              disabled={createMutation.isPending}
+              onClick={handleCreateCiclo}
+            >
+              {createMutation.isPending ? "Creando..." : "Crear Ciclo"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

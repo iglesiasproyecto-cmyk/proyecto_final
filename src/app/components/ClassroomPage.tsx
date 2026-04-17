@@ -1,13 +1,29 @@
 import { useState } from "react";
-import { useCursosEnriquecidos, useDeleteCurso, useCreateCurso, useCreateModulo, useUpdateCurso, useDeleteModulo, useCreateRecurso, useDeleteRecurso } from "@/hooks/useCursos";
+import { Link } from "react-router";
+import { useNavigate } from "react-router";
+import {
+  useCursosEnriquecidos,
+  useDeleteCurso,
+  useCreateCurso,
+  useCreateModulo,
+  useUpdateCurso,
+  useDeleteModulo,
+  useCreateRecurso,
+  useDeleteRecurso,
+  useProcesosAsignadoCurso,
+} from "@/hooks/useCursos";
+import { uploadRecursoArchivo } from "@/services/cursos.service";
 import { useMinisterios } from "@/hooks/useMinisterios";
+import type { ProcesoAsignadoCurso } from "@/types/app.types";
 import { useApp } from "../store/AppContext";
+import { EnrollmentPickerModal } from "./classroom/EnrollmentPickerModal";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 import { 
   Plus, ChevronRight, ChevronDown, FileText, Link as LinkIcon, Download, 
   ExternalLink, GraduationCap, Layers, ArrowLeft, Pencil, Trash2, 
@@ -15,6 +31,7 @@ import {
 } from "lucide-react";
 
 export function ClassroomPage() {
+  const navigate = useNavigate();
   const { data: ministerios = [] } = useMinisterios();
   const [selectedMinId, setSelectedMinId] = useState<number | null>(null);
   const actualMinId = selectedMinId ?? ministerios[0]?.idMinisterio ?? 0;
@@ -26,6 +43,8 @@ export function ClassroomPage() {
   const [showCreateCurso, setShowCreateCurso] = useState(false);
   const [showCreateModulo, setShowCreateModulo] = useState(false);
   const { usuarioActual, rolActual } = useApp();
+  const { data: todosProcesos = [] } = useProcesosAsignadoCurso();
+  const [pickerForCiclo, setPickerForCiclo] = useState<{ ciclo: ProcesoAsignadoCurso; cursoNombre: string } | null>(null);
   const createCursoMutation = useCreateCurso();
   const createModuloMutation = useCreateModulo();
   const updateCursoMutation = useUpdateCurso();
@@ -36,8 +55,11 @@ export function ClassroomPage() {
   const [moduloForm, setModuloForm] = useState({ titulo: "", descripcion: "" });
   const [editCurso, setEditCurso] = useState<{ id: number; nombre: string; descripcion: string; estado: string } | null>(null);
   const [showCreateRecurso, setShowCreateRecurso] = useState(false);
-  const [recursoForm, setRecursoForm] = useState({ nombre: "", tipo: "enlace" as "archivo" | "enlace", url: "" });
-  const canManageAula = rolActual === "super_admin" || rolActual === "admin_iglesia";
+  const [recursoForm, setRecursoForm] = useState({ nombre: "", tipo: "archivo" as "archivo" | "enlace", url: "" });
+  const [recursoFile, setRecursoFile] = useState<File | null>(null);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const canManageAula =
+    rolActual === "super_admin" || rolActual === "admin_iglesia" || rolActual === "lider";
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-48">
@@ -91,7 +113,6 @@ export function ClassroomPage() {
       {
         titulo: moduloForm.titulo.trim(),
         descripcion: moduloForm.descripcion.trim() || null,
-        orden: (cursos.find((c) => c.idCurso === idCurso)?.modulos?.length ?? 0) + 1,
         idCurso,
       },
       {
@@ -118,13 +139,39 @@ export function ClassroomPage() {
     deleteModuloMutation.mutate(id);
   };
 
-  const handleCreateRecurso = (idModulo: number) => {
+  const handleCreateRecurso = async (idModulo: number) => {
     if (!canManageAula) return;
-    if (!recursoForm.nombre.trim() || !recursoForm.url.trim()) return;
-    createRecursoMutation.mutate(
-      { idModulo, nombre: recursoForm.nombre.trim(), tipo: recursoForm.tipo, url: recursoForm.url.trim() },
-      { onSuccess: () => { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "enlace", url: "" }); } }
-    );
+    const nombre = recursoForm.nombre.trim();
+
+    if (recursoForm.tipo === "enlace" && (!nombre || !recursoForm.url.trim())) return;
+    if (recursoForm.tipo === "archivo" && !recursoFile) return;
+
+    try {
+      let finalUrl = recursoForm.url.trim();
+      const finalNombre = nombre || recursoFile?.name || "Archivo";
+
+      if (recursoForm.tipo === "archivo" && recursoFile) {
+        setIsUploadingFile(true);
+        finalUrl = await uploadRecursoArchivo({ idModulo, file: recursoFile });
+      }
+
+      await createRecursoMutation.mutateAsync({
+        idModulo,
+        nombre: finalNombre,
+        tipo: recursoForm.tipo,
+        url: finalUrl,
+      });
+
+      setShowCreateRecurso(false);
+      setRecursoForm({ nombre: "", tipo: "archivo", url: "" });
+      setRecursoFile(null);
+      toast.success("Recurso agregado");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "No se pudo agregar el recurso";
+      toast.error(msg);
+    } finally {
+      setIsUploadingFile(false);
+    }
   };
 
   const statusColors: Record<string, string> = {
@@ -215,7 +262,7 @@ export function ClassroomPage() {
         </div>
 
         {/* Create Recurso Dialog */}
-        <Dialog open={canManageAula && showCreateRecurso} onOpenChange={o => { if (!o) { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "enlace", url: "" }); } }}>
+        <Dialog open={canManageAula && showCreateRecurso} onOpenChange={o => { if (!o) { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "archivo", url: "" }); setRecursoFile(null); } }}>
           <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
@@ -229,20 +276,26 @@ export function ClassroomPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Tipo</label>
-                <select className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20" value={recursoForm.tipo} onChange={e => setRecursoForm(p => ({ ...p, tipo: e.target.value as "archivo" | "enlace" }))}>
-                  <option value="enlace">Enlace (URL)</option>
-                  <option value="archivo">Archivo</option>
+                <select className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20" value={recursoForm.tipo} onChange={e => { const tipo = e.target.value as "archivo" | "enlace"; setRecursoForm(p => ({ ...p, tipo, url: tipo === "archivo" ? "" : p.url })); if (tipo === "enlace") setRecursoFile(null); }}>
+                  <option value="archivo">Archivo adjunto (PDF/Docs)</option>
+                  <option value="enlace">Enlace externo (opcional)</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">URL *</label>
-                <Input value={recursoForm.url} onChange={e => setRecursoForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..." className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">
+                  {recursoForm.tipo === "enlace" ? "URL *" : "Archivo *"}
+                </label>
+                {recursoForm.tipo === "enlace" ? (
+                  <Input key="recurso-url" value={recursoForm.url} onChange={e => setRecursoForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..." className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+                ) : (
+                  <Input key="recurso-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.webp,.zip" onChange={e => setRecursoFile(e.target.files?.[0] ?? null)} className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+                )}
               </div>
             </div>
             <DialogFooter className="gap-2">
-              <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "enlace", url: "" }); }}>Cancelar</Button>
-              <Button className="rounded-xl px-6" onClick={() => selectedModuloId && handleCreateRecurso(selectedModuloId)} disabled={createRecursoMutation.isPending || !recursoForm.nombre || !recursoForm.url}>
-                {createRecursoMutation.isPending ? "Agregando..." : "Agregar Recurso"}
+              <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "archivo", url: "" }); setRecursoFile(null); }}>Cancelar</Button>
+              <Button className="rounded-xl px-6" onClick={() => selectedModuloId && handleCreateRecurso(selectedModuloId)} disabled={createRecursoMutation.isPending || isUploadingFile || (recursoForm.tipo === "enlace" ? (!recursoForm.nombre || !recursoForm.url) : !recursoFile)}>
+                {isUploadingFile ? "Subiendo..." : createRecursoMutation.isPending ? "Agregando..." : "Agregar Recurso"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -402,6 +455,14 @@ export function ClassroomPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                        onClick={(e) => { e.stopPropagation(); toggleCurso(curso.idCurso); }}
+                      >
+                        {isExpanded ? "Ocultar módulos" : "Ver módulos"}
+                      </Button>
                       {canManageAula && (
                       <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all">
                         <button
@@ -435,10 +496,65 @@ export function ClassroomPage() {
                       className="overflow-hidden bg-background/20"
                     >
                       <div className="grid grid-cols-1 divide-y divide-white/5 border-t border-white/5">
+                        {(() => {
+                          const ciclosDelCurso = todosProcesos.filter((p) => p.idCurso === curso.idCurso);
+                          const activos = ciclosDelCurso.filter((p) => p.estado === "programado" || p.estado === "en_curso");
+                          const historicos = ciclosDelCurso.filter((p) => p.estado === "finalizado" || p.estado === "cancelado");
+                          if (activos.length === 0 && historicos.length === 0) return null;
+
+                          return (
+                            <div className="p-4 bg-card/20 border-b border-white/5">
+                              <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+                                <Users className="w-4 h-4 text-primary" /> Ciclos activos
+                              </h3>
+                              {activos.length === 0 && <p className="text-xs text-muted-foreground">No hay ciclos activos.</p>}
+                              <div className="space-y-2">
+                                {activos.map((p) => (
+                                  <div
+                                    key={p.idProcesoAsignadoCurso}
+                                    className="flex items-center justify-between rounded-xl border border-white/10 bg-background/40 px-3 py-2"
+                                  >
+                                    <div className="text-xs">
+                                      <p className="font-semibold">
+                                        {new Date(p.fechaInicio).toLocaleDateString("es")} - {new Date(p.fechaFin).toLocaleDateString("es")}
+                                      </p>
+                                      <p className="text-muted-foreground capitalize">{p.estado.replace("_", " ")}</p>
+                                    </div>
+                                    {canManageAula && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-8 rounded-lg text-xs"
+                                        onClick={() => setPickerForCiclo({ ciclo: p, cursoNombre: curso.nombre })}
+                                      >
+                                        <Plus className="w-3.5 h-3.5 mr-1" /> Inscribir
+                                      </Button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                              {historicos.length > 0 && (
+                                <details className="mt-3">
+                                  <summary className="text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none">
+                                    Ver histórico ({historicos.length})
+                                  </summary>
+                                  <div className="mt-2 space-y-1">
+                                    {historicos.map((p) => (
+                                      <div key={p.idProcesoAsignadoCurso} className="text-[11px] text-muted-foreground/80 px-3">
+                                        {new Date(p.fechaInicio).toLocaleDateString("es")} - {new Date(p.fechaFin).toLocaleDateString("es")} · {p.estado}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </details>
+                              )}
+                            </div>
+                          );
+                        })()}
+
                         {curso.modulos?.sort((a, b) => a.orden - b.orden).map((modulo, mi) => (
                           <div 
                             key={modulo.idModulo} 
-                            onClick={() => { setSelectedCursoId(curso.idCurso); setSelectedModuloId(modulo.idModulo); }} 
+                            onClick={() => { navigate(`/app/aula/curso/${curso.idCurso}/modulo/${modulo.idModulo}`); }} 
                             className="group/mod flex items-center gap-4 px-6 py-4 cursor-pointer hover:bg-primary/5 transition-colors border-l-4 border-transparent hover:border-primary/40"
                           >
                             <div className="w-8 h-8 rounded-full bg-background/50 border border-white/5 flex items-center justify-center text-[11px] font-black text-foreground shrink-0 group-hover/mod:bg-primary group-hover/mod:text-white transition-all">
@@ -455,8 +571,15 @@ export function ClassroomPage() {
                                 <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">{modulo.estado}</span>
                               </div>
                             </div>
-                            {canManageAula && (
-                            <div className="flex items-center gap-2 opacity-0 group-hover/mod:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover/mod:opacity-100 transition-opacity">
+                              <Link
+                                to={`/app/aula/curso/${curso.idCurso}/modulo/${modulo.idModulo}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline px-2 py-1 rounded-md border border-primary/30 bg-primary/5"
+                              >
+                                Abrir →
+                              </Link>
+                              {canManageAula && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleDeleteModulo(modulo.idModulo, modulo.titulo); }}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 text-destructive/50 hover:text-destructive transition-colors shrink-0"
@@ -464,8 +587,8 @@ export function ClassroomPage() {
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
+                              )}
                             </div>
-                            )}
                             <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover/mod:translate-x-1 group-hover/mod:text-primary transition-all shrink-0" />
                           </div>
                         ))}
@@ -610,6 +733,17 @@ export function ClassroomPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {pickerForCiclo && (
+        <EnrollmentPickerModal
+          ciclo={pickerForCiclo.ciclo}
+          cursoNombre={pickerForCiclo.cursoNombre}
+          open={true}
+          onOpenChange={(o) => {
+            if (!o) setPickerForCiclo(null);
+          }}
+        />
+      )}
     </div>
   );
 }

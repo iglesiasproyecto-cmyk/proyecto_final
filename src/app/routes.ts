@@ -13,6 +13,7 @@ import { MembersPage } from "./components/MembersPage";
 import { EventsPage } from "./components/EventsPage";
 import { TasksPage } from "./components/TasksPage";
 import { ClassroomPage } from "./components/ClassroomPage";
+import { ModuloDetailPage } from "./components/classroom/ModuloDetailPage";
 import { EvaluationsPage } from "./components/EvaluationsPage";
 import { NotificationsPage } from "./components/NotificationsPage";
 import { ProfilePage } from "./components/ProfilePage";
@@ -22,6 +23,7 @@ import { PastoresPage } from "./components/PastoresPage";
 import { UsuariosPage } from "./components/UsuariosPage";
 import { CatalogosPage } from "./components/CatalogosPage";
 import { CiclosLectivosPage } from "./components/CiclosLectivosPage";
+import { MisCursosPage } from "./components/MisCursosPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
 import { SitemapPage } from "./components/SitemapPage";
 
@@ -63,8 +65,10 @@ export const router = createBrowserRouter([
           { path: "eventos", Component: EventsPage, ErrorBoundary: ErrorPage },
           { path: "tareas", Component: TasksPage, ErrorBoundary: ErrorPage },
           { path: "aula", Component: ClassroomPage, ErrorBoundary: ErrorPage },
+          { path: "aula/curso/:idCurso/modulo/:idModulo", Component: ModuloDetailPage, ErrorBoundary: ErrorPage },
           { path: "evaluaciones", Component: EvaluationsPage, ErrorBoundary: ErrorPage },
           { path: "ciclos-lectivos", Component: CiclosLectivosPage, ErrorBoundary: ErrorPage },
+          { path: "mis-cursos", Component: MisCursosPage, ErrorBoundary: ErrorPage },
           { path: "notificaciones", Component: NotificationsPage, ErrorBoundary: ErrorPage },
           { path: "perfil", Component: ProfilePage, ErrorBoundary: ErrorPage },
           { path: "geografia", Component: GeographyPage, ErrorBoundary: ErrorPage },

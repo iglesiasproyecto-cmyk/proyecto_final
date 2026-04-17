@@ -56,7 +56,8 @@ export function EvaluationsPage() {
   const [createForm, setCreateForm] = useState({ idModulo: 0, calificacion: "", estado: "pendiente" as string, observaciones: "", fechaEvaluacion: "" });
   
   const resetCreateForm = () => setCreateForm({ idModulo: 0, calificacion: "", estado: "pendiente", observaciones: "", fechaEvaluacion: "" });
-  const canManageEvaluaciones = rolActual === "super_admin" || rolActual === "admin_iglesia";
+  const canManageEvaluaciones =
+    rolActual === "super_admin" || rolActual === "admin_iglesia" || rolActual === "lider";
 
   const deleteEvaluacionMutation = useDeleteEvaluacion();
   const createEvaluacionMutation = useCreateEvaluacion();
