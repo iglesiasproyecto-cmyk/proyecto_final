@@ -183,4 +183,17 @@
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
   }
+
+  option {
+    background-color: var(--card);
+    color: var(--foreground);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

@@ -10,21 +10,15 @@ import { useCursos } from "@/hooks/useCursos";
 import { useEvaluaciones } from "@/hooks/useCursos";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
 import { usePaises, useDepartamentos, useCiudades } from "@/hooks/useGeografia";
-import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { motion } from "motion/react";
 import { SimpleBarChart, SimpleDonutChart } from "./SimpleCharts";
 import {
   Building2, Users, CalendarDays, ListTodo, BookOpen, ClipboardCheck, Bell,
-  ArrowRight, CheckCircle2, Clock, AlertCircle, ChevronRight, Globe,
+  ArrowRight, CheckCircle2, Clock, AlertCircle, Globe,
   Church, UserCheck, Settings, TrendingUp, Sparkles, Activity
 } from "lucide-react";
 
-const statusColors: Record<string, string> = {
-  pendiente: "bg-amber-100 text-amber-700",
-  en_progreso: "bg-blue-100 text-blue-700",
-  completada: "bg-green-100 text-green-700",
-};
 const statusLabels: Record<string, string> = {
   pendiente: "Pendiente",
   en_progreso: "En Progreso",
@@ -162,7 +156,7 @@ function SuperAdminDashboard() {
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
@@ -458,7 +452,7 @@ function LiderDashboard() {
               <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-blue-600/5 to-cyan-600/5 hover:from-blue-600/10 hover:to-cyan-600/10 border border-blue-600/10 hover:border-blue-600/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate("/app/tareas")}>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform bg-gradient-to-br from-blue-600 to-cyan-600 text-white`}>{statusIcons[t.estado]}</div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "Completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-blue-600"}`}>{t.titulo}</p>
+                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-blue-600"}`}>{t.titulo}</p>
                   <p className="text-[10px] font-medium text-muted-foreground truncate mt-0.5">{t.asignados?.map((a) => a.nombreCompleto).join(", ")}</p>
                 </div>
                 <Badge variant="outline" className={`text-[9px] px-2 py-0 border-0 bg-blue-600/10 text-blue-700 dark:text-blue-400 uppercase tracking-widest p-1`}>{statusLabels[t.estado]}</Badge>
@@ -571,7 +565,7 @@ function ServidorDashboard() {
               <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-blue-600/5 to-cyan-600/5 hover:from-blue-600/10 hover:to-cyan-600/10 border border-blue-600/10 hover:border-blue-600/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate("/app/tareas")}>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform bg-gradient-to-br from-blue-600 to-cyan-600 text-white`}>{statusIcons[t.estado]}</div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "Completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-blue-600"}`}>{t.titulo}</p>
+                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-blue-600"}`}>{t.titulo}</p>
                   <p className="text-[10px] font-medium text-muted-foreground truncate mt-0.5">Limite: {t.fechaLimite || "Sin fecha"}</p>
                 </div>
                 <Badge variant="outline" className={`text-[9px] px-2 py-0 border-0 bg-blue-600/10 text-blue-700 dark:text-blue-400 uppercase tracking-widest p-1`}>{statusLabels[t.estado]}</Badge>
