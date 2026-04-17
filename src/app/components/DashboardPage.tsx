@@ -51,7 +51,7 @@ function AnimatedCard({ children, index = 0, className = "", onClick }: { childr
       className={`h-full ${colSpanClasses}`}
     >
       <div 
-        className={`h-full relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] transition-all duration-300 dark:border-white/10 dark:bg-card/20 ${onClick ? "cursor-pointer hover:shadow-lg hover:bg-card/60 hover:-translate-y-1" : ""} ${innerClasses}`}
+        className={`h-full relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-border/50 shadow-[0_8px_30px_rgb(0,0,0,0.03)] transition-all duration-300 dark:border-white/10 dark:bg-card/20 ${onClick ? "cursor-pointer hover:shadow-lg hover:bg-card/60 hover:-translate-y-1" : ""} ${innerClasses}`}
         onClick={onClick}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent dark:from-white/5 opacity-50 pointer-events-none" />
@@ -161,14 +161,16 @@ function SuperAdminDashboard() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      {/* Header unificado */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">S.E.I.</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">Panel de Control</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Panel de Control</h1>
           </div>
         </div>
       </motion.div>
@@ -234,7 +236,7 @@ function SuperAdminDashboard() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2">
-                  <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className={`text-[9px] px-2 py-0 border-0 ${ig.estado === "activa" ? "bg-blue-600/10 text-blue-700 dark:text-blue-400 font-bold tracking-wider uppercase" : ""}`}>{ig.estado}</Badge>
+                  <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className={`text-[9px] px-2 py-0 border-0 ${ig.estado === "activa" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 font-bold tracking-wider uppercase" : ""}`}>{ig.estado}</Badge>
                   <div className="hidden xl:flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
                     <span className="flex items-center gap-0.5" title="Sedes"><Church className="w-3 h-3 text-blue-600/50" /> {sedes.filter((s) => s.idIglesia === ig.idIglesia).length}</span>
                     <span className="flex items-center gap-0.5" title="Ministerios"><Settings className="w-3 h-3 text-blue-600/50" /> {ministerios.filter((m) => m.idIglesia === ig.idIglesia).length}</span>
@@ -311,14 +313,16 @@ function AdminIglesiaDashboard() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+      {/* Header unificado */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
             <UserCheck className="w-6 h-6 text-white" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Bienvenido de vuelta</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>
@@ -346,7 +350,7 @@ function AdminIglesiaDashboard() {
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {ministerios.slice(0, 4).map((min) => (
-              <div key={min.idMinisterio} className={`group flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer bg-gradient-to-br border ${min.estado !== "activo" ? "from-muted/20 to-muted/5 opacity-60 border-dashed border-border" : "from-blue-600/5 to-cyan-600/5 hover:from-blue-600/10 hover:to-cyan-600/10 border-blue-600/10 hover:border-blue-600/20 shadow-sm hover:-translate-y-0.5"}`} onClick={() => navigate("/app/departamentos")}>
+              <div key={min.idMinisterio} className={`group flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer bg-gradient-to-br border ${min.estado !== "activo" ? "from-muted/20 to-muted/5 opacity-60 border-dashed border-border" : "from-blue-600/5 to-cyan-600/5 hover:from-blue-600/10 hover:to-cyan-600/10 border-blue-600/30 hover:border-blue-600/40 shadow-md shadow-blue-600/15 hover:-translate-y-0.5"}`} onClick={() => navigate("/app/departamentos")}>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${min.estado !== "activo" ? "bg-muted text-muted-foreground" : "bg-gradient-to-br from-cyan-600 to-blue-700 text-white shadow-inner group-hover:scale-110 transition-transform"}`}>
                   <span className="text-[13px] font-bold">{min.nombre.charAt(0)}</span>
                 </div>
@@ -354,7 +358,7 @@ function AdminIglesiaDashboard() {
                   <p className="text-[13px] font-semibold text-foreground/90 truncate group-hover:text-blue-600 transition-colors">{min.nombre}</p>
                   <p className="text-[10px] font-medium text-muted-foreground truncate">{min.liderNombre} &middot; {min.cantidadMiembros} miembros</p>
                 </div>
-                <Badge variant={min.estado === "activo" ? "secondary" : "outline"} className={`text-[9px] px-2 py-0 border-0 ${min.estado === "activo" ? "bg-blue-600/10 text-blue-700 dark:text-blue-400 uppercase tracking-widest p-1" : ""}`}>{min.estado}</Badge>
+                <Badge variant={min.estado === "activo" ? "secondary" : "outline"} className={`text-[9px] px-2 py-0 border-0 ${min.estado === "activo" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 uppercase tracking-widest p-1" : ""}`}>{min.estado}</Badge>
               </div>
             ))}
           </div>
@@ -424,14 +428,16 @@ function LiderDashboard() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+      {/* Header unificado */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0 text-white">
             <Users className="w-6 h-6" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Líder &mdash; {min?.nombre}</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>
@@ -536,14 +542,16 @@ function ServidorDashboard() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+      {/* Header unificado */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0 text-white">
             <UserCheck className="w-6 h-6" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Servidor &mdash; {min?.nombre}</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>

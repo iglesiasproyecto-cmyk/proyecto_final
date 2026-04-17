@@ -82,13 +82,19 @@ export function MembersPage() {
       >
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
 
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
-            Miembros
-          </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-            Gestiona los miembros de los ministerios y sus roles
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+            <Users className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Directorio</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
+              Miembros
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+              Gestiona los miembros de los ministerios y sus roles
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
@@ -99,17 +105,17 @@ export function MembersPage() {
               placeholder="Buscar miembro..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-10 bg-background/50 border-white/5 rounded-xl text-sm"
+              className="pl-9 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm"
             />
           </div>
 
           {/* Filtro de ministerio */}
-          <div className="flex items-center gap-2 bg-background/50 border border-white/5 rounded-xl px-3 h-10 shrink-0">
+          <div className="flex items-center gap-2 bg-background/60 border border-border/40 rounded-xl px-3 h-10 shadow-sm shrink-0">
             <Filter className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
             <select
               value={selectedMinisterioId}
               onChange={(e) => setSelectedMinisterioId(Number(e.target.value))}
-              className="text-sm bg-transparent border-0 outline-none text-foreground/80 min-w-0 cursor-pointer"
+              className="text-sm bg-transparent border-0 outline-none text-foreground/80 min-w-0 cursor-pointer [&_option]:bg-white [&_option]:text-gray-900 dark:[&_option]:bg-gray-800 dark:[&_option]:text-gray-100"
             >
               <option value={0}>Todos los ministerios</option>
               {ministerios.map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
@@ -118,7 +124,7 @@ export function MembersPage() {
 
           <Button
             onClick={() => setShowInvite(true)}
-            className="h-10 rounded-xl font-medium shrink-0"
+            className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all"
           >
             <Plus className="w-4 h-4 mr-1.5" /> Agregar
           </Button>
@@ -133,13 +139,13 @@ export function MembersPage() {
         className="grid grid-cols-3 gap-3"
       >
         {[
-          { label: "Total", value: filtered.length, icon: <Users className="w-4 h-4" />, color: "text-primary" },
-          { label: "Activos", value: activeCount, icon: <ShieldCheck className="w-4 h-4" />, color: "text-emerald-400" },
-          { label: "Líderes", value: leaderCount, icon: <User className="w-4 h-4" />, color: "text-blue-400" },
+          { label: "Total", value: filtered.length, icon: <Users className="w-4 h-4 text-white" />, gradient: "from-cyan-600 to-blue-700", shadow: "shadow-cyan-600/25" },
+          { label: "Activos", value: activeCount, icon: <ShieldCheck className="w-4 h-4 text-white" />, gradient: "from-emerald-500 to-emerald-700", shadow: "shadow-emerald-500/25" },
+          { label: "Líderes", value: leaderCount, icon: <User className="w-4 h-4 text-white" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-indigo-500/25" },
         ].map((stat) => (
           <div key={stat.label} className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-3">
-            <div className={`${stat.color} bg-current/10 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 opacity-80`} style={{ backgroundColor: "currentColor", opacity: 1 }}>
-              <div className={`${stat.color}`}>{stat.icon}</div>
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.gradient} ${stat.shadow} shadow-lg flex items-center justify-center shrink-0`}>
+              {stat.icon}
             </div>
             <div>
               <p className="text-xl font-black tracking-tight leading-none">{stat.value}</p>

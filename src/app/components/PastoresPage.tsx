@@ -116,14 +116,16 @@ export function PastoresPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* HEADER */}
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
+
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
             <UserCheck className="w-6 h-6 text-white" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Pastores</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Gestión de Pastores</h1>
           </div>
         </div>
       </motion.div>
@@ -131,10 +133,10 @@ export function PastoresPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <div className="flex justify-start">
           <TabsList className="bg-card/40 backdrop-blur-xl border border-white/20 dark:border-white/10 dark:bg-card/20 rounded-2xl h-14 px-1.5 shadow-sm">
-            <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-foreground">
+            <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 dark:data-[state=active]:from-cyan-600 dark:data-[state=active]:to-blue-700 data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
               Directorio ({pastores.length})
             </TabsTrigger>
-            <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-foreground">
+            <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 dark:data-[state=active]:from-cyan-600 dark:data-[state=active]:to-blue-700 data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
               Asignaciones ({iglesiaPastores.filter(ip => !ip.fechaFin).length})
             </TabsTrigger>
           </TabsList>
@@ -153,7 +155,7 @@ export function PastoresPage() {
                   className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-blue-600/20 h-11 rounded-xl" 
                 />
               </div>
-              <Button onClick={openAddPastor} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-6 bg-blue-600 hover:bg-blue-700 text-white h-11">
+              <Button onClick={openAddPastor} className="shrink-0 shadow-md shadow-cyan-600/30 rounded-full px-6 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white h-11">
                 <Plus className="w-4 h-4 mr-2" /> Nuevo Pastor
               </Button>
             </div>

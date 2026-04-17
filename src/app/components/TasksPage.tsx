@@ -88,16 +88,22 @@ export function TasksPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden"
+        className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
-            Tareas
-          </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Gestión de tareas operativas del ministerio</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+            <ListTodo className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Operaciones</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
+              Tareas
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">Gestión de tareas operativas del ministerio</p>
+          </div>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="h-10 rounded-xl font-medium shrink-0">
+        <Button onClick={() => setShowCreate(true)} className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all">
           <Plus className="w-4 h-4 mr-1.5" /> Nueva Tarea
         </Button>
       </motion.div>
@@ -113,7 +119,7 @@ export function TasksPage() {
           const cfg = statusConfig[s];
           const count = tasksByStatus(s).length;
           return (
-            <div key={s} className={`bg-card/40 backdrop-blur-xl border rounded-2xl p-4 flex items-center gap-3 ${cfg.color.includes("border") ? "border-white/10" : "border-white/10"}`}>
+            <div key={s} className={`bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 flex items-center gap-3`}>
               <div className={`w-9 h-9 rounded-xl ${cfg.color} border flex items-center justify-center shrink-0`}>{cfg.icon}</div>
               <div>
                 <p className="text-2xl font-black leading-none">{count}</p>
@@ -122,7 +128,7 @@ export function TasksPage() {
             </div>
           );
         })}
-        <div className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-3">
+        <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-slate-500/10 text-slate-400 border border-slate-500/20 flex items-center justify-center shrink-0"><ListTodo className="w-3.5 h-3.5" /></div>
           <div>
             <p className="text-2xl font-black leading-none">{tareas.length}</p>
@@ -149,14 +155,14 @@ export function TasksPage() {
               transition={{ delay: 0.12 + colIdx * 0.06 }}
             >
               {/* Column header */}
-              <div className={`flex items-center gap-2 px-4 py-3 rounded-t-2xl bg-card/60 backdrop-blur-xl border border-white/10 border-b-0`}>
+              <div className={`flex items-center gap-2 px-4 py-3 rounded-t-2xl bg-card/60 backdrop-blur-xl border border-border/50 border-b-0`}>
                 <div className={`w-2 h-2 rounded-full ${cfg.dot} shadow-[0_0_6px_currentColor]`} />
                 <span className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/70">{cfg.label}</span>
                 <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.color} border`}>{statusTasks.length}</span>
               </div>
 
               {/* Cards */}
-              <div className="space-y-2 bg-card/20 backdrop-blur-xl rounded-b-2xl border border-white/10 border-t-0 p-3 min-h-[260px]">
+              <div className="space-y-2 bg-card/20 backdrop-blur-xl rounded-b-2xl border border-border/50 border-t-0 p-3 min-h-[260px]">
                 <AnimatePresence>
                   {statusTasks.map((t, tIdx) => {
                     const next = nextStatus(t.estado);
@@ -170,7 +176,7 @@ export function TasksPage() {
                         transition={{ delay: tIdx * 0.03 }}
                       >
                         <div
-                          className="group relative bg-card/60 backdrop-blur-xl border border-white/10 rounded-xl p-3.5 cursor-pointer hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
+                          className="group relative bg-card/60 backdrop-blur-xl border border-border/50 rounded-xl p-3.5 cursor-pointer hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
                           onClick={() => setSelectedTask(t.idTarea)}
                         >
                           {/* Subtle hover glow */}

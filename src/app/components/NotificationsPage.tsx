@@ -46,15 +46,16 @@ export function NotificationsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm overflow-hidden">
+        <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-3xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-xl shadow-cyan-600/30 shrink-0">
-            <Bell className="w-7 h-7 text-white" />
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+            <Bell className="w-6 h-6 text-white" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Mi Bandeja</p>
-            <h1 className="text-3xl md:text-4xl font-light tracking-tight text-foreground">Notificaciones</h1>
-            <p className="text-muted-foreground text-[13px] font-medium mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Notificaciones</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">
               {unreadCount > 0 ? `${unreadCount} notificaciones sin leer` : "Estás al día con tus notificaciones"}
             </p>
           </div>
@@ -67,7 +68,7 @@ export function NotificationsPage() {
       </motion.div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-        <TabsList className="bg-card/40 backdrop-blur-xl border border-white/10 p-1.5 h-auto rounded-2xl w-full sm:w-auto inline-flex shadow-xl shadow-black/5 flex-wrap gap-1">
+        <TabsList className="bg-card/40 backdrop-blur-xl border border-border/50 p-1.5 h-auto rounded-2xl w-full sm:w-auto inline-flex shadow-xl shadow-black/5 flex-wrap gap-1">
           <TabsTrigger value="todas" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Todas</TabsTrigger>
           <TabsTrigger value="no_leidas" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
             Sin leer
@@ -94,7 +95,7 @@ export function NotificationsPage() {
               >
                 <div
                   className={`group flex items-start gap-4 p-5 rounded-3xl backdrop-blur-2xl border transition-all duration-300 cursor-pointer hover:-translate-y-1 ${
-                    !n.leida ? "bg-blue-600/5 border-blue-600/20 shadow-lg shadow-blue-900/5" : "bg-card/40 border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl"
+                    !n.leida ? "bg-blue-600/5 border-blue-600/20 shadow-lg shadow-blue-900/5" : "bg-card/40 border-border/50 shadow-xl hover:shadow-2xl"
                   }`}
                   onClick={() => !n.leida && markReadMutation.mutate(n.idNotificacion)}
                 >
@@ -130,7 +131,7 @@ export function NotificationsPage() {
 
       {filtered.length === 0 && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-          <div className="p-16 text-center rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl">
+          <div className="p-16 text-center rounded-3xl bg-card/40 backdrop-blur-2xl border border-border/50 shadow-xl">
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-600/10 to-blue-600/5 flex items-center justify-center mx-auto mb-6">
               <Inbox className="w-10 h-10 text-blue-600/50" />
             </div>

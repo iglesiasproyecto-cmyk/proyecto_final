@@ -14,9 +14,9 @@ import {
 
 const testCredentials = [
   { email: 'admin@iglesiabd.com',    label: 'Super Admin',    desc: 'Gestión global',       icon: Crown,     color: 'from-blue-600 to-cyan-400' },
-  { email: 'pastor@iglesiabd.com',   label: 'Admin Iglesia',  desc: 'Gestión de iglesia',   icon: Building2, color: 'from-slate-600 to-slate-400' },
-  { email: 'lider@iglesiabd.com',    label: 'Líder',          desc: 'Ministerio & equipo',  icon: Shield,    color: 'from-blue-500 to-blue-300' },
-  { email: 'servidor@iglesiabd.com', label: 'Servidor',       desc: 'Vista personal',       icon: User,      color: 'from-slate-500 to-slate-300' },
+  { email: 'pastor@iglesiabd.com',   label: 'Admin Iglesia',  desc: 'Gestión de iglesia',   icon: Building2, color: 'from-blue-600 to-cyan-400' },
+  { email: 'lider@iglesiabd.com',    label: 'Líder',          desc: 'Ministerio & equipo',  icon: Shield,    color: 'from-blue-600 to-cyan-400' },
+  { email: 'servidor@iglesiabd.com', label: 'Servidor',       desc: 'Vista personal',       icon: User,      color: 'from-blue-600 to-cyan-400' },
 ]
 
 export function LoginPage() {

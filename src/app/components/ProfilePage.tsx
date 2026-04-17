@@ -102,9 +102,9 @@ export function ProfilePage() {
 
       <Tabs defaultValue="perfil" className="mt-8">
         <TabsList className="bg-card/40 backdrop-blur-xl border border-white/10 p-1.5 h-auto rounded-2xl w-full sm:w-auto inline-flex shadow-xl shadow-black/5 flex-wrap gap-1">
-          <TabsTrigger value="perfil" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><User className="w-4 h-4 mr-2" /> Perfil</TabsTrigger>
-          <TabsTrigger value="seguridad" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><Lock className="w-4 h-4 mr-2" /> Seguridad</TabsTrigger>
-          <TabsTrigger value="iglesias" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><Building2 className="w-4 h-4 mr-2" /> Mis Iglesias</TabsTrigger>
+          <TabsTrigger value="perfil" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><User className="w-4 h-4 mr-2" /> Perfil</TabsTrigger>
+          <TabsTrigger value="seguridad" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><Lock className="w-4 h-4 mr-2" /> Seguridad</TabsTrigger>
+          <TabsTrigger value="iglesias" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><Building2 className="w-4 h-4 mr-2" /> Mis Iglesias</TabsTrigger>
         </TabsList>
 
         <TabsContent value="perfil">
@@ -138,7 +138,7 @@ export function ProfilePage() {
                 <Input value={telefono} onChange={(e) => setTelefono(e.target.value)} className="bg-card/30 border-white/10 h-12 rounded-xl text-[13px] px-4 focus-visible:ring-slate-500/30" placeholder="+502 5555-0000" />
               </div>
               <div className="pt-6 mt-4 border-t border-white/5 flex gap-3">
-                <Button className="h-11 px-6 rounded-xl bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-400 hover:to-slate-500 text-white shadow-lg transition-all" onClick={handleSaveProfile} disabled={updateUsuarioMutation.isPending}>
+                <Button className="h-11 px-6 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg transition-all" onClick={handleSaveProfile} disabled={updateUsuarioMutation.isPending}>
                   {updateUsuarioMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   Guardar Cambios
                 </Button>
@@ -188,7 +188,7 @@ export function ProfilePage() {
                 </div>
               </div>
               <div className="pt-6 mt-4 border-t border-white/5">
-                <Button className="h-11 px-6 rounded-xl bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-400 hover:to-slate-500 text-white shadow-lg transition-all" onClick={handleChangePassword} disabled={changingPassword || !newPassword || !confirmPassword}>
+                <Button className="h-11 px-6 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg transition-all disabled:opacity-100 disabled:cursor-not-allowed" onClick={handleChangePassword} disabled={changingPassword || !newPassword || !confirmPassword}>
                   {changingPassword ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
                   Actualizar Contraseña
                 </Button>
@@ -214,13 +214,13 @@ export function ProfilePage() {
                         key={ig.id}
                         className={`group flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-300 ${
                           isActive
-                            ? "bg-slate-500/10 border border-slate-500/30 shadow-md transform scale-[1.02]"
+                            ? "bg-cyan-50 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-800 shadow-md shadow-cyan-500/20 transform scale-[1.02]"
                             : "bg-card/20 border border-white/5 hover:bg-slate-500/5 hover:border-slate-500/20"
                         }`}
                         onClick={() => setIglesiaActual(ig)}
                       >
                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-inner transition-colors ${
-                          isActive ? "bg-gradient-to-br from-slate-500 to-slate-600 text-white" : "bg-card text-muted-foreground group-hover:text-slate-500 group-hover:scale-110 transition-transform"
+                          isActive ? "bg-gradient-to-br from-cyan-600 to-blue-700 text-white" : "bg-card text-muted-foreground group-hover:text-slate-500 group-hover:scale-110 transition-transform"
                         }`}>
                           <Building2 className="w-5 h-5" />
                         </div>
@@ -228,7 +228,7 @@ export function ProfilePage() {
                           <p className={`text-[14px] truncate ${isActive ? "font-bold text-foreground" : "font-semibold text-foreground/80 group-hover:text-foreground"}`}>{ig.nombre}</p>
                         </div>
                         {isActive && (
-                          <Badge variant="outline" className="text-[9px] uppercase tracking-widest flex items-center gap-1 bg-slate-500 text-white border-0 py-0.5">
+                          <Badge variant="outline" className="text-[9px] uppercase tracking-widest flex items-center gap-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 py-0.5 shadow-sm">
                             <CheckCircle2 className="w-3 h-3" /> Activa
                           </Badge>
                         )}

@@ -147,7 +147,7 @@ export function ClassroomPage() {
           <ArrowLeft className="w-4 h-4" /> Volver al curso
         </button>
 
-        <div className="relative overflow-hidden bg-card/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-sm">
+        <div className="relative overflow-hidden bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-8 shadow-sm">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
           <Badge variant="outline" className="mb-4 bg-primary/5 border-primary/20 text-primary uppercase font-black text-[10px] tracking-widest">
             {selectedCurso.nombre}
@@ -159,7 +159,7 @@ export function ClassroomPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6">
-          <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-3xl p-6 shadow-sm">
+          <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-3xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
               <h3 className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.25em] text-primary/70">
                 <Download className="w-4 h-4" /> Recursos Adjuntos
@@ -257,7 +257,7 @@ export function ClassroomPage() {
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative flex flex-col md:flex-row md:items-center justify-between gap-5 bg-card/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-sm overflow-hidden"
+        className="relative flex flex-col md:flex-row md:items-center justify-between gap-5 bg-card/40 backdrop-blur-xl border border-border/50 p-6 rounded-3xl shadow-sm overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-80 h-48 bg-primary/10 rounded-full blur-[100px] pointer-events-none -z-10" />
         <div className="flex items-center gap-5">
@@ -295,7 +295,7 @@ export function ClassroomPage() {
               <Plus className="w-4 h-4 mr-2" /> Nuevo Curso
             </Button>
           ) : (
-            <Badge variant="outline" className="h-11 rounded-2xl px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-white/10 bg-background/40">
+            <Badge variant="outline" className="h-11 rounded-2xl px-4 text-[10px] font-bold uppercase tracking-widest bg-blue-600/10 text-blue-700 dark:text-blue-400 border-blue-600/20">
               Modo lectura
             </Badge>
           )}
@@ -315,7 +315,7 @@ export function ClassroomPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + i * 0.05 }}
-            className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-4 group"
+            className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 flex items-center gap-4 group"
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shadow-md shadow-cyan-600/10 group-hover:scale-110 transition-transform">
               {s.icon}
@@ -332,7 +332,7 @@ export function ClassroomPage() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative bg-card/20 backdrop-blur-md border border-white/5 rounded-[40px] p-20 flex flex-col items-center justify-center text-center overflow-hidden"
+          className="relative bg-card/20 backdrop-blur-md border border-border/50 rounded-[40px] p-20 flex flex-col items-center justify-center text-center overflow-hidden"
         >
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
           <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white mb-8 shadow-xl shadow-cyan-600/20">
@@ -358,7 +358,7 @@ export function ClassroomPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + idx * 0.05 }}
-                className="group overflow-hidden rounded-3xl bg-card/40 backdrop-blur-xl border border-white/10 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+                className="group overflow-hidden rounded-3xl bg-card/40 backdrop-blur-xl border border-border/50 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
               >
                 <div 
                   className={`flex flex-col sm:flex-row sm:items-center gap-5 p-5 cursor-pointer transition-colors ${isExpanded ? "bg-primary/5" : "hover:bg-white/5"}`}
