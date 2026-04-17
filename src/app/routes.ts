@@ -3,6 +3,8 @@ import { RootLayout } from "./components/RootLayout";
 import { AppLayout } from "./components/AppLayout";
 import { LandingPage } from "./components/LandingPage";
 import { LoginPage } from "./components/LoginPage";
+import { AuthCallbackPage } from "./components/AuthCallbackPage";
+import { SetPasswordPage } from "./components/SetPasswordPage";
 import { DashboardPage } from "./components/DashboardPage";
 import { ChurchesPage } from "./components/ChurchesPage";
 import { DepartmentsPage } from "./components/DepartmentsPage";
@@ -36,6 +38,16 @@ export const router = createBrowserRouter([
       {
         path: "login",
         Component: LoginPage,
+        ErrorBoundary: ErrorPage,
+      },
+      {
+        path: "auth/callback",
+        Component: AuthCallbackPage,
+        ErrorBoundary: ErrorPage,
+      },
+      {
+        path: "auth/set-password",
+        Component: SetPasswordPage,
         ErrorBoundary: ErrorPage,
       },
       {

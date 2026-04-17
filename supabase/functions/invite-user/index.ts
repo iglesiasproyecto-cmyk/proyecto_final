@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
       const requestOrigin = normalizeBaseUrl(req.headers.get('origin'))
       const baseUrl = configuredSiteUrl ?? requestOrigin
       const inviteOptions = baseUrl
-        ? { data: { nombres, apellidos }, redirectTo: `${baseUrl}/app` }
+        ? { data: { nombres, apellidos }, redirectTo: `${baseUrl}/auth/callback?next=/auth/set-password` }
         : { data: { nombres, apellidos } }
 
       const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
