@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
+import { AnimatedCard } from "./ui/AnimatedCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -18,14 +19,14 @@ import {
 } from "lucide-react";
 
 const estadoCicloConfig: Record<string, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
-  programado: { label: "Programado", color: "bg-blue-500/10 text-blue-400 border-blue-500/20",      dot: "bg-blue-400",    icon: <BookMarked className="w-3 h-3" /> },
+  programado: { label: "Programado", color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",      dot: "bg-[#4682b4]",    icon: <BookMarked className="w-3 h-3" /> },
   en_curso:   { label: "En Curso",   color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-400", icon: <PlayCircle className="w-3 h-3" /> },
   finalizado: { label: "Finalizado", color: "bg-slate-500/10 text-slate-400 border-slate-500/20",   dot: "bg-slate-400",   icon: <CheckCircle2 className="w-3 h-3" /> },
   cancelado:  { label: "Cancelado",  color: "bg-rose-500/10 text-rose-400 border-rose-500/20",      dot: "bg-rose-400",    icon: <XCircle className="w-3 h-3" /> },
 };
 
 const estadoInscripcionConfig: Record<string, { label: string; color: string }> = {
-  inscrito:    { label: "Inscrito",    color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  inscrito:    { label: "Inscrito",    color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20" },
   en_progreso: { label: "En Progreso", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
   completado:  { label: "Completado",  color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
   retirado:    { label: "Retirado",    color: "bg-rose-500/10 text-rose-400 border-rose-500/20" },
@@ -185,10 +186,10 @@ export function CiclosLectivosPage() {
     });
 
   const stats = [
-    { label: "Total",       value: procesosAsignadoCurso.length,                               color: "text-primary",     bg: "border-primary/15" },
-    { label: "En Curso",    value: procesosAsignadoCurso.filter(c => c.estado === "en_curso").length,   color: "text-emerald-400", bg: "border-emerald-500/15" },
-    { label: "Programados", value: procesosAsignadoCurso.filter(c => c.estado === "programado").length, color: "text-blue-400",    bg: "border-blue-500/15" },
-    { label: "Finalizados", value: procesosAsignadoCurso.filter(c => c.estado === "finalizado").length, color: "text-slate-400",   bg: "border-slate-500/15" },
+    { label: "Total Ciclos",  value: procesosAsignadoCurso.length,                            color: "from-[#709dbd] to-[#4682b4]" },
+    { label: "En Curso",      value: procesosAsignadoCurso.filter(c => c.estado === "en_curso").length,   color: "from-emerald-500 to-teal-600" },
+    { label: "Próximos",    value: procesosAsignadoCurso.filter(c => c.estado === "programado").length, color: "from-amber-500 to-orange-600" },
+    { label: "Finalizados",   value: procesosAsignadoCurso.filter(c => c.estado === "finalizado").length, color: "from-slate-500 to-slate-700" },
   ];
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" });
@@ -204,7 +205,7 @@ export function CiclosLectivosPage() {
       >
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
         <div className="flex items-center gap-4">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -241,19 +242,23 @@ export function CiclosLectivosPage() {
       </motion.div>
 
       {/* ── Stats row ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.06 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-      >
-        {stats.map(s => (
-          <div key={s.label} className={`bg-card/40 backdrop-blur-xl border ${s.bg} border rounded-2xl p-4 flex items-center gap-3`}>
-            <span className={`text-3xl font-black ${s.color} leading-none`}>{s.value}</span>
-            <span className="text-[11px] font-bold text-muted-foreground leading-tight">{s.label}</span>
-          </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {stats.map((s, idx) => (
+          <AnimatedCard key={s.label} index={idx} className="p-4 group">
+            <div className="flex justify-between items-start mb-3">
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg text-white`}>
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-[10px] py-0 tracking-widest uppercase">STAT</Badge>
+            </div>
+            <div>
+              <p className="text-4xl font-light tracking-tight text-foreground">{s.value}</p>
+              <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{s.label}</p>
+            </div>
+          </AnimatedCard>
         ))}
-      </motion.div>
+      </div>
+
 
       {/* ── Ciclos list ── */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-2.5">
@@ -270,46 +275,47 @@ export function CiclosLectivosPage() {
             ciclosOrdenados.map((ciclo, i) => {
               const cfg = estadoCicloConfig[ciclo.estado] ?? estadoCicloConfig.programado;
               return (
-                <motion.div
+                <AnimatedCard
                   key={ciclo.idProcesoAsignadoCurso}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.97 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="group relative bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl px-5 py-4 flex items-center gap-4 cursor-pointer hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+                  index={i}
+                  className="px-6 py-5 group cursor-pointer"
                   onClick={() => setSelectedCicloId(ciclo.idProcesoAsignadoCurso)}
                 >
-                  {/* hover glow */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                  {/* status dot bar */}
-                  <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-full ${cfg.dot}`} />
-
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600/20 to-primary/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-blue-600/10">
-                    <BookOpen className="w-5 h-5 text-blue-700 dark:text-blue-400" />
-                  </div>
-
-                  <div className="flex-1 min-w-0 relative z-10">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h4 className="text-sm font-bold tracking-tight group-hover:text-primary transition-colors">{getCursoNombre(ciclo.idCurso)}</h4>
-                      <Badge variant="outline" className={`${cfg.color} border text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 flex items-center gap-1`}>
-                        {cfg.icon} {cfg.label}
-                      </Badge>
+                  <div className="flex items-center gap-5 relative z-10 h-full">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-lg text-white">
+                      <BookOpen className="w-6 h-6" />
                     </div>
-                    <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
-                      <span className="flex items-center gap-1"><Calendar className="w-3 h-3 text-primary/40" />{formatDate(ciclo.fechaInicio)} — {formatDate(ciclo.fechaFin)}</span>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 flex-wrap mb-2">
+                        <h4 className="text-lg font-bold tracking-tight group-hover:text-[#4682b4] transition-colors uppercase italic">{getCursoNombre(ciclo.idCurso)}</h4>
+                        <Badge variant="outline" className={`${cfg.color} border-0 text-[10px] uppercase font-black tracking-widest px-2.5 py-1 flex items-center gap-1.5 rounded-lg`}>
+                          {cfg.icon} {cfg.label}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-4 text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
+                        <span className="flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-[#4682b4]/50" />
+                          {formatDate(ciclo.fechaInicio)} — {formatDate(ciclo.fechaFin)}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <Users className="w-3.5 h-3.5 text-[#4682b4]/50" />
+                          Participantes inscritos
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                        onClick={e => { e.stopPropagation(); setShowConfirmDelete(ciclo.idProcesoAsignadoCurso); }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground/30 group-hover:text-[#4682b4] group-hover:translate-x-1 transition-all duration-300" />
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2 relative z-10 shrink-0">
-                    <button
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
-                      onClick={e => { e.stopPropagation(); setShowConfirmDelete(ciclo.idProcesoAsignadoCurso); }}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </motion.div>
+                </AnimatedCard>
               );
             })
           )}
@@ -347,7 +353,7 @@ export function CiclosLectivosPage() {
               <FieldLabel>Estado Inicial</FieldLabel>
               <div className="grid grid-cols-2 gap-2">
                 {["programado", "en_curso"].map(s => (
-                  <button key={s} className="h-10 rounded-xl border border-white/10 bg-background/50 text-sm font-semibold text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all capitalize">
+                  <button key={s} className="h-10 rounded-xl border border-white/10 bg-[#4682b4]/10 text-[#4682b4] hover:border-[#4682b4]/30 hover:bg-[#4682b4]/5 transition-all capitalize">
                     {estadoCicloConfig[s].label}
                   </button>
                 ))}

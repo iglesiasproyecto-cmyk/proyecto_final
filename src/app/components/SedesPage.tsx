@@ -8,8 +8,8 @@ import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { motion } from "motion/react";
-import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Save } from "lucide-react";
+import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Save, Globe, Users } from "lucide-react";
+import { AnimatedCard } from "./ui/AnimatedCard";
 
 export function SedesPage() {
   const { iglesiaActual } = useApp();
@@ -78,7 +78,7 @@ export function SedesPage() {
       {/* HEADER: Diferencia clara de títulos y subtítulos por color/tamaño */}
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <MapPin className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -86,7 +86,7 @@ export function SedesPage() {
             <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Sedes</h1>
           </div>
         </div>
-        <Button onClick={openAdd} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-6 bg-cyan-600 hover:bg-cyan-700 text-white">
+        <Button onClick={openAdd} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
           <Plus className="w-4 h-4 mr-2" /> Nueva Sede
         </Button>
       </motion.div>
@@ -100,11 +100,11 @@ export function SedesPage() {
               placeholder="Buscar sedes por nombre..." 
               value={search} 
               onChange={e => setSearch(e.target.value)} 
-              className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-cyan-600/20 h-11 rounded-xl" 
+              className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
             />
           </div>
           <Select value={filterIglesia} onValueChange={setFilterIglesia}>
-            <SelectTrigger className="w-full md:w-56 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-cyan-600/20">
+            <SelectTrigger className="w-full md:w-56 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-[#4682b4]/20">
               <SelectValue placeholder="Iglesia" />
             </SelectTrigger>
             <SelectContent>
@@ -113,7 +113,7 @@ export function SedesPage() {
             </SelectContent>
           </Select>
           <Select value={filterEstado} onValueChange={setFilterEstado}>
-            <SelectTrigger className="w-full md:w-48 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-cyan-600/20">
+            <SelectTrigger className="w-full md:w-48 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-[#4682b4]/20">
               <SelectValue placeholder="Estado" />
             </SelectTrigger>
             <SelectContent>
@@ -126,85 +126,124 @@ export function SedesPage() {
         </div>
       </motion.div>
 
-      {/* TABLA PRINCIPAL en contenedor unificado */}
-      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-        <div className="rounded-2xl bg-card/50 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden dark:border-white/10 dark:bg-card/20">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-muted/30">
-                <TableRow className="hover:bg-transparent border-border/40">
-                  <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Nombre Sede</TableHead>
-                  <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Iglesia Principal</TableHead>
-                  <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Mins.</TableHead>
-                  <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Ubicación</TableHead>
-                  <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Estado</TableHead>
-                  <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70 text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map(s => (
-                  <TableRow key={s.idSede} className={`transition-colors hover:bg-white/40 dark:hover:bg-white/5 border-border/40 ${s.estado !== 'activa' ? 'opacity-70' : ''}`}>
-                    <TableCell className="py-4">
-                      <div className="font-medium text-foreground">{s.nombre}</div>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <div className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                        <Building2 className="w-3.5 h-3.5" />
-                        {lookupIglesia(s.idIglesia)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4 text-center">
-                      <span className="inline-flex w-7 h-7 bg-primary/10 text-primary rounded-full items-center justify-center font-bold text-xs">
-                        {s.cantidadMinisterios}
-                      </span>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <div className="flex items-center gap-1.5 text-sm text-foreground/80">
-                        <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span className="truncate max-w-[150px]">{s.ciudadNombre || "-"}</span>
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 ml-5 truncate max-w-[150px]">{s.direccion || "Sin dirección"}</div>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <Badge variant="outline" className={`font-semibold tracking-wide border ${estadoColor(s.estado)}`}>
-                        {estadoLabel(s.estado)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-4 text-right">
-                      <div className="flex gap-2 justify-end">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10" onClick={() => openEdit(s.idSede)}>
-                          <Pencil className="w-3.5 h-3.5 text-foreground/70" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className={`h-8 w-8 p-0 rounded-full transition-all ${s.estado === "activa" ? "text-amber-500 hover:bg-amber-500/10" : "text-emerald-500 hover:bg-emerald-500/10"}`} 
-                          onClick={() => toggleSedeMutation.mutate(s.idSede)} 
-                          title={s.estado === "activa" ? "Desactivar" : "Activar"}
-                        >
-                          {s.estado === "activa" ? <PowerOff className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10" onClick={() => handleDeleteSede(s.idSede, s.nombre)} disabled={deleteSedeMutation.isPending}>
-                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-16">
-                      <MapPin className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-                      <p className="text-base font-medium text-foreground">No se encontraron sedes</p>
-                      <p className="text-sm text-muted-foreground mt-1">Prueba con otros filtros o términos de búsqueda</p>
-                    </TableCell>
-                  </TableRow>
+      {/* KPI Stats Row (Bento style) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <AnimatedCard index={0} className="p-5">
+           <div className="flex justify-between items-start mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
+                 <Building2 className="w-5 h-5" />
+              </div>
+              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-0">Total</Badge>
+           </div>
+           <p className="text-3xl font-light tracking-tight text-foreground">{sedes.length}</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Sedes Registradas</p>
+        </AnimatedCard>
+        <AnimatedCard index={1} className="p-5">
+           <div className="flex justify-between items-start mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg">
+                 <Power className="w-5 h-5" />
+              </div>
+              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-500 border-0">OK</Badge>
+           </div>
+           <p className="text-3xl font-light tracking-tight text-foreground">{sedes.filter(s => s.estado === 'activa').length}</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Sedes Activas</p>
+        </AnimatedCard>
+        <AnimatedCard index={2} className="p-5">
+           <div className="flex justify-between items-start mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg">
+                 <Globe className="w-5 h-5" />
+              </div>
+              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 border-0">Geografía</Badge>
+           </div>
+           <p className="text-3xl font-light tracking-tight text-foreground">{new Set(sedes.map(s => s.idCiudad)).size}</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Ciudades Cubiertas</p>
+        </AnimatedCard>
+        <AnimatedCard index={3} className="p-5">
+           <div className="flex justify-between items-start mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                 <Users className="w-5 h-5" />
+              </div>
+              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-500 border-0">Staff</Badge>
+           </div>
+           <p className="text-3xl font-light tracking-tight text-foreground">{sedes.reduce((acc, s) => acc + (s.cantidadMinisterios || 0), 0)}</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Min. Operativos</p>
+        </AnimatedCard>
+      </div>
+
+      {/* GRID PRINCIPAL de Sedes (Bento Cards) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filtered.map((s, idx) => (
+          <AnimatedCard 
+            key={s.idSede} 
+            index={idx} 
+            className={`group p-6 flex flex-col justify-between ${s.estado !== 'activa' ? 'opacity-80 grayscale-[0.3]' : ''}`}
+          >
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 rounded-[20px] bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
+                  <Building2 className={`w-6 h-6 ${s.estado === 'activa' ? 'text-[#4682b4]' : 'text-muted-foreground'}`} />
+                </div>
+                <Badge variant="outline" className={`text-[9px] font-black uppercase tracking-widest border-0 py-1 px-3 rounded-lg shadow-sm ${estadoColor(s.estado)}`}>
+                  {estadoLabel(s.estado)}
+                </Badge>
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="text-xl font-bold tracking-tight text-foreground group-hover:text-[#4682b4] transition-colors line-clamp-1 uppercase italic leading-none">{s.nombre}</h3>
+                <p className="text-[11px] font-bold text-[#4682b4]/70 uppercase tracking-widest truncate">{lookupIglesia(s.idIglesia)}</p>
+              </div>
+
+              <div className="mt-5 space-y-3 pt-4 border-t border-white/5">
+                <div className="flex items-center gap-3 text-[13px] text-muted-foreground/80 font-medium">
+                  <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                    <MapPin className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="truncate">{s.ciudadNombre || "Ciudad no def."}</span>
+                </div>
+                {s.direccion && (
+                  <p className="text-[11px] text-muted-foreground/60 italic line-clamp-1 pl-10">
+                    {s.direccion}
+                  </p>
                 )}
-              </TableBody>
-            </Table>
-          </div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                 <div className="h-8 px-3 rounded-lg bg-[#4682b4]/10 border border-[#4682b4]/20 flex items-center gap-2">
+                    <Users className="w-3.5 h-3.5 text-[#4682b4]" />
+                    <span className="text-xs font-black text-[#4682b4]">{s.cantidadMinisterios}</span>
+                 </div>
+              </div>
+
+              <div className="flex gap-1.5">
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl hover:bg-black/5 dark:hover:bg-white/10" onClick={() => openEdit(s.idSede)}>
+                  <Pencil className="w-4 h-4 text-foreground/70" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`h-9 w-9 p-0 rounded-xl transition-all ${s.estado === "activa" ? "text-amber-500 hover:bg-amber-500/10" : "text-emerald-500 hover:bg-emerald-500/10"}`} 
+                  onClick={() => toggleSedeMutation.mutate(s.idSede)} 
+                >
+                  {s.estado === "activa" ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                </Button>
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl hover:bg-red-500/10 text-red-500" onClick={() => handleDeleteSede(s.idSede, s.nombre)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </AnimatedCard>
+        ))}
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="py-24 text-center rounded-[40px] bg-card/30 backdrop-blur-3xl border border-white/10 shadow-xl">
+          <MapPin className="w-16 h-16 text-muted-foreground/20 mx-auto mb-6" />
+          <h3 className="text-xl font-bold text-foreground/80 tracking-tight">Expediente Vacío</h3>
+          <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">No se encontraron sedes activas con los criterios de búsqueda actuales.</p>
         </div>
-      </motion.div>
+      )}
 
       {/* MODAL (Diálogo de Creación / Edición) */}
       <Dialog open={dialog} onOpenChange={setDialog}>
@@ -212,7 +251,7 @@ export function SedesPage() {
           <div className="px-6 py-4 bg-muted/30 border-b border-border/40">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
-                {editing ? <Pencil className="w-5 h-5 text-cyan-600" /> : <Plus className="w-5 h-5 text-cyan-600" />} 
+                {editing ? <Pencil className="w-5 h-5 text-[#4682b4]" /> : <Plus className="w-5 h-5 text-[#4682b4]" />} 
                 {editing ? "Editar Sede" : "Registrar Nueva Sede"}
               </DialogTitle>
             </DialogHeader>
@@ -221,25 +260,25 @@ export function SedesPage() {
           <div className="px-6 py-5 space-y-4">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nombre de la Sede <span className="text-destructive">*</span></label>
-              <Input value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="bg-input-background focus-visible:ring-cyan-600/30" />
+              <Input value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" />
             </div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Dirección Física</label>
-              <Input value={form.direccion} onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))} className="bg-input-background focus-visible:ring-cyan-600/30" placeholder="Ej. Calle 123 #45-67" />
+              <Input value={form.direccion} onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" placeholder="Ej. Calle 123 #45-67" />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Iglesia Asignada <span className="text-destructive">*</span></label>
                 <Select value={form.idIglesia ? String(form.idIglesia) : ""} onValueChange={v => setForm(f => ({ ...f, idIglesia: Number(v) }))}>
-                  <SelectTrigger className="bg-input-background focus:ring-cyan-600/30"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                   <SelectContent>{iglesias.map(i => <SelectItem key={i.idIglesia} value={String(i.idIglesia)}>{i.nombre}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
                 <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Ciudad <span className="text-destructive">*</span></label>
                 <Select value={form.idCiudad ? String(form.idCiudad) : ""} onValueChange={v => setForm(f => ({ ...f, idCiudad: Number(v) }))}>
-                  <SelectTrigger className="bg-input-background focus:ring-cyan-600/30"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                   <SelectContent>
                     {ciudades.map(c => (
                       <SelectItem key={c.idCiudad} value={String(c.idCiudad)}>{c.nombre}</SelectItem>
@@ -252,7 +291,7 @@ export function SedesPage() {
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Estado Inicial</label>
               <Select value={form.estado} onValueChange={v => setForm(f => ({ ...f, estado: v as "activa" | "inactiva" | "en_construccion" }))}>
-                <SelectTrigger className="bg-input-background focus:ring-cyan-600/30"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="activa">Activa</SelectItem>
                   <SelectItem value="inactiva">Inactiva</SelectItem>
@@ -264,7 +303,7 @@ export function SedesPage() {
 
           <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setDialog(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
-            <Button onClick={handleSubmit} disabled={!form.nombre.trim() || !form.idCiudad || !form.idIglesia} className="rounded-full px-5 bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm shadow-cyan-600/20"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
+            <Button onClick={handleSubmit} disabled={!form.nombre.trim() || !form.idCiudad || !form.idIglesia} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
           </div>
         </DialogContent>
       </Dialog>

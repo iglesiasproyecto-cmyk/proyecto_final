@@ -27,7 +27,7 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
              &larr;
            </button>
            <div className="flex items-center gap-3">
-             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
                 <Users className="w-6 h-6 text-white" />
              </div>
              <div>
@@ -60,7 +60,7 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
               {minMembers.map((mm) => (
                 <div key={mm.idMiembroMinisterio} className="group flex flex-col sm:flex-row sm:items-center gap-4 p-4 hover:bg-accent/30 transition-colors">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center text-primary text-xs font-bold ring-2 ring-background shadow-inner">{(mm.nombreCompleto || "?").charAt(0).toUpperCase()}</div>
+                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#709dbd]/10 to-[#4682b4]/5 flex items-center justify-center text-primary text-xs font-bold ring-2 ring-background shadow-inner">{(mm.nombreCompleto || "?").charAt(0).toUpperCase()}</div>
                      <div className="flex-1 min-w-0">
                        <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{mm.nombreCompleto}</p>
                        <p className="text-[11px] text-muted-foreground truncate">{mm.correo}</p>
@@ -188,7 +188,7 @@ export function DepartmentsPage() {
                
                <div>
                  <div className="relative z-10 flex items-start justify-between mb-3">
-                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 group-hover:scale-105 transition-transform shrink-0">
+                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-md shadow-blue-900/20 group-hover:scale-105 transition-transform shrink-0">
                       <Users className="w-5 h-5 text-white" />
                    </div>
                    <Badge variant={m.estado === "activo" ? "default" : "secondary"} className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 ${m.estado === 'activo' ? 'bg-primary/10 text-primary border border-primary/20' : ''}`}>{m.estado === "activo" ? "Activo" : "Inactivo"}</Badge>

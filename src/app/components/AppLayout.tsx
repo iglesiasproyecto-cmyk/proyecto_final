@@ -10,6 +10,8 @@ import {
   Settings, FolderHeart, Globe, UserCheck, Settings2,
   PanelLeftClose, PanelLeftOpen, GraduationCap, Moon, Sun
 } from "lucide-react";
+import { SEILogo } from "./SEILogo";
+import { FlyingAppLogo } from "./FlyingAppLogo";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -182,13 +184,13 @@ export function AppLayout() {
             <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
             {!isCollapsed ? (
               <div className="flex items-center gap-4 flex-1 min-w-0 relative z-10">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(100,116,139,0.3)] relative overflow-hidden group-hover:shadow-[0_0_25px_rgba(100,116,139,0.5)] transition-all duration-500">
+                <div className="w-14 h-14 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center shrink-0 shadow-lg relative overflow-hidden group-hover:shadow-primary/20 transition-all duration-500">
                    <motion.div 
-                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12"
-                     animate={{ x: ["-200%", "300%"] }}
+                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                     animate={{ x: ["-150%", "150%"] }}
                      transition={{ repeat: Infinity, duration: 3, ease: "linear", repeatDelay: 1 }}
                    />
-                  <Church className="w-6 h-6 text-white relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
+                  <SEILogo className="w-10 h-10 relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[17px] font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-200 tracking-tight drop-shadow-sm">S.E.I.</h3>
@@ -196,13 +198,13 @@ export function AppLayout() {
                 </div>
               </div>
             ) : (
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(100,116,139,0.3)] relative overflow-hidden group-hover:shadow-[0_0_25px_rgba(100,116,139,0.5)] transition-all duration-500">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center mx-auto shadow-lg relative overflow-hidden group-hover:shadow-primary/20 transition-all duration-500">
                    <motion.div 
-                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12"
-                     animate={{ x: ["-200%", "300%"] }}
+                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
+                     animate={{ x: ["-150%", "150%"] }}
                      transition={{ repeat: Infinity, duration: 3, ease: "linear", repeatDelay: 1 }}
                    />
-                <Church className="w-6 h-6 text-white relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
+                <SEILogo className="w-10 h-10 relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
               </div>
             )}
             <button
@@ -315,7 +317,7 @@ export function AppLayout() {
                                 {isActive && (
                                   <motion.div
                                     layoutId="active-nav-bg"
-                                    className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-700 rounded-2xl z-0 shadow-[0_4px_25px_rgba(6,182,212,0.5)] overflow-hidden"
+                                    className="absolute inset-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] rounded-2xl z-0 shadow-[0_4px_25px_rgba(70,157,189,0.3)] overflow-hidden"
                                     initial={false}
                                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                                   >
@@ -341,7 +343,7 @@ export function AppLayout() {
                               </button>
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-700 text-white border-none shadow-[0_0_20px_rgba(6,182,212,0.4)]">
+                          <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5 bg-gradient-to-r from-[#709dbd] to-[#4682b4] text-white border-none shadow-[0_0_20px_rgba(70,157,189,0.4)]">
                             {item.label}
                           </TooltipContent>
                         </Tooltip>
@@ -361,7 +363,7 @@ export function AppLayout() {
                         {isActive && (
                           <motion.div
                             layoutId="active-nav-bg"
-                            className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-700 rounded-2xl z-0 shadow-[0_4px_25px_rgba(6,182,212,0.5)] overflow-hidden"
+                            className="absolute inset-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] rounded-2xl z-0 shadow-[0_4px_25px_rgba(70,157,189,0.3)] overflow-hidden"
                             initial={false}
                             transition={{ type: "spring", stiffness: 350, damping: 30 }}
                           >
@@ -417,6 +419,7 @@ export function AppLayout() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md flex items-center px-4 md:px-6 gap-4 shrink-0 sticky top-0 z-20">
+            <FlyingAppLogo />
             <button
               onClick={toggleSidebar}
               className="text-muted-foreground hover:text-foreground transition-colors lg:hidden"
