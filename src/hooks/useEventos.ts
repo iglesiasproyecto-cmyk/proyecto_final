@@ -64,7 +64,10 @@ export function useCreateEvento() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createEvento,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['eventos'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['eventos'] })
+      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
+    },
   })
 }
 
@@ -72,7 +75,11 @@ export function useCreateTarea() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createTarea,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tareas'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
+    },
   })
 }
 
@@ -81,7 +88,10 @@ export function useUpdateTareaEstado() {
   return useMutation({
     mutationFn: ({ id, estado }: { id: number; estado: Tarea['estado'] }) =>
       updateTareaEstado(id, estado),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tareas'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+    },
   })
 }
 

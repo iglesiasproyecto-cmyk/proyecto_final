@@ -9,6 +9,7 @@ import {
   assignRol,
   removeRol,
   inviteUser,
+  deleteUsuarioAsSuperAdmin,
 } from '@/services/usuarios.service'
 
 export function useRoles() {
@@ -62,6 +63,7 @@ export function useUpdateUsuario() {
       updateUsuario(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['usuarios'] })
+      qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })
     },
   })
 }
@@ -97,6 +99,18 @@ export function useInviteUser() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['usuarios'] })
       qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })
+    },
+  })
+}
+
+export function useDeleteUsuarioAsSuperAdmin() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (idUsuario: number) => deleteUsuarioAsSuperAdmin(idUsuario),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['usuarios'] })
+      qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })
+      qc.invalidateQueries({ queryKey: ['usuario-rol'] })
     },
   })
 }

@@ -210,6 +210,7 @@ export interface EventoEnriquecido extends Evento {
 export interface TareaEnriquecida extends Tarea {
   eventoNombre: string
   asignadosCount: number
+  asignados: (TareaAsignada & { nombreCompleto: string })[]
 }
 
 // ── Enriched queries ──
@@ -232,16 +233,23 @@ export async function getEventosEnriquecidos(idIglesia?: number): Promise<Evento
 export async function getTareasEnriquecidas(idEvento?: number): Promise<TareaEnriquecida[]> {
   let q = supabase
     .from('tarea')
-    .select('*, evento(nombre), tarea_asignada(count)')
+    .select('*, evento(nombre), tarea_asignada(*, usuario(nombres, apellidos))')
     .order('creado_en', { ascending: false })
   if (idEvento !== undefined) q = q.eq('id_evento', idEvento)
   const { data, error } = await q
   if (error) throw error
-  return (data as any[]).map(r => ({
-    ...mapTarea(r),
-    eventoNombre: r.evento?.nombre ?? '',
-    asignadosCount: Array.isArray(r.tarea_asignada) ? r.tarea_asignada[0]?.count ?? 0 : 0,
-  }))
+  return (data as any[]).map(r => {
+    const asignados = ((r.tarea_asignada as any[]) || []).map((ta: any) => ({
+      ...mapTareaAsignada(ta),
+      nombreCompleto: `${ta.usuario?.nombres ?? ''} ${ta.usuario?.apellidos ?? ''}`.trim(),
+    }))
+    return {
+      ...mapTarea(r),
+      eventoNombre: r.evento?.nombre ?? '',
+      asignadosCount: asignados.length,
+      asignados,
+    }
+  })
 }
 
 // ── Evento update/delete ──

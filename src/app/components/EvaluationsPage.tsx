@@ -46,7 +46,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function EvaluationsPage() {
-  const { usuarioActual } = useApp();
+  const { usuarioActual, rolActual } = useApp();
   const { data: evaluaciones = [], isLoading } = useEvaluacionesEnriquecidas();
   const { data: cursos = [] } = useCursos();
   const [showCreate, setShowCreate] = useState(false);
@@ -56,6 +56,7 @@ export function EvaluationsPage() {
   const [createForm, setCreateForm] = useState({ idModulo: 0, calificacion: "", estado: "pendiente" as string, observaciones: "", fechaEvaluacion: "" });
   
   const resetCreateForm = () => setCreateForm({ idModulo: 0, calificacion: "", estado: "pendiente", observaciones: "", fechaEvaluacion: "" });
+  const canManageEvaluaciones = rolActual === "super_admin" || rolActual === "admin_iglesia";
 
   const deleteEvaluacionMutation = useDeleteEvaluacion();
   const createEvaluacionMutation = useCreateEvaluacion();
@@ -86,11 +87,13 @@ export function EvaluationsPage() {
   };
 
   const handleDelete = () => {
+    if (!canManageEvaluaciones) return;
     if (!deleteTarget) return;
     deleteEvaluacionMutation.mutate(deleteTarget, { onSuccess: () => setDeleteTarget(null) });
   };
 
   const handleCreate = () => {
+    if (!canManageEvaluaciones) return;
     if (!createForm.idModulo || !usuarioActual) return;
     createEvaluacionMutation.mutate(
       {
@@ -106,6 +109,7 @@ export function EvaluationsPage() {
   };
 
   const handleUpdate = () => {
+    if (!canManageEvaluaciones) return;
     if (!editTarget) return;
     updateEvaluacionMutation.mutate(
       {
@@ -144,9 +148,15 @@ export function EvaluationsPage() {
             <p className="text-muted-foreground text-xs sm:text-sm font-medium">Historial académico y resultados de formación</p>
           </div>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0">
-          <Plus className="w-4 h-4 mr-2" /> Nueva Evaluación
-        </Button>
+        {canManageEvaluaciones ? (
+          <Button onClick={() => setShowCreate(true)} className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0">
+            <Plus className="w-4 h-4 mr-2" /> Nueva Evaluación
+          </Button>
+        ) : (
+          <Badge variant="outline" className="h-11 px-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] text-muted-foreground/70 border-white/10 bg-background/30">
+            Modo Lectura
+          </Badge>
+        )}
       </motion.div>
 
       {/* Stats Bento Grid */}
@@ -270,14 +280,16 @@ export function EvaluationsPage() {
                         </Badge>
                       </div>
 
-                      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all">
-                        <button onClick={() => setEditTarget({ id: ev.idEvaluacion, calificacion: ev.calificacion?.toString() ?? "", estado: ev.estado, observaciones: ev.observaciones ?? "" })} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 text-primary transition-colors">
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => setDeleteTarget(ev.idEvaluacion)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-rose-500/10 text-rose-500 transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      {canManageEvaluaciones && (
+                        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all">
+                          <button onClick={() => setEditTarget({ id: ev.idEvaluacion, calificacion: ev.calificacion?.toString() ?? "", estado: ev.estado, observaciones: ev.observaciones ?? "" })} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 text-primary transition-colors">
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => setDeleteTarget(ev.idEvaluacion)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-rose-500/10 text-rose-500 transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                       <ChevronRight className="w-4 h-4 text-muted-foreground/20 group-hover:translate-x-1 group-hover:text-primary transition-all hidden sm:block" />
                     </div>
                   </motion.div>
@@ -289,7 +301,7 @@ export function EvaluationsPage() {
       </Card>
 
       {/* Delete confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog open={canManageEvaluaciones && !!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent className="rounded-3xl border-white/10 bg-card/95 backdrop-blur-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-bold tracking-tight">¿Eliminar registro?</AlertDialogTitle>
@@ -307,7 +319,7 @@ export function EvaluationsPage() {
       </AlertDialog>
 
       {/* Create Dialog */}
-      <Dialog open={showCreate} onOpenChange={o => { if (!o) { setShowCreate(false); resetCreateForm(); } }}>
+      <Dialog open={canManageEvaluaciones && showCreate} onOpenChange={o => { if (!o) { setShowCreate(false); resetCreateForm(); } }}>
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">Registrar Evaluación</DialogTitle>
@@ -354,7 +366,7 @@ export function EvaluationsPage() {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editTarget} onOpenChange={o => { if (!o) setEditTarget(null); }}>
+      <Dialog open={canManageEvaluaciones && !!editTarget} onOpenChange={o => { if (!o) setEditTarget(null); }}>
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">Editar Evaluación</DialogTitle>

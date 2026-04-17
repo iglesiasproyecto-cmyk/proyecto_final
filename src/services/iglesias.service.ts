@@ -147,14 +147,11 @@ export async function getSedes(idIglesia?: number): Promise<Sede[]> {
 
 export async function createIglesia(
   data: { nombre: string; fechaFundacion: string | null; idCiudad: number; estado: Iglesia['estado'] }
-): Promise<Iglesia> {
-  const { data: result, error } = await supabase
+): Promise<void> {
+  const { error } = await supabase
     .from('iglesia')
     .insert([{ nombre: data.nombre, fecha_fundacion: data.fechaFundacion, id_ciudad: data.idCiudad, estado: data.estado }])
-    .select()
-    .single()
   if (error) throw error
-  return mapIglesia(result)
 }
 
 export async function updateIglesia(

@@ -342,6 +342,50 @@ export async function createRecurso(data: {
   return mapRecurso(result)
 }
 
+export async function createProcesoAsignadoCurso(data: {
+  idCurso: number
+  idIglesia: number
+  fechaInicio: string
+  fechaFin: string
+  estado?: ProcesoAsignadoCurso['estado']
+}): Promise<ProcesoAsignadoCurso> {
+  const { data: result, error } = await supabase
+    .from('proceso_asignado_curso')
+    .insert({
+      id_curso: data.idCurso,
+      id_iglesia: data.idIglesia,
+      fecha_inicio: data.fechaInicio,
+      fecha_fin: data.fechaFin,
+      estado: data.estado ?? 'programado',
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return mapProceso(result)
+}
+
+export async function createDetalleProcesoCurso(data: {
+  idProcesoAsignadoCurso: number
+  idUsuario: number
+  estado?: DetalleProcesoCurso['estado']
+  fechaInscripcion?: string
+}): Promise<DetalleProcesoCurso> {
+  const payload: Record<string, unknown> = {
+    id_proceso_asignado_curso: data.idProcesoAsignadoCurso,
+    id_usuario: data.idUsuario,
+    estado: data.estado ?? 'inscrito',
+  }
+  if (data.fechaInscripcion !== undefined) payload.fecha_inscripcion = data.fechaInscripcion
+
+  const { data: result, error } = await supabase
+    .from('detalle_proceso_curso')
+    .insert(payload)
+    .select()
+    .single()
+  if (error) throw error
+  return mapDetalle(result)
+}
+
 export async function updateRecurso(
   id: number,
   data: { nombre?: string; tipo?: string; url?: string }
