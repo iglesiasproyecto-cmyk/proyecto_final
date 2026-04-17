@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import {
   useCursosEnriquecidos,
   useDeleteCurso,
@@ -28,6 +29,7 @@ import {
 } from "lucide-react";
 
 export function ClassroomPage() {
+  const navigate = useNavigate();
   const { data: ministerios = [] } = useMinisterios();
   const [selectedMinId, setSelectedMinId] = useState<number | null>(null);
   const actualMinId = selectedMinId ?? ministerios[0]?.idMinisterio ?? 0;
@@ -508,7 +510,7 @@ export function ClassroomPage() {
                         {curso.modulos?.sort((a, b) => a.orden - b.orden).map((modulo, mi) => (
                           <div 
                             key={modulo.idModulo} 
-                            onClick={() => { setSelectedCursoId(curso.idCurso); setSelectedModuloId(modulo.idModulo); }} 
+                            onClick={() => { navigate(`/app/aula/curso/${curso.idCurso}/modulo/${modulo.idModulo}`); }} 
                             className="group/mod flex items-center gap-4 px-6 py-4 cursor-pointer hover:bg-primary/5 transition-colors border-l-4 border-transparent hover:border-primary/40"
                           >
                             <div className="w-8 h-8 rounded-full bg-background/50 border border-white/5 flex items-center justify-center text-[11px] font-black text-foreground shrink-0 group-hover/mod:bg-primary group-hover/mod:text-white transition-all">
