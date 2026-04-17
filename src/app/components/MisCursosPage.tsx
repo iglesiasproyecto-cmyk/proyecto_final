@@ -86,12 +86,14 @@ export function MisCursosPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-background/50 border border-white/5 rounded-xl p-1">
+        <div className="flex items-center gap-2 bg-background/50 border border-border/50 rounded-xl p-1">
           {(['activos', 'finalizados'] as const).map((t) => (
             <button
               key={t}
               className={`px-4 h-9 rounded-lg text-xs font-bold uppercase tracking-wider transition-all capitalize ${
-                tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                tab === t 
+                  ? 'bg-gradient-to-br from-cyan-600 to-blue-700 text-white shadow-md shadow-cyan-600/20' 
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => setTab(t)}
             >

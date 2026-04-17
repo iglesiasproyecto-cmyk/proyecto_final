@@ -22,7 +22,7 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
   return (
     <div className="space-y-4 max-w-7xl mx-auto motion-preset-fade">
       {/* Header Compacto tipo Tarjeta */}
-      <div className="bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
+      <div className="bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
            <button onClick={onBack} className="w-10 h-10 rounded-xl bg-background/50 border border-white/5 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors hover:-translate-x-1 shrink-0">
@@ -44,12 +44,12 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
       </div>
 
       <Tabs defaultValue="miembros" className="w-full">
-        <TabsList className="bg-card/40 backdrop-blur-md border border-white/10 p-1 rounded-xl mb-4 w-fit mx-auto md:mx-0 flex">
+        <TabsList className="bg-card/40 backdrop-blur-md border border-border/50 p-1 rounded-xl mb-4 w-fit mx-auto md:mx-0 flex">
           <TabsTrigger value="miembros" className="rounded-lg text-xs font-medium px-4"><UsersRound className="w-4 h-4 mr-2" /> Directorio ({minMembers.length})</TabsTrigger>
           <TabsTrigger value="config" className="rounded-lg text-xs font-medium px-4"><UserCog className="w-4 h-4 mr-2" /> Configuración</TabsTrigger>
         </TabsList>
         <TabsContent value="miembros" className="outline-none">
-          <Card className="bg-card/40 backdrop-blur-xl border-white/10 p-0 overflow-hidden shadow-sm rounded-2xl">
+          <Card className="bg-card/40 backdrop-blur-xl border border-border/50 p-0 overflow-hidden shadow-sm rounded-2xl">
             <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card/20">
                <div>
                   <h3 className="font-bold text-sm">Equipo Ministerial</h3>
@@ -163,7 +163,7 @@ export function DepartmentsPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Encabezado Principal y Controles Acoplados */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm relative overflow-hidden">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         
         <div className="flex items-center gap-4">
@@ -192,7 +192,7 @@ export function DepartmentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map((m, i) => (
           <motion.div key={m.idMinisterio} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05, ease: "easeOut" }}>
-            <Card className={`group relative p-4 h-full bg-card/40 backdrop-blur-xl border border-white/10 cursor-pointer shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 rounded-2xl flex flex-col justify-between overflow-hidden ${m.estado !== "activo" ? "opacity-70 grayscale-[20%]" : ""}`} onClick={() => setSelectedMin(m.idMinisterio)}>
+            <Card className={`group relative p-4 h-full bg-card/40 backdrop-blur-xl border border-border/50 cursor-pointer shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 rounded-2xl flex flex-col justify-between overflow-hidden ${m.estado !== "activo" ? "opacity-70 grayscale-[20%]" : ""}`} onClick={() => setSelectedMin(m.idMinisterio)}>
                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                
                <div>
