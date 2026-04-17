@@ -51,6 +51,52 @@ function GlassSelect({ value, onChange, children }: { value: number; onChange: (
   );
 }
 
+function EventDialogFields({ form, setForm, tiposEvento }: { form: any; setForm: (f: any) => void; tiposEvento: any[] }) {
+  return (
+    <div className="space-y-4 py-2">
+      <div>
+        <FieldLabel>Nombre del Evento</FieldLabel>
+        <GlassInput value={form.nombre} onChange={e => setForm((p: any) => ({ ...p, nombre: e.target.value }))} placeholder="Ej. Culto de Adoración Especial" />
+      </div>
+      <div>
+        <FieldLabel>Tipo de Evento</FieldLabel>
+        <GlassSelect value={form.idTipoEvento} onChange={v => setForm((p: any) => ({ ...p, idTipoEvento: v }))}>
+          <option value={0}>Seleccionar tipo...</option>
+          {tiposEvento.map(te => <option key={te.idTipoEvento} value={te.idTipoEvento}>{te.nombre}</option>)}
+        </GlassSelect>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <FieldLabel>Inicio</FieldLabel>
+          <GlassInput type="datetime-local" value={form.fechaInicio} onChange={e => setForm((p: any) => ({ ...p, fechaInicio: e.target.value }))} />
+        </div>
+        <div>
+          <FieldLabel>Fin</FieldLabel>
+          <GlassInput type="datetime-local" value={form.fechaFin} onChange={e => setForm((p: any) => ({ ...p, fechaFin: e.target.value }))} />
+        </div>
+      </div>
+      {"estado" in form && (
+        <div>
+          <FieldLabel>Estado</FieldLabel>
+          <Select value={(form as any).estado} onValueChange={v => setForm((p: any) => ({ ...p, estado: v }))}>
+            <SelectTrigger className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="programado">Programado</SelectItem>
+              <SelectItem value="en_curso">En Curso</SelectItem>
+              <SelectItem value="finalizado">Finalizado</SelectItem>
+              <SelectItem value="cancelado">Cancelado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div>
+        <FieldLabel>Descripción <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span></FieldLabel>
+        <GlassInput value={form.descripcion} onChange={e => setForm((p: any) => ({ ...p, descripcion: e.target.value }))} placeholder="Breve descripción del evento" />
+      </div>
+    </div>
+  );
+}
+
 export function EventsPage() {
   const { iglesiaActual } = useApp();
   const { data: eventos = [], isLoading } = useEventosEnriquecidos(iglesiaActual?.id);
@@ -236,51 +282,6 @@ export function EventsPage() {
     ));
   };
 
-  // Shared dialog form fields
-  const EventDialogFields = ({ form, setForm }: { form: typeof createForm & { estado?: string }; setForm: (f: any) => void }) => (
-    <div className="space-y-4 py-2">
-      <div>
-        <FieldLabel>Nombre del Evento</FieldLabel>
-        <GlassInput value={form.nombre} onChange={e => setForm((p: any) => ({ ...p, nombre: e.target.value }))} placeholder="Ej. Culto de Adoración Especial" />
-      </div>
-      <div>
-        <FieldLabel>Tipo de Evento</FieldLabel>
-        <GlassSelect value={form.idTipoEvento} onChange={v => setForm((p: any) => ({ ...p, idTipoEvento: v }))}>
-          <option value={0}>Seleccionar tipo...</option>
-          {tiposEvento.map(te => <option key={te.idTipoEvento} value={te.idTipoEvento}>{te.nombre}</option>)}
-        </GlassSelect>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <FieldLabel>Inicio</FieldLabel>
-          <GlassInput type="datetime-local" value={form.fechaInicio} onChange={e => setForm((p: any) => ({ ...p, fechaInicio: e.target.value }))} />
-        </div>
-        <div>
-          <FieldLabel>Fin</FieldLabel>
-          <GlassInput type="datetime-local" value={form.fechaFin} onChange={e => setForm((p: any) => ({ ...p, fechaFin: e.target.value }))} />
-        </div>
-      </div>
-      {"estado" in form && (
-        <div>
-          <FieldLabel>Estado</FieldLabel>
-          <Select value={(form as any).estado} onValueChange={v => setForm((p: any) => ({ ...p, estado: v }))}>
-            <SelectTrigger className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="programado">Programado</SelectItem>
-              <SelectItem value="en_curso">En Curso</SelectItem>
-              <SelectItem value="finalizado">Finalizado</SelectItem>
-              <SelectItem value="cancelado">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-      <div>
-        <FieldLabel>Descripción <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span></FieldLabel>
-        <GlassInput value={form.descripcion} onChange={e => setForm((p: any) => ({ ...p, descripcion: e.target.value }))} placeholder="Breve descripción del evento" />
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
 
@@ -359,7 +360,7 @@ export function EventsPage() {
             </DialogTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Completa los datos para programar un nuevo evento.</p>
           </DialogHeader>
-          <EventDialogFields form={createForm} setForm={setCreateForm} />
+          <EventDialogFields form={createForm} setForm={setCreateForm} tiposEvento={tiposEvento} />
           <DialogFooter className="border-t border-border/50 pt-4 mt-2">
             <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
             <Button className="rounded-xl" onClick={handleCreateEvento} disabled={createEventoMutation.isPending}>
@@ -378,7 +379,7 @@ export function EventsPage() {
             </DialogTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Modifica los datos del evento seleccionado.</p>
           </DialogHeader>
-          <EventDialogFields form={editForm} setForm={setEditForm} />
+          <EventDialogFields form={editForm} setForm={setEditForm} tiposEvento={tiposEvento} />
           <DialogFooter className="border-t border-border/50 pt-4 mt-2">
             <Button variant="ghost" className="rounded-xl" onClick={() => setEditEvento(null)}>Cancelar</Button>
             <Button className="rounded-xl" onClick={handleUpdateEvento} disabled={updateEventoMutation.isPending}>

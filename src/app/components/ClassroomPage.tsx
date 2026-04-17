@@ -1,7 +1,19 @@
 import { useState } from "react";
-import { useCursosEnriquecidos, useDeleteCurso, useCreateCurso, useCreateModulo, useUpdateCurso, useDeleteModulo, useCreateRecurso, useDeleteRecurso } from "@/hooks/useCursos";
+import {
+  useCursosEnriquecidos,
+  useDeleteCurso,
+  useCreateCurso,
+  useCreateModulo,
+  useUpdateCurso,
+  useDeleteModulo,
+  useCreateRecurso,
+  useDeleteRecurso,
+  useProcesosAsignadoCurso,
+} from "@/hooks/useCursos";
 import { useMinisterios } from "@/hooks/useMinisterios";
+import type { ProcesoAsignadoCurso } from "@/types/app.types";
 import { useApp } from "../store/AppContext";
+import { EnrollmentPickerModal } from "./classroom/EnrollmentPickerModal";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -26,6 +38,8 @@ export function ClassroomPage() {
   const [showCreateCurso, setShowCreateCurso] = useState(false);
   const [showCreateModulo, setShowCreateModulo] = useState(false);
   const { usuarioActual, rolActual } = useApp();
+  const { data: todosProcesos = [] } = useProcesosAsignadoCurso();
+  const [pickerForCiclo, setPickerForCiclo] = useState<{ ciclo: ProcesoAsignadoCurso; cursoNombre: string } | null>(null);
   const createCursoMutation = useCreateCurso();
   const createModuloMutation = useCreateModulo();
   const updateCursoMutation = useUpdateCurso();
@@ -435,6 +449,61 @@ export function ClassroomPage() {
                       className="overflow-hidden bg-background/20"
                     >
                       <div className="grid grid-cols-1 divide-y divide-white/5 border-t border-white/5">
+                        {(() => {
+                          const ciclosDelCurso = todosProcesos.filter((p) => p.idCurso === curso.idCurso);
+                          const activos = ciclosDelCurso.filter((p) => p.estado === "programado" || p.estado === "en_curso");
+                          const historicos = ciclosDelCurso.filter((p) => p.estado === "finalizado" || p.estado === "cancelado");
+                          if (activos.length === 0 && historicos.length === 0) return null;
+
+                          return (
+                            <div className="p-4 bg-card/20 border-b border-white/5">
+                              <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+                                <Users className="w-4 h-4 text-primary" /> Ciclos activos
+                              </h3>
+                              {activos.length === 0 && <p className="text-xs text-muted-foreground">No hay ciclos activos.</p>}
+                              <div className="space-y-2">
+                                {activos.map((p) => (
+                                  <div
+                                    key={p.idProcesoAsignadoCurso}
+                                    className="flex items-center justify-between rounded-xl border border-white/10 bg-background/40 px-3 py-2"
+                                  >
+                                    <div className="text-xs">
+                                      <p className="font-semibold">
+                                        {new Date(p.fechaInicio).toLocaleDateString("es")} - {new Date(p.fechaFin).toLocaleDateString("es")}
+                                      </p>
+                                      <p className="text-muted-foreground capitalize">{p.estado.replace("_", " ")}</p>
+                                    </div>
+                                    {canManageAula && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-8 rounded-lg text-xs"
+                                        onClick={() => setPickerForCiclo({ ciclo: p, cursoNombre: curso.nombre })}
+                                      >
+                                        <Plus className="w-3.5 h-3.5 mr-1" /> Inscribir
+                                      </Button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                              {historicos.length > 0 && (
+                                <details className="mt-3">
+                                  <summary className="text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none">
+                                    Ver histórico ({historicos.length})
+                                  </summary>
+                                  <div className="mt-2 space-y-1">
+                                    {historicos.map((p) => (
+                                      <div key={p.idProcesoAsignadoCurso} className="text-[11px] text-muted-foreground/80 px-3">
+                                        {new Date(p.fechaInicio).toLocaleDateString("es")} - {new Date(p.fechaFin).toLocaleDateString("es")} · {p.estado}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </details>
+                              )}
+                            </div>
+                          );
+                        })()}
+
                         {curso.modulos?.sort((a, b) => a.orden - b.orden).map((modulo, mi) => (
                           <div 
                             key={modulo.idModulo} 
@@ -610,6 +679,17 @@ export function ClassroomPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {pickerForCiclo && (
+        <EnrollmentPickerModal
+          ciclo={pickerForCiclo.ciclo}
+          cursoNombre={pickerForCiclo.cursoNombre}
+          open={true}
+          onOpenChange={(o) => {
+            if (!o) setPickerForCiclo(null);
+          }}
+        />
+      )}
     </div>
   );
 }

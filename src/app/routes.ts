@@ -22,6 +22,7 @@ import { PastoresPage } from "./components/PastoresPage";
 import { UsuariosPage } from "./components/UsuariosPage";
 import { CatalogosPage } from "./components/CatalogosPage";
 import { CiclosLectivosPage } from "./components/CiclosLectivosPage";
+import { MisCursosPage } from "./components/MisCursosPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
 import { SitemapPage } from "./components/SitemapPage";
 
@@ -65,6 +66,7 @@ export const router = createBrowserRouter([
           { path: "aula", Component: ClassroomPage, ErrorBoundary: ErrorPage },
           { path: "evaluaciones", Component: EvaluationsPage, ErrorBoundary: ErrorPage },
           { path: "ciclos-lectivos", Component: CiclosLectivosPage, ErrorBoundary: ErrorPage },
+          { path: "mis-cursos", Component: MisCursosPage, ErrorBoundary: ErrorPage },
           { path: "notificaciones", Component: NotificationsPage, ErrorBoundary: ErrorPage },
           { path: "perfil", Component: ProfilePage, ErrorBoundary: ErrorPage },
           { path: "geografia", Component: GeographyPage, ErrorBoundary: ErrorPage },

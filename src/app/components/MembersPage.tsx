@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMinisterios, useMiembrosMinisterioEnriquecidos, useCreateMiembroMinisterio, useDeleteMiembroMinisterio } from "@/hooks/useMinisterios";
+import { useUsuarios } from "@/hooks/useUsuarios";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -20,13 +21,15 @@ const rolColors: Record<string, string> = {
 
 export function MembersPage() {
   const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios();
+  const { data: usuarios = [] } = useUsuarios();
   const [search, setSearch] = useState("");
   const [selectedMinisterioId, setSelectedMinisterioId] = useState<number>(0);
   const [showInvite, setShowInvite] = useState(false);
-  const { data: miembros = [], isLoading: miembrosLoading } = useMiembrosMinisterioEnriquecidos(selectedMinisterioId);
+  const { data: miembros = [], isLoading: miembrosLoading } = useMiembrosMinisterioEnriquecidos(selectedMinisterioId || undefined);
   const createMiembroMutation = useCreateMiembroMinisterio();
   const deleteMiembroMutation = useDeleteMiembroMinisterio();
   const [inviteForm, setInviteForm] = useState({ idUsuario: 0, rolEnMinisterio: "servidor" });
+  const [inviteUserSearch, setInviteUserSearch] = useState("");
 
   const isLoading = ministeriosLoading || miembrosLoading;
 
@@ -44,6 +47,21 @@ export function MembersPage() {
     const email = (mm.usuarioCorreo || mm.correo || "").toLowerCase();
     return name.includes(search.toLowerCase()) || email.includes(search.toLowerCase());
   });
+
+  const activeMemberIds = new Set(
+    miembros.filter((m) => m.activo).map((m) => m.idUsuario)
+  );
+
+  const selectableUsuarios = usuarios
+    .filter((u) => u.activo)
+    .filter((u) => !activeMemberIds.has(u.idUsuario))
+    .filter((u) => {
+      const full = `${u.nombres} ${u.apellidos}`.toLowerCase();
+      const email = (u.correo || "").toLowerCase();
+      const q = inviteUserSearch.toLowerCase().trim();
+      if (!q) return true;
+      return full.includes(q) || email.includes(q);
+    });
 
   function handleDeleteMiembro(id: number, nombre: string) {
     if (!confirm(`¿Eliminar a "${nombre}" del ministerio?`)) return;
@@ -63,6 +81,7 @@ export function MembersPage() {
         onSuccess: () => {
           setShowInvite(false);
           setInviteForm({ idUsuario: 0, rolEnMinisterio: "servidor" });
+          setInviteUserSearch("");
         },
       }
     );
@@ -70,6 +89,7 @@ export function MembersPage() {
 
   const activeCount = filtered.filter(m => m.activo).length;
   const leaderCount = filtered.filter(m => m.rolEnMinisterio === "lider").length;
+  const showMinisterioColumn = selectedMinisterioId === 0;
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
@@ -117,7 +137,13 @@ export function MembersPage() {
           </div>
 
           <Button
-            onClick={() => setShowInvite(true)}
+            onClick={() => {
+              if (!selectedMinisterioId) {
+                alert("Selecciona un ministerio en el filtro antes de agregar un miembro.");
+                return;
+              }
+              setShowInvite(true);
+            }}
             className="h-10 rounded-xl font-medium shrink-0"
           >
             <Plus className="w-4 h-4 mr-1.5" /> Agregar
@@ -157,8 +183,8 @@ export function MembersPage() {
       >
         <Card className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-sm p-0">
           {/* Cabecera de tabla */}
-          <div className="hidden md:grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-5 py-3 border-b border-border/40 bg-card/20">
-            {["Miembro", "Contacto", "Rol", "Estado", ""].map((col) => (
+          <div className={`hidden md:grid ${showMinisterioColumn ? "grid-cols-[2fr_1.3fr_2fr_1fr_1fr_auto]" : "grid-cols-[2fr_2fr_1fr_1fr_auto]"} gap-4 px-5 py-3 border-b border-border/40 bg-card/20`}>
+            {[(showMinisterioColumn ? ["Miembro", "Ministerio", "Contacto", "Rol", "Estado", ""] : ["Miembro", "Contacto", "Rol", "Estado", ""])].flat().map((col) => (
               <span key={col} className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">{col}</span>
             ))}
           </div>
@@ -179,7 +205,7 @@ export function MembersPage() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 10 }}
                     transition={{ delay: i * 0.03 }}
-                    className="group flex flex-col md:grid md:grid-cols-[2fr_2fr_1fr_1fr_auto] gap-3 md:gap-4 items-start md:items-center px-5 py-4 hover:bg-accent/20 transition-all duration-200"
+                    className={`group flex flex-col md:grid ${showMinisterioColumn ? "md:grid-cols-[2fr_1.3fr_2fr_1fr_1fr_auto]" : "md:grid-cols-[2fr_2fr_1fr_1fr_auto]"} gap-3 md:gap-4 items-start md:items-center px-5 py-4 hover:bg-accent/20 transition-all duration-200`}
                   >
                     {/* Avatar + nombre */}
                     <div className="flex items-center gap-3 min-w-0">
@@ -193,9 +219,18 @@ export function MembersPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{name}</p>
-                        <p className="text-xs text-muted-foreground truncate md:hidden">{email}</p>
+                        <p className="text-xs text-muted-foreground truncate md:hidden">
+                          {showMinisterioColumn ? `${mm.ministerioNombre || "Sin ministerio"} · ${email}` : email}
+                        </p>
                       </div>
                     </div>
+
+                    {/* Ministerio */}
+                    {showMinisterioColumn && (
+                      <div className="hidden md:block min-w-0">
+                        <p className="text-xs text-foreground/85 font-medium truncate">{mm.ministerioNombre || "Sin ministerio"}</p>
+                      </div>
+                    )}
 
                     {/* Contacto */}
                     <div className="hidden md:flex flex-col gap-1 min-w-0">
@@ -270,14 +305,28 @@ export function MembersPage() {
 
           <div className="space-y-4 py-2">
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">ID de Usuario</label>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Usuario</label>
               <Input
-                type="number"
-                value={inviteForm.idUsuario || ""}
-                onChange={(e) => setInviteForm(prev => ({ ...prev, idUsuario: Number(e.target.value) }))}
-                placeholder="Ingresa el ID numérico del usuario"
-                className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
+                value={inviteUserSearch}
+                onChange={(e) => setInviteUserSearch(e.target.value)}
+                placeholder="Buscar por nombre o correo"
+                className="h-11 bg-background/50 border-white/10 rounded-xl text-sm mb-2"
               />
+              <select
+                value={inviteForm.idUsuario || ""}
+                onChange={(e) => setInviteForm((prev) => ({ ...prev, idUsuario: Number(e.target.value) }))}
+                className="w-full h-11 px-3 bg-background/50 border border-white/10 rounded-xl text-sm outline-none"
+              >
+                <option value="" disabled>Selecciona un usuario</option>
+                {selectableUsuarios.map((u) => (
+                  <option key={u.idUsuario} value={u.idUsuario}>
+                    {u.nombres} {u.apellidos} - {u.correo}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-muted-foreground mt-2">
+                {selectableUsuarios.length} usuario(s) disponible(s) para este ministerio.
+              </p>
             </div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Rol en el Ministerio</label>

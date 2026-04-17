@@ -27,6 +27,7 @@ function mapMiembro(r: MiembroRow): MiembroMinisterio {
     fechaSalida: r.fecha_salida,
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
+    activo: r.fecha_salida === null,
   }
 }
 
@@ -38,6 +39,8 @@ export interface MinisterioEnriquecido extends Ministerio {
 export interface MiembroMinisterioEnriquecido extends MiembroMinisterio {
   usuarioNombre: string
   usuarioCorreo: string
+  telefono: string | null
+  ministerioNombre: string
 }
 
 export async function getMinisteriosEnriquecidos(idSede?: number): Promise<MinisterioEnriquecido[]> {
@@ -55,17 +58,20 @@ export async function getMinisteriosEnriquecidos(idSede?: number): Promise<Minis
   }))
 }
 
-export async function getMiembrosMinisterioEnriquecidos(idMinisterio: number): Promise<MiembroMinisterioEnriquecido[]> {
-  const { data, error } = await supabase
+export async function getMiembrosMinisterioEnriquecidos(idMinisterio?: number): Promise<MiembroMinisterioEnriquecido[]> {
+  let q = supabase
     .from('miembro_ministerio')
-    .select('*, usuario(nombres, apellidos, correo)')
-    .eq('id_ministerio', idMinisterio)
+    .select('*, usuario(nombres, apellidos, correo, telefono), ministerio(nombre)')
     .order('creado_en', { ascending: false })
+  if (idMinisterio !== undefined) q = q.eq('id_ministerio', idMinisterio)
+  const { data, error } = await q
   if (error) throw error
   return (data as any[]).map(r => ({
     ...mapMiembro(r),
     usuarioNombre: `${r.usuario?.nombres ?? ''} ${r.usuario?.apellidos ?? ''}`.trim(),
     usuarioCorreo: r.usuario?.correo ?? '',
+    telefono: r.usuario?.telefono ?? null,
+    ministerioNombre: r.ministerio?.nombre ?? '',
   }))
 }
 

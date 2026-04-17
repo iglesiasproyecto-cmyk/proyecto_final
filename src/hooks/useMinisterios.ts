@@ -32,7 +32,7 @@ export function useMinisteriosEnriquecidos(idSede?: number) {
   })
 }
 
-export function useMiembrosMinisterioEnriquecidos(idMinisterio: number) {
+export function useMiembrosMinisterioEnriquecidos(idMinisterio?: number) {
   return useQuery({
     queryKey: ['miembros-ministerio-enriquecidos', idMinisterio],
     queryFn: () => getMiembrosMinisterioEnriquecidos(idMinisterio),
