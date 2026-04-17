@@ -54,7 +54,8 @@ export function ClassroomPage() {
   const [editCurso, setEditCurso] = useState<{ id: number; nombre: string; descripcion: string; estado: string } | null>(null);
   const [showCreateRecurso, setShowCreateRecurso] = useState(false);
   const [recursoForm, setRecursoForm] = useState({ nombre: "", tipo: "enlace" as "archivo" | "enlace", url: "" });
-  const canManageAula = rolActual === "super_admin" || rolActual === "admin_iglesia";
+  const canManageAula =
+    rolActual === "super_admin" || rolActual === "admin_iglesia" || rolActual === "lider";
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-48">
