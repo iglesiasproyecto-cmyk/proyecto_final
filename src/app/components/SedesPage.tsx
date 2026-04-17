@@ -10,18 +10,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { motion } from "motion/react";
 import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Save } from "lucide-react";
+import { toast } from "sonner";
 
 export function SedesPage() {
-  const { iglesiaActual } = useApp();
-  const { data: sedes = [], isLoading } = useSedesEnriquecidas(iglesiaActual?.id);
-  const { data: iglesias = [] } = useIglesias();
-  const { data: ciudades = [] } = useCiudades();
   const [search, setSearch] = useState("");
   const [filterIglesia, setFilterIglesia] = useState("all");
   const [filterEstado, setFilterEstado] = useState("all");
   const [dialog, setDialog] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const [form, setForm] = useState({ nombre: "", direccion: "", idCiudad: 0, idIglesia: 0, estado: "activa" as "activa" | "inactiva" | "en_construccion" });
+
+  const { iglesiaActual, rolActual } = useApp();
+  const queryIglesiaId = rolActual === "super_admin"
+    ? (filterIglesia === "all" ? undefined : Number(filterIglesia))
+    : iglesiaActual?.id;
+  const { data: sedes = [], isLoading } = useSedesEnriquecidas(queryIglesiaId);
+  const { data: iglesias = [] } = useIglesias();
+  const { data: ciudades = [] } = useCiudades();
 
   const createSedeMutation = useCreateSede();
   const updateSedeMutation = useUpdateSede();
@@ -37,7 +42,12 @@ export function SedesPage() {
     </div>
   );
 
-  const openAdd = () => { setForm({ nombre: "", direccion: "", idCiudad: 0, idIglesia: 0, estado: "activa" }); setEditing(null); setDialog(true); };
+  const openAdd = () => {
+    const defaultIglesiaId = iglesiaActual?.id ?? (iglesias.length === 1 ? iglesias[0].idIglesia : 0);
+    setForm({ nombre: "", direccion: "", idCiudad: 0, idIglesia: defaultIglesiaId, estado: "activa" });
+    setEditing(null);
+    setDialog(true);
+  };
   
   const openEdit = (id: number) => {
     const s = sedes.find(x => x.idSede === id); if (!s) return;
@@ -46,14 +56,35 @@ export function SedesPage() {
   };
 
   const handleSubmit = () => {
-    if (!form.nombre.trim() || !form.idCiudad || !form.idIglesia) return;
+    if (!form.nombre.trim() || !form.idCiudad || !form.idIglesia) {
+      toast.error("Completa nombre, iglesia y ciudad para guardar la sede");
+      return;
+    }
     if (editing) updateSedeMutation.mutate(
       { id: editing, data: { nombre: form.nombre, direccion: form.direccion || null, idCiudad: form.idCiudad, idIglesia: form.idIglesia, estado: form.estado } },
-      { onSuccess: () => { setEditing(null); setDialog(false); } }
+      {
+        onSuccess: () => {
+          toast.success("Sede actualizada");
+          setEditing(null);
+          setDialog(false);
+        },
+        onError: (err: any) => {
+          toast.error(err?.message ?? "No se pudo actualizar la sede");
+        },
+      }
     );
     else createSedeMutation.mutate(
       { nombre: form.nombre, direccion: form.direccion || null, idCiudad: form.idCiudad, idIglesia: form.idIglesia, estado: form.estado },
-      { onSuccess: () => { setEditing(null); setDialog(false); } }
+      {
+        onSuccess: () => {
+          toast.success("Sede creada correctamente");
+          setEditing(null);
+          setDialog(false);
+        },
+        onError: (err: any) => {
+          toast.error(err?.message ?? "No se pudo crear la sede");
+        },
+      }
     );
   };
 
@@ -68,7 +99,8 @@ export function SedesPage() {
 
   const filtered = sedes.filter(s => {
     if (search && !s.nombre.toLowerCase().includes(search.toLowerCase())) return false;
-    if (filterIglesia !== "all" && s.idIglesia !== Number(filterIglesia)) return false;
+    // For super admin the iglesia filter is applied at query-level above.
+    if (rolActual !== "super_admin" && filterIglesia !== "all" && s.idIglesia !== Number(filterIglesia)) return false;
     if (filterEstado !== "all" && s.estado !== filterEstado) return false;
     return true;
   });
