@@ -151,7 +151,10 @@ export function EvaluationsPage() {
           </div>
         </div>
         {canManageEvaluaciones ? (
-          <Button onClick={() => setShowCreate(true)} className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0">
+          <Button 
+            onClick={() => setShowCreate(true)} 
+            className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:scale-105 transition-all"
+          >
             <Plus className="w-4 h-4 mr-2" /> Nueva Evaluación
           </Button>
         ) : (
@@ -251,7 +254,7 @@ export function EvaluationsPage() {
             <select 
               value={cursoFilter} 
               onChange={(e) => setCursoFilter(e.target.value)} 
-              className="text-[11px] bg-transparent border-0 outline-none text-foreground/70 cursor-pointer font-bold uppercase tracking-tight"
+              className="text-[11px] bg-transparent border-0 outline-none text-foreground cursor-pointer font-bold uppercase tracking-tight"
             >
               <option value="all">Todos los cursos</option>
               {uniqueCursos.map((c) => <option key={c} value={c}>{c}</option>)}
