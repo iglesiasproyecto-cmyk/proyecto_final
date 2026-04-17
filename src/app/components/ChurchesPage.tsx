@@ -142,9 +142,20 @@ export function ChurchesPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
-      {/* Header unificado con controles */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <Building2 className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest pl-1">Directorio</p>
+            <h1 className="text-3xl font-light tracking-tight mt-0.5">Gestión de Iglesias</h1>
+          </div>
+        </div>
+        <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
+          <Plus className="w-4 h-4 mr-2" /> Nueva Iglesia
+        </Button>
+      </motion.div>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -168,7 +179,7 @@ export function ChurchesPage() {
               placeholder="Buscar por nombre o ciudad..." 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
-              className="pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" 
+              className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
             />
           </div>
           <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto h-10 items-center">
@@ -192,7 +203,7 @@ export function ChurchesPage() {
         {filtered.map((ig, i) => (
           <GlassCard key={ig.idIglesia} index={i} isActive={ig.estado === "activa"}>
             <div className="flex items-start justify-between mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-inner border border-primary/10 transition-transform hover:scale-105">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/5 flex items-center justify-center shadow-inner border border-primary/10 transition-transform hover:scale-105">
                 <Building2 className="w-7 h-7 text-primary/80" />
               </div>
               <div className="flex flex-col items-end gap-1.5">

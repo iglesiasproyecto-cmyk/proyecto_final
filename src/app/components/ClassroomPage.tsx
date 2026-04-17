@@ -314,7 +314,7 @@ export function ClassroomPage() {
       >
         <div className="absolute top-0 right-0 w-80 h-48 bg-primary/10 rounded-full blur-[100px] pointer-events-none -z-10" />
         <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shrink-0 shadow-lg shadow-cyan-600/20">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shrink-0 shadow-lg shadow-cyan-600/20">
             <GraduationCap className="w-8 h-8" />
           </div>
           <div className="min-w-0">
@@ -370,7 +370,7 @@ export function ClassroomPage() {
             transition={{ delay: 0.1 + i * 0.05 }}
             className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 flex items-center gap-4 group"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shadow-md shadow-cyan-600/10 group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-md shadow-blue-900/10 group-hover:scale-110 transition-transform">
               {s.icon}
             </div>
             <div>
@@ -388,7 +388,7 @@ export function ClassroomPage() {
           className="relative bg-card/20 backdrop-blur-md border border-border/50 rounded-[40px] p-20 flex flex-col items-center justify-center text-center overflow-hidden"
         >
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white mb-8 shadow-xl shadow-cyan-600/20">
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white mb-8 shadow-xl shadow-blue-900/20">
             <GraduationCap className="w-12 h-12" />
           </div>
           <h3 className="text-2xl font-bold tracking-tight text-foreground/80 mb-3">Aula vacía</h3>

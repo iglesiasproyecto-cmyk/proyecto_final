@@ -202,19 +202,14 @@ export function UsuariosPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Header unificado con controles */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
-
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Directorio</p>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Gestión de Usuarios</h1>
-            </div>
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <Users className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Directorio</p>
+            <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Usuarios</h1>
           </div>
           <Button onClick={() => setShowInvite(true)} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all">
             <UserPlus className="w-4 h-4 mr-2" /> Invitar Usuario
@@ -252,7 +247,57 @@ export function UsuariosPage() {
             Limpiar filtros
           </Button>
         </div>
+        <Button onClick={() => setShowInvite(true)} className="shrink-0 shadow-md shadow-[#4682b4]/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 text-white h-11">
+          <UserPlus className="w-4 h-4 mr-2" /> Invitar Usuario
+        </Button>
       </motion.div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Total Usuarios", value: enriched.length, icon: <Users className="w-4 h-4" /> },
+          { label: "Activos", value: enriched.filter(u => u.activo).length, icon: <ShieldCheck className="w-4 h-4" /> },
+          { label: "Inactivos", value: enriched.filter(u => !u.activo).length, icon: <X className="w-4 h-4" /> },
+          { label: "Con acceso reciente", value: enriched.filter(u => u.ultimoAcceso).length, icon: <Clock className="w-4 h-4" /> },
+        ].map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + i * 0.05 }}
+            className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-4 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-md shadow-blue-900/10 group-hover:scale-110 transition-transform shrinking-0">
+              {s.icon}
+            </div>
+            <div className="min-w-0">
+              <p className="text-2xl font-black text-foreground leading-none mb-1">{s.value}</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest truncate">{s.label}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Buscar por nombre o correo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-card" />
+        </div>
+        <Select value={filterEstado} onValueChange={setFilterEstado}>
+          <SelectTrigger className="w-36 bg-card"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="activo">Activos</SelectItem>
+            <SelectItem value="inactivo">Inactivos</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterRol} onValueChange={setFilterRol}>
+          <SelectTrigger className="w-52 bg-card"><SelectValue placeholder="Rol" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los roles</SelectItem>
+            {roles.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
       <Card>
         <Table>
@@ -307,7 +352,7 @@ export function UsuariosPage() {
                       <Pencil className="w-3.5 h-3.5 text-amber-600" />
                     </Button>
                     <Button variant="ghost" size="sm" title="Asignar rol" onClick={() => { setShowAssignRol(u.idUsuario); resetAssignForm(); }}>
-                      <ShieldPlus className="w-3.5 h-3.5 text-blue-600" />
+                      <ShieldPlus className="w-3.5 h-3.5 text-[#4682b4] dark:text-[#709dbd]" />
                     </Button>
                     {isSuperAdmin && (
                       <Button variant="ghost" size="sm" title="Eliminar usuario" onClick={() => openDeleteDialog(u.idUsuario)}>
