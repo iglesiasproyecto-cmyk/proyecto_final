@@ -21,6 +21,27 @@ function normalizeBaseUrl(url?: string | null): string | null {
   }
 }
 
+async function findAuthUserByEmail(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  email: string
+) {
+  const normalized = email.trim().toLowerCase()
+  const perPage = 200
+
+  for (let page = 1; page <= 20; page++) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage })
+    if (error) throw error
+
+    const users = data?.users ?? []
+    const match = users.find((u) => (u.email ?? '').toLowerCase() === normalized)
+    if (match) return match
+
+    if (users.length < perPage) break
+  }
+
+  return null
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -128,6 +149,7 @@ Deno.serve(async (req) => {
 
     let usuarioId: number | null = existingUsuario?.id_usuario ?? null
     let inviteSent = false
+    let profileReconciled = false
 
     if (!usuarioId) {
       // Invite user via Supabase Auth Admin API.
@@ -156,8 +178,43 @@ Deno.serve(async (req) => {
           .eq('correo', normalizedEmail)
           .maybeSingle()
         if (dupUsuarioError) throw dupUsuarioError
-        if (!dupUsuario) throw inviteError
-        usuarioId = dupUsuario.id_usuario
+        if (dupUsuario) {
+          usuarioId = dupUsuario.id_usuario
+        } else {
+          // User exists in Auth but is missing in public.usuario. Reconcile it here.
+          const authUser = await findAuthUserByEmail(supabaseAdmin, normalizedEmail)
+          if (!authUser) throw inviteError
+
+          const fallbackNombres = String(nombres).trim() || 'Usuario'
+          const fallbackApellidos = String(apellidos).trim() || 'Invitado'
+
+          const { data: insertedUsuario, error: insertedUsuarioError } = await supabaseAdmin
+            .from('usuario')
+            .insert({
+              auth_user_id: authUser.id,
+              nombres: fallbackNombres,
+              apellidos: fallbackApellidos,
+              correo: normalizedEmail,
+              contrasena_hash: '',
+              activo: true,
+            })
+            .select('id_usuario')
+            .single()
+
+          if (insertedUsuarioError) {
+            const retry = await supabaseAdmin
+              .from('usuario')
+              .select('id_usuario')
+              .eq('correo', normalizedEmail)
+              .maybeSingle()
+            if (retry.error) throw retry.error
+            if (!retry.data) throw insertedUsuarioError
+            usuarioId = retry.data.id_usuario
+          } else {
+            usuarioId = insertedUsuario.id_usuario
+            profileReconciled = true
+          }
+        }
       } else {
         inviteSent = true
         const authUserId = inviteData.user.id
@@ -206,6 +263,7 @@ Deno.serve(async (req) => {
 
     if (assignmentCheckError) throw assignmentCheckError
 
+    let roleAssigned = false
     if (!existingAssignment) {
       const { error: rolError } = await supabaseAdmin
         .from('usuario_rol')
@@ -216,9 +274,16 @@ Deno.serve(async (req) => {
           fecha_inicio: new Date().toISOString().split('T')[0],
         })
       if (rolError) throw rolError
+      roleAssigned = true
     }
 
-    return new Response(JSON.stringify({ success: true, inviteSent }), {
+    return new Response(JSON.stringify({
+      success: true,
+      inviteSent,
+      profileReconciled,
+      roleAssigned,
+      userAlreadyExisted: !inviteSent,
+    }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

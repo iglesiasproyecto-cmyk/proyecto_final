@@ -162,7 +162,13 @@ export async function inviteUser(data: {
   apellidos: string
   idIglesia: number
   idRol: number
-}): Promise<void> {
+}): Promise<{
+  success: boolean
+  inviteSent: boolean
+  profileReconciled: boolean
+  roleAssigned: boolean
+  userAlreadyExisted: boolean
+}> {
   const payload = {
     ...data,
     correo: data.correo.trim().toLowerCase(),
@@ -184,6 +190,8 @@ export async function inviteUser(data: {
     const err = await res.json().catch(() => ({ message: res.statusText }))
     throw new Error(err.message ?? 'Error al invitar usuario')
   }
+
+  return await res.json()
 }
 
 export async function toggleUsuarioActivo(id: number): Promise<void> {

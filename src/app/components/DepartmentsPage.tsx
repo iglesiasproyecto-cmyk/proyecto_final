@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   useMinisteriosEnriquecidos, useDeleteMinisterio, useMiembrosMinisterio, useToggleMinisterioEstado, useCreateMinisterio,
 } from "@/hooks/useMinisterios";
+import { useSedes } from "@/hooks/useIglesias";
 import type { Ministerio } from "@/types/app.types";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -9,6 +10,7 @@ import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { motion } from "motion/react";
 import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2 } from "lucide-react";
 
@@ -116,6 +118,7 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
 
 export function DepartmentsPage() {
   const { data: ministerios = [], isLoading } = useMinisteriosEnriquecidos();
+  const { data: sedes = [] } = useSedes(); // Fetch all sedes, but we'll filter in UI
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedMin, setSelectedMin] = useState<number | null>(null);
@@ -128,7 +131,7 @@ export function DepartmentsPage() {
     if (!confirm(`¿Eliminar ministerio "${nombre}"? Esta acción no se puede deshacer.`)) return;
     deleteMinisterioMutation.mutate(id);
   }
-  const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "" });
+  const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idSede: "" });
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -140,18 +143,18 @@ export function DepartmentsPage() {
   }
 
   const handleCreateMinisterio = () => {
-    if (!createForm.nombre.trim()) return;
+    if (!createForm.nombre.trim() || !createForm.idSede) return;
     createMinisterioMutation.mutate(
       {
         nombre: createForm.nombre.trim(),
         descripcion: createForm.descripcion.trim() || null,
-        idSede: 1, // MVP: single-sede demo
+        idSede: parseInt(createForm.idSede),
         estado: 'activo',
       },
       {
         onSuccess: () => {
           setShowCreate(false);
-          setCreateForm({ nombre: "", descripcion: "" });
+          setCreateForm({ nombre: "", descripcion: "", idSede: "" });
         },
       }
     );
@@ -261,12 +264,27 @@ export function DepartmentsPage() {
                 className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
               />
             </div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">Sede</label>
+              <Select value={createForm.idSede} onValueChange={(value) => setCreateForm(p => ({ ...p, idSede: value }))}>
+                <SelectTrigger className="h-11 bg-background/50 border-white/10 rounded-xl text-sm">
+                  <SelectValue placeholder="Selecciona una sede" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sedes.map((sede) => (
+                    <SelectItem key={sede.idSede} value={sede.idSede.toString()}>
+                      {sede.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter className="mt-2 border-t border-border/50 pt-4">
-            <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); setCreateForm({ nombre: "", descripcion: "" }); }}>
+            <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); setCreateForm({ nombre: "", descripcion: "", idSede: "" }); }}>
               Cancelar
             </Button>
-            <Button variant="default" className="rounded-xl" onClick={handleCreateMinisterio} disabled={!createForm.nombre.trim() || createMinisterioMutation.isPending}>
+            <Button variant="default" className="rounded-xl" onClick={handleCreateMinisterio} disabled={!createForm.nombre.trim() || !createForm.idSede || createMinisterioMutation.isPending}>
               {createMinisterioMutation.isPending ? "Creando..." : "Crear Ministerio"}
             </Button>
           </DialogFooter>

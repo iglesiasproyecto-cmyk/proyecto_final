@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUsuarioRoles, useUpdateUsuario } from "@/hooks/useUsuarios";
+import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUsuarioRoles, useUpdateUsuario, useDeleteUsuarioAsSuperAdmin } from "@/hooks/useUsuarios";
 import { useIglesias } from "@/hooks/useIglesias";
 import { useApp } from "@/app/store/AppContext";
 import { Card } from "./ui/card";
@@ -10,28 +10,34 @@ import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
-import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, Phone, UserPlus, ShieldPlus, Pencil, X, Loader2 } from "lucide-react";
+import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, Phone, UserPlus, ShieldPlus, Pencil, X, Loader2, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 export function UsuariosPage() {
-  const { iglesiaActual } = useApp();
+  const { iglesiaActual, usuarioActual, rolActual } = useApp();
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
   const { data: iglesias = [] } = useIglesias();
   const [search, setSearch] = useState("");
   const [filterEstado, setFilterEstado] = useState("all");
   const [filterRol, setFilterRol] = useState("all");
+  const [filterIglesia, setFilterIglesia] = useState<string>("all");
   const [detail, setDetail] = useState<number | null>(null);
   const [showInvite, setShowInvite] = useState(false);
   const [showAssignRol, setShowAssignRol] = useState<number | null>(null);
   const [editUser, setEditUser] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ nombres: "", apellidos: "", telefono: "" });
+  const [deleteUser, setDeleteUser] = useState<number | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const toggleActivoMutation = useToggleUsuarioActivo();
   const inviteMutation = useInviteUser();
   const assignRolMutation = useAssignRol();
   const removeRolMutation = useRemoveRol();
   const updateUsuarioMutation = useUpdateUsuario();
+  const deleteUsuarioMutation = useDeleteUsuarioAsSuperAdmin();
+
+  const isSuperAdmin = rolActual === "super_admin";
 
   // Invite form state
   const [inviteForm, setInviteForm] = useState({
@@ -60,11 +66,13 @@ export function UsuariosPage() {
     if (filterEstado === "activo" && !u.activo) return false;
     if (filterEstado === "inactivo" && u.activo) return false;
     if (filterRol !== "all" && !u.roleNames.some(rn => rn.rolNombre.toLowerCase().includes(filterRol.toLowerCase()))) return false;
+    if (filterIglesia !== "all" && !u.roleNames.some(rn => String(rn.idIglesia) === filterIglesia)) return false;
     return true;
   });
 
   const detailUser = detail ? enriched.find(u => u.idUsuario === detail) : null;
   const assignUser = showAssignRol ? enriched.find(u => u.idUsuario === showAssignRol) : null;
+  const deleteTargetUser = deleteUser ? enriched.find(u => u.idUsuario === deleteUser) : null;
 
   const openEditDialog = (idUsuario: number) => {
     const user = enriched.find(u => u.idUsuario === idUsuario);
@@ -91,8 +99,16 @@ export function UsuariosPage() {
         idRol: inviteForm.idRol,
       },
       {
-        onSuccess: () => {
-          toast.success("Invitación enviada exitosamente");
+        onSuccess: (result) => {
+          if (result.inviteSent) {
+            toast.success("Invitación enviada. El usuario debe revisar su correo para crear contraseña");
+          } else if (result.profileReconciled && result.roleAssigned) {
+            toast.success("Correo existente recuperado y vinculado. Se asignó el rol correctamente");
+          } else if (result.roleAssigned) {
+            toast.success("El correo ya existía. Se asignó el rol sin reenviar invitación");
+          } else {
+            toast.success("El usuario ya tenía ese rol activo en la iglesia seleccionada");
+          }
           setShowInvite(false);
           resetInviteForm();
         },
@@ -156,6 +172,34 @@ export function UsuariosPage() {
     );
   };
 
+  const openDeleteDialog = (idUsuario: number) => {
+    setDeleteUser(idUsuario);
+    setDeleteConfirmText("");
+  };
+
+  const handleDeleteUser = () => {
+    if (!deleteTargetUser) return;
+    if (deleteConfirmText.trim().toLowerCase() !== deleteTargetUser.correo.trim().toLowerCase()) {
+      toast.error("Debes escribir exactamente el correo del usuario para confirmar");
+      return;
+    }
+
+    deleteUsuarioMutation.mutate(deleteTargetUser.idUsuario, {
+      onSuccess: (mode) => {
+        if (mode === "hard") {
+          toast.success("Usuario eliminado permanentemente");
+        } else {
+          toast.success("Usuario eliminado (archivado por seguridad de datos)");
+        }
+        setDeleteUser(null);
+        setDeleteConfirmText("");
+      },
+      onError: (err: any) => {
+        toast.error(err?.message ?? "No se pudo eliminar el usuario");
+      },
+    });
+  };
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
@@ -212,6 +256,16 @@ export function UsuariosPage() {
             {roles.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={filterIglesia} onValueChange={setFilterIglesia}>
+          <SelectTrigger className="w-56 bg-card"><SelectValue placeholder="Iglesia" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las iglesias</SelectItem>
+            {iglesias.map(ig => <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Button variant="outline" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); }}>
+          Limpiar filtros
+        </Button>
       </div>
 
       <Card>
@@ -269,6 +323,11 @@ export function UsuariosPage() {
                     <Button variant="ghost" size="sm" title="Asignar rol" onClick={() => { setShowAssignRol(u.idUsuario); resetAssignForm(); }}>
                       <ShieldPlus className="w-3.5 h-3.5 text-blue-600" />
                     </Button>
+                    {isSuperAdmin && u.idUsuario !== usuarioActual?.idUsuario && (
+                      <Button variant="ghost" size="sm" title="Eliminar usuario" onClick={() => openDeleteDialog(u.idUsuario)}>
+                        <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                      </Button>
+                    )}
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -282,6 +341,17 @@ export function UsuariosPage() {
                 </TableCell>
               </TableRow>
             ))}
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} className="py-10 text-center">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <Search className="w-5 h-5" />
+                    <p className="text-sm">No hay usuarios con los filtros actuales</p>
+                    <p className="text-xs">Ajusta la búsqueda o limpia los filtros para ver más resultados.</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </Card>
@@ -517,6 +587,45 @@ export function UsuariosPage() {
             <Button variant="outline" onClick={() => setEditUser(null)}>Cancelar</Button>
             <Button onClick={handleEditUser} disabled={updateUsuarioMutation.isPending}>
               {updateUsuarioMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Guardando...</> : <><Pencil className="w-4 h-4 mr-2" /> Guardar Cambios</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete User Dialog ── */}
+      <Dialog open={!!deleteUser} onOpenChange={o => { if (!o) { setDeleteUser(null); setDeleteConfirmText(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600"><AlertTriangle className="w-5 h-5" /> Eliminar Usuario</DialogTitle>
+          </DialogHeader>
+          {deleteTargetUser && (
+            <div className="space-y-4 py-2">
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-700 dark:text-red-300">
+                Esta acción es irreversible para el acceso del usuario. Si existen datos relacionados, se realizará archivado seguro para no romper historial.
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm">Usuario: <strong>{deleteTargetUser.nombres} {deleteTargetUser.apellidos}</strong></p>
+                <p className="text-xs text-muted-foreground">Correo de confirmación: {deleteTargetUser.correo}</p>
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Escribe el correo para confirmar *</label>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={e => setDeleteConfirmText(e.target.value)}
+                  placeholder={deleteTargetUser.correo}
+                  className="bg-input-background"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDeleteUser(null); setDeleteConfirmText(""); }}>Cancelar</Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteUser}
+              disabled={deleteUsuarioMutation.isPending || !deleteTargetUser || deleteConfirmText.trim().toLowerCase() !== deleteTargetUser.correo.trim().toLowerCase()}
+            >
+              {deleteUsuarioMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Eliminando...</> : <><Trash2 className="w-4 h-4 mr-2" /> Eliminar Usuario</>}
             </Button>
           </DialogFooter>
         </DialogContent>

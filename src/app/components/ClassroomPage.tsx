@@ -25,7 +25,7 @@ export function ClassroomPage() {
   const [expandedCursos, setExpandedCursos] = useState<Set<number>>(new Set());
   const [showCreateCurso, setShowCreateCurso] = useState(false);
   const [showCreateModulo, setShowCreateModulo] = useState(false);
-  const { usuarioActual } = useApp();
+  const { usuarioActual, rolActual } = useApp();
   const createCursoMutation = useCreateCurso();
   const createModuloMutation = useCreateModulo();
   const updateCursoMutation = useUpdateCurso();
@@ -37,6 +37,7 @@ export function ClassroomPage() {
   const [editCurso, setEditCurso] = useState<{ id: number; nombre: string; descripcion: string; estado: string } | null>(null);
   const [showCreateRecurso, setShowCreateRecurso] = useState(false);
   const [recursoForm, setRecursoForm] = useState({ nombre: "", tipo: "enlace" as "archivo" | "enlace", url: "" });
+  const canManageAula = rolActual === "super_admin" || rolActual === "admin_iglesia";
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-48">
@@ -58,6 +59,7 @@ export function ClassroomPage() {
   };
 
   const handleCreateCurso = () => {
+    if (!canManageAula) return;
     if (!cursoForm.nombre.trim() || !usuarioActual) return;
     createCursoMutation.mutate(
       {
@@ -77,11 +79,13 @@ export function ClassroomPage() {
   };
 
   function handleDeleteCurso(id: number, nombre: string) {
+    if (!canManageAula) return;
     if (!confirm(`¿Eliminar curso "${nombre}"?`)) return;
     deleteCursoMutation.mutate(id);
   }
 
   const handleCreateModulo = (idCurso: number) => {
+    if (!canManageAula) return;
     if (!moduloForm.titulo.trim()) return;
     createModuloMutation.mutate(
       {
@@ -100,6 +104,7 @@ export function ClassroomPage() {
   };
 
   const handleUpdateCurso = () => {
+    if (!canManageAula) return;
     if (!editCurso || !editCurso.nombre.trim()) return;
     updateCursoMutation.mutate(
       { id: editCurso.id, data: { nombre: editCurso.nombre.trim(), descripcion: editCurso.descripcion.trim() || null, estado: editCurso.estado } },
@@ -108,11 +113,13 @@ export function ClassroomPage() {
   };
 
   const handleDeleteModulo = (id: number, titulo: string) => {
+    if (!canManageAula) return;
     if (!confirm(`¿Eliminar módulo "${titulo}"?`)) return;
     deleteModuloMutation.mutate(id);
   };
 
   const handleCreateRecurso = (idModulo: number) => {
+    if (!canManageAula) return;
     if (!recursoForm.nombre.trim() || !recursoForm.url.trim()) return;
     createRecursoMutation.mutate(
       { idModulo, nombre: recursoForm.nombre.trim(), tipo: recursoForm.tipo, url: recursoForm.url.trim() },
@@ -157,14 +164,18 @@ export function ClassroomPage() {
               <h3 className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.25em] text-primary/70">
                 <Download className="w-4 h-4" /> Recursos Adjuntos
               </h3>
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="h-8 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 hover:text-primary"
-                onClick={() => setShowCreateRecurso(true)}
-              >
-                <PlusCircle className="w-3.5 h-3.5 mr-1.5" /> Agregar Recurso
-              </Button>
+              {canManageAula ? (
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-8 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 hover:text-primary"
+                  onClick={() => setShowCreateRecurso(true)}
+                >
+                  <PlusCircle className="w-3.5 h-3.5 mr-1.5" /> Agregar Recurso
+                </Button>
+              ) : (
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Solo lectura</span>
+              )}
             </div>
             {selectedModulo.recursos && selectedModulo.recursos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -181,13 +192,15 @@ export function ClassroomPage() {
                       <a href={r.url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors">
                         {r.tipo === "archivo" ? <Download className="w-4 h-4" /> : <ExternalLink className="w-4 h-4" />}
                       </a>
-                      <button 
-                        className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors shrink-0"
-                        onClick={() => { if (confirm(`¿Eliminar recurso "${r.nombre}"?`)) deleteRecursoMutation.mutate(r.idRecurso); }}
-                        disabled={deleteRecursoMutation.isPending}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canManageAula && (
+                        <button 
+                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors shrink-0"
+                          onClick={() => { if (confirm(`¿Eliminar recurso "${r.nombre}"?`)) deleteRecursoMutation.mutate(r.idRecurso); }}
+                          disabled={deleteRecursoMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -202,7 +215,7 @@ export function ClassroomPage() {
         </div>
 
         {/* Create Recurso Dialog */}
-        <Dialog open={showCreateRecurso} onOpenChange={o => { if (!o) { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "enlace", url: "" }); } }}>
+        <Dialog open={canManageAula && showCreateRecurso} onOpenChange={o => { if (!o) { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "enlace", url: "" }); } }}>
           <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
@@ -274,12 +287,18 @@ export function ClassroomPage() {
               </select>
             </div>
           )}
-          <Button 
-            onClick={() => setShowCreateCurso(true)} 
-            className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0"
-          >
-            <Plus className="w-4 h-4 mr-2" /> Nuevo Curso
-          </Button>
+          {canManageAula ? (
+            <Button 
+              onClick={() => setShowCreateCurso(true)} 
+              className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Nuevo Curso
+            </Button>
+          ) : (
+            <Badge variant="outline" className="h-11 rounded-2xl px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-white/10 bg-background/40">
+              Modo lectura
+            </Badge>
+          )}
         </div>
       </motion.div>
 
@@ -323,9 +342,11 @@ export function ClassroomPage() {
           <p className="text-sm text-muted-foreground/60 max-w-sm mb-8">
             Aún no hay cursos de formación en este ministerio. Inicia la academia agregando un nuevo programa.
           </p>
-          <Button onClick={() => setShowCreateCurso(true)} className="h-11 rounded-2xl px-8 font-bold uppercase tracking-widest text-[11px]">
-            <Plus className="w-4 h-4 mr-2" /> Crear primer curso
-          </Button>
+          {canManageAula && (
+            <Button onClick={() => setShowCreateCurso(true)} className="h-11 rounded-2xl px-8 font-bold uppercase tracking-widest text-[11px]">
+              <Plus className="w-4 h-4 mr-2" /> Crear primer curso
+            </Button>
+          )}
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 gap-3">
@@ -381,6 +402,7 @@ export function ClassroomPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {canManageAula && (
                       <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all">
                         <button
                           onClick={(e) => { e.stopPropagation(); setEditCurso({ id: curso.idCurso, nombre: curso.nombre, descripcion: curso.descripcion ?? "", estado: curso.estado }); }}
@@ -396,6 +418,7 @@ export function ClassroomPage() {
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
+                      )}
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isExpanded ? "bg-primary text-white rotate-180" : "bg-muted text-muted-foreground"}`}>
                         <ChevronDown className="w-4 h-4" />
                       </div>
@@ -432,6 +455,7 @@ export function ClassroomPage() {
                                 <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">{modulo.estado}</span>
                               </div>
                             </div>
+                            {canManageAula && (
                             <div className="flex items-center gap-2 opacity-0 group-hover/mod:opacity-100 transition-opacity">
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleDeleteModulo(modulo.idModulo, modulo.titulo); }}
@@ -441,15 +465,18 @@ export function ClassroomPage() {
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
+                            )}
                             <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover/mod:translate-x-1 group-hover/mod:text-primary transition-all shrink-0" />
                           </div>
                         ))}
-                        <button 
-                          onClick={() => { setSelectedCursoId(curso.idCurso); setShowCreateModulo(true); }} 
-                          className="flex items-center gap-3 px-8 py-5 text-primary/70 hover:text-primary hover:bg-primary/5 transition-all text-sm font-bold tracking-tight bg-white/10 dark:bg-black/10"
-                        >
-                          <PlusCircle className="w-4 h-4" /> Agregar un nuevo módulo a este curso
-                        </button>
+                        {canManageAula && (
+                          <button 
+                            onClick={() => { setSelectedCursoId(curso.idCurso); setShowCreateModulo(true); }} 
+                            className="flex items-center gap-3 px-8 py-5 text-primary/70 hover:text-primary hover:bg-primary/5 transition-all text-sm font-bold tracking-tight bg-white/10 dark:bg-black/10"
+                          >
+                            <PlusCircle className="w-4 h-4" /> Agregar un nuevo módulo a este curso
+                          </button>
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -461,7 +488,7 @@ export function ClassroomPage() {
       )}
 
       {/* Modern Glass Dialogs */}
-      <Dialog open={showCreateCurso} onOpenChange={setShowCreateCurso}>
+      <Dialog open={showCreateCurso && canManageAula} onOpenChange={setShowCreateCurso}>
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
@@ -508,7 +535,7 @@ export function ClassroomPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showCreateModulo} onOpenChange={setShowCreateModulo}>
+      <Dialog open={showCreateModulo && canManageAula} onOpenChange={setShowCreateModulo}>
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
@@ -548,7 +575,7 @@ export function ClassroomPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!editCurso} onOpenChange={o => { if (!o) setEditCurso(null); }}>
+      <Dialog open={!!editCurso && canManageAula} onOpenChange={o => { if (!o) setEditCurso(null); }}>
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
