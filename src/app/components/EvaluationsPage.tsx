@@ -134,7 +134,7 @@ export function EvaluationsPage() {
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative flex flex-col md:flex-row md:items-center justify-between gap-5 bg-card/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-sm overflow-hidden"
+        className="relative flex flex-col md:flex-row md:items-center justify-between gap-5 bg-card/40 backdrop-blur-xl border border-border/50 p-6 rounded-3xl shadow-sm overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-80 h-48 bg-primary/10 rounded-full blur-[100px] pointer-events-none -z-10" />
         <div className="flex items-center gap-5">
@@ -153,7 +153,7 @@ export function EvaluationsPage() {
             <Plus className="w-4 h-4 mr-2" /> Nueva Evaluación
           </Button>
         ) : (
-          <Badge variant="outline" className="h-11 px-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] text-muted-foreground/70 border-white/10 bg-background/30">
+          <Badge variant="outline" className="h-11 px-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] bg-blue-600/10 text-blue-700 dark:text-blue-400 border-blue-600/20">
             Modo Lectura
           </Badge>
         )}
@@ -187,7 +187,7 @@ export function EvaluationsPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 + i * 0.05 }}
-                className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-3xl p-5 hover:bg-white/5 transition-colors"
+                className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-5 hover:bg-white/5 transition-colors"
               >
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-3 truncate">{c}</p>
                 <div className="flex items-baseline gap-2">
@@ -204,12 +204,12 @@ export function EvaluationsPage() {
       </div>
 
       {/* List Section */}
-      <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-[32px] overflow-hidden shadow-sm">
+      <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-[32px] overflow-hidden shadow-sm">
         <div className="p-6 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h3 className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.25em] text-primary/70">
             <TrendingUp className="w-4 h-4" /> Historial de Resultados
           </h3>
-          <div className="flex items-center gap-2 bg-background/40 border border-white/5 rounded-2xl px-3 h-10 shrink-0">
+          <div className="flex items-center gap-2 bg-background/40 border border-border/50 rounded-2xl px-3 h-10 shrink-0">
             <Filter className="w-3.5 h-3.5 text-muted-foreground/40" />
             <select 
               value={cursoFilter} 

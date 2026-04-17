@@ -131,15 +131,13 @@ export function CatalogosPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {roles.map(r => (
-              <div key={r.idRol} className="group flex flex-col p-5 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all cursor-default">
-                <div className="flex items-start justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600/20 to-blue-600/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform mb-4"><ShieldCheck className="w-6 h-6 text-blue-600" /></div>
-                </div>
-                <div>
+              <div key={r.idRol} className="group flex flex-col h-full p-5 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all cursor-default">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600/20 to-blue-600/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform mb-4"><ShieldCheck className="w-6 h-6 text-blue-600" /></div>
+                <div className="flex-1">
                   <p className="text-[16px] font-black text-foreground/90 group-hover:text-blue-600 transition-colors tracking-tight">{r.nombre}</p>
                   <p className="text-[12px] font-medium text-muted-foreground mt-1.5 line-clamp-3 leading-relaxed">{r.descripcion}</p>
                 </div>
-                <div className="mt-8 flex items-center justify-between pt-4 border-t border-white/5">
+                <div className="mt-8 flex items-center justify-between gap-3 pt-4 border-t border-white/5">
                   <Badge variant="outline" className="text-[9px] px-2 py-0 border-blue-600/20 bg-blue-600/5 text-blue-700 dark:text-blue-400 uppercase tracking-widest font-bold">Rol Base</Badge>
                   <span className="text-[10px] text-muted-foreground font-black tracking-widest uppercase opacity-50">ID: {r.idRol}</span>
                 </div>

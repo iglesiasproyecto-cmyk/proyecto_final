@@ -142,41 +142,43 @@ export function ChurchesPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
-            <Building2 className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest pl-1">Directorio</p>
-            <h1 className="text-3xl font-light tracking-tight mt-0.5">Gestión de Iglesias</h1>
-          </div>
-        </div>
-        <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-6">
-          <Plus className="w-4 h-4 mr-2" /> Nueva Iglesia
-        </Button>
-      </motion.div>
+      {/* Header unificado con controles */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
 
-      {/* Action Bar with Glassmorphism */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-        <div className="p-2.5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm flex flex-col sm:flex-row gap-3 dark:border-white/10 dark:bg-card/20">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+              <Building2 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Directorio</p>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Gestión de Iglesias</h1>
+            </div>
+          </div>
+          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all">
+            <Plus className="w-4 h-4 mr-2" /> Nueva Iglesia
+          </Button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
             <Input 
               placeholder="Buscar por nombre o ciudad..." 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
-              className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-primary/20 h-11 rounded-xl" 
+              className="pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" 
             />
           </div>
-          <div className="flex gap-1.5 p-1 bg-muted/20 rounded-xl overflow-x-auto">
+          <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto h-10 items-center">
             {(["all", "activa", "inactiva"] as const).map((f) => (
               <Button 
                 key={f} 
                 variant={filter === f ? "default" : "ghost"} 
                 size="sm" 
                 onClick={() => setFilter(f)} 
-                className={`h-9 px-4 rounded-lg font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
+                className={`h-full px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm bg-gradient-to-r from-cyan-600 to-blue-700 text-white hover:from-cyan-500 hover:to-blue-600" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
               >
                 {f === "all" ? "Todas" : f === "activa" ? "Activas" : "Inactivas"}
               </Button>
@@ -194,7 +196,7 @@ export function ChurchesPage() {
                 <Building2 className="w-7 h-7 text-primary/80" />
               </div>
               <div className="flex flex-col items-end gap-1.5">
-                <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className="shadow-sm tracking-wide">{estadoLabels[ig.estado]}</Badge>
+                <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className={`shadow-sm tracking-wide ${ig.estado === "activa" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : ""}`}>{estadoLabels[ig.estado]}</Badge>
                 {ig.cantidadSedes > 0 && (
                   <Badge variant="outline" className="text-[10px] bg-card/50 border-white/50 dark:border-white/10 uppercase font-semibold">
                     {ig.cantidadSedes} {ig.cantidadSedes === 1 ? "sede" : "sedes"}

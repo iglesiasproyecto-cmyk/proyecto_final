@@ -107,36 +107,37 @@ export function SedesPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
-      {/* HEADER: Diferencia clara de títulos y subtítulos por color/tamaño */}
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
-            <MapPin className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Sedes</h1>
-          </div>
-        </div>
-        <Button onClick={openAdd} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-6 bg-cyan-600 hover:bg-cyan-700 text-white">
-          <Plus className="w-4 h-4 mr-2" /> Nueva Sede
-        </Button>
-      </motion.div>
+      {/* Header unificado con controles */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
 
-      {/* ACTION BAR: Estética Glass */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
-        <div className="p-3 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm flex flex-col md:flex-row gap-3 dark:border-white/10 dark:bg-card/20">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+              <MapPin className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Gestión de Sedes</h1>
+            </div>
+          </div>
+          <Button onClick={openAdd} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all">
+            <Plus className="w-4 h-4 mr-2" /> Nueva Sede
+          </Button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">
           <div className="relative flex-1 md:max-w-md">
-            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
             <Input 
               placeholder="Buscar sedes por nombre..." 
               value={search} 
               onChange={e => setSearch(e.target.value)} 
-              className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-cyan-600/20 h-11 rounded-xl" 
+              className="pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" 
             />
           </div>
           <Select value={filterIglesia} onValueChange={setFilterIglesia}>
-            <SelectTrigger className="w-full md:w-56 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-cyan-600/20">
+            <SelectTrigger className="w-full md:w-56 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm">
               <SelectValue placeholder="Iglesia" />
             </SelectTrigger>
             <SelectContent>
@@ -145,7 +146,7 @@ export function SedesPage() {
             </SelectContent>
           </Select>
           <Select value={filterEstado} onValueChange={setFilterEstado}>
-            <SelectTrigger className="w-full md:w-48 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-cyan-600/20">
+            <SelectTrigger className="w-full md:w-48 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm">
               <SelectValue placeholder="Estado" />
             </SelectTrigger>
             <SelectContent>
@@ -155,6 +156,9 @@ export function SedesPage() {
               <SelectItem value="en_construccion">En Construcción</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="ghost" className="h-10 rounded-xl text-xs" onClick={() => { setSearch(""); setFilterIglesia("all"); setFilterEstado("all"); }}>
+            Limpiar filtros
+          </Button>
         </div>
       </motion.div>
 

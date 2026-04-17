@@ -156,7 +156,7 @@ export function EventsPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
-                className="group relative bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+                className="group relative bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
               >
                 {/* Glow hover */}
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -288,19 +288,25 @@ export function EventsPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden"
+        className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
-            Eventos
-          </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Agenda y gestiona los eventos de la iglesia</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+            <CalendarDays className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Operaciones</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
+              Eventos
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">Agenda y gestiona los eventos de la iglesia</p>
+          </div>
         </div>
         <Button
           onClick={() => setShowCreate(true)}
           disabled={!iglesiaActual}
-          className="h-10 rounded-xl font-medium shrink-0"
+          className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all"
         >
           <Plus className="w-4 h-4 mr-1.5" /> Nuevo Evento
         </Button>
@@ -326,12 +332,12 @@ export function EventsPage() {
       {/* ── Tabs + Events ── */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <Tabs defaultValue="todos">
-          <TabsList className="bg-card/40 backdrop-blur-md border border-white/10 p-1 rounded-xl w-fit flex mb-5">
-            <TabsTrigger value="todos" className="rounded-lg text-xs font-medium px-4">Todos ({eventos.length})</TabsTrigger>
-            <TabsTrigger value="global" className="rounded-lg text-xs font-medium px-4">
+          <TabsList className="bg-card/40 backdrop-blur-md border border-border/50 p-1 rounded-xl w-fit flex mb-5">
+            <TabsTrigger value="todos" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">Todos ({eventos.length})</TabsTrigger>
+            <TabsTrigger value="global" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">
               <Globe className="w-3.5 h-3.5 mr-1.5" /> Globales
             </TabsTrigger>
-            <TabsTrigger value="ministerio" className="rounded-lg text-xs font-medium px-4">
+            <TabsTrigger value="ministerio" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">
               <Users className="w-3.5 h-3.5 mr-1.5" /> Ministeriales
             </TabsTrigger>
           </TabsList>

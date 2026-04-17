@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { motion } from "motion/react";
-import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2 } from "lucide-react";
+import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2, Settings } from "lucide-react";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-700", servidor: "bg-gray-100 text-gray-700" };
@@ -39,7 +39,7 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
            </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-           <Badge variant={min.estado === "activo" ? "default" : "secondary"} className={`px-3 py-1 text-[10px] uppercase font-bold tracking-widest ${min.estado === 'activo' ? 'bg-primary/10 text-primary border border-white/10' : ''}`}>{min.estado === "activo" ? "Activo" : "Inactivo"}</Badge>
+           <Badge variant={min.estado === "activo" ? "default" : "secondary"} className={`px-3 py-1 text-[10px] uppercase font-bold tracking-widest ${min.estado === 'activo' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200' : ''}`}>{min.estado === "activo" ? "Activo" : "Inactivo"}</Badge>
         </div>
       </div>
 
@@ -70,7 +70,7 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
                   </div>
                   <div className="flex items-center gap-2 sm:shrink-0 justify-end">
                      <Badge variant="outline" className={`${rolColors[mm.rolEnMinisterio || "servidor"]} border-white/10 text-[10px] uppercase font-bold tracking-widest px-2 py-0.5`}>{rolLabels[mm.rolEnMinisterio || "servidor"] || mm.rolEnMinisterio}</Badge>
-                     <Badge variant={mm.activo ? "secondary" : "outline"} className={`text-[10px] bg-background/50 border-white/5`}>{mm.activo ? "Activo" : "Inactivo"}</Badge>
+                     <Badge variant={mm.activo ? "secondary" : "outline"} className={`text-[10px] ${mm.activo ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200' : 'bg-background/50 border-white/5'}`}>{mm.activo ? "Activo" : "Inactivo"}</Badge>
                   </div>
                 </div>
               ))}
@@ -166,17 +166,23 @@ export function DepartmentsPage() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Ministerios</h1>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Gestiona la estructura organizativa de la iglesia</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+            <Settings className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Ministerios</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">Gestiona la estructura organizativa de la iglesia</p>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 w-full md:w-64">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
-            <Input placeholder="Buscar ministerio..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10 bg-background/50 border-white/5 rounded-xl focus-visible:ring-primary/20 text-sm" />
+            <Input placeholder="Buscar ministerio..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" />
           </div>
-          <Button onClick={() => setShowCreate(true)} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium">
+          <Button onClick={() => setShowCreate(true)} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all">
             <Plus className="w-4 h-4 mr-2" /> Nuevo
           </Button>
         </div>
@@ -194,7 +200,7 @@ export function DepartmentsPage() {
                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 group-hover:scale-105 transition-transform shrink-0">
                       <Users className="w-5 h-5 text-white" />
                    </div>
-                   <Badge variant={m.estado === "activo" ? "default" : "secondary"} className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 ${m.estado === 'activo' ? 'bg-primary/10 text-primary border border-primary/20' : ''}`}>{m.estado === "activo" ? "Activo" : "Inactivo"}</Badge>
+                   <Badge variant={m.estado === "activo" ? "default" : "secondary"} className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 ${m.estado === 'activo' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200' : ''}`}>{m.estado === "activo" ? "Activo" : "Inactivo"}</Badge>
                  </div>
                  
                  <div className="relative z-10">

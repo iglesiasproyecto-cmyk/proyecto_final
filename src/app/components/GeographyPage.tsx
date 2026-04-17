@@ -117,7 +117,7 @@ export function GeographyPage() {
             <h1 className="text-3xl font-light tracking-tight">Gestión Geográfica</h1>
           </div>
         </div>
-        <Button onClick={() => openDialog("pais", "add")} className="shrink-0 shadow-md shadow-cyan-600/20 rounded-full px-6 bg-cyan-600 hover:bg-cyan-700 text-white h-11"><Plus className="w-4 h-4 mr-2" /> Nuevo País</Button>
+        <Button onClick={() => openDialog("pais", "add")} className="shrink-0 shadow-md shadow-cyan-600/30 rounded-full px-6 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white h-11"><Plus className="w-4 h-4 mr-2" /> Nuevo País</Button>
       </motion.div>
 
       {/* STATS ROW */}
@@ -157,7 +157,7 @@ export function GeographyPage() {
           const deps = departamentosGeo.filter(d => d.idPais === pais.idPais);
           const isExpP = expandedPais.has(pais.idPais);
           return (
-             <div key={pais.idPais} className="rounded-2xl bg-card/50 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden dark:border-white/10 dark:bg-card/20 transition-all">
+             <div key={pais.idPais} className="rounded-2xl bg-card/50 backdrop-blur-2xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden dark:border-white/10 dark:bg-card/20 transition-all">
                 <div className="flex items-center gap-4 p-4 md:px-6 cursor-pointer hover:bg-white/40 dark:hover:bg-white/5 transition-colors" onClick={() => togglePais(pais.idPais)}>
                    <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shrink-0">
                       <Globe className="w-5 h-5" />
