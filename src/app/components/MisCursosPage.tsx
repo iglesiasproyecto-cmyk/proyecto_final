@@ -1,0 +1,136 @@
+import { useState } from 'react'
+import { motion } from 'motion/react'
+import { useApp } from '../store/AppContext'
+import { useMisInscripciones } from '@/hooks/useInscripciones'
+import { Card } from './ui/card'
+import { Button } from './ui/button'
+import { Progress } from './ui/progress'
+import { EstadoInscripcionBadge } from './classroom/EstadoInscripcionBadge'
+import { CompanerosDrawer } from './classroom/CompanerosDrawer'
+import { BookOpen, Calendar, GraduationCap, Users } from 'lucide-react'
+
+const ACTIVOS = new Set(['inscrito', 'en_progreso'] as const)
+
+export function MisCursosPage() {
+  const { usuarioActual } = useApp()
+  const { data: inscripciones = [], isLoading } = useMisInscripciones(usuarioActual?.idUsuario)
+  const [tab, setTab] = useState<'activos' | 'finalizados'>('activos')
+  const [drawerCiclo, setDrawerCiclo] = useState<{ id: number; curso: string } | null>(null)
+
+  const activos = inscripciones.filter((i) => ACTIVOS.has(i.estado as 'inscrito' | 'en_progreso'))
+  const finalizados = inscripciones.filter((i) => !ACTIVOS.has(i.estado as 'inscrito' | 'en_progreso'))
+  const visibles = tab === 'activos' ? activos : finalizados
+
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
+        Cargando tus cursos...
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-5 max-w-6xl mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden flex flex-col md:flex-row md:items-center gap-4"
+      >
+        <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
+        <div className="flex items-center gap-4 flex-1">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+            <GraduationCap className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight leading-none">Mis Cursos</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+              {activos.length} activos · {finalizados.length} finalizados
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 bg-background/50 border border-white/5 rounded-xl p-1">
+          {(['activos', 'finalizados'] as const).map((t) => (
+            <button
+              key={t}
+              className={`px-4 h-9 rounded-lg text-xs font-bold uppercase tracking-wider transition-all capitalize ${
+                tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setTab(t)}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+
+      {visibles.length === 0 ? (
+        <div className="py-20 flex flex-col items-center gap-3 text-muted-foreground text-center">
+          <div className="w-16 h-16 rounded-2xl bg-accent/40 flex items-center justify-center">
+            <BookOpen className="w-7 h-7 opacity-40" />
+          </div>
+          <p className="font-semibold text-sm">
+            {tab === 'activos'
+              ? 'Aún no estás inscrito en ningún curso.'
+              : 'Todavía no tienes cursos finalizados.'}
+          </p>
+          {tab === 'activos' && (
+            <p className="text-xs">Tu líder o admin te inscribirá cuando haya un ciclo disponible.</p>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {visibles.map((i, idx) => (
+            <motion.div
+              key={i.idDetalleProcesoCurso}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.03 }}
+            >
+              <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-2xl p-5 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm leading-tight truncate">{i.nombreCurso}</h3>
+                    <p className="text-[11px] text-muted-foreground">
+                      {i.nombreMinisterio} · {i.nombreIglesia}
+                    </p>
+                  </div>
+                  <EstadoInscripcionBadge estado={i.estado} />
+                </div>
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {formatDate(i.fechaInicioCiclo)} - {formatDate(i.fechaFinCiclo)}
+                </p>
+                <div>
+                  <div className="flex items-center justify-between mb-1 text-[11px] text-muted-foreground">
+                    <span>Progreso</span>
+                    <span title="El progreso se activará cuando el instructor añada contenido de módulos.">0%</span>
+                  </div>
+                  <Progress value={0} className="h-1.5 bg-background/50" />
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 h-9 rounded-xl text-xs"
+                    onClick={() => setDrawerCiclo({ id: i.idProcesoAsignadoCurso, curso: i.nombreCurso })}
+                  >
+                    <Users className="w-3.5 h-3.5 mr-1" /> Compañeros
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      <CompanerosDrawer
+        idCiclo={drawerCiclo?.id ?? null}
+        cursoNombre={drawerCiclo?.curso ?? ''}
+        onClose={() => setDrawerCiclo(null)}
+      />
+    </div>
+  )
+}
