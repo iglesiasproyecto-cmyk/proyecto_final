@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getMinisterios, getMiembrosMinisterio,
   getMinisteriosEnriquecidos, getMiembrosMinisterioEnriquecidos,
+  getMinisteriosIdsDeUsuario,
   createMinisterio, updateMinisterio, toggleMinisterioEstado,
   createMiembroMinisterio,
   deleteMinisterio, deleteMiembroMinisterio, updateMiembroMinisterio,
@@ -36,6 +37,15 @@ export function useMiembrosMinisterioEnriquecidos(idMinisterio?: number) {
   return useQuery({
     queryKey: ['miembros-ministerio-enriquecidos', idMinisterio],
     queryFn: () => getMiembrosMinisterioEnriquecidos(idMinisterio),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useMinisteriosIdsDeUsuario(idUsuario?: number) {
+  return useQuery({
+    queryKey: ['ministerios-ids-usuario', idUsuario],
+    queryFn: () => getMinisteriosIdsDeUsuario(idUsuario as number),
+    enabled: !!idUsuario,
     staleTime: 5 * 60 * 1000,
   })
 }

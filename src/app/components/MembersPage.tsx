@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { useMinisterios, useMiembrosMinisterioEnriquecidos, useCreateMiembroMinisterio, useDeleteMiembroMinisterio } from "@/hooks/useMinisterios";
+import { useEffect, useMemo, useState } from "react";
+import { useMinisterios, useMiembrosMinisterioEnriquecidos, useCreateMiembroMinisterio, useDeleteMiembroMinisterio, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
 import { useUsuarios } from "@/hooks/useUsuarios";
+import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -20,12 +21,29 @@ const rolColors: Record<string, string> = {
 };
 
 export function MembersPage() {
+  const { rolActual, usuarioActual } = useApp();
+  const isLider = rolActual === "lider";
   const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios();
+  const { data: ministeriosIdsUsuario = [] } = useMinisteriosIdsDeUsuario(usuarioActual?.idUsuario);
   const { data: usuarios = [] } = useUsuarios();
   const [search, setSearch] = useState("");
   const [selectedMinisterioId, setSelectedMinisterioId] = useState<number>(0);
   const [showInvite, setShowInvite] = useState(false);
-  const { data: miembros = [], isLoading: miembrosLoading } = useMiembrosMinisterioEnriquecidos(selectedMinisterioId || undefined);
+
+  const ministerioIdsLider = useMemo(() => new Set(ministeriosIdsUsuario), [ministeriosIdsUsuario]);
+  const ministeriosVisibles = useMemo(() => {
+    if (!isLider) return ministerios;
+    return ministerios.filter((m) => ministerioIdsLider.has(m.idMinisterio));
+  }, [isLider, ministerios, ministerioIdsLider]);
+
+  useEffect(() => {
+    if (!isLider) return;
+    const firstId = ministeriosVisibles[0]?.idMinisterio ?? 0;
+    if (selectedMinisterioId !== firstId) setSelectedMinisterioId(firstId);
+  }, [isLider, ministeriosVisibles, selectedMinisterioId]);
+
+  const effectiveMinisterioId = isLider ? (selectedMinisterioId || ministeriosVisibles[0]?.idMinisterio || 0) : selectedMinisterioId;
+  const { data: miembros = [], isLoading: miembrosLoading } = useMiembrosMinisterioEnriquecidos(effectiveMinisterioId || undefined);
   const createMiembroMutation = useCreateMiembroMinisterio();
   const deleteMiembroMutation = useDeleteMiembroMinisterio();
   const [inviteForm, setInviteForm] = useState({ idUsuario: 0, rolEnMinisterio: "servidor" });
@@ -69,11 +87,11 @@ export function MembersPage() {
   }
 
   const handleInvite = () => {
-    if (!inviteForm.idUsuario || !selectedMinisterioId) return;
+    if (!inviteForm.idUsuario || !effectiveMinisterioId) return;
     createMiembroMutation.mutate(
       {
         idUsuario: inviteForm.idUsuario,
-        idMinisterio: selectedMinisterioId,
+        idMinisterio: effectiveMinisterioId,
         rolEnMinisterio: inviteForm.rolEnMinisterio || null,
         fechaIngreso: new Date().toISOString().split('T')[0],
       },
@@ -89,7 +107,7 @@ export function MembersPage() {
 
   const activeCount = filtered.filter(m => m.activo).length;
   const leaderCount = filtered.filter(m => m.rolEnMinisterio === "lider").length;
-  const showMinisterioColumn = selectedMinisterioId === 0;
+  const showMinisterioColumn = !isLider && selectedMinisterioId === 0;
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
@@ -127,18 +145,19 @@ export function MembersPage() {
           <div className="flex items-center gap-2 bg-background/50 border border-white/5 rounded-xl px-3 h-10 shrink-0">
             <Filter className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
             <select
-              value={selectedMinisterioId}
+              value={effectiveMinisterioId}
               onChange={(e) => setSelectedMinisterioId(Number(e.target.value))}
+              disabled={isLider}
               className="text-sm bg-transparent border-0 outline-none text-foreground/80 min-w-0 cursor-pointer"
             >
-              <option value={0}>Todos los ministerios</option>
-              {ministerios.map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
+              {!isLider && <option value={0}>Todos los ministerios</option>}
+              {ministeriosVisibles.map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
             </select>
           </div>
 
           <Button
             onClick={() => {
-              if (!selectedMinisterioId) {
+              if (!effectiveMinisterioId) {
                 alert("Selecciona un ministerio en el filtro antes de agregar un miembro.");
                 return;
               }
@@ -349,7 +368,7 @@ export function MembersPage() {
             <Button
               className="rounded-xl"
               onClick={handleInvite}
-              disabled={!inviteForm.idUsuario || !selectedMinisterioId || createMiembroMutation.isPending}
+              disabled={!inviteForm.idUsuario || !effectiveMinisterioId || createMiembroMutation.isPending}
             >
               {createMiembroMutation.isPending ? "Agregando..." : "Agregar Miembro"}
             </Button>
