@@ -53,9 +53,9 @@ export async function getRoles(): Promise<Rol[]> {
 }
 
 export async function getUsuarios(): Promise<Usuario[]> {
-  const { data, error } = await supabase.from('usuario').select('*').order('apellidos')
+  const { data, error } = await supabase.rpc('get_all_usuarios_enriquecidos')
   if (error) throw error
-  return data.map(mapUsuario)
+  return ((data as any[]) || []).map(mapUsuario)
 }
 
 export async function getUsuarioRoles(idUsuario: number): Promise<UsuarioRol[]> {
@@ -193,4 +193,12 @@ export async function toggleUsuarioActivo(id: number): Promise<void> {
   const { error } = await supabase
     .from('usuario').update({ activo: !current.activo }).eq('id_usuario', id)
   if (error) throw error
+}
+
+export async function deleteUsuarioAsSuperAdmin(idUsuario: number): Promise<'hard' | 'soft'> {
+  const { data, error } = await supabase.rpc('delete_usuario_super_admin', {
+    target_usuario_id: idUsuario,
+  })
+  if (error) throw error
+  return data as 'hard' | 'soft'
 }
