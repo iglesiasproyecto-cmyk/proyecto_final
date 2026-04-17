@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useApp } from "../store/AppContext"
 import { Button } from './ui/button'
 import { Input } from './ui/input'
+import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'motion/react'
 import { SEILogo } from './SEILogo'
 import {
@@ -26,6 +27,7 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isResettingPassword, setIsResettingPassword] = useState(false)
 
   useEffect(() => {
     if (!authLoading && session && usuarioActual) navigate("/app")
@@ -75,6 +77,31 @@ export function LoginPage() {
     } else {
       navigate('/app')
     }
+  }
+
+  const handleResetPassword = async () => {
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanEmail) {
+      setError('Ingresa tu correo para recuperar la contrasena.')
+      return
+    }
+
+    setIsResettingPassword(true)
+    setError('')
+
+    const redirectTo = `${window.location.origin}/auth/callback?next=/auth/set-password`
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+      redirectTo,
+    })
+
+    setIsResettingPassword(false)
+
+    if (resetError) {
+      setError('No se pudo enviar el correo de recuperacion. Intenta nuevamente.')
+      return
+    }
+
+    toast.success('Te enviamos un correo para restablecer tu contrasena.')
   }
 
   return (
@@ -338,6 +365,15 @@ export function LoginPage() {
                 </>
               )}
             </Button>
+
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              disabled={isResettingPassword || isLoading}
+              className="w-full text-center text-xs font-semibold text-primary/80 hover:text-primary transition-colors disabled:opacity-60"
+            >
+              {isResettingPassword ? 'Enviando correo de recuperacion...' : 'Olvide mi contrasena'}
+            </button>
           </motion.form>
 
           {/* Demo Button - Estilo discreto pero premium */}
