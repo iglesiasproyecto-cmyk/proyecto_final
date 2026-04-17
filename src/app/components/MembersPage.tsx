@@ -1,15 +1,22 @@
 import { useState } from "react";
-import { useMinisterios, useMiembrosMinisterioEnriquecidos, useCreateMiembroMinisterio, useDeleteMiembroMinisterio, useUpdateMiembroMinisterio } from "@/hooks/useMinisterios";
+import { useMinisterios, useMiembrosMinisterioEnriquecidos, useCreateMiembroMinisterio, useDeleteMiembroMinisterio } from "@/hooks/useMinisterios";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
-import { motion } from "motion/react";
-import { Plus, Search, Mail, Phone, Filter, Inbox, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Plus, Search, Mail, Phone, Filter, Inbox, Trash2, Users, ShieldCheck, User } from "lucide-react";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
-const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-700", servidor: "bg-gray-100 text-gray-700" };
+const rolIcons: Record<string, React.ReactNode> = {
+  lider: <ShieldCheck className="w-3 h-3" />,
+  servidor: <User className="w-3 h-3" />,
+};
+const rolColors: Record<string, string> = {
+  lider: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  servidor: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+};
 
 export function MembersPage() {
   const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios();
@@ -19,16 +26,23 @@ export function MembersPage() {
   const { data: miembros = [], isLoading: miembrosLoading } = useMiembrosMinisterioEnriquecidos(selectedMinisterioId);
   const createMiembroMutation = useCreateMiembroMinisterio();
   const deleteMiembroMutation = useDeleteMiembroMinisterio();
-  const updateMiembroMutation = useUpdateMiembroMinisterio();
   const [inviteForm, setInviteForm] = useState({ idUsuario: 0, rolEnMinisterio: "servidor" });
 
   const isLoading = ministeriosLoading || miembrosLoading;
 
-  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+  if (isLoading) return (
+    <div className="flex items-center justify-center h-48 text-muted-foreground">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        <span className="text-sm">Cargando miembros...</span>
+      </div>
+    </div>
+  );
 
   const filtered = miembros.filter((mm) => {
-    const matchSearch = (mm.usuarioNombre || mm.nombreCompleto || "").toLowerCase().includes(search.toLowerCase()) || (mm.usuarioCorreo || mm.correo || "").toLowerCase().includes(search.toLowerCase());
-    return matchSearch;
+    const name = (mm.usuarioNombre || mm.nombreCompleto || "").toLowerCase();
+    const email = (mm.usuarioCorreo || mm.correo || "").toLowerCase();
+    return name.includes(search.toLowerCase()) || email.includes(search.toLowerCase());
   });
 
   function handleDeleteMiembro(id: number, nombre: string) {
@@ -54,119 +68,240 @@ export function MembersPage() {
     );
   };
 
+  const activeCount = filtered.filter(m => m.activo).length;
+  const leaderCount = filtered.filter(m => m.rolEnMinisterio === "lider").length;
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div><h1>Miembros</h1><p className="text-muted-foreground text-sm">Gestiona los miembros de los ministerios</p></div>
-        <Button onClick={() => setShowInvite(true)}>
-          <Plus className="w-4 h-4 mr-2" /> Agregar Miembro
-        </Button>
+    <div className="space-y-5 max-w-7xl mx-auto">
+
+      {/* Header unificado con controles */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden"
+      >
+        <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
+
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
+            Miembros
+          </h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+            Gestiona los miembros de los ministerios y sus roles
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+          {/* Búsqueda */}
+          <div className="relative flex-1 min-w-0 md:w-56">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+            <Input
+              placeholder="Buscar miembro..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-10 bg-background/50 border-white/5 rounded-xl text-sm"
+            />
+          </div>
+
+          {/* Filtro de ministerio */}
+          <div className="flex items-center gap-2 bg-background/50 border border-white/5 rounded-xl px-3 h-10 shrink-0">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+            <select
+              value={selectedMinisterioId}
+              onChange={(e) => setSelectedMinisterioId(Number(e.target.value))}
+              className="text-sm bg-transparent border-0 outline-none text-foreground/80 min-w-0 cursor-pointer"
+            >
+              <option value={0}>Todos los ministerios</option>
+              {ministerios.map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
+            </select>
+          </div>
+
+          <Button
+            onClick={() => setShowInvite(true)}
+            className="h-10 rounded-xl font-medium shrink-0"
+          >
+            <Plus className="w-4 h-4 mr-1.5" /> Agregar
+          </Button>
+        </div>
       </motion.div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar por nombre o correo..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-card" />
-        </div>
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-muted-foreground" />
-          <select value={selectedMinisterioId} onChange={(e) => setSelectedMinisterioId(Number(e.target.value))} className="border rounded-lg px-3 py-2 text-sm bg-card">
-            <option value={0}>Todos los ministerios</option>
-            {ministerios.map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
-          </select>
-        </div>
-      </div>
+      {/* Métricas rápidas */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="grid grid-cols-3 gap-3"
+      >
+        {[
+          { label: "Total", value: filtered.length, icon: <Users className="w-4 h-4" />, color: "text-primary" },
+          { label: "Activos", value: activeCount, icon: <ShieldCheck className="w-4 h-4" />, color: "text-emerald-400" },
+          { label: "Líderes", value: leaderCount, icon: <User className="w-4 h-4" />, color: "text-blue-400" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-3">
+            <div className={`${stat.color} bg-current/10 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 opacity-80`} style={{ backgroundColor: "currentColor", opacity: 1 }}>
+              <div className={`${stat.color}`}>{stat.icon}</div>
+            </div>
+            <div>
+              <p className="text-xl font-black tracking-tight leading-none">{stat.value}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">{stat.label}</p>
+            </div>
+          </div>
+        ))}
+      </motion.div>
 
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted/30">
-                <th className="text-left px-4 py-3 text-xs text-muted-foreground uppercase tracking-wider">Miembro</th>
-                <th className="text-left px-4 py-3 text-xs text-muted-foreground uppercase tracking-wider hidden md:table-cell">Contacto</th>
-                <th className="text-left px-4 py-3 text-xs text-muted-foreground uppercase tracking-wider">Rol</th>
-                <th className="text-left px-4 py-3 text-xs text-muted-foreground uppercase tracking-wider">Estado</th>
-                <th className="px-4 py-3 text-xs text-muted-foreground uppercase tracking-wider text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((mm) => (
-                <tr key={mm.idMiembroMinisterio} className="border-b last:border-0 hover:bg-accent/30 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm shrink-0">{(mm.usuarioNombre || mm.nombreCompleto || "?").charAt(0)}</div>
-                      <div>
-                        <p className="text-sm">{mm.usuarioNombre || mm.nombreCompleto}</p>
-                        <p className="text-xs text-muted-foreground md:hidden">{mm.usuarioCorreo || mm.correo}</p>
+      {/* Lista de miembros — Tabla Glass */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Card className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-sm p-0">
+          {/* Cabecera de tabla */}
+          <div className="hidden md:grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-5 py-3 border-b border-border/40 bg-card/20">
+            {["Miembro", "Contacto", "Rol", "Estado", ""].map((col) => (
+              <span key={col} className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">{col}</span>
+            ))}
+          </div>
+
+          <div className="divide-y divide-border/30">
+            <AnimatePresence>
+              {filtered.map((mm, i) => {
+                const name = mm.usuarioNombre || mm.nombreCompleto || "Sin nombre";
+                const email = mm.usuarioCorreo || mm.correo || "";
+                const phone = mm.telefono || "—";
+                const rol = mm.rolEnMinisterio || "servidor";
+                const inicial = name.charAt(0).toUpperCase();
+
+                return (
+                  <motion.div
+                    key={mm.idMiembroMinisterio}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="group flex flex-col md:grid md:grid-cols-[2fr_2fr_1fr_1fr_auto] gap-3 md:gap-4 items-start md:items-center px-5 py-4 hover:bg-accent/20 transition-all duration-200"
+                  >
+                    {/* Avatar + nombre */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="relative shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/15 flex items-center justify-center text-primary font-bold text-sm shadow-inner group-hover:scale-105 transition-transform">
+                          {inicial}
+                        </div>
+                        {mm.activo && (
+                          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{name}</p>
+                        <p className="text-xs text-muted-foreground truncate md:hidden">{email}</p>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Mail className="w-3 h-3" /> {mm.usuarioCorreo || mm.correo}</div>
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Phone className="w-3 h-3" /> {mm.telefono}</div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant="outline" className={`${rolColors[mm.rolEnMinisterio || "servidor"]} border-0 text-xs`}>{rolLabels[mm.rolEnMinisterio || "servidor"] || mm.rolEnMinisterio}</Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={mm.activo ? "secondary" : "outline"} className="text-xs">{mm.activo ? "Activo" : "Inactivo"}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDeleteMiembro(mm.idMiembroMinisterio, mm.usuarioNombre || mm.nombreCompleto || String(mm.idMiembroMinisterio))}
-                      disabled={deleteMiembroMutation.isPending}
-                      title="Eliminar miembro"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filtered.length === 0 && (
-          <div className="text-center py-12">
-            <Inbox className="w-12 h-12 mx-auto text-muted-foreground/20 mb-3" />
-            <p className="text-muted-foreground text-sm">No se encontraron miembros</p>
-          </div>
-        )}
-      </Card>
 
+                    {/* Contacto */}
+                    <div className="hidden md:flex flex-col gap-1 min-w-0">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
+                        <Mail className="w-3 h-3 shrink-0 text-primary/40" />
+                        <span className="truncate">{email}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Phone className="w-3 h-3 shrink-0 text-primary/40" />
+                        <span>{phone}</span>
+                      </div>
+                    </div>
+
+                    {/* Rol */}
+                    <div>
+                      <Badge variant="outline" className={`${rolColors[rol] ?? rolColors.servidor} border text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 flex items-center gap-1 w-fit`}>
+                        {rolIcons[rol] ?? rolIcons.servidor}
+                        {rolLabels[rol] ?? rol}
+                      </Badge>
+                    </div>
+
+                    {/* Estado */}
+                    <div>
+                      <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border ${mm.activo ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-slate-500/10 text-slate-400 border-slate-500/20"}`}>
+                        {mm.activo ? "Activo" : "Inactivo"}
+                      </Badge>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="flex md:justify-end">
+                      <button
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                        onClick={() => handleDeleteMiembro(mm.idMiembroMinisterio, name)}
+                        disabled={deleteMiembroMutation.isPending}
+                        title="Eliminar miembro"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+
+          {/* Estado vacío */}
+          {filtered.length === 0 && (
+            <div className="py-16 flex flex-col items-center justify-center text-muted-foreground gap-3">
+              <div className="w-16 h-16 rounded-2xl bg-accent/40 flex items-center justify-center">
+                <Inbox className="w-7 h-7 opacity-40" />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-sm">Sin miembros registrados</p>
+                <p className="text-xs mt-0.5">
+                  {search ? "Intenta con otros términos de búsqueda." : "Usa el botón Agregar para añadir el primero."}
+                </p>
+              </div>
+            </div>
+          )}
+        </Card>
+      </motion.div>
+
+      {/* Dialog agregar miembro */}
       <Dialog open={showInvite} onOpenChange={setShowInvite}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Agregar Miembro al Ministerio</DialogTitle>
+            <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+              Agregar Miembro
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">Asocia un usuario existente a un ministerio con un rol definido.</p>
           </DialogHeader>
+
           <div className="space-y-4 py-2">
             <div>
-              <label className="text-sm text-muted-foreground mb-1 block">ID de Usuario</label>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">ID de Usuario</label>
               <Input
                 type="number"
                 value={inviteForm.idUsuario || ""}
                 onChange={(e) => setInviteForm(prev => ({ ...prev, idUsuario: Number(e.target.value) }))}
-                placeholder="ID numérico del usuario"
-                className="bg-input-background"
+                placeholder="Ingresa el ID numérico del usuario"
+                className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
               />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Rol en Ministerio</label>
-              <Input
-                value={inviteForm.rolEnMinisterio}
-                onChange={(e) => setInviteForm(prev => ({ ...prev, rolEnMinisterio: e.target.value }))}
-                placeholder="servidor, lider, etc."
-                className="bg-input-background"
-              />
+              <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Rol en el Ministerio</label>
+              <div className="grid grid-cols-2 gap-2">
+                {["servidor", "lider"].map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setInviteForm(p => ({ ...p, rolEnMinisterio: r }))}
+                    className={`h-11 rounded-xl border text-sm font-semibold transition-all ${inviteForm.rolEnMinisterio === r ? "bg-primary/10 border-primary/30 text-primary" : "bg-background/50 border-white/10 text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {rolLabels[r]}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowInvite(false)}>Cancelar</Button>
-            <Button onClick={handleInvite} disabled={createMiembroMutation.isPending}>
+
+          <DialogFooter className="mt-2 pt-4 border-t border-border/50">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setShowInvite(false)}>Cancelar</Button>
+            <Button
+              className="rounded-xl"
+              onClick={handleInvite}
+              disabled={!inviteForm.idUsuario || !selectedMinisterioId || createMiembroMutation.isPending}
+            >
               {createMiembroMutation.isPending ? "Agregando..." : "Agregar Miembro"}
             </Button>
           </DialogFooter>
