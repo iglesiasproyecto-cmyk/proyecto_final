@@ -104,7 +104,7 @@ export function MyDepartmentPage() {
       >
         <div className="absolute top-0 right-0 w-72 h-48 bg-primary/10 rounded-full blur-[90px] pointer-events-none -z-10" />
 
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white text-2xl font-black shrink-0 shadow-lg shadow-cyan-600/20">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white text-xl font-black shadow-lg shadow-blue-900/30">
           {min.nombre.charAt(0)}
         </div>
 
@@ -148,7 +148,7 @@ export function MyDepartmentPage() {
             onClick={() => navigate(s.nav)}
             className="group bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 transition-all flex items-center gap-3"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shadow-md shadow-cyan-600/10 group-hover:scale-110 transition-transform shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-md shadow-blue-900/20 group-hover:scale-110 transition-transform shrink-0">
               {s.icon}
             </div>
             <div>

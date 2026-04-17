@@ -18,15 +18,16 @@ import {
   AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { 
-  ClipboardCheck, Plus, Filter, TrendingUp, Trash2, Pencil, 
-  ChevronRight, Calendar, Star, BookOpen, AlertCircle, CheckCircle2 
+  ChevronRight, Calendar, Star, BookOpen, AlertCircle, CheckCircle2,
+  Trophy, Target, Zap
 } from "lucide-react";
+import { AnimatedCard } from "./ui/AnimatedCard";
 
 const estadoEvalConfig: Record<string, { label: string; color: string; icon: any }> = {
   pendiente:   { label: "Pendiente",   color: "bg-amber-500/10 text-amber-500 border-amber-500/20",   icon: AlertCircle },
   aprobado:    { label: "Aprobado",    color: "bg-primary/10 text-primary border-primary/20",         icon: CheckCircle2 },
   reprobado:   { label: "Reprobado",   color: "bg-rose-500/10 text-rose-500 border-rose-500/20",      icon: XCircle },
-  en_revision: { label: "En Revisión", color: "bg-blue-500/10 text-blue-500 border-blue-500/20",      icon: Clock },
+  en_revision: { label: "En Revisión", color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",      icon: Clock },
 };
 
 function XCircle(props: any) {
@@ -134,7 +135,7 @@ export function EvaluationsPage() {
       >
         <div className="absolute top-0 right-0 w-80 h-48 bg-primary/10 rounded-full blur-[100px] pointer-events-none -z-10" />
         <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shrink-0 shadow-lg shadow-cyan-600/20">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg shadow-blue-900/30">
             <ClipboardCheck className="w-8 h-8" />
           </div>
           <div>
@@ -149,52 +150,87 @@ export function EvaluationsPage() {
         </Button>
       </motion.div>
 
-      {/* Stats Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <motion.div 
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="md:col-span-1 bg-primary/10 backdrop-blur-xl border border-primary/20 rounded-3xl p-6 flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary/70">Promedio General</span>
-            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white"><Star className="w-4 h-4 fill-current" /></div>
-          </div>
-          <div>
-            <p className={`text-4xl font-black ${getCalColor(avgCal)}`}>{avgCal > 0 ? avgCal.toFixed(1) : "—"}</p>
-            <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-2">{evaluaciones.length} evaluaciones en total</p>
-          </div>
-        </motion.div>
+      {/* Stats Bento Grid Enhanced */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <AnimatedCard index={0} className="p-5">
+           <div className="flex justify-between items-start mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg">
+                 <Trophy className="w-5 h-5" />
+              </div>
+              <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 border-0">Logro</Badge>
+           </div>
+           <p className={`text-3xl font-black ${getCalColor(avgCal)}`}>{avgCal > 0 ? avgCal.toFixed(1) : "—"}</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Promedio General</p>
+        </AnimatedCard>
 
-        <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <AnimatedCard index={1} className="p-5">
+           <div className="flex justify-between items-start mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
+                 <Target className="w-5 h-5" />
+              </div>
+              <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-500 border-0">Meta</Badge>
+           </div>
+           <p className="text-3xl font-black text-foreground">
+             {evaluaciones.filter(e => e.calificacion && e.calificacion >= 80).length}
+           </p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Módulos Excelentes</p>
+        </AnimatedCard>
+
+        <AnimatedCard index={2} className="p-5">
+           <div className="flex justify-between items-start mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                 <Zap className="w-5 h-5" />
+              </div>
+              <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-500 border-0">Estado</Badge>
+           </div>
+           <p className="text-3xl font-black text-foreground">
+             {evaluaciones.filter(e => e.estado === 'aprobado').length}
+           </p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Total Aprobados</p>
+        </AnimatedCard>
+
+        <AnimatedCard index={3} className="p-5">
+           <div className="flex justify-between items-start mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center text-white shadow-lg">
+                 <BookOpen className="w-5 h-5" />
+              </div>
+              <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest bg-slate-500/10 text-slate-400 border-0">Cursos</Badge>
+           </div>
+           <p className="text-3xl font-black text-foreground">{uniqueCursos.length}</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Cursos en Proceso</p>
+        </AnimatedCard>
+      </div>
+
+      {/* Course Progress Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {uniqueCursos.slice(0, 3).map((c, i) => {
             const cursoEvals = evaluaciones.filter((e) => e.cursoNombre === c && e.calificacion !== null);
             const avg = cursoEvals.length > 0 ? cursoEvals.reduce((sum, e) => sum + (e.calificacion || 0), 0) / cursoEvals.length : 0;
             return (
-              <motion.div
+              <AnimatedCard
                 key={c}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + i * 0.05 }}
-                className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-3xl p-5 hover:bg-white/5 transition-colors"
+                index={i}
+                className="p-5"
               >
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-3 truncate">{c}</p>
-                <div className="flex items-baseline gap-2">
-                  <span className={`text-2xl font-black ${getCalColor(avg)}`}>{avg > 0 ? avg.toFixed(1) : "—"}</span>
-                  <span className="text-[10px] font-bold text-muted-foreground/40">AVG</span>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 truncate max-w-[150px]">{c}</p>
+                  <span className={`text-lg font-black ${getCalColor(avg)} leading-none`}>{avg > 0 ? avg.toFixed(1) : "—"}</span>
                 </div>
-                <div className="mt-3 w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                  <div className={`h-full bg-gradient-to-r from-primary to-primary/40 rounded-full`} style={{ width: `${avg}%` }} />
+                <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden shadow-inner">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${avg}%` }}
+                    transition={{ duration: 1, delay: 0.5 }}
+                    className={`h-full bg-gradient-to-r from-[#709dbd] to-[#4682b4] shadow-[0_0_8px_rgba(70,130,180,0.4)]`} 
+                  />
                 </div>
-              </motion.div>
+              </AnimatedCard>
             );
           })}
-        </div>
       </div>
 
-      {/* List Section */}
-      <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-[32px] overflow-hidden shadow-sm">
+      {/* List Section Unificied with AnimatedCard */}
+      <AnimatedCard className="overflow-hidden">
         <div className="p-6 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h3 className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.25em] text-primary/70">
             <TrendingUp className="w-4 h-4" /> Historial de Resultados
@@ -286,7 +322,7 @@ export function EvaluationsPage() {
             )}
           </AnimatePresence>
         </div>
-      </Card>
+      </AnimatedCard>
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

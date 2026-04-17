@@ -112,7 +112,7 @@ export function LoginPage() {
           animate={{ opacity: 1, x: 0 }}
           className="relative z-10 flex items-center gap-4"
         >
-          <div className="w-14 h-14 rounded-[20px] bg-white/5 backdrop-blur-xl border border-white/10 p-2.5 shadow-2xl shadow-primary/20">
+          <div className="w-20 h-20 rounded-[28px] bg-white/5 backdrop-blur-xl border border-white/10 p-3 shadow-2xl shadow-primary/20">
             <SEILogo className="w-full h-full object-contain filter drop-shadow-lg" />
           </div>
           <div className="h-10 w-px bg-white/10" />
@@ -193,7 +193,7 @@ export function LoginPage() {
         >
           {/* Mobile Header */}
           <div className="lg:hidden flex flex-col items-center mb-10">
-            <div className="w-16 h-16 rounded-2xl bg-[#0c2340] flex items-center justify-center p-3 shadow-xl mb-4">
+            <div className="w-24 h-24 rounded-3xl bg-[#0c2340] flex items-center justify-center p-4 shadow-2xl mb-6">
               <SEILogo className="w-full h-full object-contain" />
             </div>
             <h1 className="text-2xl font-black tracking-tight leading-none text-foreground">S.E.I.</h1>

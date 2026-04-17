@@ -118,7 +118,7 @@ export function UsuariosPage() {
     <div className="space-y-6 max-w-6xl mx-auto">
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <Users className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -126,28 +126,34 @@ export function UsuariosPage() {
             <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Usuarios</h1>
           </div>
         </div>
-        <Button onClick={() => setShowInvite(true)} className="shrink-0 shadow-md shadow-blue-600/20 rounded-full px-6 bg-blue-600 hover:bg-blue-700 text-white h-11">
+        <Button onClick={() => setShowInvite(true)} className="shrink-0 shadow-md shadow-[#4682b4]/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 text-white h-11">
           <UserPlus className="w-4 h-4 mr-2" /> Invitar Usuario
         </Button>
       </motion.div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="p-3 text-center">
-          <p className="text-2xl text-primary">{enriched.length}</p>
-          <p className="text-xs text-muted-foreground">Total Usuarios</p>
-        </Card>
-        <Card className="p-3 text-center">
-          <p className="text-2xl text-green-600">{enriched.filter(u => u.activo).length}</p>
-          <p className="text-xs text-muted-foreground">Activos</p>
-        </Card>
-        <Card className="p-3 text-center">
-          <p className="text-2xl text-red-600">{enriched.filter(u => !u.activo).length}</p>
-          <p className="text-xs text-muted-foreground">Inactivos</p>
-        </Card>
-        <Card className="p-3 text-center">
-          <p className="text-2xl text-blue-600">{enriched.filter(u => u.ultimoAcceso).length}</p>
-          <p className="text-xs text-muted-foreground">Con acceso reciente</p>
-        </Card>
+        {[
+          { label: "Total Usuarios", value: enriched.length, icon: <Users className="w-4 h-4" /> },
+          { label: "Activos", value: enriched.filter(u => u.activo).length, icon: <ShieldCheck className="w-4 h-4" /> },
+          { label: "Inactivos", value: enriched.filter(u => !u.activo).length, icon: <X className="w-4 h-4" /> },
+          { label: "Con acceso reciente", value: enriched.filter(u => u.ultimoAcceso).length, icon: <Clock className="w-4 h-4" /> },
+        ].map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + i * 0.05 }}
+            className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-4 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-md shadow-blue-900/10 group-hover:scale-110 transition-transform shrinking-0">
+              {s.icon}
+            </div>
+            <div className="min-w-0">
+              <p className="text-2xl font-black text-foreground leading-none mb-1">{s.value}</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest truncate">{s.label}</p>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -222,7 +228,7 @@ export function UsuariosPage() {
                   <div className="flex gap-1 justify-end">
                     <Button variant="ghost" size="sm" title="Ver detalle" onClick={() => setDetail(u.idUsuario)}><Eye className="w-3.5 h-3.5" /></Button>
                     <Button variant="ghost" size="sm" title="Asignar rol" onClick={() => { setShowAssignRol(u.idUsuario); resetAssignForm(); }}>
-                      <ShieldPlus className="w-3.5 h-3.5 text-blue-600" />
+                      <ShieldPlus className="w-3.5 h-3.5 text-[#4682b4] dark:text-[#709dbd]" />
                     </Button>
                     <Button 
                       variant="ghost" 

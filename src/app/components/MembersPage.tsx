@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMinisterios, useMiembrosMinisterioEnriquecidos, useCreateMiembroMinisterio, useDeleteMiembroMinisterio } from "@/hooks/useMinisterios";
 import { Card } from "./ui/card";
+import { AnimatedCard } from "./ui/AnimatedCard";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -14,7 +15,7 @@ const rolIcons: Record<string, React.ReactNode> = {
   servidor: <User className="w-3 h-3" />,
 };
 const rolColors: Record<string, string> = {
-  lider: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  lider: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",
   servidor: "bg-slate-500/10 text-slate-400 border-slate-500/20",
 };
 
@@ -126,137 +127,131 @@ export function MembersPage() {
       </motion.div>
 
       {/* Métricas rápidas */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="grid grid-cols-3 gap-3"
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
-          { label: "Total", value: filtered.length, icon: <Users className="w-4 h-4" />, color: "text-primary" },
-          { label: "Activos", value: activeCount, icon: <ShieldCheck className="w-4 h-4" />, color: "text-emerald-400" },
-          { label: "Líderes", value: leaderCount, icon: <User className="w-4 h-4" />, color: "text-blue-400" },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-3">
-            <div className={`${stat.color} bg-current/10 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 opacity-80`} style={{ backgroundColor: "currentColor", opacity: 1 }}>
-              <div className={`${stat.color}`}>{stat.icon}</div>
+          { label: "Total Miembros", value: filtered.length, icon: <Users className="w-5 h-5" />, color: "from-[#709dbd] to-[#4682b4]", delay: 0 },
+          { label: "Activos Ahora", value: activeCount, icon: <ShieldCheck className="w-5 h-5" />, color: "from-emerald-500/80 to-teal-600/80", delay: 1 },
+          { label: "Líderes de Red", value: leaderCount, icon: <User className="w-5 h-5" />, color: "from-[#709dbd] to-[#4682b4]", delay: 2 },
+        ].map((stat, idx) => (
+          <AnimatedCard key={stat.label} index={idx} className="p-4 group">
+            <div className="flex justify-between items-start mb-3">
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg text-white`}>
+                {stat.icon}
+              </div>
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-[10px] py-0 tracking-widest uppercase">Estadística</Badge>
             </div>
             <div>
-              <p className="text-xl font-black tracking-tight leading-none">{stat.value}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">{stat.label}</p>
+              <p className="text-4xl font-light tracking-tight text-foreground">{stat.value}</p>
+              <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{stat.label}</p>
             </div>
-          </div>
+          </AnimatedCard>
         ))}
-      </motion.div>
+      </div>
+
 
       {/* Lista de miembros — Tabla Glass */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <Card className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-sm p-0">
-          {/* Cabecera de tabla */}
-          <div className="hidden md:grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-5 py-3 border-b border-border/40 bg-card/20">
-            {["Miembro", "Contacto", "Rol", "Estado", ""].map((col) => (
-              <span key={col} className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">{col}</span>
-            ))}
-          </div>
+      <AnimatedCard index={4} className="overflow-hidden p-0">
+        {/* Cabecera de tabla */}
+        <div className="hidden md:grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-6 py-4 border-b border-white/5 bg-white/5 dark:bg-black/20">
+          {["Miembro", "Contacto", "Rol", "Estado", ""].map((col) => (
+            <span key={col} className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/70">{col}</span>
+          ))}
+        </div>
 
-          <div className="divide-y divide-border/30">
-            <AnimatePresence>
-              {filtered.map((mm, i) => {
-                const name = mm.usuarioNombre || mm.nombreCompleto || "Sin nombre";
-                const email = mm.usuarioCorreo || mm.correo || "";
-                const phone = mm.telefono || "—";
-                const rol = mm.rolEnMinisterio || "servidor";
-                const inicial = name.charAt(0).toUpperCase();
+        <div className="divide-y divide-white/5">
+          <AnimatePresence>
+            {filtered.map((mm, i) => {
+              const name = mm.usuarioNombre || mm.nombreCompleto || "Sin nombre";
+              const email = mm.usuarioCorreo || mm.correo || "";
+              const phone = mm.telefono || "—";
+              const rol = mm.rolEnMinisterio || "servidor";
+              const inicial = name.charAt(0).toUpperCase();
 
-                return (
-                  <motion.div
-                    key={mm.idMiembroMinisterio}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="group flex flex-col md:grid md:grid-cols-[2fr_2fr_1fr_1fr_auto] gap-3 md:gap-4 items-start md:items-center px-5 py-4 hover:bg-accent/20 transition-all duration-200"
-                  >
-                    {/* Avatar + nombre */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="relative shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/15 flex items-center justify-center text-primary font-bold text-sm shadow-inner group-hover:scale-105 transition-transform">
-                          {inicial}
-                        </div>
-                        {mm.activo && (
-                          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background" />
-                        )}
+              return (
+                <motion.div
+                  key={mm.idMiembroMinisterio}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ delay: i * 0.02 }}
+                  className="group flex flex-col md:grid md:grid-cols-[2fr_2fr_1fr_1fr_auto] gap-3 md:gap-4 items-start md:items-center px-6 py-5 hover:bg-white/5 transition-all duration-300"
+                >
+                  {/* Avatar + nombre */}
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="relative shrink-0">
+                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white font-bold text-sm shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform">
+                        {inicial}
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{name}</p>
-                        <p className="text-xs text-muted-foreground truncate md:hidden">{email}</p>
-                      </div>
+                      {mm.activo && (
+                        <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
+                      )}
                     </div>
-
-                    {/* Contacto */}
-                    <div className="hidden md:flex flex-col gap-1 min-w-0">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
-                        <Mail className="w-3 h-3 shrink-0 text-primary/40" />
-                        <span className="truncate">{email}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Phone className="w-3 h-3 shrink-0 text-primary/40" />
-                        <span>{phone}</span>
-                      </div>
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-bold truncate group-hover:text-blue-500 transition-colors uppercase tracking-tight">{name}</p>
+                      <p className="text-xs text-muted-foreground truncate md:hidden">{email}</p>
                     </div>
+                  </div>
 
-                    {/* Rol */}
-                    <div>
-                      <Badge variant="outline" className={`${rolColors[rol] ?? rolColors.servidor} border text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 flex items-center gap-1 w-fit`}>
-                        {rolIcons[rol] ?? rolIcons.servidor}
-                        {rolLabels[rol] ?? rol}
-                      </Badge>
+                  {/* Contacto */}
+                  <div className="hidden md:flex flex-col gap-1 min-w-0">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium truncate">
+                      <Mail className="w-3.5 h-3.5 shrink-0 text-blue-500/50" />
+                      <span className="truncate">{email}</span>
                     </div>
-
-                    {/* Estado */}
-                    <div>
-                      <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border ${mm.activo ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-slate-500/10 text-slate-400 border-slate-500/20"}`}>
-                        {mm.activo ? "Activo" : "Inactivo"}
-                      </Badge>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                      <Phone className="w-3.5 h-3.5 shrink-0 text-blue-500/50" />
+                      <span>{phone}</span>
                     </div>
+                  </div>
 
-                    {/* Acciones */}
-                    <div className="flex md:justify-end">
-                      <button
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 opacity-0 group-hover:opacity-100"
-                        onClick={() => handleDeleteMiembro(mm.idMiembroMinisterio, name)}
-                        disabled={deleteMiembroMutation.isPending}
-                        title="Eliminar miembro"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </div>
+                  {/* Rol */}
+                  <div>
+                    <Badge variant="outline" className={`${rolColors[rol] ?? rolColors.servidor} border-0 bg-[#4682b4]/10 text-[#4682b4] dark:text-[#709dbd] text-[10px] uppercase font-black tracking-widest px-2.5 py-1 flex items-center gap-1.5 w-fit rounded-lg`}>
+                      {rolIcons[rol] ?? rolIcons.servidor}
+                      {rolLabels[rol] ?? rol}
+                    </Badge>
+                  </div>
 
-          {/* Estado vacío */}
-          {filtered.length === 0 && (
-            <div className="py-16 flex flex-col items-center justify-center text-muted-foreground gap-3">
-              <div className="w-16 h-16 rounded-2xl bg-accent/40 flex items-center justify-center">
-                <Inbox className="w-7 h-7 opacity-40" />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-sm">Sin miembros registrados</p>
-                <p className="text-xs mt-0.5">
-                  {search ? "Intenta con otros términos de búsqueda." : "Usa el botón Agregar para añadir el primero."}
-                </p>
-              </div>
+                  {/* Estado */}
+                  <div>
+                    <Badge variant="outline" className={`text-[10px] uppercase font-black tracking-widest px-2.5 py-1 border-0 rounded-lg ${mm.activo ? "bg-emerald-500/10 text-emerald-600" : "bg-slate-500/10 text-slate-400"}`}>
+                      {mm.activo ? "Activo" : "Inactivo"}
+                    </Badge>
+                  </div>
+
+                  {/* Acciones */}
+                  <div className="flex md:justify-end">
+                    <button
+                      className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-all duration-300 opacity-0 group-hover:opacity-100"
+                      onClick={() => handleDeleteMiembro(mm.idMiembroMinisterio, name)}
+                      disabled={deleteMiembroMutation.isPending}
+                      title="Eliminar miembro"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+
+        {/* Estado vacío */}
+        {filtered.length === 0 && (
+          <div className="py-24 flex flex-col items-center justify-center text-muted-foreground gap-4">
+            <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center shadow-inner">
+              <Inbox className="w-10 h-10 opacity-20" />
             </div>
-          )}
-        </Card>
-      </motion.div>
+            <div className="text-center">
+              <p className="font-bold text-lg uppercase tracking-widest opacity-80">Sin miembros</p>
+              <p className="text-xs mt-1 max-w-[200px]">
+                {search ? "No encontramos resultados para tu búsqueda." : "Aún no hay miembros en este ministerio."}
+              </p>
+            </div>
+          </div>
+        )}
+      </AnimatedCard>
+
 
       {/* Dialog agregar miembro */}
       <Dialog open={showInvite} onOpenChange={setShowInvite}>
@@ -286,7 +281,7 @@ export function MembersPage() {
                   <button
                     key={r}
                     onClick={() => setInviteForm(p => ({ ...p, rolEnMinisterio: r }))}
-                    className={`h-11 rounded-xl border text-sm font-semibold transition-all ${inviteForm.rolEnMinisterio === r ? "bg-primary/10 border-primary/30 text-primary" : "bg-background/50 border-white/10 text-muted-foreground hover:text-foreground"}`}
+                    className={`h-11 rounded-xl border text-sm font-semibold transition-all ${inviteForm.rolEnMinisterio === r ? "bg-[#4682b4]/10 border-[#4682b4]/30 text-[#4682b4]" : "bg-background/50 border-white/10 text-muted-foreground hover:text-foreground"}`}
                   >
                     {rolLabels[r]}
                   </button>
