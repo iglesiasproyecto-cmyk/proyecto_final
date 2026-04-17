@@ -133,6 +133,11 @@ export function AppLayout() {
     if (!authLoading && !usuarioActual) navigate("/login");
   }, [authLoading, usuarioActual, navigate]);
 
+  useEffect(() => {
+    const sectionTitle = pageTitles[location.pathname] || "Panel"
+    document.title = `${sectionTitle} | IGLESIABD`
+  }, [location.pathname]);
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
