@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { useIglesiasEnriquecidas, useCreateIglesia, useUpdateIglesia, useToggleIglesiaEstado, useDeleteIglesia } from "@/hooks/useIglesias";
-import type { Iglesia } from "@/types/app.types";
 import type { IglesiaEnriquecida } from "@/services/iglesias.service";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useCiudades } from "@/hooks/useGeografia";
 import { motion } from "motion/react";
-import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar, MoreVertical } from "lucide-react";
+import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar } from "lucide-react";
 
 const estadoLabels: Record<string, string> = {
   activa: "Activa",
@@ -34,7 +33,7 @@ function GlassCard({ children, index = 0, isActive = true }: { children: React.R
       className="h-full"
     >
       <div 
-        className={`h-full relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] transition-all duration-300 dark:border-white/10 dark:bg-card/20 hover:shadow-lg hover:bg-card/60 hover:-translate-y-1 ${!isActive ? "opacity-75 grayscale-[0.2]" : ""}`}
+        className={`h-full relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-border/50 shadow-[0_8px_30px_rgb(0,0,0,0.03)] transition-all duration-300 dark:border-white/10 dark:bg-card/20 hover:shadow-lg hover:bg-card/60 hover:-translate-y-1 ${!isActive ? "opacity-75 grayscale-[0.2]" : ""}`}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent dark:from-white/5 opacity-50 pointer-events-none" />
         <div className="relative z-10 p-5 flex flex-col h-full">
@@ -143,7 +142,7 @@ export function ChurchesPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* Header unificado con controles */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm relative overflow-hidden">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -171,7 +170,7 @@ export function ChurchesPage() {
               className="pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" 
             />
           </div>
-          <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto h-10 items-center">
+          <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto no-scrollbar h-10 items-center">
             {(["all", "activa", "inactiva"] as const).map((f) => (
               <Button 
                 key={f} 

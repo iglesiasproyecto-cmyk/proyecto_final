@@ -28,7 +28,7 @@ function GlassCard({ children, index = 0 }: { children: React.ReactNode; index?:
       className="h-full"
     >
       <div 
-        className="h-full relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] transition-all duration-300 dark:border-white/10 dark:bg-card/20 hover:shadow-lg hover:bg-card/60 hover:-translate-y-1"
+        className="h-full relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-border/50 shadow-[0_8px_30px_rgb(0,0,0,0.03)] transition-all duration-300 hover:shadow-lg hover:bg-card/60 hover:-translate-y-1"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent dark:from-white/5 opacity-50 pointer-events-none" />
         <div className="relative z-10 p-5 flex flex-col h-full">
@@ -116,7 +116,7 @@ export function PastoresPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* HEADER */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
 
         <div className="flex items-center gap-4">
@@ -132,7 +132,7 @@ export function PastoresPage() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <div className="flex justify-start">
-          <TabsList className="bg-card/40 backdrop-blur-xl border border-white/20 dark:border-white/10 dark:bg-card/20 rounded-2xl h-14 px-1.5 shadow-sm">
+          <TabsList className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl h-14 px-1.5 shadow-sm">
             <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 dark:data-[state=active]:from-cyan-600 dark:data-[state=active]:to-blue-700 data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
               Directorio ({pastores.length})
             </TabsTrigger>
@@ -145,7 +145,7 @@ export function PastoresPage() {
         <TabsContent value="pastores" className="space-y-6 mt-6">
           {/* ACTION BAR */}
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
-            <div className="p-3 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm flex flex-col sm:flex-row justify-between gap-3 dark:border-white/10 dark:bg-card/20">
+            <div className="p-3 rounded-2xl bg-card/40 backdrop-blur-xl border border-border/50 shadow-sm flex flex-col sm:flex-row justify-between gap-3">
               <div className="relative flex-1 md:max-w-md">
                 <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input 
@@ -243,12 +243,12 @@ export function PastoresPage() {
         <TabsContent value="asignaciones" className="space-y-4 mt-6">
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
             <div className="flex justify-end mb-4">
-              <Button onClick={openAsign} className="shadow-md shadow-primary/20 rounded-full px-6 bg-blue-600 hover:bg-blue-700 text-white h-11">
+              <Button onClick={openAsign} className="shrink-0 shadow-md shadow-cyan-600/30 rounded-full px-6 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white h-11">
                 <Plus className="w-4 h-4 mr-2" /> Nueva Asignación
               </Button>
             </div>
             
-            <div className="rounded-2xl bg-card/50 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden dark:border-white/10 dark:bg-card/20">
+            <div className="rounded-2xl bg-card/50 backdrop-blur-2xl border border-border/50 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden dark:border-white/10 dark:bg-card/20">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-muted/30">

@@ -116,7 +116,7 @@ export function MembersPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden"
+        className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
 
@@ -154,7 +154,7 @@ export function MembersPage() {
               value={effectiveMinisterioId}
               onChange={(e) => setSelectedMinisterioId(Number(e.target.value))}
               disabled={isLider}
-              className="text-sm bg-transparent border-0 outline-none text-foreground/80 min-w-0 cursor-pointer [&_option]:bg-white [&_option]:text-gray-900 dark:[&_option]:bg-gray-800 dark:[&_option]:text-gray-100"
+              className="text-sm bg-transparent border-0 outline-none text-foreground min-w-0 cursor-pointer"
             >
               {!isLider && <option value={0}>Todos los ministerios</option>}
               {ministeriosVisibles.map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
@@ -188,7 +188,7 @@ export function MembersPage() {
           { label: "Activos", value: activeCount, icon: <ShieldCheck className="w-4 h-4 text-white" />, gradient: "from-emerald-500 to-emerald-700", shadow: "shadow-emerald-500/25" },
           { label: "Líderes", value: leaderCount, icon: <User className="w-4 h-4 text-white" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-indigo-500/25" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-3">
+          <div key={stat.label} className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.gradient} ${stat.shadow} shadow-lg flex items-center justify-center shrink-0`}>
               {stat.icon}
             </div>
@@ -206,7 +206,7 @@ export function MembersPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <Card className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-sm p-0">
+        <Card className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl overflow-hidden shadow-sm p-0">
           {/* Cabecera de tabla */}
           <div className={`hidden md:grid ${showMinisterioColumn ? "grid-cols-[2fr_1.3fr_2fr_1fr_1fr_auto]" : "grid-cols-[2fr_2fr_1fr_1fr_auto]"} gap-4 px-5 py-3 border-b border-border/40 bg-card/20`}>
             {[(showMinisterioColumn ? ["Miembro", "Ministerio", "Contacto", "Rol", "Estado", ""] : ["Miembro", "Contacto", "Rol", "Estado", ""])].flat().map((col) => (

@@ -8,12 +8,12 @@ import {
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "./ui/alert-dialog";
-import { Globe, MapPin, Building, Plus, Pencil, Trash2, ChevronRight, ChevronDown, Search, X, Layers, Flag } from "lucide-react";
+import { Globe, MapPin, Building, Plus, Pencil, Trash2, ChevronRight, ChevronDown, Search, X } from "lucide-react";
 import { motion } from "motion/react";
 
 export function GeographyPage() {
@@ -107,14 +107,15 @@ export function GeographyPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* HEADER */}
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
             <Globe className="w-6 h-6 text-white" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Catálogos</p>
-            <h1 className="text-3xl font-light tracking-tight">Gestión Geográfica</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Gestión Geográfica</h1>
           </div>
         </div>
         <Button onClick={() => openDialog("pais", "add")} className="shrink-0 shadow-md shadow-cyan-600/30 rounded-full px-6 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white h-11"><Plus className="w-4 h-4 mr-2" /> Nuevo País</Button>
@@ -122,15 +123,15 @@ export function GeographyPage() {
 
       {/* STATS ROW */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }} className="grid grid-cols-3 gap-4">
-        <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm dark:border-white/10 dark:bg-card/20 flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
+        <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-border/50 shadow-sm flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
           <p className="text-3xl font-light text-cyan-600 dark:text-cyan-400">{paises.length}</p>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5"/> Países</p>
         </div>
-        <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm dark:border-white/10 dark:bg-card/20 flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
+        <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-border/50 shadow-sm flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
           <p className="text-3xl font-light text-violet-600 dark:text-violet-400">{departamentosGeo.length}</p>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5"/> Departamentos</p>
         </div>
-        <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm dark:border-white/10 dark:bg-card/20 flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
+        <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-border/50 shadow-sm flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
           <p className="text-3xl font-light text-emerald-600 dark:text-emerald-400">{ciudades.length}</p>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 flex items-center gap-1.5"><Building className="w-3.5 h-3.5"/> Ciudades</p>
         </div>
@@ -138,7 +139,7 @@ export function GeographyPage() {
 
       {/* ACTION BAR */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
-        <div className="p-3 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm flex dark:border-white/10 dark:bg-card/20">
+        <div className="p-3 rounded-2xl bg-card/40 backdrop-blur-xl border border-border/50 shadow-sm flex">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input 

@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { 
   Plus, ChevronRight, ChevronDown, FileText, Link as LinkIcon, Download, 
   ExternalLink, GraduationCap, Layers, ArrowLeft, Pencil, Trash2, 
-  PlusCircle, BookOpen, Clock, Users, CheckCircle2, MoreVertical
+  PlusCircle, BookOpen, Clock, Users, CheckCircle2
 } from "lucide-react";
 
 export function ClassroomPage() {
@@ -227,7 +227,7 @@ export function ClassroomPage() {
             {selectedModulo.recursos && selectedModulo.recursos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {selectedModulo.recursos.map((r) => (
-                  <div key={r.idRecurso} className="flex items-center gap-3 p-4 rounded-2xl bg-background/40 hover:bg-background/60 border border-white/5 transition-all group">
+                  <div key={r.idRecurso} className="flex items-center gap-3 p-4 rounded-2xl bg-background/40 hover:bg-background/60 border border-border/50 transition-all group">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-110 transition-transform">
                       {r.tipo === "archivo" ? <FileText className="w-5 h-5" /> : <LinkIcon className="w-5 h-5" />}
                     </div>
@@ -327,14 +327,14 @@ export function ClassroomPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 overflow-x-auto pb-1 md:pb-0">
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1 md:pb-0">
           {ministerios.length > 1 && (
-            <div className="flex items-center gap-2 bg-background/40 border border-white/5 rounded-2xl px-3 h-11 shrink-0">
+            <div className="flex items-center gap-2 bg-background/40 border border-border/50 rounded-2xl px-3 h-11 shrink-0">
               <BookOpen className="w-4 h-4 text-muted-foreground/50" />
               <select
                 value={actualMinId}
                 onChange={(e) => { setSelectedMinId(Number(e.target.value)); setSelectedCursoId(null); }}
-                className="text-xs bg-transparent border-0 outline-none text-foreground/80 cursor-pointer font-bold tracking-tight"
+                className="text-xs bg-transparent border-0 outline-none text-foreground cursor-pointer font-bold tracking-tight"
               >
                 {ministerios.filter((m) => m.estado === "activo").map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
               </select>
@@ -343,7 +343,7 @@ export function ClassroomPage() {
           {canManageAula ? (
             <Button 
               onClick={() => setShowCreateCurso(true)} 
-              className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0"
+              className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:scale-105 transition-all"
             >
               <Plus className="w-4 h-4 mr-2" /> Nuevo Curso
             </Button>
@@ -447,7 +447,7 @@ export function ClassroomPage() {
                         </div>
                       )}
                       {curso.cantidadInscritos > 0 && (
-                        <div className="flex flex-col items-end border-l border-white/10 pl-4">
+                        <div className="flex flex-col items-end border-l border-border/40 pl-4">
                           <span className="text-base font-black leading-none">{curso.cantidadInscritos}</span>
                           <span className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Inscritos</span>
                         </div>

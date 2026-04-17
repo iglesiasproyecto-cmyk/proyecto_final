@@ -87,7 +87,7 @@ function CicloDetail({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden flex flex-col md:flex-row md:items-center gap-4"
+        className="relative bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm overflow-hidden flex flex-col md:flex-row md:items-center gap-4"
       >
         <div className="absolute top-0 right-0 w-64 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
         <button
@@ -119,7 +119,7 @@ function CicloDetail({
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-2xl"
+          className="bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-2xl"
         >
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -134,7 +134,7 @@ function CicloDetail({
 
       {/* Participants */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-2xl p-0 overflow-hidden shadow-sm">
+        <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-2xl p-0 overflow-hidden shadow-sm">
           <div className="p-4 border-b border-border/40 bg-card/20 flex items-center justify-between">
             <div>
               <h3 className="font-bold text-sm flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Participantes inscritos</h3>
@@ -365,7 +365,7 @@ export function CiclosLectivosPage() {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
           <div className="flex items-center gap-2 bg-background/50 border border-border/50 rounded-xl px-3 h-10">
             <Filter className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
-            <select value={estadoFilter} onChange={e => setEstadoFilter(e.target.value)} className="text-xs bg-transparent border-0 outline-none text-foreground/80 cursor-pointer">
+            <select value={estadoFilter} onChange={e => setEstadoFilter(e.target.value)} className="text-xs bg-transparent border-0 outline-none text-foreground cursor-pointer">
               <option value="all">Todos los estados</option>
               <option value="programado">Programado</option>
               <option value="en_curso">En Curso</option>
@@ -375,7 +375,7 @@ export function CiclosLectivosPage() {
           </div>
           <div className="flex items-center gap-2 bg-background/50 border border-border/50 rounded-xl px-3 h-10">
             <BookOpen className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
-            <select value={cursoFilter} onChange={e => setCursoFilter(e.target.value)} className="text-xs bg-transparent border-0 outline-none text-foreground/80 cursor-pointer">
+            <select value={cursoFilter} onChange={e => setCursoFilter(e.target.value)} className="text-xs bg-transparent border-0 outline-none text-foreground cursor-pointer">
               <option value="all">Todos los cursos</option>
               {uniqueCursoIds.map(id => <option key={id} value={id}>{getCursoNombre(id)}</option>)}
             </select>
