@@ -5,6 +5,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+function normalizeBaseUrl(url?: string | null): string | null {
+  if (!url) return null
+  const trimmed = url.trim()
+  if (!trimmed) return null
+
+  // Accept both "example.com" and "https://example.com" formats.
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+
+  try {
+    const parsed = new URL(withProtocol)
+    return parsed.origin
+  } catch {
+    return null
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -44,58 +60,165 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Invite user via Supabase Auth Admin API
-    // NOTE: The handle_new_user trigger automatically creates the usuario record.
-    // We must NOT insert manually — that would cause a duplicate.
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      correo,
-      {
-        data: { nombres, apellidos },
-        redirectTo: `${Deno.env.get('SITE_URL') ?? ''}/app`,
-      }
+    const normalizedEmail = String(correo).trim().toLowerCase()
+
+    const { data: callerUsuario, error: callerUsuarioError } = await supabaseAdmin
+      .from('usuario')
+      .select('id_usuario')
+      .eq('auth_user_id', user.id)
+      .maybeSingle()
+
+    if (callerUsuarioError || !callerUsuario) {
+      return new Response(JSON.stringify({ message: 'Caller profile not found' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const { data: callerRoles, error: callerRolesError } = await supabaseAdmin
+      .from('usuario_rol')
+      .select('id_iglesia, rol:rol!inner(nombre)')
+      .eq('id_usuario', callerUsuario.id_usuario)
+      .is('fecha_fin', null)
+
+    if (callerRolesError) throw callerRolesError
+
+    const activeRoles = (callerRoles ?? []) as Array<{ id_iglesia: number; rol: { nombre: string } }>
+    const isSuperAdmin = activeRoles.some((r) => r.rol?.nombre === 'Super Administrador')
+    const managedIglesias = new Set(
+      activeRoles
+        .filter((r) => r.rol?.nombre === 'Super Administrador' || r.rol?.nombre === 'Administrador de Iglesia')
+        .map((r) => r.id_iglesia)
     )
-    if (inviteError) throw inviteError
 
-    const authUserId = inviteData.user.id
+    if (!isSuperAdmin && !managedIglesias.has(idIglesia)) {
+      return new Response(JSON.stringify({ message: 'No autorizado para gestionar esa iglesia' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
-    // Poll up to 5 seconds for the trigger to create the usuario record
-    let usuarioId: number | null = null
-    for (let attempt = 0; attempt < 10; attempt++) {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      const { data: rows } = await supabaseAdmin
-        .from('usuario')
-        .select('id_usuario')
-        .eq('auth_user_id', authUserId)
-        .limit(1)
-      if (rows && rows.length > 0) {
-        usuarioId = rows[0].id_usuario
-        break
+    const { data: targetRole, error: targetRoleError } = await supabaseAdmin
+      .from('rol')
+      .select('nombre')
+      .eq('id_rol', idRol)
+      .single()
+
+    if (targetRoleError || !targetRole) {
+      return new Response(JSON.stringify({ message: 'Rol inválido' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (!isSuperAdmin && targetRole.nombre === 'Super Administrador') {
+      return new Response(JSON.stringify({ message: 'No autorizado para asignar ese rol' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // First, check if the app profile already exists to keep this flow idempotent.
+    const { data: existingUsuario, error: existingUsuarioError } = await supabaseAdmin
+      .from('usuario')
+      .select('id_usuario, auth_user_id, activo')
+      .eq('correo', normalizedEmail)
+      .maybeSingle()
+    if (existingUsuarioError) throw existingUsuarioError
+
+    let usuarioId: number | null = existingUsuario?.id_usuario ?? null
+    let inviteSent = false
+
+    if (!usuarioId) {
+      // Invite user via Supabase Auth Admin API.
+      // NOTE: The handle_new_user trigger should create the usuario record.
+      const configuredSiteUrl = normalizeBaseUrl(Deno.env.get('SITE_URL'))
+      const requestOrigin = normalizeBaseUrl(req.headers.get('origin'))
+      const baseUrl = configuredSiteUrl ?? requestOrigin
+      const inviteOptions = baseUrl
+        ? { data: { nombres, apellidos }, redirectTo: `${baseUrl}/app` }
+        : { data: { nombres, apellidos } }
+
+      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        normalizedEmail,
+        inviteOptions
+      )
+
+      if (inviteError) {
+        const msg = inviteError.message?.toLowerCase() ?? ''
+        const duplicateLike = msg.includes('duplicate') || msg.includes('already') || msg.includes('exists')
+        if (!duplicateLike) throw inviteError
+
+        // In race conditions / previous partial attempts, profile may already exist.
+        const { data: dupUsuario, error: dupUsuarioError } = await supabaseAdmin
+          .from('usuario')
+          .select('id_usuario')
+          .eq('correo', normalizedEmail)
+          .maybeSingle()
+        if (dupUsuarioError) throw dupUsuarioError
+        if (!dupUsuario) throw inviteError
+        usuarioId = dupUsuario.id_usuario
+      } else {
+        inviteSent = true
+        const authUserId = inviteData.user.id
+
+        // Poll up to 5 seconds for the trigger to create the usuario record.
+        for (let attempt = 0; attempt < 10; attempt++) {
+          await new Promise((resolve) => setTimeout(resolve, 500))
+          const { data: rows } = await supabaseAdmin
+            .from('usuario')
+            .select('id_usuario')
+            .eq('auth_user_id', authUserId)
+            .limit(1)
+          if (rows && rows.length > 0) {
+            usuarioId = rows[0].id_usuario
+            break
+          }
+        }
+
+        if (!usuarioId) {
+          const { data: fallbackUsuario, error: fallbackUsuarioError } = await supabaseAdmin
+            .from('usuario')
+            .select('id_usuario')
+            .eq('correo', normalizedEmail)
+            .maybeSingle()
+          if (fallbackUsuarioError) throw fallbackUsuarioError
+          if (!fallbackUsuario) {
+            throw new Error('No se pudo resolver el perfil de usuario invitado')
+          }
+          usuarioId = fallbackUsuario.id_usuario
+        }
       }
     }
 
     if (!usuarioId) {
-      // Trigger did not fire in time — create the record manually as fallback
-      const { data: newUsuario, error: usuarioError } = await supabaseAdmin
-        .from('usuario')
-        .insert({ nombres, apellidos, correo, auth_user_id: authUserId, activo: true, contrasena_hash: '' })
-        .select('id_usuario')
-        .single()
-      if (usuarioError) throw usuarioError
-      usuarioId = newUsuario.id_usuario
+      throw new Error('No se pudo resolver el usuario objetivo')
     }
 
-    // Assign rol
-    const { error: rolError } = await supabaseAdmin
+    const { data: existingAssignment, error: assignmentCheckError } = await supabaseAdmin
       .from('usuario_rol')
-      .insert({
-        id_usuario: usuarioId,
-        id_rol: idRol,
-        id_iglesia: idIglesia,
-        fecha_inicio: new Date().toISOString().split('T')[0],
-      })
-    if (rolError) throw rolError
+      .select('id_usuario_rol')
+      .eq('id_usuario', usuarioId)
+      .eq('id_rol', idRol)
+      .eq('id_iglesia', idIglesia)
+      .is('fecha_fin', null)
+      .maybeSingle()
 
-    return new Response(JSON.stringify({ success: true }), {
+    if (assignmentCheckError) throw assignmentCheckError
+
+    if (!existingAssignment) {
+      const { error: rolError } = await supabaseAdmin
+        .from('usuario_rol')
+        .insert({
+          id_usuario: usuarioId,
+          id_rol: idRol,
+          id_iglesia: idIglesia,
+          fecha_inicio: new Date().toISOString().split('T')[0],
+        })
+      if (rolError) throw rolError
+    }
+
+    return new Response(JSON.stringify({ success: true, inviteSent }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
