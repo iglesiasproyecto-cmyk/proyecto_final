@@ -31,6 +31,7 @@ function mapModulo(r: ModuloRow): Modulo {
     idModulo: r.id_modulo,
     titulo: r.titulo,
     descripcion: r.descripcion,
+    contenidoMd: r.contenido_md,
     orden: r.orden,
     estado: r.estado as Modulo['estado'],
     idCurso: r.id_curso,
@@ -154,6 +155,16 @@ export async function getModulos(idCurso: number): Promise<Modulo[]> {
   return data.map(mapModulo)
 }
 
+export async function getModulo(idModulo: number): Promise<Modulo> {
+  const { data, error } = await supabase
+    .from('modulo')
+    .select('*')
+    .eq('id_modulo', idModulo)
+    .single()
+  if (error) throw error
+  return mapModulo(data)
+}
+
 export async function getRecursos(idModulo: number): Promise<Recurso[]> {
   const { data, error } = await supabase
     .from('recurso')
@@ -267,6 +278,20 @@ export async function updateModulo(
     .single()
   if (error) throw error
   return mapModulo(result)
+}
+
+export async function updateModuloContenido(
+  idModulo: number,
+  contenidoMd: string | null
+): Promise<Modulo> {
+  const { data, error } = await supabase
+    .from('modulo')
+    .update({ contenido_md: contenidoMd })
+    .eq('id_modulo', idModulo)
+    .select()
+    .single()
+  if (error) throw error
+  return mapModulo(data)
 }
 
 export async function deleteModulo(id: number): Promise<void> {

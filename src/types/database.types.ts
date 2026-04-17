@@ -476,6 +476,7 @@ export type Database = {
       }
       modulo: {
         Row: {
+          contenido_md: string | null
           creado_en: string
           descripcion: string | null
           estado: Database["public"]["Enums"]["estado_modulo"]
@@ -486,6 +487,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          contenido_md?: string | null
           creado_en?: string
           descripcion?: string | null
           estado?: Database["public"]["Enums"]["estado_modulo"]
@@ -496,6 +498,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          contenido_md?: string | null
           creado_en?: string
           descripcion?: string | null
           estado?: Database["public"]["Enums"]["estado_modulo"]
@@ -1106,6 +1109,10 @@ export type Database = {
         Args: { target_ministerio_id: number }
         Returns: boolean
       }
+      can_read_modulo_as_student: {
+        Args: { p_id_modulo: number }
+        Returns: boolean
+      }
       current_usuario_id: { Args: never; Returns: number }
       delete_usuario_super_admin: {
         Args: { target_usuario_id: number }
@@ -1378,3 +1385,4 @@ export const Constants = {
     },
   },
 } as const
+
