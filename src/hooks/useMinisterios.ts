@@ -44,7 +44,10 @@ export function useCreateMinisterio() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createMinisterio,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['ministerios'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ministerios'] })
+      qc.invalidateQueries({ queryKey: ['ministerios-enriquecidos'] })
+    },
   })
 }
 
@@ -53,7 +56,10 @@ export function useUpdateMinisterio() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateMinisterio>[1] }) =>
       updateMinisterio(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['ministerios'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ministerios'] })
+      qc.invalidateQueries({ queryKey: ['ministerios-enriquecidos'] })
+    },
   })
 }
 
@@ -61,7 +67,10 @@ export function useToggleMinisterioEstado() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => toggleMinisterioEstado(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['ministerios'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ministerios'] })
+      qc.invalidateQueries({ queryKey: ['ministerios-enriquecidos'] })
+    },
   })
 }
 
@@ -69,8 +78,11 @@ export function useCreateMiembroMinisterio() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createMiembroMinisterio,
-    onSuccess: (_data, variables) =>
-      qc.invalidateQueries({ queryKey: ['miembros-ministerio', variables.idMinisterio] }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['miembros-ministerio', variables.idMinisterio] })
+      qc.invalidateQueries({ queryKey: ['miembros-ministerio-enriquecidos'] })
+      qc.invalidateQueries({ queryKey: ['ministerios-enriquecidos'] })
+    },
   })
 }
 
