@@ -62,6 +62,7 @@ export function useUpdateUsuario() {
       updateUsuario(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['usuarios'] })
+      qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })
     },
   })
 }

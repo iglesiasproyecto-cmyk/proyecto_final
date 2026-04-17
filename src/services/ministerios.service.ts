@@ -151,11 +151,14 @@ export async function deleteMiembroMinisterio(id: number): Promise<void> {
 
 export async function updateMiembroMinisterio(
   id: number,
-  data: { cargo?: string | null; fechaFin?: string | null }
+  data: { rolEnMinisterio?: string | null; activo?: boolean; fechaSalida?: string | null }
 ): Promise<MiembroMinisterio> {
   const patch: Record<string, unknown> = {}
-  if (data.cargo !== undefined) patch.rol_en_ministerio = data.cargo
-  if (data.fechaFin !== undefined) patch.fecha_salida = data.fechaFin
+  if (data.rolEnMinisterio !== undefined) patch.rol_en_ministerio = data.rolEnMinisterio
+  if (data.fechaSalida !== undefined) patch.fecha_salida = data.fechaSalida
+  if (data.activo !== undefined && data.fechaSalida === undefined) {
+    patch.fecha_salida = data.activo ? null : new Date().toISOString().split('T')[0]
+  }
   const { data: result, error } = await supabase
     .from('miembro_ministerio')
     .update(patch)

@@ -7,6 +7,7 @@ import {
   updateCurso, deleteCurso, updateModulo, deleteModulo,
   createEvaluacion, updateEvaluacion,
   createRecurso, updateRecurso, deleteRecurso,
+  createProcesoAsignadoCurso, createDetalleProcesoCurso,
   updateProcesoAsignadoCurso,
   deleteEvaluacion, deleteProcesoAsignadoCurso,
 } from '@/services/cursos.service'
@@ -229,6 +230,28 @@ export function useUpdateProcesoAsignadoCurso() {
     mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateProcesoAsignadoCurso>[1] }) =>
       updateProcesoAsignadoCurso(id, data),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['procesos-curso'] })
+    },
+  })
+}
+
+export function useCreateProcesoAsignadoCurso() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof createProcesoAsignadoCurso>[0]) => createProcesoAsignadoCurso(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['procesos-curso'] })
+      qc.invalidateQueries({ queryKey: ['cursos-enriquecidos'] })
+    },
+  })
+}
+
+export function useCreateDetalleProcesoCurso() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof createDetalleProcesoCurso>[0]) => createDetalleProcesoCurso(data),
+    onSuccess: (_result, variables) => {
+      qc.invalidateQueries({ queryKey: ['detalles-proceso', variables.idProcesoAsignadoCurso] })
       qc.invalidateQueries({ queryKey: ['procesos-curso'] })
     },
   })

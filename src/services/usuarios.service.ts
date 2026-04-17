@@ -69,32 +69,37 @@ export async function getUsuarioRoles(idUsuario: number): Promise<UsuarioRol[]> 
 }
 
 export interface UsuarioEnriquecido extends Usuario {
-  roleNames: { rolNombre: string; iglesiaNombre: string }[]
+  roleNames: {
+    idUsuarioRol: number
+    idRol: number
+    idIglesia: number
+    rolNombre: string
+    iglesiaNombre: string
+    fechaFin: string | null
+  }[]
   minNames: { nombre: string; rol: string }[]
 }
 
 export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
-  const { data, error } = await supabase
-    .from('usuario')
-    .select(`
-      *,
-      usuario_rol ( id_usuario_rol, fecha_fin, rol ( nombre ), iglesia ( nombre ) ),
-      miembro_ministerio ( id_miembro_ministerio, activo, rol_en_ministerio, ministerio ( nombre ) )
-    `)
-    .order('apellidos')
+  const { data, error } = await supabase.rpc('get_all_usuarios_enriquecidos')
   if (error) throw error
-  return (data as any[]).map(r => ({
+
+  return ((data as any[]) || []).map(r => ({
     ...mapUsuario(r),
-    roleNames: ((r.usuario_rol as any[]) || [])
+    roleNames: ((r.roles as any[]) || [])
       .filter((ur: any) => ur.fecha_fin === null)
       .map((ur: any) => ({
-        rolNombre: ur.rol?.nombre ?? '',
-        iglesiaNombre: ur.iglesia?.nombre ?? '',
+        idUsuarioRol: ur.id_usuario_rol,
+        idRol: ur.id_rol,
+        idIglesia: ur.id_iglesia,
+        rolNombre: ur.rol_nombre ?? '',
+        iglesiaNombre: ur.iglesia_nombre ?? '',
+        fechaFin: ur.fecha_fin,
       })),
-    minNames: ((r.miembro_ministerio as any[]) || [])
+    minNames: ((r.ministerios as any[]) || [])
       .filter((mm: any) => mm.fecha_salida === null)
       .map((mm: any) => ({
-        nombre: mm.ministerio?.nombre ?? '',
+        nombre: mm.ministerio_nombre ?? '',
         rol: mm.rol_en_ministerio ?? '',
       })),
   }))
@@ -158,6 +163,10 @@ export async function inviteUser(data: {
   idIglesia: number
   idRol: number
 }): Promise<void> {
+  const payload = {
+    ...data,
+    correo: data.correo.trim().toLowerCase(),
+  }
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('No hay sesión activa')
   const res = await fetch(
@@ -168,7 +177,7 @@ export async function inviteUser(data: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     }
   )
   if (!res.ok) {
