@@ -30,8 +30,8 @@ export function ModuloDetailPage() {
 
   const canEdit = useMemo(() => {
     if (rolActual === 'super_admin') return true
-    if (!curso) return false
     if (rolActual === 'admin_iglesia') return true
+    if (!curso) return false
     if (rolActual === 'lider') return ministeriosIds.includes(curso.idMinisterio)
     return false
   }, [rolActual, curso, ministeriosIds])
@@ -44,13 +44,17 @@ export function ModuloDetailPage() {
   }, [canEdit, misInscripciones, idCurso])
 
   useEffect(() => {
+    if (!Number.isFinite(idCurso) || !Number.isFinite(idModulo)) {
+      navigate('/app/mis-cursos')
+      return
+    }
     if (errorModulo || (modulo && !canReadAsStudent) || (modulo && !canEdit && modulo.estado !== 'publicado')) {
       toast.error('No tienes acceso a este módulo.')
       navigate('/app/mis-cursos')
     }
-  }, [errorModulo, modulo, canReadAsStudent, canEdit, navigate])
+  }, [idCurso, idModulo, errorModulo, modulo, canReadAsStudent, canEdit, navigate])
 
-  if (loadingModulo || !modulo || !curso) {
+  if (loadingModulo || !modulo) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
         Cargando módulo...
@@ -61,7 +65,7 @@ export function ModuloDetailPage() {
   return (
     <div className="space-y-4 max-w-5xl mx-auto">
       <ModuloBreadcrumb
-        cursoNombre={curso.nombre}
+        cursoNombre={curso?.nombre ?? `Curso ${idCurso}`}
         idCurso={idCurso}
         moduloOrden={modulo.orden}
         moduloTitulo={modulo.titulo}
