@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { motion } from 'motion/react'
 import { useApp } from '../store/AppContext'
+import { useModulos } from '@/hooks/useCursos'
 import { useMisInscripciones } from '@/hooks/useInscripciones'
 import { Card } from './ui/card'
 import { Button } from './ui/button'
@@ -10,6 +12,39 @@ import { CompanerosDrawer } from './classroom/CompanerosDrawer'
 import { BookOpen, Calendar, GraduationCap, Users } from 'lucide-react'
 
 const ACTIVOS = new Set(['inscrito', 'en_progreso'] as const)
+
+function ModulosDeCurso({ idCurso }: { idCurso: number }) {
+  const { data: modulos = [], isLoading } = useModulos(idCurso)
+  const publicados = modulos
+    .filter((m) => m.estado === 'publicado')
+    .sort((a, b) => a.orden - b.orden)
+
+  if (isLoading) {
+    return <p className="text-[11px] text-muted-foreground">Cargando módulos...</p>
+  }
+
+  if (publicados.length === 0) {
+    return <p className="text-[11px] text-muted-foreground italic">Aún no hay módulos publicados.</p>
+  }
+
+  return (
+    <ul className="space-y-1">
+      {publicados.map((m) => (
+        <li key={m.idModulo}>
+          <Link
+            to={`/app/aula/curso/${idCurso}/modulo/${m.idModulo}`}
+            className="flex items-center justify-between gap-2 text-[11px] px-2 py-1 rounded-md hover:bg-accent/40 transition-colors"
+          >
+            <span className="truncate">
+              <span className="font-semibold">{m.orden}.</span> {m.titulo}
+            </span>
+            <span className="text-primary shrink-0">Abrir →</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 export function MisCursosPage() {
   const { usuarioActual } = useApp()
@@ -109,6 +144,10 @@ export function MisCursosPage() {
                     <span title="El progreso se activará cuando el instructor añada contenido de módulos.">0%</span>
                   </div>
                   <Progress value={0} className="h-1.5 bg-background/50" />
+                </div>
+                <div className="pt-2 border-t border-white/10">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Módulos</p>
+                  <ModulosDeCurso idCurso={i.idCurso} />
                 </div>
                 <div className="flex items-center gap-2 pt-1">
                   <Button

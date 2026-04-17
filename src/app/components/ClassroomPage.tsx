@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import {
   useCursosEnriquecidos,
   useDeleteCurso,
@@ -524,8 +525,15 @@ export function ClassroomPage() {
                                 <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">{modulo.estado}</span>
                               </div>
                             </div>
-                            {canManageAula && (
                             <div className="flex items-center gap-2 opacity-0 group-hover/mod:opacity-100 transition-opacity">
+                              <Link
+                                to={`/app/aula/curso/${curso.idCurso}/modulo/${modulo.idModulo}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline px-2 py-1 rounded-md"
+                              >
+                                Abrir →
+                              </Link>
+                              {canManageAula && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleDeleteModulo(modulo.idModulo, modulo.titulo); }}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 text-destructive/50 hover:text-destructive transition-colors shrink-0"
@@ -533,8 +541,8 @@ export function ClassroomPage() {
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
+                              )}
                             </div>
-                            )}
                             <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover/mod:translate-x-1 group-hover/mod:text-primary transition-all shrink-0" />
                           </div>
                         ))}
