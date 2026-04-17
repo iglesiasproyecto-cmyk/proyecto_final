@@ -14,7 +14,7 @@ import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, 
 import { toast } from "sonner";
 
 export function UsuariosPage() {
-  const { iglesiaActual, usuarioActual, rolActual } = useApp();
+  const { iglesiaActual, rolActual } = useApp();
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
   const { data: iglesias = [] } = useIglesias();
