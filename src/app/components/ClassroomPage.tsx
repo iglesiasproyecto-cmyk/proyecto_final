@@ -7,7 +7,12 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
-import { Plus, ChevronRight, ChevronDown, FileText, Link as LinkIcon, Download, ExternalLink, GraduationCap, Layers, ArrowLeft, Pencil, Trash2, PlusCircle } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { 
+  Plus, ChevronRight, ChevronDown, FileText, Link as LinkIcon, Download, 
+  ExternalLink, GraduationCap, Layers, ArrowLeft, Pencil, Trash2, 
+  PlusCircle, BookOpen, Clock, Users, CheckCircle2, MoreVertical
+} from "lucide-react";
 
 export function ClassroomPage() {
   const { data: ministerios = [] } = useMinisterios();
@@ -33,7 +38,14 @@ export function ClassroomPage() {
   const [showCreateRecurso, setShowCreateRecurso] = useState(false);
   const [recursoForm, setRecursoForm] = useState({ nombre: "", tipo: "enlace" as "archivo" | "enlace", url: "" });
 
-  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+  if (isLoading) return (
+    <div className="flex items-center justify-center h-48">
+      <div className="flex flex-col items-center gap-3 text-muted-foreground">
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        <span className="text-sm tracking-widest uppercase text-[10px] font-bold">Iniciando Aula...</span>
+      </div>
+    </div>
+  );
 
   const selectedCurso = selectedCursoId ? cursos.find((c) => c.idCurso === selectedCursoId) : null;
   const selectedModulo = selectedModuloId && selectedCurso ? selectedCurso.modulos?.find((m) => m.idModulo === selectedModuloId) : null;
@@ -65,7 +77,7 @@ export function ClassroomPage() {
   };
 
   function handleDeleteCurso(id: number, nombre: string) {
-    if (!confirm(`¿Eliminar curso "${nombre}"? Se eliminarán todos sus módulos y evaluaciones.`)) return;
+    if (!confirm(`¿Eliminar curso "${nombre}"?`)) return;
     deleteCursoMutation.mutate(id);
   }
 
@@ -108,205 +120,388 @@ export function ClassroomPage() {
     );
   };
 
+  const statusColors: Record<string, string> = {
+    activo: "bg-primary/10 text-primary border-primary/20",
+    inactivo: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+    archivado: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  };
+
   if (selectedModulo && selectedCurso) {
     return (
-      <div className="space-y-6 max-w-4xl mx-auto">
-        <button onClick={() => setSelectedModuloId(null)} className="flex items-center gap-2 text-primary hover:underline text-sm"><ArrowLeft className="w-4 h-4" /> Volver al curso</button>
-        <div><Badge variant="secondary" className="mb-2">{selectedCurso.nombre}</Badge><h1>{selectedModulo.titulo}</h1></div>
-        <Card className="p-6"><div className="prose max-w-none"><p className="text-sm text-muted-foreground leading-relaxed">{selectedModulo.descripcion}</p></div></Card>
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="flex items-center gap-2"><Download className="w-5 h-5 text-primary" /> Recursos Adjuntos</h3>
-            <Button size="sm" variant="outline" onClick={() => setShowCreateRecurso(true)}><PlusCircle className="w-3.5 h-3.5 mr-1" /> Agregar Recurso</Button>
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="space-y-6 max-w-4xl mx-auto"
+      >
+        <button 
+          onClick={() => setSelectedModuloId(null)} 
+          className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest"
+        >
+          <ArrowLeft className="w-4 h-4" /> Volver al curso
+        </button>
+
+        <div className="relative overflow-hidden bg-card/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-sm">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+          <Badge variant="outline" className="mb-4 bg-primary/5 border-primary/20 text-primary uppercase font-black text-[10px] tracking-widest">
+            {selectedCurso.nombre}
+          </Badge>
+          <h1 className="text-3xl font-light tracking-tight text-foreground">{selectedModulo.titulo}</h1>
+          <div className="mt-8 prose prose-slate dark:prose-invert max-w-none">
+            <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">{selectedModulo.descripcion}</p>
           </div>
-          {selectedModulo.recursos && selectedModulo.recursos.length > 0 ? (
-            <div className="space-y-2">
-              {selectedModulo.recursos.map((r) => (
-                <div key={r.idRecurso} className="flex items-center gap-3 p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors group">
-                  {r.tipo === "archivo" ? <FileText className="w-5 h-5 text-primary shrink-0" /> : <LinkIcon className="w-5 h-5 text-primary shrink-0" />}
-                  <span className="flex-1 text-sm">{r.nombre}</span>
-                  <a href={r.url} target="_blank" rel="noreferrer">
-                    <Button variant="ghost" size="sm">{r.tipo === "archivo" ? <Download className="w-4 h-4" /> : <ExternalLink className="w-4 h-4" />}</Button>
-                  </a>
-                  <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive" title="Eliminar recurso"
-                    onClick={() => { if (confirm(`¿Eliminar recurso "${r.nombre}"?`)) deleteRecursoMutation.mutate(r.idRecurso); }}
-                    disabled={deleteRecursoMutation.isPending}
-                  ><Trash2 className="w-4 h-4" /></Button>
-                </div>
-              ))}
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
+          <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-3xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+              <h3 className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.25em] text-primary/70">
+                <Download className="w-4 h-4" /> Recursos Adjuntos
+              </h3>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-8 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 hover:text-primary"
+                onClick={() => setShowCreateRecurso(true)}
+              >
+                <PlusCircle className="w-3.5 h-3.5 mr-1.5" /> Agregar Recurso
+              </Button>
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">Sin recursos adjuntos. Agrega enlaces o archivos.</p>
-          )}
-        </Card>
+            {selectedModulo.recursos && selectedModulo.recursos.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {selectedModulo.recursos.map((r) => (
+                  <div key={r.idRecurso} className="flex items-center gap-3 p-4 rounded-2xl bg-background/40 hover:bg-background/60 border border-white/5 transition-all group">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-110 transition-transform">
+                      {r.tipo === "archivo" ? <FileText className="w-5 h-5" /> : <LinkIcon className="w-5 h-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-sm font-semibold truncate text-foreground/90">{r.nombre}</span>
+                      <span className="block text-[10px] text-muted-foreground uppercase tracking-widest font-medium">{r.tipo}</span>
+                    </div>
+                    <div className="flex items-center gap-1 group-hover:opacity-100 opacity-0 md:opacity-0 transition-opacity">
+                      <a href={r.url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors">
+                        {r.tipo === "archivo" ? <Download className="w-4 h-4" /> : <ExternalLink className="w-4 h-4" />}
+                      </a>
+                      <button 
+                        className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors shrink-0"
+                        onClick={() => { if (confirm(`¿Eliminar recurso "${r.nombre}"?`)) deleteRecursoMutation.mutate(r.idRecurso); }}
+                        disabled={deleteRecursoMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-12 flex flex-col items-center gap-3 text-muted-foreground/40">
+                <FileText className="w-12 h-12" />
+                <p className="text-sm font-medium">Sin recursos adjuntos</p>
+              </div>
+            )}
+          </Card>
+        </div>
 
         {/* Create Recurso Dialog */}
         <Dialog open={showCreateRecurso} onOpenChange={o => { if (!o) { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "enlace", url: "" }); } }}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader><DialogTitle>Agregar Recurso</DialogTitle></DialogHeader>
-            <div className="space-y-4 py-2">
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Nombre *</label>
-                <Input value={recursoForm.nombre} onChange={e => setRecursoForm(p => ({ ...p, nombre: e.target.value }))} placeholder="Nombre del recurso" className="bg-input-background" />
+          <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+                Agregar Recurso
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Nombre *</label>
+                <Input value={recursoForm.nombre} onChange={e => setRecursoForm(p => ({ ...p, nombre: e.target.value }))} placeholder="Nombre del recurso" className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Tipo</label>
-                <select className="w-full h-10 rounded-md border border-input bg-input-background px-3 text-sm" value={recursoForm.tipo} onChange={e => setRecursoForm(p => ({ ...p, tipo: e.target.value as "archivo" | "enlace" }))}>
+              <div className="space-y-2">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Tipo</label>
+                <select className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20" value={recursoForm.tipo} onChange={e => setRecursoForm(p => ({ ...p, tipo: e.target.value as "archivo" | "enlace" }))}>
                   <option value="enlace">Enlace (URL)</option>
                   <option value="archivo">Archivo</option>
                 </select>
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">URL *</label>
-                <Input value={recursoForm.url} onChange={e => setRecursoForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..." className="bg-input-background" />
+              <div className="space-y-2">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">URL *</label>
+                <Input value={recursoForm.url} onChange={e => setRecursoForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..." className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "enlace", url: "" }); }}>Cancelar</Button>
-              <Button onClick={() => selectedModuloId && handleCreateRecurso(selectedModuloId)} disabled={createRecursoMutation.isPending || !recursoForm.nombre || !recursoForm.url}>
-                {createRecursoMutation.isPending ? "Guardando..." : "Agregar Recurso"}
+            <DialogFooter className="gap-2">
+              <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "enlace", url: "" }); }}>Cancelar</Button>
+              <Button className="rounded-xl px-6" onClick={() => selectedModuloId && handleCreateRecurso(selectedModuloId)} disabled={createRecursoMutation.isPending || !recursoForm.nombre || !recursoForm.url}>
+                {createRecursoMutation.isPending ? "Agregando..." : "Agregar Recurso"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1>Aula de Formación</h1>
-          <p className="text-muted-foreground text-sm">{min ? `${min.nombre} — Cursos y módulos de capacitación` : "Selecciona un ministerio"}</p>
+    <div className="space-y-5 max-w-7xl mx-auto">
+      {/* Header Panorámico */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative flex flex-col md:flex-row md:items-center justify-between gap-5 bg-card/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-sm overflow-hidden"
+      >
+        <div className="absolute top-0 right-0 w-80 h-48 bg-primary/10 rounded-full blur-[100px] pointer-events-none -z-10" />
+        <div className="flex items-center gap-5">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shrink-0 shadow-lg shadow-cyan-600/20">
+            <GraduationCap className="w-8 h-8" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none mb-2">
+              Aula de Formación
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-sm font-medium">
+              {min ? `${min.nombre} — Cursos y capacitación` : "Capacitación continua para el equipo"}
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          {ministerios.length > 0 && (
-            <select
-              value={actualMinId}
-              onChange={(e) => { setSelectedMinId(Number(e.target.value)); setSelectedCursoId(null); }}
-              className="border rounded-lg px-3 py-2 text-sm bg-card"
-            >
-              {ministerios.filter((m) => m.estado === "activo").map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
-            </select>
+
+        <div className="flex items-center gap-3 overflow-x-auto pb-1 md:pb-0">
+          {ministerios.length > 1 && (
+            <div className="flex items-center gap-2 bg-background/40 border border-white/5 rounded-2xl px-3 h-11 shrink-0">
+              <BookOpen className="w-4 h-4 text-muted-foreground/50" />
+              <select
+                value={actualMinId}
+                onChange={(e) => { setSelectedMinId(Number(e.target.value)); setSelectedCursoId(null); }}
+                className="text-xs bg-transparent border-0 outline-none text-foreground/80 cursor-pointer font-bold tracking-tight"
+              >
+                {ministerios.filter((m) => m.estado === "activo").map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
+              </select>
+            </div>
           )}
-          <Button onClick={() => setShowCreateCurso(true)}><Plus className="w-4 h-4 mr-2" /> Nuevo Curso</Button>
+          <Button 
+            onClick={() => setShowCreateCurso(true)} 
+            className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Nuevo Curso
+          </Button>
         </div>
+      </motion.div>
+
+      {/* Stats Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Cursos Totales", value: cursos.length, icon: <Layers className="w-4 h-4" /> },
+          { label: "Modulos", value: cursos.reduce((acc, c) => acc + (c.cantidadModulos || 0), 0), icon: <BookOpen className="w-4 h-4" /> },
+          { label: "Inscritos", value: cursos.reduce((acc, c) => acc + (c.cantidadInscritos || 0), 0), icon: <Users className="w-4 h-4" /> },
+          { label: "Activos", value: cursos.filter(c => c.estado === "activo").length, icon: <CheckCircle2 className="w-4 h-4" /> },
+        ].map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + i * 0.05 }}
+            className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-4 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shadow-md shadow-cyan-600/10 group-hover:scale-110 transition-transform">
+              {s.icon}
+            </div>
+            <div>
+              <p className="text-2xl font-black text-foreground leading-none mb-1">{s.value}</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{s.label}</p>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
       {cursos.length === 0 ? (
-        <Card className="p-12 text-center">
-          <GraduationCap className="w-16 h-16 mx-auto text-muted-foreground/20 mb-4" />
-          <h3 className="text-muted-foreground mb-2">Aula vacía</h3>
-          <p className="text-sm text-muted-foreground">Aún no hay cursos de formación en este ministerio.</p>
-          <Button className="mt-4" onClick={() => setShowCreateCurso(true)}><Plus className="w-4 h-4 mr-2" /> Crear primer curso</Button>
-        </Card>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative bg-card/20 backdrop-blur-md border border-white/5 rounded-[40px] p-20 flex flex-col items-center justify-center text-center overflow-hidden"
+        >
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white mb-8 shadow-xl shadow-cyan-600/20">
+            <GraduationCap className="w-12 h-12" />
+          </div>
+          <h3 className="text-2xl font-bold tracking-tight text-foreground/80 mb-3">Aula vacía</h3>
+          <p className="text-sm text-muted-foreground/60 max-w-sm mb-8">
+            Aún no hay cursos de formación en este ministerio. Inicia la academia agregando un nuevo programa.
+          </p>
+          <Button onClick={() => setShowCreateCurso(true)} className="h-11 rounded-2xl px-8 font-bold uppercase tracking-widest text-[11px]">
+            <Plus className="w-4 h-4 mr-2" /> Crear primer curso
+          </Button>
+        </motion.div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3">
           {cursos.map((curso, idx) => {
             const isExpanded = expandedCursos.has(curso.idCurso);
             return (
-              <Card key={curso.idCurso} className="overflow-hidden">
-                <button onClick={() => toggleCurso(curso.idCurso)} className="w-full flex items-center gap-4 p-4 text-left hover:bg-accent/30 transition-colors">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0"><Layers className="w-5 h-5" /></div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">Curso {idx + 1}</Badge>
-                      <h4 className="text-sm truncate">{curso.nombre}</h4>
-                      {curso.duracionHoras && <span className="text-xs text-muted-foreground">({curso.duracionHoras}h)</span>}
+              <motion.div
+                key={curso.idCurso}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + idx * 0.05 }}
+                className="group overflow-hidden rounded-3xl bg-card/40 backdrop-blur-xl border border-white/10 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+              >
+                <div 
+                  className={`flex flex-col sm:flex-row sm:items-center gap-5 p-5 cursor-pointer transition-colors ${isExpanded ? "bg-primary/5" : "hover:bg-white/5"}`}
+                  onClick={() => toggleCurso(curso.idCurso)}
+                >
+                  <div className="flex items-center gap-5 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600/20 to-primary/10 border border-blue-600/10 flex items-center justify-center text-blue-700 dark:text-blue-400 shrink-0 transition-transform group-hover:scale-105">
+                      <Layers className="w-6 h-6" />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{curso.descripcion}</p>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5 overflow-x-auto no-scrollbar">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary/60 shrink-0">Curso {idx + 1}</span>
+                        <Badge variant="outline" className={`shrink-0 text-[10px] uppercase font-bold tracking-tighter px-1.5 py-0 ${statusColors[curso.estado]}`}>
+                          {curso.estado}
+                        </Badge>
+                        {curso.duracionHoras && (
+                          <span className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground/60 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
+                            <Clock className="w-3 h-3" /> {curso.duracionHoras}h
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-lg font-bold tracking-tight text-foreground truncate">{curso.nombre}</h4>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{curso.descripcion}</p>
+                    </div>
                   </div>
-                  <Badge variant="secondary" className="text-xs shrink-0">{curso.estado}</Badge>
-                  {curso.cantidadModulos > 0 && <Badge variant="outline" className="text-xs shrink-0">{curso.cantidadModulos} módulos</Badge>}
-                  {curso.cantidadInscritos > 0 && <Badge variant="outline" className="text-xs shrink-0">{curso.cantidadInscritos} inscritos</Badge>}
-                  {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDeleteCurso(curso.idCurso, curso.nombre); }}
-                    disabled={deleteCursoMutation.isPending}
-                    className="ml-1 p-1 rounded hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors disabled:opacity-50"
-                    title="Eliminar curso"
-                  >
-                    <span className="text-xs">✕</span>
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setEditCurso({ id: curso.idCurso, nombre: curso.nombre, descripcion: curso.descripcion ?? "", estado: curso.estado }); }}
-                    className="ml-1 p-1 rounded hover:bg-primary/10 text-primary/60 hover:text-primary transition-colors"
-                    title="Editar curso"
-                  >
-                    <Pencil className="w-3 h-3" />
-                  </button>
-                </button>
-                {isExpanded && (
-                  <div className="border-t bg-muted/20">
-                    {curso.modulos?.sort((a, b) => a.orden - b.orden).map((modulo, mi) => (
-                      <button key={modulo.idModulo} onClick={() => { setSelectedCursoId(curso.idCurso); setSelectedModuloId(modulo.idModulo); }} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/30 transition-colors border-b last:border-0 group/mod">
-                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs shrink-0">{mi + 1}</div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm">{modulo.titulo}</p>
-                          {modulo.recursos && modulo.recursos.length > 0 && <p className="text-xs text-muted-foreground">{modulo.recursos.length} recurso(s)</p>}
+
+                  <div className="flex items-center gap-4 justify-between sm:justify-end shrink-0 pl-[68px] sm:pl-0">
+                    <div className="flex items-center gap-4">
+                      {curso.cantidadModulos > 0 && (
+                        <div className="flex flex-col items-end">
+                          <span className="text-base font-black leading-none">{curso.cantidadModulos}</span>
+                          <span className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Módulos</span>
                         </div>
-                        <Badge variant="outline" className="text-xs">{modulo.estado}</Badge>
+                      )}
+                      {curso.cantidadInscritos > 0 && (
+                        <div className="flex flex-col items-end border-l border-white/10 pl-4">
+                          <span className="text-base font-black leading-none">{curso.cantidadInscritos}</span>
+                          <span className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Inscritos</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all">
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteModulo(modulo.idModulo, modulo.titulo); }}
-                          className="p-1 rounded hover:bg-destructive/10 text-destructive/50 hover:text-destructive opacity-0 group-hover/mod:opacity-100 transition-all"
-                          disabled={deleteModuloMutation.isPending}
+                          onClick={(e) => { e.stopPropagation(); setEditCurso({ id: curso.idCurso, nombre: curso.nombre, descripcion: curso.descripcion ?? "", estado: curso.estado }); }}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 text-primary/60 hover:text-primary transition-colors"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                    ))}
-                    <button onClick={() => { setSelectedCursoId(curso.idCurso); setShowCreateModulo(true); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-primary hover:bg-primary/5 transition-colors">
-                      <Plus className="w-4 h-4" /><span className="text-sm">Agregar módulo</span>
-                    </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteCurso(curso.idCurso, curso.nombre); }}
+                          disabled={deleteCursoMutation.isPending}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 text-destructive/50 hover:text-destructive transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isExpanded ? "bg-primary text-white rotate-180" : "bg-muted text-muted-foreground"}`}>
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
+                    </div>
                   </div>
-                )}
-              </Card>
+                </div>
+
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden bg-background/20"
+                    >
+                      <div className="grid grid-cols-1 divide-y divide-white/5 border-t border-white/5">
+                        {curso.modulos?.sort((a, b) => a.orden - b.orden).map((modulo, mi) => (
+                          <div 
+                            key={modulo.idModulo} 
+                            onClick={() => { setSelectedCursoId(curso.idCurso); setSelectedModuloId(modulo.idModulo); }} 
+                            className="group/mod flex items-center gap-4 px-6 py-4 cursor-pointer hover:bg-primary/5 transition-colors border-l-4 border-transparent hover:border-primary/40"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-background/50 border border-white/5 flex items-center justify-center text-[11px] font-black text-foreground shrink-0 group-hover/mod:bg-primary group-hover/mod:text-white transition-all">
+                              {mi + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold truncate text-foreground/90">{modulo.titulo}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                {modulo.recursos && modulo.recursos.length > 0 && (
+                                  <span className="text-[10px] font-bold text-primary flex items-center gap-1 uppercase tracking-tight">
+                                    <FileText className="w-2.5 h-2.5" /> {modulo.recursos.length} recursos
+                                  </span>
+                                )}
+                                <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">{modulo.estado}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 opacity-0 group-hover/mod:opacity-100 transition-opacity">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDeleteModulo(modulo.idModulo, modulo.titulo); }}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 text-destructive/50 hover:text-destructive transition-colors shrink-0"
+                                disabled={deleteModuloMutation.isPending}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover/mod:translate-x-1 group-hover/mod:text-primary transition-all shrink-0" />
+                          </div>
+                        ))}
+                        <button 
+                          onClick={() => { setSelectedCursoId(curso.idCurso); setShowCreateModulo(true); }} 
+                          className="flex items-center gap-3 px-8 py-5 text-primary/70 hover:text-primary hover:bg-primary/5 transition-all text-sm font-bold tracking-tight bg-white/10 dark:bg-black/10"
+                        >
+                          <PlusCircle className="w-4 h-4" /> Agregar un nuevo módulo a este curso
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             );
           })}
         </div>
       )}
 
+      {/* Modern Glass Dialogs */}
       <Dialog open={showCreateCurso} onOpenChange={setShowCreateCurso}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Nuevo Curso</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Nombre *</label>
+        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+              Crear Nuevo Curso
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Diseña un nuevo programa de capacitación.</p>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Nombre del Curso *</label>
               <Input
                 value={cursoForm.nombre}
                 onChange={(e) => setCursoForm(p => ({ ...p, nombre: e.target.value }))}
-                placeholder="Nombre del curso"
-                className="bg-input-background"
+                placeholder="Ej. Liderazgo Nivel 1"
+                className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
               />
             </div>
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Descripción</label>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Descripción</label>
               <Input
                 value={cursoForm.descripcion}
                 onChange={(e) => setCursoForm(p => ({ ...p, descripcion: e.target.value }))}
-                placeholder="Descripción opcional"
-                className="bg-input-background"
+                placeholder="Breve descripción del objetivo"
+                className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
               />
             </div>
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Duración (horas)</label>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Duración Estimada (horas)</label>
               <Input
                 type="number"
                 value={cursoForm.duracionHoras}
                 onChange={(e) => setCursoForm(p => ({ ...p, duracionHoras: e.target.value }))}
-                placeholder="Ej: 40"
-                className="bg-input-background"
+                placeholder="Ej: 24"
+                className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateCurso(false)}>Cancelar</Button>
-            <Button
-              onClick={handleCreateCurso}
-              disabled={createCursoMutation.isPending || !usuarioActual}
-            >
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setShowCreateCurso(false)}>Cancelar</Button>
+            <Button className="rounded-xl px-8" onClick={handleCreateCurso} disabled={createCursoMutation.isPending || !usuarioActual}>
               {createCursoMutation.isPending ? "Creando..." : "Crear Curso"}
             </Button>
           </DialogFooter>
@@ -314,57 +509,65 @@ export function ClassroomPage() {
       </Dialog>
 
       <Dialog open={showCreateModulo} onOpenChange={setShowCreateModulo}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Nuevo Módulo</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Título *</label>
+        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+              Agregar Módulo
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Título del Módulo *</label>
               <Input
                 value={moduloForm.titulo}
                 onChange={(e) => setModuloForm(p => ({ ...p, titulo: e.target.value }))}
-                placeholder="Título del módulo"
-                className="bg-input-background"
+                placeholder="Ej. Introducción al Servicio"
+                className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
               />
             </div>
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Descripción/Contenido</label>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Contenido / Descripción</label>
               <textarea
                 value={moduloForm.descripcion}
                 onChange={(e) => setModuloForm(p => ({ ...p, descripcion: e.target.value }))}
-                placeholder="Contenido del módulo..."
-                className="w-full border rounded-lg px-3 py-2 text-sm bg-card mt-1 min-h-[120px] resize-y"
+                placeholder="Contenido principal del módulo..."
+                className="w-full h-32 rounded-xl border border-white/10 bg-background/50 p-4 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 resize-none"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateModulo(false)}>Cancelar</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setShowCreateModulo(false)}>Cancelar</Button>
             <Button
+              className="rounded-xl px-8"
               onClick={() => selectedCursoId && handleCreateModulo(selectedCursoId)}
               disabled={createModuloMutation.isPending || !selectedCursoId}
             >
-              {createModuloMutation.isPending ? "Creando..." : "Crear Módulo"}
+              {createModuloMutation.isPending ? "Agregando..." : "Agregar Módulo"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Curso Dialog */}
       <Dialog open={!!editCurso} onOpenChange={o => { if (!o) setEditCurso(null); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Editar Curso</DialogTitle></DialogHeader>
+        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+              Editar Curso
+            </DialogTitle>
+          </DialogHeader>
           {editCurso && (
-            <div className="space-y-4 py-2">
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Nombre *</label>
-                <Input value={editCurso.nombre} onChange={e => setEditCurso(p => p ? { ...p, nombre: e.target.value } : p)} className="bg-input-background" />
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Nombre *</label>
+                <Input value={editCurso.nombre} onChange={e => setEditCurso(p => p ? { ...p, nombre: e.target.value } : p)} className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Descripción</label>
-                <Input value={editCurso.descripcion} onChange={e => setEditCurso(p => p ? { ...p, descripcion: e.target.value } : p)} className="bg-input-background" />
+              <div className="space-y-2">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Descripción</label>
+                <Input value={editCurso.descripcion} onChange={e => setEditCurso(p => p ? { ...p, descripcion: e.target.value } : p)} className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Estado</label>
-                <select className="w-full h-10 rounded-md border border-input bg-input-background px-3 text-sm" value={editCurso.estado} onChange={e => setEditCurso(p => p ? { ...p, estado: e.target.value } : p)}>
+              <div className="space-y-2">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Estado</label>
+                <select className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20" value={editCurso.estado} onChange={e => setEditCurso(p => p ? { ...p, estado: e.target.value } : p)}>
                   <option value="activo">Activo</option>
                   <option value="inactivo">Inactivo</option>
                   <option value="archivado">Archivado</option>
@@ -372,10 +575,10 @@ export function ClassroomPage() {
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditCurso(null)}>Cancelar</Button>
-            <Button onClick={handleUpdateCurso} disabled={updateCursoMutation.isPending}>
-              {updateCursoMutation.isPending ? "Guardando..." : "Guardar Cambios"}
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setEditCurso(null)}>Cancelar</Button>
+            <Button className="rounded-xl px-8" onClick={handleUpdateCurso} disabled={updateCursoMutation.isPending}>
+              {updateCursoMutation.isPending ? "Guardar" : "Guardar Cambios"}
             </Button>
           </DialogFooter>
         </DialogContent>
