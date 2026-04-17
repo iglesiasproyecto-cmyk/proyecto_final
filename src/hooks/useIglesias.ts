@@ -48,7 +48,10 @@ export function useCreateIglesia() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createIglesia,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['iglesias'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['iglesias'] })
+      qc.invalidateQueries({ queryKey: ['iglesias-enriquecidas'] })
+    },
   })
 }
 
@@ -57,7 +60,10 @@ export function useUpdateIglesia() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateIglesia>[1] }) =>
       updateIglesia(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['iglesias'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['iglesias'] })
+      qc.invalidateQueries({ queryKey: ['iglesias-enriquecidas'] })
+    },
   })
 }
 
@@ -65,7 +71,10 @@ export function useToggleIglesiaEstado() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => toggleIglesiaEstado(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['iglesias'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['iglesias'] })
+      qc.invalidateQueries({ queryKey: ['iglesias-enriquecidas'] })
+    },
   })
 }
 
@@ -73,7 +82,11 @@ export function useCreateSede() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createSede,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['sedes'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sedes'] })
+      qc.invalidateQueries({ queryKey: ['sedes-enriquecidas'] })
+      qc.invalidateQueries({ queryKey: ['iglesias-enriquecidas'] })
+    },
   })
 }
 
@@ -82,7 +95,10 @@ export function useUpdateSede() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateSede>[1] }) =>
       updateSede(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['sedes'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sedes'] })
+      qc.invalidateQueries({ queryKey: ['sedes-enriquecidas'] })
+    },
   })
 }
 
@@ -90,7 +106,10 @@ export function useToggleSedeEstado() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => toggleSedeEstado(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['sedes'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sedes'] })
+      qc.invalidateQueries({ queryKey: ['sedes-enriquecidas'] })
+    },
   })
 }
 

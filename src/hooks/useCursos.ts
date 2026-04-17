@@ -82,7 +82,10 @@ export function useCreateCurso() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createCurso,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['cursos'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cursos'] })
+      qc.invalidateQueries({ queryKey: ['cursos-enriquecidos'] })
+    },
   })
 }
 
@@ -90,8 +93,11 @@ export function useCreateModulo() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createModulo,
-    onSuccess: (_data, variables) =>
-      qc.invalidateQueries({ queryKey: ['modulos', variables.idCurso] }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['modulos', variables.idCurso] })
+      qc.invalidateQueries({ queryKey: ['cursos'] })
+      qc.invalidateQueries({ queryKey: ['cursos-enriquecidos'] })
+    },
   })
 }
 
@@ -189,6 +195,7 @@ export function useCreateRecurso() {
     mutationFn: (data: Parameters<typeof createRecurso>[0]) => createRecurso(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['recursos'] })
+      qc.invalidateQueries({ queryKey: ['cursos-enriquecidos'] })
     },
   })
 }
@@ -200,6 +207,7 @@ export function useUpdateRecurso() {
       updateRecurso(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['recursos'] })
+      qc.invalidateQueries({ queryKey: ['cursos-enriquecidos'] })
     },
   })
 }
@@ -210,6 +218,7 @@ export function useDeleteRecurso() {
     mutationFn: (id: number) => deleteRecurso(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['recursos'] })
+      qc.invalidateQueries({ queryKey: ['cursos-enriquecidos'] })
     },
   })
 }
