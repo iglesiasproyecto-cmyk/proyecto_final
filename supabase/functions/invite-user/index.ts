@@ -1,8 +1,38 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+const baseCorsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
+function resolveCorsHeaders(origin: string | null): Record<string, string> {
+  if (!origin) return baseCorsHeaders
+  if (!allowedOrigins.includes(origin)) return baseCorsHeaders
+
+  return {
+    ...baseCorsHeaders,
+    'Access-Control-Allow-Origin': origin,
+    Vary: 'Origin',
+  }
+}
+
+function jsonResponse(
+  origin: string | null,
+  body: Record<string, unknown>,
+  status = 200
+): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...resolveCorsHeaders(origin),
+      'Content-Type': 'application/json',
+    },
+  })
 }
 
 function normalizeBaseUrl(url?: string | null): string | null {
@@ -43,17 +73,21 @@ async function findAuthUserByEmail(
 }
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('origin')
+  const isBrowserRequest = Boolean(origin)
+
+  if (isBrowserRequest && !allowedOrigins.includes(origin!)) {
+    return jsonResponse(origin, { message: 'Origin not allowed' }, 403)
+  }
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: resolveCorsHeaders(origin) })
   }
 
   try {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonResponse(origin, { message: 'Unauthorized' }, 401)
     }
 
     const supabaseAdmin = createClient(
@@ -66,19 +100,22 @@ Deno.serve(async (req) => {
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
     if (authError || !user) {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonResponse(origin, { message: 'Unauthorized' }, 401)
     }
 
     const { correo, nombres, apellidos, idIglesia, idRol } = await req.json()
 
     if (!correo || !nombres || !apellidos || !idIglesia || !idRol) {
-      return new Response(JSON.stringify({ message: 'Missing required fields' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonResponse(origin, { message: 'Missing required fields' }, 400)
+    }
+
+    const configuredSiteUrl = normalizeBaseUrl(Deno.env.get('SITE_URL'))
+    if (!configuredSiteUrl) {
+      return jsonResponse(
+        origin,
+        { message: 'Server misconfigured: SITE_URL is required for invitations' },
+        500
+      )
     }
 
     const normalizedEmail = String(correo).trim().toLowerCase()
@@ -90,10 +127,7 @@ Deno.serve(async (req) => {
       .maybeSingle()
 
     if (callerUsuarioError || !callerUsuario) {
-      return new Response(JSON.stringify({ message: 'Caller profile not found' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonResponse(origin, { message: 'Caller profile not found' }, 403)
     }
 
     const { data: callerRoles, error: callerRolesError } = await supabaseAdmin
@@ -113,10 +147,7 @@ Deno.serve(async (req) => {
     )
 
     if (!isSuperAdmin && !managedIglesias.has(idIglesia)) {
-      return new Response(JSON.stringify({ message: 'No autorizado para gestionar esa iglesia' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonResponse(origin, { message: 'No autorizado para gestionar esa iglesia' }, 403)
     }
 
     const { data: targetRole, error: targetRoleError } = await supabaseAdmin
@@ -126,17 +157,11 @@ Deno.serve(async (req) => {
       .single()
 
     if (targetRoleError || !targetRole) {
-      return new Response(JSON.stringify({ message: 'Rol inválido' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonResponse(origin, { message: 'Rol inválido' }, 400)
     }
 
     if (!isSuperAdmin && targetRole.nombre === 'Super Administrador') {
-      return new Response(JSON.stringify({ message: 'No autorizado para asignar ese rol' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return jsonResponse(origin, { message: 'No autorizado para asignar ese rol' }, 403)
     }
 
     // First, check if the app profile already exists to keep this flow idempotent.
@@ -154,12 +179,10 @@ Deno.serve(async (req) => {
     if (!usuarioId) {
       // Invite user via Supabase Auth Admin API.
       // NOTE: The handle_new_user trigger should create the usuario record.
-      const configuredSiteUrl = normalizeBaseUrl(Deno.env.get('SITE_URL'))
-      const requestOrigin = normalizeBaseUrl(req.headers.get('origin'))
-      const baseUrl = configuredSiteUrl ?? requestOrigin
-      const inviteOptions = baseUrl
-        ? { data: { nombres, apellidos }, redirectTo: `${baseUrl}/auth/callback?next=/auth/set-password` }
-        : { data: { nombres, apellidos } }
+      const inviteOptions = {
+        data: { nombres, apellidos },
+        redirectTo: `${configuredSiteUrl}/auth/callback?next=/auth/set-password`,
+      }
 
       const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
         normalizedEmail,
@@ -277,21 +300,15 @@ Deno.serve(async (req) => {
       roleAssigned = true
     }
 
-    return new Response(JSON.stringify({
+    return jsonResponse(origin, {
       success: true,
       inviteSent,
       profileReconciled,
       roleAssigned,
       userAlreadyExisted: !inviteSent,
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
-    return new Response(JSON.stringify({ message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return jsonResponse(origin, { message }, 500)
   }
 })

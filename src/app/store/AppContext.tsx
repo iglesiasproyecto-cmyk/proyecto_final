@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
 import type { Usuario } from '@/types/app.types'
@@ -29,6 +29,21 @@ const AppContext = createContext<AppState | undefined>(undefined)
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+
+function normalizeAppRole(rawRoles: string[]): string {
+  const normalized = rawRoles.map((name) =>
+    String(name)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim()
+  )
+
+  if (normalized.some((name) => name === 'super administrador')) return 'super_admin'
+  if (normalized.some((name) => name === 'administrador de iglesia')) return 'admin_iglesia'
+  if (normalized.some((name) => name.includes('lider'))) return 'lider'
+  return 'servidor'
+}
 
 /** Raw fetch with AbortController timeout — guaranteed to not hang */
 async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 5000): Promise<Response> {
@@ -172,6 +187,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     return 'super_admin'
   })
+  const lastHandledTokenRef = useRef<string | null>(null)
 
   useEffect(() => {
     localStorage.setItem('sei-mock-mode', String(isMockMode))
@@ -250,11 +266,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setNotificacionesCount(notifCount)
 
           // Derive highest role
-          const roleNames = roles.map((r: any) => r.rol_nombre ?? '')
-          let derivedRol = 'servidor'
-          if (roleNames.includes('Super Administrador')) derivedRol = 'super_admin'
-          else if (roleNames.includes('Administrador de Iglesia')) derivedRol = 'admin_iglesia'
-          else if (roleNames.includes('Líder')) derivedRol = 'lider'
+          const roleNames = roles.map((r: any) => String(r.rol_nombre ?? ''))
+          const derivedRol = normalizeAppRole(roleNames)
           setRolActual(derivedRol)
 
           // Build iglesias
@@ -288,6 +301,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('[AUTH] onAuthStateChange:', _event, !!session)
+
+      // Supabase puede emitir SIGNED_IN repetido con la misma sesion.
+      // Evitamos recargar perfil si el access token no cambio.
+      if (_event === 'SIGNED_IN' && session?.access_token && session.access_token === lastHandledTokenRef.current) {
+        return
+      }
+
+      if (session?.access_token) {
+        lastHandledTokenRef.current = session.access_token
+      } else if (!session) {
+        lastHandledTokenRef.current = null
+      }
+
       const callId = ++callCounter
       await handleAuthSession(session, callId)
     })
@@ -333,7 +359,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         creadoEn: new Date().toISOString(),
         actualizadoEn: new Date().toISOString(),
       })
-      setRolActual(mockRol)
+      setRolActual(normalizeAppRole([mockRol]))
       setIglesiasDelUsuario([{ id: 1, nombre: 'Iglesia Mock' }])
       setIglesiaActual({ id: 1, nombre: 'Iglesia Mock' })
     }
