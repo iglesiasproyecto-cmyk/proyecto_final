@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUsuarioRoles } from "@/hooks/useUsuarios";
+import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUsuarioRoles, useUpdateUsuario } from "@/hooks/useUsuarios";
 import { useIglesias } from "@/hooks/useIglesias";
 import { useApp } from "@/app/store/AppContext";
 import { Card } from "./ui/card";
@@ -10,7 +10,7 @@ import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
-import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, Phone, UserPlus, ShieldPlus, X, Loader2 } from "lucide-react";
+import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, Phone, UserPlus, ShieldPlus, Pencil, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function UsuariosPage() {
@@ -24,11 +24,14 @@ export function UsuariosPage() {
   const [detail, setDetail] = useState<number | null>(null);
   const [showInvite, setShowInvite] = useState(false);
   const [showAssignRol, setShowAssignRol] = useState<number | null>(null);
+  const [editUser, setEditUser] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ nombres: "", apellidos: "", telefono: "" });
 
   const toggleActivoMutation = useToggleUsuarioActivo();
   const inviteMutation = useInviteUser();
   const assignRolMutation = useAssignRol();
   const removeRolMutation = useRemoveRol();
+  const updateUsuarioMutation = useUpdateUsuario();
 
   // Invite form state
   const [inviteForm, setInviteForm] = useState({
@@ -62,6 +65,17 @@ export function UsuariosPage() {
 
   const detailUser = detail ? enriched.find(u => u.idUsuario === detail) : null;
   const assignUser = showAssignRol ? enriched.find(u => u.idUsuario === showAssignRol) : null;
+
+  const openEditDialog = (idUsuario: number) => {
+    const user = enriched.find(u => u.idUsuario === idUsuario);
+    if (!user) return;
+    setEditUser(idUsuario);
+    setEditForm({
+      nombres: user.nombres,
+      apellidos: user.apellidos,
+      telefono: user.telefono ?? "",
+    });
+  };
 
   const handleInvite = () => {
     if (!inviteForm.correo.trim() || !inviteForm.nombres.trim() || !inviteForm.apellidos.trim() || !inviteForm.idRol || !inviteForm.idIglesia) {
@@ -112,6 +126,34 @@ export function UsuariosPage() {
     removeRolMutation.mutate(idUsuarioRol, {
       onSuccess: () => toast.success(`Rol "${rolNombre}" removido`),
     });
+  };
+
+  const handleEditUser = () => {
+    if (!editUser) return;
+    if (!editForm.nombres.trim() || !editForm.apellidos.trim()) {
+      toast.error("Nombres y apellidos son obligatorios");
+      return;
+    }
+
+    updateUsuarioMutation.mutate(
+      {
+        id: editUser,
+        data: {
+          nombres: editForm.nombres.trim(),
+          apellidos: editForm.apellidos.trim(),
+          telefono: editForm.telefono.trim() || null,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Usuario actualizado exitosamente");
+          setEditUser(null);
+        },
+        onError: (err: any) => {
+          toast.error(err?.message ?? "No se pudo actualizar el usuario");
+        },
+      }
+    );
   };
 
   return (
@@ -221,6 +263,9 @@ export function UsuariosPage() {
                 <TableCell className="text-right">
                   <div className="flex gap-1 justify-end">
                     <Button variant="ghost" size="sm" title="Ver detalle" onClick={() => setDetail(u.idUsuario)}><Eye className="w-3.5 h-3.5" /></Button>
+                    <Button variant="ghost" size="sm" title="Editar usuario" onClick={() => openEditDialog(u.idUsuario)}>
+                      <Pencil className="w-3.5 h-3.5 text-amber-600" />
+                    </Button>
                     <Button variant="ghost" size="sm" title="Asignar rol" onClick={() => { setShowAssignRol(u.idUsuario); resetAssignForm(); }}>
                       <ShieldPlus className="w-3.5 h-3.5 text-blue-600" />
                     </Button>
@@ -372,7 +417,16 @@ export function UsuariosPage() {
                 {assignUser.roleNames.length > 0 ? (
                   <div className="space-y-1.5">
                     {assignUser.roleNames.map((rn, i) => (
-                      <RoleRow key={i} rolNombre={rn.rolNombre} iglesiaNombre={rn.iglesiaNombre} idUsuario={assignUser.idUsuario} onRemove={handleRemoveRol} isRemoving={removeRolMutation.isPending} />
+                      <RoleRow
+                        key={rn.idUsuarioRol || `${rn.idRol}-${rn.idIglesia}-${i}`}
+                        rolNombre={rn.rolNombre}
+                        iglesiaNombre={rn.iglesiaNombre}
+                        idRol={rn.idRol}
+                        idIglesia={rn.idIglesia}
+                        idUsuario={assignUser.idUsuario}
+                        onRemove={handleRemoveRol}
+                        isRemoving={removeRolMutation.isPending}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -421,20 +475,69 @@ export function UsuariosPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ── Edit User Dialog ── */}
+      <Dialog open={!!editUser} onOpenChange={o => !o && setEditUser(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Pencil className="w-5 h-5" /> Editar Usuario</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Nombres *</label>
+                <Input
+                  value={editForm.nombres}
+                  onChange={e => setEditForm(p => ({ ...p, nombres: e.target.value }))}
+                  placeholder="Nombres"
+                  className="bg-input-background"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Apellidos *</label>
+                <Input
+                  value={editForm.apellidos}
+                  onChange={e => setEditForm(p => ({ ...p, apellidos: e.target.value }))}
+                  placeholder="Apellidos"
+                  className="bg-input-background"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Teléfono</label>
+              <Input
+                value={editForm.telefono}
+                onChange={e => setEditForm(p => ({ ...p, telefono: e.target.value }))}
+                placeholder="Teléfono"
+                className="bg-input-background"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditUser(null)}>Cancelar</Button>
+            <Button onClick={handleEditUser} disabled={updateUsuarioMutation.isPending}>
+              {updateUsuarioMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Guardando...</> : <><Pencil className="w-4 h-4 mr-2" /> Guardar Cambios</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 /* ── Helper component for the role row with remove button ── */
-function RoleRow({ rolNombre, iglesiaNombre, idUsuario, onRemove, isRemoving }: {
-  rolNombre: string; iglesiaNombre: string; idUsuario: number; onRemove: (idUsuarioRol: number, rolNombre: string) => void; isRemoving: boolean;
+function RoleRow({ rolNombre, iglesiaNombre, idRol, idIglesia, idUsuario, onRemove, isRemoving }: {
+  rolNombre: string
+  iglesiaNombre: string
+  idRol: number
+  idIglesia: number
+  idUsuario: number
+  onRemove: (idUsuarioRol: number, rolNombre: string) => void
+  isRemoving: boolean
 }) {
-  // We need the actual idUsuarioRol to remove it. Since the enriched query doesn't provide it,
-  // we fetch it when the user clicks. For now, we use the usuarios-enriquecidos enrichment pattern.
   const { data: userRoles = [] } = useUsuarioRoles(idUsuario);
   const matchingRol = userRoles.find(ur => {
-    // Match by role name via the roles list — not ideal but functional
-    return ur.fechaFin === null;
+    return ur.fechaFin === null && ur.idRol === idRol && ur.idIglesia === idIglesia;
   });
 
   return (
