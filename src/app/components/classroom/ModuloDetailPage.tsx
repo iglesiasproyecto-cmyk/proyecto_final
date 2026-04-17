@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { useApp } from '../../store/AppContext'
 import { useModulo } from '@/hooks/useModulo'
-import { useCursos, useModulos } from '@/hooks/useCursos'
+import { useCreateRecurso, useCursos, useDeleteRecurso, useModulos, useRecursos } from '@/hooks/useCursos'
+import { uploadRecursoArchivo } from '@/services/cursos.service'
 import { useMisInscripciones } from '@/hooks/useInscripciones'
 import { useMinisteriosIdsDeUsuario } from '@/hooks/useMinisterios'
 import { ModuloBreadcrumb } from './ModuloBreadcrumb'
@@ -12,6 +13,9 @@ import { ModuloNavegacion } from './ModuloNavegacion'
 import { ModuloContenidoEditor } from './ModuloContenidoEditor'
 import { ModuloContenidoView } from './ModuloContenidoView'
 import { Card } from '../ui/card'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { Link as LinkIcon, FileText, Trash2, Plus } from 'lucide-react'
 
 export function ModuloDetailPage() {
   const { idCurso: idCursoStr, idModulo: idModuloStr } = useParams()
@@ -21,20 +25,26 @@ export function ModuloDetailPage() {
   const { rolActual, usuarioActual } = useApp()
 
   const { data: modulo, isLoading: loadingModulo, error: errorModulo } = useModulo(idModulo)
+  const { data: recursos = [], isLoading: loadingRecursos } = useRecursos(idModulo)
   const { data: modulos = [] } = useModulos(idCurso)
-  const { data: cursos = [] } = useCursos()
+  const { data: cursos = [], isLoading: loadingCursos } = useCursos()
   const curso = cursos.find((c) => c.idCurso === idCurso)
 
-  const { data: misInscripciones = [] } = useMisInscripciones(usuarioActual?.idUsuario)
-  const { data: ministeriosIds = [] } = useMinisteriosIdsDeUsuario(usuarioActual?.idUsuario)
+  const { data: misInscripciones = [], isLoading: loadingInscripciones } = useMisInscripciones(usuarioActual?.idUsuario)
+  const { isLoading: loadingMinisterios } = useMinisteriosIdsDeUsuario(usuarioActual?.idUsuario)
+  const createRecursoMutation = useCreateRecurso()
+  const deleteRecursoMutation = useDeleteRecurso()
+  const [recursoForm, setRecursoForm] = useState({ nombre: '', tipo: 'archivo' as 'archivo' | 'enlace', url: '' })
+  const [recursoFile, setRecursoFile] = useState<File | null>(null)
+  const [isUploadingFile, setIsUploadingFile] = useState(false)
 
   const canEdit = useMemo(() => {
     if (rolActual === 'super_admin') return true
     if (rolActual === 'admin_iglesia') return true
-    if (!curso) return false
-    if (rolActual === 'lider') return ministeriosIds.includes(curso.idMinisterio)
+    // Si lider pudo leer el modulo por RLS, su scope le permite gestionarlo.
+    if (rolActual === 'lider' && !!modulo) return true
     return false
-  }, [rolActual, curso, ministeriosIds])
+  }, [rolActual, modulo])
 
   const canReadAsStudent = useMemo(() => {
     if (canEdit) return true
@@ -43,23 +53,79 @@ export function ModuloDetailPage() {
     )
   }, [canEdit, misInscripciones, idCurso])
 
+  const accessLoading = loadingModulo || loadingCursos || loadingInscripciones || loadingMinisterios
+
   useEffect(() => {
-    if (!Number.isFinite(idCurso) || !Number.isFinite(idModulo)) {
+    if (!Number.isInteger(idCurso) || idCurso <= 0 || !Number.isInteger(idModulo) || idModulo <= 0) {
       navigate('/app/mis-cursos')
       return
     }
+    if (accessLoading) return
     if (errorModulo || (modulo && !canReadAsStudent) || (modulo && !canEdit && modulo.estado !== 'publicado')) {
       toast.error('No tienes acceso a este módulo.')
       navigate('/app/mis-cursos')
     }
-  }, [idCurso, idModulo, errorModulo, modulo, canReadAsStudent, canEdit, navigate])
+  }, [idCurso, idModulo, accessLoading, errorModulo, modulo, canReadAsStudent, canEdit, navigate])
 
-  if (loadingModulo || !modulo) {
+  if (accessLoading || !modulo) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
         Cargando módulo...
       </div>
     )
+  }
+
+  const handleCreateRecurso = async () => {
+    if (!canEdit) return
+    const nombre = recursoForm.nombre.trim()
+
+    if (recursoForm.tipo === 'enlace' && (!nombre || !recursoForm.url.trim())) {
+      toast.error('Completa nombre y URL del recurso.')
+      return
+    }
+
+    if (recursoForm.tipo === 'archivo' && !recursoFile) {
+      toast.error('Selecciona un archivo para subir.')
+      return
+    }
+
+    try {
+      let finalUrl = recursoForm.url.trim()
+      const finalNombre = nombre || recursoFile?.name || 'Archivo'
+
+      if (recursoForm.tipo === 'archivo' && recursoFile) {
+        setIsUploadingFile(true)
+        finalUrl = await uploadRecursoArchivo({ idModulo: modulo.idModulo, file: recursoFile })
+      }
+
+      await createRecursoMutation.mutateAsync({
+        idModulo: modulo.idModulo,
+        nombre: finalNombre,
+        tipo: recursoForm.tipo,
+        url: finalUrl,
+      })
+
+      setRecursoForm({ nombre: '', tipo: 'archivo', url: '' })
+      setRecursoFile(null)
+      toast.success('Recurso agregado')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error creando recurso'
+      toast.error(msg)
+    } finally {
+      setIsUploadingFile(false)
+    }
+  }
+
+  const handleDeleteRecurso = (idRecurso: number, nombre: string) => {
+    if (!canEdit) return
+    if (!confirm(`¿Eliminar recurso "${nombre}"?`)) return
+    deleteRecursoMutation.mutate(idRecurso, {
+      onSuccess: () => toast.success('Recurso eliminado'),
+      onError: (e) => {
+        const msg = e instanceof Error ? e.message : 'Error eliminando recurso'
+        toast.error(msg)
+      },
+    })
   }
 
   return (
@@ -96,6 +162,97 @@ export function ModuloDetailPage() {
           />
         ) : (
           <ModuloContenidoView contenidoMd={modulo.contenidoMd} />
+        )}
+      </Card>
+
+      <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-3xl p-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Recursos del módulo</h2>
+          {loadingRecursos && <span className="text-xs text-muted-foreground">Cargando...</span>}
+        </div>
+
+        {recursos.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aún no hay recursos (PDF, enlaces, etc.).</p>
+        ) : (
+          <ul className="space-y-2">
+            {recursos.map((r) => (
+              <li
+                key={r.idRecurso}
+                className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-background/40 px-3 py-2"
+              >
+                <a
+                  href={r.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="min-w-0 flex-1 hover:underline"
+                >
+                  <span className="flex items-center gap-2 text-sm truncate">
+                    {r.tipo === 'archivo' ? <FileText className="w-4 h-4" /> : <LinkIcon className="w-4 h-4" />}
+                    {r.nombre}
+                  </span>
+                </a>
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => handleDeleteRecurso(r.idRecurso, r.nombre)}
+                    disabled={deleteRecursoMutation.isPending}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {canEdit && (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-2 pt-2 border-t border-white/10">
+            <Input
+              className="md:col-span-4"
+              placeholder="Nombre del recurso"
+              value={recursoForm.nombre}
+              onChange={(e) => setRecursoForm((p) => ({ ...p, nombre: e.target.value }))}
+            />
+            <select
+              className="md:col-span-2 h-10 rounded-md border border-input bg-background px-3 text-sm"
+              value={recursoForm.tipo}
+              onChange={(e) => {
+                const tipo = e.target.value as 'archivo' | 'enlace'
+                setRecursoForm((p) => ({ ...p, tipo }))
+                if (tipo === 'enlace') setRecursoFile(null)
+                if (tipo === 'archivo') setRecursoForm((p) => ({ ...p, url: '' }))
+              }}
+            >
+              <option value="archivo">Archivo adjunto (PDF/Docs)</option>
+              <option value="enlace">Enlace externo (opcional)</option>
+            </select>
+            {recursoForm.tipo === 'enlace' ? (
+              <Input
+                key="recurso-url"
+                className="md:col-span-4"
+                placeholder="https://..."
+                value={recursoForm.url}
+                onChange={(e) => setRecursoForm((p) => ({ ...p, url: e.target.value }))}
+              />
+            ) : (
+              <Input
+                key="recurso-file"
+                className="md:col-span-4"
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.webp,.zip"
+                onChange={(e) => setRecursoFile(e.target.files?.[0] ?? null)}
+              />
+            )}
+            <Button
+              className="md:col-span-2"
+              onClick={handleCreateRecurso}
+              disabled={createRecursoMutation.isPending || isUploadingFile}
+            >
+              <Plus className="w-4 h-4 mr-1" /> {isUploadingFile ? 'Subiendo...' : 'Agregar'}
+            </Button>
+          </div>
         )}
       </Card>
 

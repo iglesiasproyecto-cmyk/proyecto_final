@@ -12,6 +12,7 @@ import {
   useDeleteRecurso,
   useProcesosAsignadoCurso,
 } from "@/hooks/useCursos";
+import { uploadRecursoArchivo } from "@/services/cursos.service";
 import { useMinisterios } from "@/hooks/useMinisterios";
 import type { ProcesoAsignadoCurso } from "@/types/app.types";
 import { useApp } from "../store/AppContext";
@@ -22,6 +23,7 @@ import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 import { 
   Plus, ChevronRight, ChevronDown, FileText, Link as LinkIcon, Download, 
   ExternalLink, GraduationCap, Layers, ArrowLeft, Pencil, Trash2, 
@@ -53,7 +55,9 @@ export function ClassroomPage() {
   const [moduloForm, setModuloForm] = useState({ titulo: "", descripcion: "" });
   const [editCurso, setEditCurso] = useState<{ id: number; nombre: string; descripcion: string; estado: string } | null>(null);
   const [showCreateRecurso, setShowCreateRecurso] = useState(false);
-  const [recursoForm, setRecursoForm] = useState({ nombre: "", tipo: "enlace" as "archivo" | "enlace", url: "" });
+  const [recursoForm, setRecursoForm] = useState({ nombre: "", tipo: "archivo" as "archivo" | "enlace", url: "" });
+  const [recursoFile, setRecursoFile] = useState<File | null>(null);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
   const canManageAula =
     rolActual === "super_admin" || rolActual === "admin_iglesia" || rolActual === "lider";
 
@@ -109,7 +113,6 @@ export function ClassroomPage() {
       {
         titulo: moduloForm.titulo.trim(),
         descripcion: moduloForm.descripcion.trim() || null,
-        orden: (cursos.find((c) => c.idCurso === idCurso)?.modulos?.length ?? 0) + 1,
         idCurso,
       },
       {
@@ -136,13 +139,39 @@ export function ClassroomPage() {
     deleteModuloMutation.mutate(id);
   };
 
-  const handleCreateRecurso = (idModulo: number) => {
+  const handleCreateRecurso = async (idModulo: number) => {
     if (!canManageAula) return;
-    if (!recursoForm.nombre.trim() || !recursoForm.url.trim()) return;
-    createRecursoMutation.mutate(
-      { idModulo, nombre: recursoForm.nombre.trim(), tipo: recursoForm.tipo, url: recursoForm.url.trim() },
-      { onSuccess: () => { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "enlace", url: "" }); } }
-    );
+    const nombre = recursoForm.nombre.trim();
+
+    if (recursoForm.tipo === "enlace" && (!nombre || !recursoForm.url.trim())) return;
+    if (recursoForm.tipo === "archivo" && !recursoFile) return;
+
+    try {
+      let finalUrl = recursoForm.url.trim();
+      const finalNombre = nombre || recursoFile?.name || "Archivo";
+
+      if (recursoForm.tipo === "archivo" && recursoFile) {
+        setIsUploadingFile(true);
+        finalUrl = await uploadRecursoArchivo({ idModulo, file: recursoFile });
+      }
+
+      await createRecursoMutation.mutateAsync({
+        idModulo,
+        nombre: finalNombre,
+        tipo: recursoForm.tipo,
+        url: finalUrl,
+      });
+
+      setShowCreateRecurso(false);
+      setRecursoForm({ nombre: "", tipo: "archivo", url: "" });
+      setRecursoFile(null);
+      toast.success("Recurso agregado");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "No se pudo agregar el recurso";
+      toast.error(msg);
+    } finally {
+      setIsUploadingFile(false);
+    }
   };
 
   const statusColors: Record<string, string> = {
@@ -233,7 +262,7 @@ export function ClassroomPage() {
         </div>
 
         {/* Create Recurso Dialog */}
-        <Dialog open={canManageAula && showCreateRecurso} onOpenChange={o => { if (!o) { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "enlace", url: "" }); } }}>
+        <Dialog open={canManageAula && showCreateRecurso} onOpenChange={o => { if (!o) { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "archivo", url: "" }); setRecursoFile(null); } }}>
           <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
@@ -247,20 +276,26 @@ export function ClassroomPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Tipo</label>
-                <select className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20" value={recursoForm.tipo} onChange={e => setRecursoForm(p => ({ ...p, tipo: e.target.value as "archivo" | "enlace" }))}>
-                  <option value="enlace">Enlace (URL)</option>
-                  <option value="archivo">Archivo</option>
+                <select className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20" value={recursoForm.tipo} onChange={e => { const tipo = e.target.value as "archivo" | "enlace"; setRecursoForm(p => ({ ...p, tipo, url: tipo === "archivo" ? "" : p.url })); if (tipo === "enlace") setRecursoFile(null); }}>
+                  <option value="archivo">Archivo adjunto (PDF/Docs)</option>
+                  <option value="enlace">Enlace externo (opcional)</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">URL *</label>
-                <Input value={recursoForm.url} onChange={e => setRecursoForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..." className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">
+                  {recursoForm.tipo === "enlace" ? "URL *" : "Archivo *"}
+                </label>
+                {recursoForm.tipo === "enlace" ? (
+                  <Input key="recurso-url" value={recursoForm.url} onChange={e => setRecursoForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..." className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+                ) : (
+                  <Input key="recurso-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.webp,.zip" onChange={e => setRecursoFile(e.target.files?.[0] ?? null)} className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+                )}
               </div>
             </div>
             <DialogFooter className="gap-2">
-              <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "enlace", url: "" }); }}>Cancelar</Button>
-              <Button className="rounded-xl px-6" onClick={() => selectedModuloId && handleCreateRecurso(selectedModuloId)} disabled={createRecursoMutation.isPending || !recursoForm.nombre || !recursoForm.url}>
-                {createRecursoMutation.isPending ? "Agregando..." : "Agregar Recurso"}
+              <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreateRecurso(false); setRecursoForm({ nombre: "", tipo: "archivo", url: "" }); setRecursoFile(null); }}>Cancelar</Button>
+              <Button className="rounded-xl px-6" onClick={() => selectedModuloId && handleCreateRecurso(selectedModuloId)} disabled={createRecursoMutation.isPending || isUploadingFile || (recursoForm.tipo === "enlace" ? (!recursoForm.nombre || !recursoForm.url) : !recursoFile)}>
+                {isUploadingFile ? "Subiendo..." : createRecursoMutation.isPending ? "Agregando..." : "Agregar Recurso"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -420,6 +455,14 @@ export function ClassroomPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                        onClick={(e) => { e.stopPropagation(); toggleCurso(curso.idCurso); }}
+                      >
+                        {isExpanded ? "Ocultar módulos" : "Ver módulos"}
+                      </Button>
                       {canManageAula && (
                       <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all">
                         <button
@@ -528,11 +571,11 @@ export function ClassroomPage() {
                                 <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">{modulo.estado}</span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 opacity-0 group-hover/mod:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover/mod:opacity-100 transition-opacity">
                               <Link
                                 to={`/app/aula/curso/${curso.idCurso}/modulo/${modulo.idModulo}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline px-2 py-1 rounded-md"
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline px-2 py-1 rounded-md border border-primary/30 bg-primary/5"
                               >
                                 Abrir →
                               </Link>

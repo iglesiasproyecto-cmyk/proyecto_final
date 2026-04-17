@@ -93,6 +93,20 @@ export async function getMiembrosMinisterio(idMinisterio: number): Promise<Miemb
   return data.map(mapMiembro)
 }
 
+export async function getMinisteriosIdsDeUsuario(idUsuario: number): Promise<number[]> {
+  const { data, error } = await supabase
+    .from('miembro_ministerio')
+    .select('id_ministerio, rol_en_ministerio')
+    .eq('id_usuario', idUsuario)
+    .is('fecha_salida', null)
+  if (error) throw error
+
+  const rows = (data as Array<{ id_ministerio: number; rol_en_ministerio: string | null }>) ?? []
+  const liderRows = rows.filter((r) => r.rol_en_ministerio === 'lider')
+  const source = liderRows.length > 0 ? liderRows : rows
+  return Array.from(new Set(source.map((r) => r.id_ministerio)))
+}
+
 // ── Ministerio mutations ──
 
 export async function createMinisterio(
