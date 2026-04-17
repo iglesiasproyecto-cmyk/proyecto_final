@@ -1,21 +1,19 @@
-// Use local asset; figma: virtual import is unavailable in Vite runtime
-import logoImage from "../../assets/c213986cba199fbbd1eb1e261be133808f51b787.png";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
+import logoImage from "../../assets/sei_logo_official.png";
 
 interface SEILogoProps {
   className?: string;
-  alt?: string;
   style?: React.CSSProperties;
 }
 
-export function SEILogo({ className = "w-12 h-12", alt = "S.E.I. Logo", style }: SEILogoProps) {
+export function SEILogo({ className = "w-20 h-20", style }: SEILogoProps) {
   return (
-    <ImageWithFallback
-      src={logoImage} 
-      alt={alt}
-      className={className}
-      style={style}
-      draggable={false}
-    />
+    <div className={`relative flex items-center justify-center ${className}`} style={style}>
+      <img 
+        src={logoImage} 
+        alt="S.E.I. Logo" 
+        className="w-full h-full object-contain"
+        draggable={false}
+      />
+    </div>
   );
 }

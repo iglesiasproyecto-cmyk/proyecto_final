@@ -11,9 +11,9 @@ import { CalendarDays, ListTodo, Info, AlertTriangle, BookOpen, CheckCheck, Chec
 import { Bell } from "lucide-react";
 
 const typeConfig: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  evento: { label: "Evento", color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-600/10", icon: <CalendarDays className="w-5 h-5" /> },
+  evento: { label: "Evento", color: "text-[#4682b4] dark:text-[#709dbd]", bg: "bg-[#4682b4]/10", icon: <CalendarDays className="w-5 h-5" /> },
   tarea: { label: "Tarea", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-500/10", icon: <ListTodo className="w-5 h-5" /> },
-  curso: { label: "Curso", color: "text-cyan-700 dark:text-cyan-400", bg: "bg-cyan-600/10", icon: <BookOpen className="w-5 h-5" /> },
+  curso: { label: "Curso", color: "text-[#4682b4] dark:text-[#709dbd]", bg: "bg-[#4682b4]/10", icon: <BookOpen className="w-5 h-5" /> },
   alerta: { label: "Alerta", color: "text-red-700 dark:text-red-400", bg: "bg-red-500/10", icon: <AlertTriangle className="w-5 h-5" /> },
   informacion: { label: "Info", color: "text-indigo-700 dark:text-indigo-400", bg: "bg-indigo-600/10", icon: <Info className="w-5 h-5" /> },
 };
@@ -49,8 +49,8 @@ export function NotificationsPage() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm overflow-hidden">
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
-            <Bell className="w-6 h-6 text-white" />
+          <div className="w-14 h-14 rounded-3xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/30 shrink-0">
+            <Bell className="w-7 h-7 text-white" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Mi Bandeja</p>
@@ -61,23 +61,23 @@ export function NotificationsPage() {
           </div>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" onClick={() => usuarioActual && markAllReadMutation.mutate(usuarioActual.idUsuario)} disabled={markAllReadMutation.isPending} className="shrink-0 rounded-xl bg-card/40 backdrop-blur-xl border border-blue-600/20 text-blue-700 dark:text-blue-400 hover:bg-blue-600/10 font-bold shadow-sm transition-all">
+          <Button variant="outline" onClick={() => usuarioActual && markAllReadMutation.mutate(usuarioActual.idUsuario)} disabled={markAllReadMutation.isPending} className="shrink-0 rounded-xl bg-card/40 backdrop-blur-xl border-[#4682b4]/40 text-[#4682b4] hover:bg-[#4682b4]/10 font-bold shadow-sm transition-all pb-1 pt-1 h-auto">
             <CheckCheck className="w-4 h-4 mr-2" /> Marcar todas
           </Button>
         )}
       </motion.div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-        <TabsList className="bg-card/40 backdrop-blur-xl border border-border/50 p-1.5 h-auto rounded-2xl w-full sm:w-auto inline-flex shadow-xl shadow-black/5 flex-wrap gap-1">
-          <TabsTrigger value="todas" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Todas</TabsTrigger>
-          <TabsTrigger value="no_leidas" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+        <TabsList className="bg-card/40 backdrop-blur-xl border border-white/10 p-1.5 h-auto rounded-2xl w-full sm:w-auto inline-flex shadow-xl shadow-black/5 flex-wrap gap-1">
+          <TabsTrigger value="todas" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Todas</TabsTrigger>
+          <TabsTrigger value="no_leidas" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
             Sin leer
             {unreadCount > 0 && (
-              <span className="ml-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow-sm">{unreadCount}</span>
+              <span className="ml-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow-sm">{unreadCount}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="evento" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Eventos</TabsTrigger>
-          <TabsTrigger value="tarea" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Tareas</TabsTrigger>
+          <TabsTrigger value="evento" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Eventos</TabsTrigger>
+          <TabsTrigger value="tarea" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Tareas</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -95,7 +95,7 @@ export function NotificationsPage() {
               >
                 <div
                   className={`group flex items-start gap-4 p-5 rounded-3xl backdrop-blur-2xl border transition-all duration-300 cursor-pointer hover:-translate-y-1 ${
-                    !n.leida ? "bg-blue-600/5 border-blue-600/20 shadow-lg shadow-blue-900/5" : "bg-card/40 border-border/50 shadow-xl hover:shadow-2xl"
+                    !n.leida ? "bg-[#4682b4]/5 border-[#4682b4]/20 shadow-lg shadow-blue-900/5" : "bg-card/40 border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl"
                   }`}
                   onClick={() => !n.leida && markReadMutation.mutate(n.idNotificacion)}
                 >
@@ -105,11 +105,11 @@ export function NotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className={`text-[15px] tracking-tight ${!n.leida ? "font-bold text-foreground" : "font-semibold text-foreground/80 group-hover:text-blue-600 transition-colors"}`}>{n.titulo}</p>
+                        <p className={`text-[15px] tracking-tight ${!n.leida ? "font-bold text-foreground" : "font-semibold text-foreground/80 group-hover:text-[#4682b4] transition-colors"}`}>{n.titulo}</p>
                         <p className={`text-[13px] mt-1 line-clamp-2 leading-relaxed ${!n.leida ? "font-medium text-foreground/90" : "text-muted-foreground"}`}>{n.mensaje}</p>
                       </div>
                       {!n.leida && (
-                        <div className="w-3 h-3 rounded-full bg-cyan-500 shrink-0 mt-1.5 shadow-[0_0_10px_rgba(6,182,212,0.5)] animate-pulse" />
+                        <div className="w-3 h-3 rounded-full bg-[#4682b4] shadow-[0_0_10px_rgba(70,130,180,0.5)] animate-pulse" />
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-4 pt-3 border-t border-white/5">
@@ -117,7 +117,7 @@ export function NotificationsPage() {
                       <span className="text-[11px] font-medium text-muted-foreground">{formatDate(n.creadoEn)}</span>
                       {n.leida && (
                         <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-auto tracking-widest uppercase">
-                          <Check className="w-3 h-3 text-cyan-600" /> Leida
+                          <Check className="w-3 h-3 text-[#4682b4]" /> Leida
                         </span>
                       )}
                     </div>
@@ -131,9 +131,9 @@ export function NotificationsPage() {
 
       {filtered.length === 0 && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-          <div className="p-16 text-center rounded-3xl bg-card/40 backdrop-blur-2xl border border-border/50 shadow-xl">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-600/10 to-blue-600/5 flex items-center justify-center mx-auto mb-6">
-              <Inbox className="w-10 h-10 text-blue-600/50" />
+          <div className="p-16 text-center rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#709dbd]/10 to-[#4682b4]/5 flex items-center justify-center mx-auto mb-6">
+              <Inbox className="w-10 h-10 text-[#4682b4]/50" />
             </div>
             <h3 className="text-lg font-bold text-foreground/90 tracking-tight mb-2">Bandeja Vacía</h3>
             <p className="text-[13px] font-medium text-muted-foreground">
