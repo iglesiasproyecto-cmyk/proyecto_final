@@ -8,6 +8,7 @@ import {
 } from "@/hooks/useCursos";
 import { useRetirarInscripcion, useReactivarInscripcion } from "@/hooks/useInscripciones";
 import { useMinisterios } from "@/hooks/useMinisterios";
+import { useApp } from "@/app/store/AppContext";
 import type { ProcesoAsignadoCurso } from "@/types/app.types";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -25,6 +26,7 @@ import {
   GraduationCap, Plus, Calendar, Filter, Users, ArrowLeft,
   BookOpen, Trash2, ChevronRight, CheckCircle2, PlayCircle, BookMarked, XCircle, UserPlus, Undo2,
 } from "lucide-react";
+import { EnrollmentPickerModal } from "./classroom/EnrollmentPickerModal";
 
 const estadoCicloConfig: Record<string, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
   programado: { label: "Programado", color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",      dot: "bg-[#4682b4]",    icon: <BookMarked className="w-3 h-3" /> },

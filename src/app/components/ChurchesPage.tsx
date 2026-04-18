@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useIglesiasEnriquecidas, useCreateIglesia, useUpdateIglesia, useToggleIglesiaEstado, useDeleteIglesia } from "@/hooks/useIglesias";
-import type { Iglesia } from "@/types/app.types";
+
 import type { IglesiaEnriquecida } from "@/services/iglesias.service";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useCiudades } from "@/hooks/useGeografia";
 import { motion } from "motion/react";
-import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar, MoreVertical } from "lucide-react";
+import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar } from "lucide-react";
 
 const estadoLabels: Record<string, string> = {
   activa: "Activa",
@@ -157,46 +157,30 @@ export function ChurchesPage() {
         </Button>
       </motion.div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
-              <Building2 className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Directorio</p>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Gestión de Iglesias</h1>
-            </div>
-          </div>
-          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all">
-            <Plus className="w-4 h-4 mr-2" /> Nueva Iglesia
-          </Button>
+      <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+          <Input 
+            placeholder="Buscar por nombre o ciudad..." 
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)} 
+            className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
+          />
         </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
-            <Input 
-              placeholder="Buscar por nombre o ciudad..." 
-              value={search} 
-              onChange={(e) => setSearch(e.target.value)} 
-              className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
-            />
-          </div>
-          <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto h-10 items-center">
-            {(["all", "activa", "inactiva"] as const).map((f) => (
-              <Button 
-                key={f} 
-                variant={filter === f ? "default" : "ghost"} 
-                size="sm" 
-                onClick={() => setFilter(f)} 
-                className={`h-full px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm bg-gradient-to-r from-cyan-600 to-blue-700 text-white hover:from-cyan-500 hover:to-blue-600" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
-              >
-                {f === "all" ? "Todas" : f === "activa" ? "Activas" : "Inactivas"}
-              </Button>
-            ))}
-          </div>
+        <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto h-10 items-center">
+          {(["all", "activa", "inactiva"] as const).map((f) => (
+            <Button 
+              key={f} 
+              variant={filter === f ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setFilter(f)} 
+              className={`h-full px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm bg-gradient-to-r from-cyan-600 to-blue-700 text-white hover:from-cyan-500 hover:to-blue-600" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
+            >
+              {f === "all" ? "Todas" : f === "activa" ? "Activas" : "Inactivas"}
+            </Button>
+          ))}
         </div>
-      </motion.div>
+      </div>
 
       {/* Grid de Iglesias */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

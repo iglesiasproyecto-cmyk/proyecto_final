@@ -10,21 +10,17 @@ import { useCursos } from "@/hooks/useCursos";
 import { useEvaluaciones } from "@/hooks/useCursos";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
 import { usePaises, useDepartamentos, useCiudades } from "@/hooks/useGeografia";
-import { Card } from "./ui/card";
+
 import { Badge } from "./ui/badge";
 import { motion } from "motion/react";
 import { SimpleBarChart, SimpleDonutChart } from "./SimpleCharts";
 import {
   Building2, Users, CalendarDays, ListTodo, BookOpen, ClipboardCheck, Bell,
-  ArrowRight, CheckCircle2, Clock, AlertCircle, ChevronRight, Globe,
+  ArrowRight, CheckCircle2, Clock, AlertCircle, Globe,
   Church, UserCheck, Settings, TrendingUp, Sparkles, Activity
 } from "lucide-react";
 
-const statusColors: Record<string, string> = {
-  pendiente: "bg-amber-100 text-amber-700",
-  en_progreso: "bg-[#4682b4]/10 text-[#4682b4]",
-  completada: "bg-green-100 text-green-700",
-};
+
 const statusLabels: Record<string, string> = {
   pendiente: "Pendiente",
   en_progreso: "En Progreso",
@@ -458,7 +454,7 @@ function LiderDashboard() {
               <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate("/app/tareas")}>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white`}>{statusIcons[t.estado]}</div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "Completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-[#4682b4]"}`}>{t.titulo}</p>
+                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-[#4682b4]"}`}>{t.titulo}</p>
                   <p className="text-[10px] font-medium text-muted-foreground truncate mt-0.5">{t.asignados?.map((a) => a.nombreCompleto).join(", ")}</p>
                 </div>
                 <Badge variant="outline" className={`text-[9px] px-2 py-0 border-0 bg-[#4682b4]/10 text-[#4682b4] uppercase tracking-widest p-1`}>{statusLabels[t.estado]}</Badge>
@@ -571,7 +567,7 @@ function ServidorDashboard() {
               <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate("/app/tareas")}>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white`}>{statusIcons[t.estado]}</div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "Completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-[#4682b4]"}`}>{t.titulo}</p>
+                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-[#4682b4]"}`}>{t.titulo}</p>
                   <p className="text-[10px] font-medium text-muted-foreground truncate mt-0.5">Limite: {t.fechaLimite || "Sin fecha"}</p>
                 </div>
                 <Badge variant="outline" className={`text-[9px] px-2 py-0 border-0 bg-[#4682b4]/10 text-[#4682b4] uppercase tracking-widest p-1`}>{statusLabels[t.estado]}</Badge>

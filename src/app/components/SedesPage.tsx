@@ -5,12 +5,13 @@ import { useCiudades } from "@/hooks/useGeografia";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+
 import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Save, Globe, Users } from "lucide-react";
 import { motion } from "motion/react";
 import { AnimatedCard } from "./ui/AnimatedCard";
+import { toast } from "sonner";
 
 export function SedesPage() {
   const [search, setSearch] = useState("");
@@ -121,22 +122,7 @@ export function SedesPage() {
         <Button onClick={openAdd} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
           <Plus className="w-4 h-4 mr-2" /> Nueva Sede
         </Button>
-      </motion.div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
-              <MapPin className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Gestión de Sedes</h1>
-            </div>
-          </div>
-          <Button onClick={openAdd} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all">
-            <Plus className="w-4 h-4 mr-2" /> Nueva Sede
-          </Button>
-        </div>
 
         <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">
           <div className="relative flex-1 md:max-w-md">

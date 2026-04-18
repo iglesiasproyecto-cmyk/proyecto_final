@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRoles } from "@/hooks/useUsuarios";
 import { useTiposEvento, useCreateTipoEvento, useUpdateTipoEvento, useDeleteTipoEvento } from "@/hooks/useEventos";
-import { Card } from "./ui/card";
+
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
