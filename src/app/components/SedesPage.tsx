@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Save, Globe, Users } from "lucide-react";
+import { motion } from "motion/react";
 import { AnimatedCard } from "./ui/AnimatedCard";
 
 export function SedesPage() {

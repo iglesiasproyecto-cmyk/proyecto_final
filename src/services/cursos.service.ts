@@ -97,6 +97,7 @@ export interface CursoEnriquecido extends Curso {
 export interface EvaluacionEnriquecida extends Evaluacion {
   moduloNombre: string
   cursoNombre: string
+  usuarioNombre: string
 }
 
 export async function getCursosEnriquecidos(idMinisterio?: number): Promise<CursoEnriquecido[]> {
@@ -125,7 +126,7 @@ export async function getCursosEnriquecidos(idMinisterio?: number): Promise<Curs
 export async function getEvaluacionesEnriquecidas(idModulo?: number): Promise<EvaluacionEnriquecida[]> {
   let q = supabase
     .from('evaluacion')
-    .select('*, modulo(titulo, curso(nombre))')
+    .select('*, modulo(titulo, curso(nombre)), usuario(nombres, apellidos)')
     .order('creado_en', { ascending: false })
   if (idModulo !== undefined) q = q.eq('id_modulo', idModulo)
   const { data, error } = await q
@@ -134,6 +135,7 @@ export async function getEvaluacionesEnriquecidas(idModulo?: number): Promise<Ev
     ...mapEvaluacion(r),
     moduloNombre: r.modulo?.titulo ?? '',
     cursoNombre: r.modulo?.curso?.nombre ?? '',
+    usuarioNombre: r.usuario ? `${r.usuario.nombres} ${r.usuario.apellidos}` : 'Desconocido',
   }))
 }
 
