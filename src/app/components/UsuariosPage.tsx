@@ -14,7 +14,7 @@ import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, 
 import { toast } from "sonner";
 
 export function UsuariosPage() {
-  const { iglesiaActual, usuarioActual, rolActual } = useApp();
+  const { iglesiaActual, rolActual } = useApp();
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
   const { data: iglesias = [] } = useIglesias();
@@ -211,9 +211,6 @@ export function UsuariosPage() {
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Directorio</p>
             <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Usuarios</h1>
           </div>
-          <Button onClick={() => setShowInvite(true)} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all">
-            <UserPlus className="w-4 h-4 mr-2" /> Invitar Usuario
-          </Button>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">

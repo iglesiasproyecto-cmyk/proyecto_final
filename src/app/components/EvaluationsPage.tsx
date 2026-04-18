@@ -20,9 +20,10 @@ import {
 import { 
   ChevronRight, Calendar, Star, BookOpen, AlertCircle, CheckCircle2,
   Trophy, Target, Zap, Plus, Filter, Pencil, Trash2, TrendingUp, ClipboardCheck,
-  User, BarChart3, GraduationCap
+  User, BarChart3, GraduationCap, Building2, Users, Search
 } from "lucide-react";
 import { AnimatedCard } from "./ui/AnimatedCard";
+import { SimpleBarChart, SimpleDonutChart } from "./SimpleCharts";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell,
   RadialBarChart, RadialBar, Legend, PieChart, Pie
@@ -251,13 +252,13 @@ export function EvaluationsPage() {
            </div>
         </AnimatedCard>
 
-        <AnimatedCard className="p-5 flex flex-col items-center justify-center h-[300px]">
-           <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 mb-4">Progreso Global</h3>
-           <div className="relative w-full h-full flex items-center justify-center">
+        <AnimatedCard className="p-5 flex flex-col items-center justify-center h-[300px] overflow-hidden">
+           <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 mb-2">Progreso Global</h3>
+           <div className="relative w-full h-[220px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <RadialBarChart 
-                  innerRadius="60%" 
-                  outerRadius="100%" 
+                  innerRadius="80%" 
+                  outerRadius="110%" 
                   data={[{ name: 'Aprobados', value: (evaluaciones.filter(e => e.estado === 'aprobado' && e.idUsuario === usuarioActual?.idUsuario).length / (evaluaciones.filter(e => e.idUsuario === usuarioActual?.idUsuario).length || 1)) * 100, fill: '#4682b4' }]} 
                   startAngle={180} 
                   endAngle={0}
@@ -265,11 +266,11 @@ export function EvaluationsPage() {
                   <RadialBar background dataKey='value' cornerRadius={10} />
                 </RadialBarChart>
               </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pt-8">
-                 <span className="text-4xl font-black text-[#4682b4]">
+              <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
+                 <span className="text-5xl font-black text-[#4682b4] leading-none">
                    {Math.round((evaluaciones.filter(e => e.estado === 'aprobado' && e.idUsuario === usuarioActual?.idUsuario).length / (evaluaciones.filter(e => e.idUsuario === usuarioActual?.idUsuario).length || 1)) * 100)}%
                  </span>
-                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Aprobación</span>
+                 <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] mt-2">Aprobación</span>
               </div>
            </div>
         </AnimatedCard>
