@@ -11,7 +11,6 @@ import {
   PanelLeftClose, PanelLeftOpen, GraduationCap, Moon, Sun
 } from "lucide-react";
 import { SEILogo } from "./SEILogo";
-import { FlyingAppLogo } from "./FlyingAppLogo";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -429,8 +428,7 @@ export function AppLayout() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
-          <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md flex items-center px-4 md:px-6 gap-4 shrink-0 sticky top-0 z-20">
-            <FlyingAppLogo />
+          <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-4 md:px-6 gap-4 shrink-0 sticky top-0 z-20">
             <button
               onClick={toggleSidebar}
               className="text-muted-foreground hover:text-foreground transition-colors lg:hidden"

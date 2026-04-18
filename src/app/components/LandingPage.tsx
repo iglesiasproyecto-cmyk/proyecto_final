@@ -140,10 +140,8 @@ export function LandingPage() {
 
       {/* Main Container */}
       <div className="relative z-20 flex flex-col items-center text-center max-w-5xl mx-auto">
-        
-        {/* The Mighty Eagle (Interactive) */}
         <FlyingEagle />
-
+        
         {/* Content Section */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
