@@ -19,9 +19,14 @@ import {
 } from "./ui/alert-dialog";
 import { 
   ChevronRight, Calendar, Star, BookOpen, AlertCircle, CheckCircle2,
-  Trophy, Target, Zap
+  Trophy, Target, Zap, Plus, Filter, Pencil, Trash2, TrendingUp, ClipboardCheck,
+  User, BarChart3, GraduationCap
 } from "lucide-react";
 import { AnimatedCard } from "./ui/AnimatedCard";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell,
+  RadialBarChart, RadialBar, Legend, PieChart, Pie
+} from 'recharts';
 
 const estadoEvalConfig: Record<string, { label: string; color: string; icon: any }> = {
   pendiente:   { label: "Pendiente",   color: "bg-amber-500/10 text-amber-500 border-amber-500/20",   icon: AlertCircle },
@@ -47,13 +52,14 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function EvaluationsPage() {
-  const { usuarioActual } = useApp();
+  const { usuarioActual, rolActual } = useApp();
   const { data: evaluaciones = [], isLoading } = useEvaluacionesEnriquecidas();
   const { data: cursos = [] } = useCursos();
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [cursoFilter, setCursoFilter] = useState("all");
   const [editTarget, setEditTarget] = useState<{ id: number; calificacion: string; estado: string; observaciones: string } | null>(null);
+  const [studentSearch, setStudentSearch] = useState("");
   const [createForm, setCreateForm] = useState({ idModulo: 0, calificacion: "", estado: "pendiente" as string, observaciones: "", fechaEvaluacion: "" });
   
   const resetCreateForm = () => setCreateForm({ idModulo: 0, calificacion: "", estado: "pendiente", observaciones: "", fechaEvaluacion: "" });
@@ -140,9 +146,9 @@ export function EvaluationsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none mb-2">
-              Mis Evaluaciones
+              Panel de Evaluaciones
             </h1>
-            <p className="text-muted-foreground text-xs sm:text-sm font-medium">Historial académico y resultados de formación</p>
+            <p className="text-muted-foreground text-xs sm:text-sm font-medium">Control académico y seguimiento de resultados</p>
           </div>
         </div>
         <Button onClick={() => setShowCreate(true)} className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0">
@@ -192,48 +198,261 @@ export function EvaluationsPage() {
         <AnimatedCard index={3} className="p-5">
            <div className="flex justify-between items-start mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center text-white shadow-lg">
-                 <BookOpen className="w-5 h-5" />
+                 <Building2 className="w-5 h-5" />
               </div>
-              <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest bg-slate-500/10 text-slate-400 border-0">Cursos</Badge>
+              <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest bg-slate-500/10 text-slate-400 border-0">Sede</Badge>
            </div>
            <p className="text-3xl font-black text-foreground">{uniqueCursos.length}</p>
            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Cursos en Proceso</p>
         </AnimatedCard>
       </div>
 
-      {/* Course Progress Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {uniqueCursos.slice(0, 3).map((c, i) => {
-            const cursoEvals = evaluaciones.filter((e) => e.cursoNombre === c && e.calificacion !== null);
-            const avg = cursoEvals.length > 0 ? cursoEvals.reduce((sum, e) => sum + (e.calificacion || 0), 0) / cursoEvals.length : 0;
-            return (
-              <AnimatedCard
-                key={c}
-                index={i}
-                className="p-5"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 truncate max-w-[150px]">{c}</p>
-                  <span className={`text-lg font-black ${getCalColor(avg)} leading-none`}>{avg > 0 ? avg.toFixed(1) : "—"}</span>
+      {/* Seccion Mi Progreso (Visible para TODOS) */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-5"
+      >
+        <AnimatedCard className="md:col-span-2 p-5 flex flex-col justify-center h-[300px]">
+           <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-primary/70 flex items-center gap-2">
+                <GraduationCap className="w-4 h-4" /> Mi Rendimiento por Curso
+              </h3>
+           </div>
+           <div className="h-full w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={uniqueCursos.map(c => {
+                  const cursoEvals = evaluaciones.filter(e => e.cursoNombre === c && e.calificacion !== null && e.idUsuario === usuarioActual?.idUsuario);
+                  const avg = cursoEvals.length > 0 ? cursoEvals.reduce((sum, e) => sum + (e.calificacion || 0), 0) / cursoEvals.length : 0;
+                  return { name: c.substring(0, 15), avg: Number(avg.toFixed(1)) };
+                }).filter(i => i.avg > 0)}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} domain={[0, 100]} />
+                  <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                  <Bar dataKey="avg" fill="#4682b4" radius={[4, 4, 0, 0]} barSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+           </div>
+        </AnimatedCard>
+
+        <AnimatedCard className="p-5 flex flex-col items-center justify-center h-[300px]">
+           <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 mb-4">Progreso Global</h3>
+           <div className="relative w-full h-full flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadialBarChart 
+                  innerRadius="60%" 
+                  outerRadius="100%" 
+                  data={[{ name: 'Aprobados', value: (evaluaciones.filter(e => e.estado === 'aprobado' && e.idUsuario === usuarioActual?.idUsuario).length / (evaluaciones.filter(e => e.idUsuario === usuarioActual?.idUsuario).length || 1)) * 100, fill: '#4682b4' }]} 
+                  startAngle={180} 
+                  endAngle={0}
+                >
+                  <RadialBar background dataKey='value' cornerRadius={10} />
+                </RadialBarChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pt-8">
+                 <span className="text-4xl font-black text-[#4682b4]">
+                   {Math.round((evaluaciones.filter(e => e.estado === 'aprobado' && e.idUsuario === usuarioActual?.idUsuario).length / (evaluaciones.filter(e => e.idUsuario === usuarioActual?.idUsuario).length || 1)) * 100)}%
+                 </span>
+                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Aprobación</span>
+              </div>
+           </div>
+        </AnimatedCard>
+      </motion.div>
+
+      {/* Seccion Estadistica por Estudiante (Solo Admins y Lideres) */}
+      {(rolActual === 'super_admin' || rolActual === 'admin_iglesia' || rolActual === 'lider') && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center gap-3 px-1 mt-4">
+            <BarChart3 className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold tracking-tight uppercase text-[12px] tracking-[0.2em] text-muted-foreground">Estadística por Estudiante</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Top Estudiantes List */}
+            <AnimatedCard className="lg:col-span-1 p-0 overflow-hidden">
+               <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary/70">Top Estudiantes</span>
+                  <Trophy className="w-3.5 h-3.5 text-amber-500" />
+               </div>
+               <div className="divide-y divide-white/5 max-h-[300px] overflow-y-auto">
+                  {(() => {
+                    const studentMap: Record<string, { sum: number, count: number, name: string }> = {};
+                    evaluaciones.forEach(ev => {
+                      if (ev.calificacion === null) return;
+                      if (!studentMap[ev.idUsuario]) studentMap[ev.idUsuario] = { sum: 0, count: 0, name: ev.usuarioNombre };
+                      studentMap[ev.idUsuario].sum += ev.calificacion;
+                      studentMap[ev.idUsuario].count += 1;
+                    });
+                    const students = Object.values(studentMap)
+                      .map(s => ({ name: s.name, avg: s.sum / s.count }))
+                      .sort((a, b) => b.avg - a.avg);
+
+                    if (students.length === 0) return <div className="p-10 text-center text-xs text-muted-foreground/50">Sin datos</div>;
+
+                    return students.map((s, i) => (
+                      <div key={s.name} className="flex items-center justify-between p-3.5 hover:bg-white/5 transition-colors">
+                        <div className="flex items-center gap-3">
+                           <div className="w-6 h-6 rounded-lg bg-background border border-white/10 flex items-center justify-center text-[10px] font-black text-primary">
+                             {i + 1}
+                           </div>
+                           <span className="text-xs font-bold truncate max-w-[120px]">{s.name}</span>
+                        </div>
+                        <span className={`text-xs font-black ${getCalColor(s.avg)}`}>{s.avg.toFixed(1)}</span>
+                      </div>
+                    ));
+                  })()}
+               </div>
+            </AnimatedCard>
+
+            <AnimatedCard className="lg:col-span-2 p-5 bg-card/10 border-white/5 flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4682b4]">Distribución por Estado</span>
                 </div>
-                <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden shadow-inner">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${avg}%` }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                    className={`h-full bg-gradient-to-r from-[#709dbd] to-[#4682b4] shadow-[0_0_8px_rgba(70,130,180,0.4)]`} 
-                  />
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Aprobados', value: evaluaciones.filter(e => e.estado === 'aprobado').length, fill: '#10b981' },
+                            { name: 'Pendientes', value: evaluaciones.filter(e => e.estado === 'pendiente').length, fill: '#f59e0b' },
+                            { name: 'Reprobados', value: evaluaciones.filter(e => e.estado === 'reprobado').length, fill: '#ef4444' },
+                          ]}
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          { [0,1,2].map((entry, index) => <Cell key={`cell-${index}`} />) }
+                        </Pie>
+                        <RechartsTooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-col justify-center gap-3">
+                    {[
+                      { label: 'Aprobados', color: 'bg-emerald-500', count: evaluaciones.filter(e => e.estado === 'aprobado').length },
+                      { label: 'Pendientes', color: 'bg-amber-500', count: evaluaciones.filter(e => e.estado === 'pendiente').length },
+                      { label: 'Reprobados', color: 'bg-rose-500', count: evaluaciones.filter(e => e.estado === 'reprobado').length },
+                    ].map(st => (
+                      <div key={st.label} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${st.color}`} />
+                          <span className="text-xs font-bold text-muted-foreground">{st.label}</span>
+                        </div>
+                        <span className="text-sm font-black text-foreground">{st.count}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </AnimatedCard>
-            );
-          })}
-      </div>
+            </AnimatedCard>
+          </div>
+
+          {/* Estadísticas Detalladas por Curso */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            {uniqueCursos.map((c, i) => {
+              const cursoEvals = evaluaciones.filter(e => e.cursoNombre === c && e.calificacion !== null);
+              const avg = cursoEvals.length > 0 ? cursoEvals.reduce((sum, e) => sum + (e.calificacion || 0), 0) / cursoEvals.length : 0;
+              const count = new Set(cursoEvals.map(e => e.idUsuario)).size;
+              return (
+                <AnimatedCard key={c} index={i} className="p-4 bg-primary/5 border-primary/10">
+                   <div className="flex justify-between items-center mb-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#4682b4] truncate max-w-[120px]">{c}</span>
+                      <GraduationCap className="w-3.5 h-3.5 text-[#4682b4]" />
+                   </div>
+                   <div className="flex items-baseline gap-2">
+                      <span className={`text-2xl font-black ${getCalColor(avg)}`}>{avg > 0 ? avg.toFixed(1) : "—"}</span>
+                      <span className="text-[10px] text-muted-foreground font-bold">AVG</span>
+                   </div>
+                   <p className="text-[10px] text-muted-foreground/60 mt-1 font-medium">{count} estudiantes evaluados</p>
+                </AnimatedCard>
+              );
+            })}
+          </div>
+
+          {/* Tabla de Desempeño por Estudiante */}
+          <AnimatedCard className="mt-6 p-0 overflow-hidden">
+             <div className="p-4 border-b border-white/5 bg-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-primary/70">Desempeño Detallado por Estudiante</span>
+                </div>
+                <div className="relative w-full sm:w-64">
+                   <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+                   <Input 
+                      placeholder="Buscar estudiante..." 
+                      value={studentSearch}
+                      onChange={(e) => setStudentSearch(e.target.value)}
+                      className="pl-9 h-9 bg-background/50 border-white/10 rounded-xl text-xs"
+                   />
+                </div>
+             </div>
+             <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                   <thead>
+                      <tr className="bg-white/5 border-b border-white/5">
+                         <th className="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Estudiante</th>
+                         <th className="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Curso</th>
+                         <th className="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Módulos</th>
+                         <th className="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 text-right">Promedio</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-white/5">
+                      {(() => {
+                        const reportMap: Record<string, { name: string, curso: string, sum: number, count: number }> = {};
+                        evaluaciones.forEach(ev => {
+                          if (ev.calificacion === null) return;
+                          const key = `${ev.idUsuario}-${ev.cursoNombre}`;
+                          if (!reportMap[key]) reportMap[key] = { name: ev.usuarioNombre, curso: ev.cursoNombre, sum: 0, count: 0 };
+                          reportMap[key].sum += ev.calificacion;
+                          reportMap[key].count += 1;
+                        });
+                        const filteredReports = Object.values(reportMap)
+                          .filter(r => r.name.toLowerCase().includes(studentSearch.toLowerCase()) || r.curso.toLowerCase().includes(studentSearch.toLowerCase()))
+                          .sort((a,b) => a.name.localeCompare(b.name));
+                        
+                        if (filteredReports.length === 0) return <tr><td colSpan={4} className="p-10 text-center text-xs text-muted-foreground/50">Sin resultados</td></tr>;
+                        return filteredReports.map((r, i) => (
+                          <tr key={i} className="hover:bg-white/5 transition-colors group">
+                             <td className="px-5 py-3">
+                                <div className="flex items-center gap-3">
+                                   <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-[10px] font-black text-white">
+                                      {r.name.charAt(0)}
+                                   </div>
+                                   <span className="text-xs font-bold text-foreground/90 group-hover:text-primary transition-colors">{r.name}</span>
+                                </div>
+                             </td>
+                             <td className="px-5 py-3">
+                                <Badge variant="outline" className="text-[10px] font-medium border-white/10 bg-white/5 text-muted-foreground truncate max-w-[150px]">{r.curso}</Badge>
+                             </td>
+                             <td className="px-5 py-3">
+                                <span className="text-xs font-bold text-muted-foreground">{r.count} <span className="text-[10px] opacity-50">evaluados</span></span>
+                             </td>
+                             <td className="px-5 py-3 text-right font-black">
+                                <span className={`text-sm ${getCalColor(r.sum/r.count)}`}>{(r.sum/r.count).toFixed(1)}</span>
+                             </td>
+                          </tr>
+                        ));
+                      })()}
+                   </tbody>
+                </table>
+             </div>
+          </AnimatedCard>
+        </motion.div>
+      )}
 
       {/* List Section Unificied with AnimatedCard */}
       <AnimatedCard className="overflow-hidden">
         <div className="p-6 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h3 className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.25em] text-primary/70">
-            <TrendingUp className="w-4 h-4" /> Historial de Resultados
+            <TrendingUp className="w-4 h-4" /> Historial General
           </h3>
           <div className="flex items-center gap-2 bg-background/40 border border-white/5 rounded-2xl px-3 h-10 shrink-0">
             <Filter className="w-3.5 h-3.5 text-muted-foreground/40" />
@@ -285,6 +504,11 @@ export function EvaluationsPage() {
                           <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-tighter bg-primary/5 text-primary border-primary/20 border-0 px-2 h-4">
                             {ev.cursoNombre}
                           </Badge>
+                          {(rolActual === 'super_admin' || rolActual === 'admin_iglesia') && (
+                            <Badge variant="outline" className="text-[9px] uppercase font-black tracking-tighter bg-amber-500/10 text-amber-600 border-0 px-2 h-4 flex items-center gap-1">
+                              <User className="w-2 h-2" /> {ev.usuarioNombre}
+                            </Badge>
+                          )}
                           <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">{ev.moduloNombre}</span>
                         </div>
                         <p className="text-sm font-semibold truncate text-foreground/90 group-hover:text-primary transition-colors">
