@@ -14,7 +14,7 @@ import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, 
 import { toast } from "sonner";
 
 export function UsuariosPage() {
-  const { iglesiaActual, usuarioActual, rolActual } = useApp();
+  const { iglesiaActual, rolActual } = useApp();
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
   const { data: iglesias = [] } = useIglesias();
@@ -204,7 +204,7 @@ export function UsuariosPage() {
     <div className="space-y-6 max-w-6xl mx-auto">
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <Users className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -212,61 +212,42 @@ export function UsuariosPage() {
             <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Usuarios</h1>
           </div>
         </div>
-        <Button onClick={() => setShowInvite(true)} className="shrink-0 shadow-md shadow-blue-600/20 rounded-full px-6 bg-blue-600 hover:bg-blue-700 text-white h-11">
+
+        <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+            <Input placeholder="Buscar por nombre o correo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" />
+          </div>
+          <Select value={filterEstado} onValueChange={setFilterEstado}>
+            <SelectTrigger className="w-36 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="activo">Activos</SelectItem>
+              <SelectItem value="inactivo">Inactivos</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterRol} onValueChange={setFilterRol}>
+            <SelectTrigger className="w-52 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Rol" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los roles</SelectItem>
+              {roles.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterIglesia} onValueChange={setFilterIglesia}>
+            <SelectTrigger className="w-56 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Iglesia" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las iglesias</SelectItem>
+              {iglesias.map(ig => <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button variant="ghost" className="h-10 rounded-xl text-xs" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); }}>
+            Limpiar filtros
+          </Button>
+        </div>
+        <Button onClick={() => setShowInvite(true)} className="shrink-0 shadow-md shadow-[#4682b4]/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 text-white h-11">
           <UserPlus className="w-4 h-4 mr-2" /> Invitar Usuario
         </Button>
       </motion.div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="p-3 text-center">
-          <p className="text-2xl text-primary">{enriched.length}</p>
-          <p className="text-xs text-muted-foreground">Total Usuarios</p>
-        </Card>
-        <Card className="p-3 text-center">
-          <p className="text-2xl text-green-600">{enriched.filter(u => u.activo).length}</p>
-          <p className="text-xs text-muted-foreground">Activos</p>
-        </Card>
-        <Card className="p-3 text-center">
-          <p className="text-2xl text-red-600">{enriched.filter(u => !u.activo).length}</p>
-          <p className="text-xs text-muted-foreground">Inactivos</p>
-        </Card>
-        <Card className="p-3 text-center">
-          <p className="text-2xl text-blue-600">{enriched.filter(u => u.ultimoAcceso).length}</p>
-          <p className="text-xs text-muted-foreground">Con acceso reciente</p>
-        </Card>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar por nombre o correo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-card" />
-        </div>
-        <Select value={filterEstado} onValueChange={setFilterEstado}>
-          <SelectTrigger className="w-36 bg-card"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="activo">Activos</SelectItem>
-            <SelectItem value="inactivo">Inactivos</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filterRol} onValueChange={setFilterRol}>
-          <SelectTrigger className="w-52 bg-card"><SelectValue placeholder="Rol" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los roles</SelectItem>
-            {roles.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={filterIglesia} onValueChange={setFilterIglesia}>
-          <SelectTrigger className="w-56 bg-card"><SelectValue placeholder="Iglesia" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las iglesias</SelectItem>
-            {iglesias.map(ig => <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Button variant="outline" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); }}>
-          Limpiar filtros
-        </Button>
-      </div>
 
       <Card>
         <Table>
@@ -310,7 +291,7 @@ export function UsuariosPage() {
                   {u.ultimoAcceso ? new Date(u.ultimoAcceso).toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" }) : "Nunca"}
                 </TableCell>
                 <TableCell>
-                  <Badge className={`text-xs ${u.activo ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                  <Badge className={`text-xs ${u.activo ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : "bg-red-100 text-red-800"}`}>
                     {u.activo ? "Activo" : "Inactivo"}
                   </Badge>
                 </TableCell>
@@ -321,9 +302,9 @@ export function UsuariosPage() {
                       <Pencil className="w-3.5 h-3.5 text-amber-600" />
                     </Button>
                     <Button variant="ghost" size="sm" title="Asignar rol" onClick={() => { setShowAssignRol(u.idUsuario); resetAssignForm(); }}>
-                      <ShieldPlus className="w-3.5 h-3.5 text-blue-600" />
+                      <ShieldPlus className="w-3.5 h-3.5 text-[#4682b4] dark:text-[#709dbd]" />
                     </Button>
-                    {isSuperAdmin && u.idUsuario !== usuarioActual?.idUsuario && (
+                    {isSuperAdmin && (
                       <Button variant="ghost" size="sm" title="Eliminar usuario" onClick={() => openDeleteDialog(u.idUsuario)}>
                         <Trash2 className="w-3.5 h-3.5 text-red-600" />
                       </Button>
@@ -366,7 +347,7 @@ export function UsuariosPage() {
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-lg text-primary">{detailUser.nombres[0]}{detailUser.apellidos[0]}</div>
                 <div>
                   <p className="text-lg">{detailUser.nombres} {detailUser.apellidos}</p>
-                  <Badge className={`text-xs ${detailUser.activo ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>{detailUser.activo ? "Activo" : "Inactivo"}</Badge>
+                  <Badge className={`text-xs ${detailUser.activo ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : "bg-red-100 text-red-800"}`}>{detailUser.activo ? "Activo" : "Inactivo"}</Badge>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">

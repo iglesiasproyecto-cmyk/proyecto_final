@@ -1,10 +1,10 @@
 import { createBrowserRouter } from "react-router";
 import { RootLayout } from "./components/RootLayout";
 import { AppLayout } from "./components/AppLayout";
+import { IndexRedirect } from "./components/IndexRedirect";
 import { LandingPage } from "./components/LandingPage";
 import { LoginPage } from "./components/LoginPage";
-import { AuthCallbackPage } from "./components/AuthCallbackPage";
-import { SetPasswordPage } from "./components/SetPasswordPage";
+import { ForgotPasswordPage } from "./components/ForgotPasswordPage";
 import { DashboardPage } from "./components/DashboardPage";
 import { ChurchesPage } from "./components/ChurchesPage";
 import { DepartmentsPage } from "./components/DepartmentsPage";
@@ -43,13 +43,8 @@ export const router = createBrowserRouter([
         ErrorBoundary: ErrorPage,
       },
       {
-        path: "auth/callback",
-        Component: AuthCallbackPage,
-        ErrorBoundary: ErrorPage,
-      },
-      {
-        path: "auth/set-password",
-        Component: SetPasswordPage,
+        path: "forgot-password",
+        Component: ForgotPasswordPage,
         ErrorBoundary: ErrorPage,
       },
       {
@@ -58,6 +53,7 @@ export const router = createBrowserRouter([
         ErrorBoundary: ErrorPage,
         children: [
           { index: true, Component: DashboardPage, ErrorBoundary: ErrorPage },
+          { path: "index", Component: IndexRedirect, ErrorBoundary: ErrorPage },
           { path: "iglesias", Component: ChurchesPage, ErrorBoundary: ErrorPage },
           { path: "departamentos", Component: DepartmentsPage, ErrorBoundary: ErrorPage },
           { path: "mi-departamento", Component: MyDepartmentPage, ErrorBoundary: ErrorPage },

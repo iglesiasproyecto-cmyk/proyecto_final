@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useEventosEnriquecidos, useDeleteEvento, useTiposEvento, useCreateEvento, useUpdateEvento } from "@/hooks/useEventos";
 import type { EventoEnriquecido } from "@/services/eventos.service";
 import { useApp } from "@/app/store/AppContext";
+import { AnimatedCard } from "./ui/AnimatedCard";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 
 const estadoConfig: Record<string, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
-  programado:  { label: "Programado",  color: "bg-blue-500/10 text-blue-400 border-blue-500/20",    dot: "bg-blue-400",    icon: <BookMarked className="w-3 h-3" /> },
+  programado:  { label: "Programado",  color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",    dot: "bg-[#4682b4]",    icon: <BookMarked className="w-3 h-3" /> },
   en_curso:    { label: "En Curso",    color: "bg-amber-500/10 text-amber-400 border-amber-500/20", dot: "bg-amber-400",   icon: <PlayCircle className="w-3 h-3" /> },
   finalizado:  { label: "Finalizado",  color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-400", icon: <CheckCircle2 className="w-3 h-3" /> },
   cancelado:   { label: "Cancelado",   color: "bg-rose-500/10 text-rose-400 border-rose-500/20",    dot: "bg-rose-400",    icon: <XCircle className="w-3 h-3" /> },
@@ -160,10 +161,10 @@ export function EventsPage() {
   const getMon  = (d: string) => new Date(d).toLocaleDateString("es", { month: "short" }).toUpperCase();
 
   const stats = [
-    { label: "Programados", value: eventos.filter(e => e.estado === "programado").length,  color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/15" },
-    { label: "En Curso",    value: eventos.filter(e => e.estado === "en_curso").length,    color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/15" },
-    { label: "Finalizados", value: eventos.filter(e => e.estado === "finalizado").length,  color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/15" },
-    { label: "Total",       value: eventos.length,                                         color: "text-primary",     bg: "bg-primary/10 border-primary/15" },
+    { label: "Programados", value: eventos.filter(e => e.estado === "programado").length,  color: "from-[#709dbd] to-[#4682b4]" },
+    { label: "En Curso",    value: eventos.filter(e => e.estado === "en_curso").length,    color: "from-amber-500 to-orange-600" },
+    { label: "Finalizados", value: eventos.filter(e => e.estado === "finalizado").length,  color: "from-emerald-500 to-teal-600" },
+    { label: "Total Eventos", value: eventos.length,                                      color: "from-[#709dbd] to-[#4682b4]" },
   ];
 
   const renderEventsGrid = (list: typeof eventos) => {
@@ -197,84 +198,79 @@ export function EventsPage() {
             const scope = isGlobal ? scopeConfig.global : scopeConfig.ministerio;
             const estado = estadoConfig[evento.estado] ?? estadoConfig.programado;
             return (
-              <motion.div
+              <AnimatedCard
                 key={evento.idEvento}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="group relative bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+                index={i}
+                className="p-5 group"
               >
-                {/* Glow hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-
-                <div className="flex gap-4 relative z-10">
+                <div className="flex gap-5 relative z-10">
                   {/* Calendar chip */}
-                  <div className="w-14 shrink-0 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/15 flex flex-col items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
-                    <span className="text-[10px] font-bold text-primary/70 uppercase leading-none">{getMon(evento.fechaInicio)}</span>
-                    <span className="text-2xl font-black text-primary leading-none mt-0.5">{getDay(evento.fechaInicio)}</span>
+                  <div className="w-16 shrink-0 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex flex-col items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform text-white">
+                    <span className="text-[10px] font-black uppercase leading-none opacity-80">{getMon(evento.fechaInicio)}</span>
+                    <span className="text-3xl font-black leading-none mt-1">{getDay(evento.fechaInicio)}</span>
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <h4 className="text-sm font-bold tracking-tight leading-snug group-hover:text-primary transition-colors truncate pr-1">{evento.nombre}</h4>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <h4 className="text-lg font-bold tracking-tight leading-snug group-hover:text-[#4682b4] transition-colors truncate pr-1 uppercase italic">{evento.nombre}</h4>
                       {/* Action buttons — appear on hover */}
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
                         <button
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-all"
+                          className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
                           onClick={() => openEditDialog(evento)}
                         >
-                          <Pencil className="w-3 h-3" />
+                          <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                          className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
                           disabled={deleteEventoMutation.isPending}
                           onClick={() => handleDeleteEvento(evento.idEvento, evento.nombre)}
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
 
                     {evento.descripcion && (
-                      <p className="text-[11px] text-muted-foreground line-clamp-1 mb-2">{evento.descripcion}</p>
+                      <p className="text-[12px] text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{evento.descripcion}</p>
                     )}
 
                     {/* Tags row */}
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge variant="outline" className={`${estado.color} border text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 flex items-center gap-1`}>
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
+                      <Badge variant="outline" className={`${estado.color} border-0 text-[10px] uppercase font-black tracking-widest px-2.5 py-1 flex items-center gap-1.5 rounded-lg`}>
                         {estado.icon} {estado.label}
                       </Badge>
-                      <Badge variant="outline" className={`${scope.color} border text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 flex items-center gap-1`}>
+                      <Badge variant="outline" className={`${scope.color} border-0 text-[10px] uppercase font-black tracking-widest px-2.5 py-1 flex items-center gap-1.5 rounded-lg`}>
                         {scope.icon} {isGlobal ? "Global" : evento.ministerioNombre}
                       </Badge>
                       {evento.tipoEventoNombre && (
-                        <Badge variant="outline" className="bg-slate-500/10 text-slate-400 border-slate-500/20 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5">
+                        <Badge variant="outline" className="bg-white/5 border-0 text-muted-foreground text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-lg">
                           {evento.tipoEventoNombre}
                         </Badge>
                       )}
                     </div>
 
                     {/* Meta info */}
-                    <div className="flex flex-wrap gap-3 mt-2.5 text-[11px] text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-primary/40 shrink-0" />
+                    <div className="flex flex-wrap gap-4 pt-3 border-t border-white/5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-[#4682b4]/50 shrink-0" />
                         {formatDate(evento.fechaInicio)} · {formatTime(evento.fechaInicio)}
                       </span>
                       {evento.sedeNombre && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-primary/40 shrink-0" />
+                        <span className="flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-[#4682b4]/50 shrink-0" />
                           {evento.sedeNombre}
                         </span>
                       )}
                       {evento.cantidadTareas > 0 && (
-                        <span className="bg-background/40 px-2 py-0.5 rounded-md border border-white/5">
+                        <span className="bg-[#4682b4]/10 text-[#4682b4] px-2 py-0.5 rounded-md border-0">
                           {evento.cantidadTareas} tareas
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </AnimatedCard>
             );
           })}
         </div>
@@ -289,50 +285,58 @@ export function EventsPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden"
+        className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
-            Eventos
-          </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Agenda y gestiona los eventos de la iglesia</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <CalendarDays className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Operaciones</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
+              Eventos
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">Agenda y gestiona los eventos de la iglesia</p>
+          </div>
         </div>
         <Button
           onClick={() => setShowCreate(true)}
           disabled={!iglesiaActual}
-          className="h-10 rounded-xl font-medium shrink-0"
+          className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all"
         >
           <Plus className="w-4 h-4 mr-1.5" /> Nuevo Evento
         </Button>
       </motion.div>
 
       {/* ── Stats row ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.06 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-      >
-        {stats.map((s) => (
-          <div key={s.label} className={`${s.bg} border rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl group hover:shadow-lg hover:shadow-primary/5 transition-all`}>
-            <div className="flex flex-col">
-              <span className={`text-3xl font-black ${s.color} leading-none tracking-tighter`}>{s.value}</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-1">{s.label}</span>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {stats.map((s, idx) => (
+          <AnimatedCard key={s.label} index={idx} className="p-4 group">
+            <div className="flex justify-between items-start mb-3">
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg text-white`}>
+                <CalendarDays className="w-5 h-5" />
+              </div>
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-[10px] py-0 tracking-widest uppercase">KPI</Badge>
             </div>
-          </div>
+            <div>
+              <p className="text-4xl font-light tracking-tight text-foreground">{s.value}</p>
+              <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{s.label}</p>
+            </div>
+          </AnimatedCard>
         ))}
-      </motion.div>
+      </div>
+
 
       {/* ── Tabs + Events ── */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <Tabs defaultValue="todos">
-          <TabsList className="bg-card/40 backdrop-blur-md border border-white/10 p-1 rounded-xl w-fit flex mb-5">
-            <TabsTrigger value="todos" className="rounded-lg text-xs font-medium px-4">Todos ({eventos.length})</TabsTrigger>
-            <TabsTrigger value="global" className="rounded-lg text-xs font-medium px-4">
+          <TabsList className="bg-card/40 backdrop-blur-md border border-border/50 p-1 rounded-xl w-fit flex mb-5">
+            <TabsTrigger value="todos" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">Todos ({eventos.length})</TabsTrigger>
+            <TabsTrigger value="global" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">
               <Globe className="w-3.5 h-3.5 mr-1.5" /> Globales
             </TabsTrigger>
-            <TabsTrigger value="ministerio" className="rounded-lg text-xs font-medium px-4">
+            <TabsTrigger value="ministerio" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">
               <Users className="w-3.5 h-3.5 mr-1.5" /> Ministeriales
             </TabsTrigger>
           </TabsList>

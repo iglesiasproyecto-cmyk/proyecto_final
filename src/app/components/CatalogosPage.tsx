@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRoles } from "@/hooks/useUsuarios";
 import { useTiposEvento, useCreateTipoEvento, useUpdateTipoEvento, useDeleteTipoEvento } from "@/hooks/useEventos";
-import { Card } from "./ui/card";
+
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -56,7 +56,7 @@ export function CatalogosPage() {
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-3xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-xl shadow-cyan-600/30 shrink-0">
+          <div className="w-14 h-14 rounded-3xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-xl shadow-blue-900/30 shrink-0">
             <Settings2 className="w-7 h-7 text-white" />
           </div>
           <div>
@@ -69,8 +69,8 @@ export function CatalogosPage() {
 
       <Tabs value={tab} onValueChange={setTab} className="mt-8">
         <TabsList className="bg-card/40 backdrop-blur-xl border border-white/10 p-1.5 h-auto rounded-2xl w-full sm:w-auto inline-flex shadow-xl shadow-black/5">
-          <TabsTrigger value="tipos_evento" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><Calendar className="w-4 h-4 mr-2" /> Tipos de Evento ({tiposEvento.length})</TabsTrigger>
-          <TabsTrigger value="roles" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><ShieldCheck className="w-4 h-4 mr-2" /> Roles ({roles.length})</TabsTrigger>
+          <TabsTrigger value="tipos_evento" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><Calendar className="w-4 h-4 mr-2" /> Tipos de Evento ({tiposEvento.length})</TabsTrigger>
+          <TabsTrigger value="roles" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><ShieldCheck className="w-4 h-4 mr-2" /> Roles ({roles.length})</TabsTrigger>
         </TabsList>
 
         {/* Tipos de Evento */}
@@ -80,24 +80,24 @@ export function CatalogosPage() {
               <h3 className="text-sm font-bold text-foreground tracking-tight">Registro de Tipos</h3>
               <p className="text-[12px] font-medium text-muted-foreground mt-0.5">Define los tipos de evento disponibles para todas las iglesias (Tabla: TipoEvento)</p>
             </div>
-            <Button onClick={openAddTE} className="bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 rounded-xl px-6 hover:scale-105 transition-all text-xs font-semibold h-11 tracking-wide"><Plus className="w-4 h-4 mr-2" /> Nuevo Tipo</Button>
+            <Button onClick={openAddTE} className="bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 rounded-xl px-6 hover:scale-105 transition-all text-xs font-semibold h-11 tracking-wide"><Plus className="w-4 h-4 mr-2" /> Nuevo Tipo</Button>
           </div>
 
           <div className="rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-2xl overflow-hidden">
             <Table>
-              <TableHeader className="bg-blue-600/5">
+              <TableHeader className="bg-[#4682b4]/5">
                 <TableRow className="hover:bg-transparent border-white/10">
-                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 p-5">Nombre</TableHead>
-                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 p-5">Descripción</TableHead>
-                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 p-5">Creado</TableHead>
-                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 p-5 text-right">Acciones</TableHead>
+                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-[#4682b4] dark:text-[#709dbd] p-5">Nombre</TableHead>
+                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-[#4682b4] dark:text-[#709dbd] p-5">Descripción</TableHead>
+                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-[#4682b4] dark:text-[#709dbd] p-5">Creado</TableHead>
+                  <TableHead className="text-[10px] font-bold uppercase tracking-widest text-[#4682b4] dark:text-[#709dbd] p-5 text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tiposEvento.map(te => (
-                  <TableRow key={te.idTipoEvento} className="group hover:bg-blue-600/5 border-white/5 transition-colors">
+                  <TableRow key={te.idTipoEvento} className="group hover:bg-[#4682b4]/5 border-white/5 transition-colors">
                     <TableCell className="p-5">
-                      <span className="text-[14px] font-black tracking-tight text-foreground/90 group-hover:text-blue-600 transition-colors py-1">{te.nombre}</span>
+                      <span className="text-[14px] font-black tracking-tight text-foreground/90 group-hover:text-[#4682b4] transition-colors py-1">{te.nombre}</span>
                     </TableCell>
                     <TableCell className="p-5 text-[12px] font-medium text-muted-foreground max-w-[16rem] xl:max-w-md truncate">{te.descripcion || "—"}</TableCell>
                     <TableCell className="p-5">
@@ -105,7 +105,7 @@ export function CatalogosPage() {
                     </TableCell>
                     <TableCell className="p-5 text-right">
                       <div className="flex gap-2 justify-end">
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-blue-600 hover:bg-blue-600/10 hover:text-blue-700 hover:rotate-12 transition-all shadow-sm bg-background/50" onClick={() => openEditTE(te.idTipoEvento)}><Pencil className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-[#4682b4] hover:bg-[#4682b4]/10 hover:text-[#4682b4]/80 hover:rotate-12 transition-all shadow-sm bg-background/50" onClick={() => openEditTE(te.idTipoEvento)}><Pencil className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-red-500 hover:bg-red-500/10 hover:text-red-600 hover:-rotate-12 transition-all shadow-sm bg-background/50" onClick={() => setConfirmDeleteTE({ id: te.idTipoEvento, name: te.nombre })}><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </TableCell>
@@ -133,14 +133,14 @@ export function CatalogosPage() {
             {roles.map(r => (
               <div key={r.idRol} className="group flex flex-col p-5 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all cursor-default">
                 <div className="flex items-start justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600/20 to-blue-600/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform mb-4"><ShieldCheck className="w-6 h-6 text-blue-600" /></div>
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform mb-4"><ShieldCheck className="w-6 h-6 text-[#4682b4]" /></div>
                 </div>
                 <div>
-                  <p className="text-[16px] font-black text-foreground/90 group-hover:text-blue-600 transition-colors tracking-tight">{r.nombre}</p>
+                  <p className="text-[16px] font-black text-foreground/90 group-hover:text-[#4682b4] transition-colors tracking-tight">{r.nombre}</p>
                   <p className="text-[12px] font-medium text-muted-foreground mt-1.5 line-clamp-3 leading-relaxed">{r.descripcion}</p>
                 </div>
                 <div className="mt-8 flex items-center justify-between pt-4 border-t border-white/5">
-                  <Badge variant="outline" className="text-[9px] px-2 py-0 border-blue-600/20 bg-blue-600/5 text-blue-700 dark:text-blue-400 uppercase tracking-widest font-bold">Rol Base</Badge>
+                  <Badge variant="outline" className="text-[9px] px-2 py-0 border-[#4682b4]/20 bg-[#4682b4]/5 text-[#4682b4] dark:text-[#709dbd] uppercase tracking-widest font-bold">Rol Base</Badge>
                   <span className="text-[10px] text-muted-foreground font-black tracking-widest uppercase opacity-50">ID: {r.idRol}</span>
                 </div>
               </div>
@@ -159,7 +159,7 @@ export function CatalogosPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" className="rounded-xl border-white/10" onClick={() => setDialogTE(false)}>Cancelar</Button>
-            <Button onClick={handleSubmitTE} disabled={!formTE.nombre.trim()} className="rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 shadow-lg text-white">Guardar</Button>
+            <Button onClick={handleSubmitTE} disabled={!formTE.nombre.trim()} className="rounded-xl bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] shadow-lg text-white">Guardar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
