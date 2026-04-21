@@ -10,6 +10,7 @@ import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { motion, AnimatePresence } from "motion/react";
 import { Plus, Search, Mail, Phone, Filter, Inbox, Trash2, Users, ShieldCheck, User } from "lucide-react";
+import { toast } from "sonner";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolIcons: Record<string, React.ReactNode> = {
@@ -30,6 +31,7 @@ export function MembersPage() {
   const [search, setSearch] = useState("");
   const [selectedMinisterioId, setSelectedMinisterioId] = useState<number>(0);
   const [showInvite, setShowInvite] = useState(false);
+  const [highlightFilter, setHighlightFilter] = useState(false);
 
   const ministerioIdsLider = useMemo(() => new Set(ministeriosIdsUsuario), [ministeriosIdsUsuario]);
   const ministeriosVisibles = useMemo(() => {
@@ -149,23 +151,39 @@ export function MembersPage() {
           </div>
 
           {/* Filtro de ministerio */}
-          <div className="flex items-center gap-2 bg-background/60 border border-border/40 rounded-xl px-3 h-10 shadow-sm shrink-0">
-            <Filter className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+          <motion.div
+            animate={highlightFilter ? { x: [0, -6, 6, -4, 4, 0] } : {}}
+            transition={{ duration: 0.45 }}
+            className={`flex items-center gap-2 bg-background/60 border rounded-xl px-3 h-10 shadow-sm shrink-0 transition-colors ${
+              highlightFilter
+                ? "border-amber-400/80 ring-2 ring-amber-400/30 shadow-amber-500/20"
+                : "border-border/40"
+            }`}
+          >
+            <Filter className={`w-3.5 h-3.5 shrink-0 transition-colors ${highlightFilter ? "text-amber-500" : "text-muted-foreground/60"}`} />
             <select
               value={effectiveMinisterioId}
-              onChange={(e) => setSelectedMinisterioId(Number(e.target.value))}
+              onChange={(e) => {
+                setSelectedMinisterioId(Number(e.target.value));
+                setHighlightFilter(false);
+              }}
               disabled={isLider}
               className="text-sm bg-transparent border-0 outline-none text-foreground/80 min-w-0 cursor-pointer [&_option]:bg-white [&_option]:text-gray-900 dark:[&_option]:bg-gray-800 dark:[&_option]:text-gray-100"
             >
               {!isLider && <option value={0}>Todos los ministerios</option>}
               {ministeriosVisibles.map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
             </select>
-          </div>
+          </motion.div>
 
           <Button
             onClick={() => {
               if (!effectiveMinisterioId) {
-                alert("Selecciona un ministerio en el filtro antes de agregar un miembro.");
+                setHighlightFilter(true);
+                toast.warning("Elige un ministerio específico", {
+                  description: "Usa el filtro para elegir a qué ministerio agregarás al miembro.",
+                  duration: 4000,
+                });
+                window.setTimeout(() => setHighlightFilter(false), 2500);
                 return;
               }
               setShowInvite(true);
