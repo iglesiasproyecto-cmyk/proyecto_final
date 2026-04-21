@@ -109,7 +109,7 @@ export function GeographyPage() {
       {/* HEADER */}
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] shadow-blue-900/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] shadow-blue-900/20 shrink-0 flex items-center justify-center">
             <Globe className="w-6 h-6 text-white" />
           </div>
           <div>
