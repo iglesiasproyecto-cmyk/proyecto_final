@@ -338,6 +338,41 @@ export function LoginPage() {
                 </>
               )}
             </Button>
+
+            {/* Forgot Password Link */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="text-center pt-2"
+            >
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors underline underline-offset-2"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </motion.div>
+
+            {/* Register Link */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="text-center pt-4 text-sm"
+            >
+              <p className="text-muted-foreground">
+                ¿No tienes cuenta?{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/register")}
+                  className="font-bold text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
+                >
+                  Regístrate aquí
+                </button>
+              </p>
+            </motion.div>
           </motion.form>
 
           {/* Demo Button - Estilo discreto pero premium */}
