@@ -210,6 +210,30 @@ export async function getDetallesProcesoCurso(idProceso: number): Promise<Detall
   return data.map(mapDetalle)
 }
 
+export async function getInscritosPorCurso(idCurso: number): Promise<DetalleProcesoCurso[]> {
+  const { data, error } = await supabase
+    .from('detalle_proceso_curso')
+    .select(`
+      id_detalle_proceso_curso,
+      id_proceso_asignado_curso,
+      id_usuario,
+      fecha_inscripcion,
+      estado,
+      creado_en,
+      updated_at,
+      usuario(nombres, apellidos, correo),
+      proceso_asignado_curso!inner(id_curso)
+    `)
+    .eq('proceso_asignado_curso.id_curso', idCurso)
+    .order('fecha_inscripcion', { ascending: false })
+  if (error) throw error
+  return (data as any[]).map((r) => ({
+    ...mapDetalle(r),
+    nombreCompleto: r.usuario ? `${r.usuario.nombres} ${r.usuario.apellidos}` : undefined,
+    correo: r.usuario?.correo ?? undefined,
+  }))
+}
+
 // ── Curso mutations ──
 
 export async function createCurso(
@@ -406,6 +430,46 @@ export async function uploadRecursoArchivo(data: {
   }
 
   return publicData.publicUrl
+}
+
+const RECURSO_MAX_SIZE_BYTES = 25 * 1024 * 1024
+const RECURSO_ALLOWED_EXTENSIONS = new Set([
+  'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'png', 'jpg', 'jpeg', 'webp', 'zip',
+])
+
+export function validateRecursoFile(file: File): string | null {
+  if (file.size > RECURSO_MAX_SIZE_BYTES) {
+    return 'El archivo supera el límite de 25MB.'
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+  if (!ext || !RECURSO_ALLOWED_EXTENSIONS.has(ext)) {
+    return 'Tipo de archivo no permitido.'
+  }
+
+  return null
+}
+
+export async function getRecursoSignedUrl(urlOrPath: string): Promise<string> {
+  if (!urlOrPath) throw new Error('URL de recurso inválida')
+
+  if (/^https?:\/\//i.test(urlOrPath) && !urlOrPath.includes('/storage/v1/object/')) {
+    return urlOrPath
+  }
+
+  const marker = '/storage/v1/object/public/aula-recursos/'
+  const objectPath = urlOrPath.includes(marker)
+    ? urlOrPath.split(marker)[1]
+    : urlOrPath.replace(/^\/+/, '')
+
+  if (!objectPath) throw new Error('Ruta de recurso inválida')
+
+  const { data, error } = await supabase.storage
+    .from('aula-recursos')
+    .createSignedUrl(objectPath, 60 * 60)
+
+  if (error) throw error
+  return data.signedUrl
 }
 
 export async function createProcesoAsignadoCurso(data: {
