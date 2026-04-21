@@ -4,12 +4,15 @@ import { motion } from 'motion/react'
 import { useApp } from '../store/AppContext'
 import { useModulos } from '@/hooks/useCursos'
 import { useMisInscripciones } from '@/hooks/useInscripciones'
+import { useMiAvanceCurso } from '@/hooks/useAvance'
+import { useEvaluaciones } from '@/hooks/useCursos'
 import { Card } from './ui/card'
 import { Button } from './ui/button'
 import { Progress } from './ui/progress'
 import { EstadoInscripcionBadge } from './classroom/EstadoInscripcionBadge'
 import { CompanerosDrawer } from './classroom/CompanerosDrawer'
-import { BookOpen, Calendar, GraduationCap, Users } from 'lucide-react'
+import { BookOpen, Calendar, GraduationCap, Users, Award } from 'lucide-react'
+import type { Evaluacion } from '@/types/app.types'
 
 const ACTIVOS = new Set(['inscrito', 'en_progreso'] as const)
 
@@ -46,15 +49,63 @@ function ModulosDeCurso({ idCurso }: { idCurso: number }) {
   )
 }
 
+function NotaFinal({
+  idCurso,
+  estadoDetalle,
+  evaluaciones,
+}: {
+  idCurso: number
+  estadoDetalle: string
+  evaluaciones: Evaluacion[]
+}) {
+  const { data: modulos = [] } = useModulos(idCurso)
+  const idModulosCurso = new Set(modulos.map((m) => m.idModulo))
+  const relevantes = evaluaciones.filter(
+    (e) =>
+      idModulosCurso.has(e.idModulo) &&
+      typeof e.calificacion === 'number' &&
+      (e.estado === 'aprobado' || e.estado === 'reprobado'),
+  )
+  if (relevantes.length === 0) return null
+  const promedio =
+    Math.round(
+      (relevantes.reduce((acc, e) => acc + (e.calificacion ?? 0), 0) / relevantes.length) * 10,
+    ) / 10
+  const aprobado = estadoDetalle === 'completado' && promedio >= 3
+  return (
+    <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+        <Award className="w-3 h-3" /> Nota final
+      </span>
+      <span
+        className={`text-sm font-bold ${
+          aprobado ? 'text-emerald-500' : promedio >= 3 ? 'text-foreground' : 'text-destructive'
+        }`}
+      >
+        {promedio.toFixed(1)}
+      </span>
+    </div>
+  )
+}
+
 export function MisCursosPage() {
   const { usuarioActual } = useApp()
   const { data: inscripciones = [], isLoading } = useMisInscripciones(usuarioActual?.idUsuario)
+  const { data: avances = [] } = useMiAvanceCurso(usuarioActual?.idUsuario)
+  const { data: evaluaciones = [] } = useEvaluaciones(usuarioActual?.idUsuario)
   const [tab, setTab] = useState<'activos' | 'finalizados'>('activos')
   const [drawerCiclo, setDrawerCiclo] = useState<{ id: number; curso: string } | null>(null)
 
   const activos = inscripciones.filter((i) => ACTIVOS.has(i.estado as 'inscrito' | 'en_progreso'))
   const finalizados = inscripciones.filter((i) => !ACTIVOS.has(i.estado as 'inscrito' | 'en_progreso'))
   const visibles = tab === 'activos' ? activos : finalizados
+
+  const progresoPorDetalle = new Map(
+    avances.map((a) => [
+      a.idDetalleProcesoCurso,
+      a.modulosPublicados > 0 ? Math.round((a.modulosCompletados / a.modulosPublicados) * 100) : 0,
+    ]),
+  )
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -117,7 +168,9 @@ export function MisCursosPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {visibles.map((i, idx) => (
+          {visibles.map((i, idx) => {
+            const progreso = progresoPorDetalle.get(i.idDetalleProcesoCurso) ?? 0
+            return (
             <motion.div
               key={i.idDetalleProcesoCurso}
               initial={{ opacity: 0, y: 10 }}
@@ -141,14 +194,19 @@ export function MisCursosPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1 text-[11px] text-muted-foreground">
                     <span>Progreso</span>
-                    <span title="El progreso se activará cuando el instructor añada contenido de módulos.">0%</span>
+                    <span>{progreso}%</span>
                   </div>
-                  <Progress value={0} className="h-1.5 bg-background/50" />
+                  <Progress value={progreso} className="h-1.5 bg-background/50" />
                 </div>
                 <div className="pt-2 border-t border-white/10">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Módulos</p>
                   <ModulosDeCurso idCurso={i.idCurso} />
                 </div>
+                <NotaFinal
+                  idCurso={i.idCurso}
+                  estadoDetalle={i.estado}
+                  evaluaciones={evaluaciones}
+                />
                 <div className="flex items-center gap-2 pt-1">
                   <Button
                     variant="outline"
@@ -161,7 +219,8 @@ export function MisCursosPage() {
                 </div>
               </Card>
             </motion.div>
-          ))}
+            )
+          })}
         </div>
       )}
 

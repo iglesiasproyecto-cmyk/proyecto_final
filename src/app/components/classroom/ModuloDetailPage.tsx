@@ -5,9 +5,14 @@ import { toast } from 'sonner'
 import { useApp } from '../../store/AppContext'
 import { useModulo } from '@/hooks/useModulo'
 import { useCreateRecurso, useCursos, useDeleteRecurso, useModulos, useRecursos } from '@/hooks/useCursos'
-import { uploadRecursoArchivo } from '@/services/cursos.service'
+import { uploadRecursoArchivo, getRecursoSignedUrl, validateRecursoFile } from '@/services/cursos.service'
 import { useMisInscripciones } from '@/hooks/useInscripciones'
 import { useMinisteriosIdsDeUsuario } from '@/hooks/useMinisterios'
+import {
+  useAvancesDetalle,
+  useMarcarModuloCompletado,
+  useDesmarcarModuloCompletado,
+} from '@/hooks/useAvance'
 import { ModuloBreadcrumb } from './ModuloBreadcrumb'
 import { ModuloNavegacion } from './ModuloNavegacion'
 import { ModuloContenidoEditor } from './ModuloContenidoEditor'
@@ -15,7 +20,7 @@ import { ModuloContenidoView } from './ModuloContenidoView'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
-import { Link as LinkIcon, FileText, Trash2, Plus } from 'lucide-react'
+import { Link as LinkIcon, FileText, Trash2, Plus, CheckCircle2, Circle } from 'lucide-react'
 
 export function ModuloDetailPage() {
   const { idCurso: idCursoStr, idModulo: idModuloStr } = useParams()
@@ -46,12 +51,55 @@ export function ModuloDetailPage() {
     return false
   }, [rolActual, modulo])
 
+  const inscripcionActiva = useMemo(
+    () =>
+      misInscripciones.find(
+        (i) => i.idCurso === idCurso && (i.estado === 'inscrito' || i.estado === 'en_progreso')
+      ),
+    [misInscripciones, idCurso],
+  )
+
   const canReadAsStudent = useMemo(() => {
     if (canEdit) return true
-    return misInscripciones.some(
-      (i) => i.idCurso === idCurso && (i.estado === 'inscrito' || i.estado === 'en_progreso')
-    )
-  }, [canEdit, misInscripciones, idCurso])
+    return !!inscripcionActiva
+  }, [canEdit, inscripcionActiva])
+
+  const idDetalleInscripcion = inscripcionActiva?.idDetalleProcesoCurso ?? null
+  const { data: avancesDetalle = [] } = useAvancesDetalle(idDetalleInscripcion)
+  const avanceActual = avancesDetalle.find((a) => a.idModulo === idModulo) ?? null
+  const marcarMutation = useMarcarModuloCompletado()
+  const desmarcarMutation = useDesmarcarModuloCompletado()
+
+  const puedeMarcarProgreso =
+    !canEdit &&
+    !!inscripcionActiva &&
+    !!modulo &&
+    modulo.estado === 'publicado' &&
+    !!usuarioActual
+
+  const handleToggleCompletado = async () => {
+    if (!puedeMarcarProgreso || !inscripcionActiva || !usuarioActual) return
+    try {
+      if (avanceActual) {
+        await desmarcarMutation.mutateAsync({
+          idAvance: avanceActual.idAvance,
+          idDetalleProcesoCurso: inscripcionActiva.idDetalleProcesoCurso,
+          idUsuario: usuarioActual.idUsuario,
+        })
+        toast.success('Modulo desmarcado')
+      } else {
+        await marcarMutation.mutateAsync({
+          idUsuario: usuarioActual.idUsuario,
+          idModulo,
+          idDetalleProcesoCurso: inscripcionActiva.idDetalleProcesoCurso,
+        })
+        toast.success('Modulo marcado como completado')
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'No se pudo actualizar el progreso'
+      toast.error(msg)
+    }
+  }
 
   const accessLoading = loadingModulo || loadingCursos || loadingInscripciones || loadingMinisterios
 
@@ -87,6 +135,14 @@ export function ModuloDetailPage() {
     if (recursoForm.tipo === 'archivo' && !recursoFile) {
       toast.error('Selecciona un archivo para subir.')
       return
+    }
+
+    if (recursoForm.tipo === 'archivo' && recursoFile) {
+      const err = validateRecursoFile(recursoFile)
+      if (err) {
+        toast.error(err)
+        return
+      }
     }
 
     try {
@@ -151,6 +207,29 @@ export function ModuloDetailPage() {
             {modulo.estado}
           </span>
         </div>
+        {puedeMarcarProgreso && (
+          <div className="flex items-center justify-end">
+            <Button
+              size="sm"
+              variant={avanceActual ? 'outline' : 'default'}
+              onClick={handleToggleCompletado}
+              disabled={marcarMutation.isPending || desmarcarMutation.isPending}
+              className="rounded-xl"
+            >
+              {avanceActual ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-1 text-emerald-500" />
+                  Completado · desmarcar
+                </>
+              ) : (
+                <>
+                  <Circle className="w-4 h-4 mr-1" />
+                  Marcar como completado
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </motion.div>
 
       <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-3xl p-5">
@@ -180,17 +259,37 @@ export function ModuloDetailPage() {
                 key={r.idRecurso}
                 className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-background/40 px-3 py-2"
               >
-                <a
-                  href={r.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="min-w-0 flex-1 hover:underline"
-                >
-                  <span className="flex items-center gap-2 text-sm truncate">
-                    {r.tipo === 'archivo' ? <FileText className="w-4 h-4" /> : <LinkIcon className="w-4 h-4" />}
-                    {r.nombre}
-                  </span>
-                </a>
+                {r.tipo === 'archivo' ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const url = await getRecursoSignedUrl(r.url)
+                        window.open(url, '_blank', 'noopener,noreferrer')
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : 'No se pudo abrir el archivo')
+                      }
+                    }}
+                    className="min-w-0 flex-1 text-left hover:underline"
+                  >
+                    <span className="flex items-center gap-2 text-sm truncate">
+                      <FileText className="w-4 h-4" />
+                      {r.nombre}
+                    </span>
+                  </button>
+                ) : (
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="min-w-0 flex-1 hover:underline"
+                  >
+                    <span className="flex items-center gap-2 text-sm truncate">
+                      <LinkIcon className="w-4 h-4" />
+                      {r.nombre}
+                    </span>
+                  </a>
+                )}
                 {canEdit && (
                   <Button
                     variant="ghost"

@@ -1066,6 +1066,65 @@ export type Database = {
           },
         ]
       }
+      avance_modulo: {
+        Row: {
+          completado_en: string
+          creado_en: string
+          id_avance: number
+          id_detalle_proceso_curso: number
+          id_modulo: number
+          id_usuario: number
+          updated_at: string
+        }
+        Insert: {
+          completado_en?: string
+          creado_en?: string
+          id_avance?: number
+          id_detalle_proceso_curso: number
+          id_modulo: number
+          id_usuario: number
+          updated_at?: string
+        }
+        Update: {
+          completado_en?: string
+          creado_en?: string
+          id_avance?: number
+          id_detalle_proceso_curso?: number
+          id_modulo?: number
+          id_usuario?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avance_modulo_id_detalle_proceso_curso_fkey"
+            columns: ["id_detalle_proceso_curso"]
+            isOneToOne: false
+            referencedRelation: "detalle_proceso_curso"
+            referencedColumns: ["id_detalle_proceso_curso"]
+          },
+          {
+            foreignKeyName: "avance_modulo_id_detalle_proceso_curso_fkey"
+            columns: ["id_detalle_proceso_curso"]
+            isOneToOne: false
+            referencedRelation: "v_companeros_ciclo"
+            referencedColumns: ["id_detalle_proceso_curso"]
+          },
+          {
+            foreignKeyName: "avance_modulo_id_modulo_fkey"
+            columns: ["id_modulo"]
+            isOneToOne: false
+            referencedRelation: "modulo"
+            referencedColumns: ["id_modulo"]
+          },
+          {
+            foreignKeyName: "avance_modulo_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
     }
     Views: {
       v_companeros_ciclo: {
@@ -1094,6 +1153,17 @@ export type Database = {
           },
         ]
       }
+      v_avance_curso_detalle: {
+        Row: {
+          id_curso: number | null
+          id_detalle_proceso_curso: number | null
+          id_proceso_asignado_curso: number | null
+          id_usuario: number | null
+          modulos_completados: number | null
+          modulos_publicados: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_assign_role: { Args: { target_role_id: number }; Returns: boolean }
@@ -1114,6 +1184,10 @@ export type Database = {
         Returns: boolean
       }
       current_usuario_id: { Args: never; Returns: number }
+      finalizar_ciclo: {
+        Args: { p_id_proceso: number }
+        Returns: undefined
+      }
       delete_usuario_super_admin: {
         Args: { target_usuario_id: number }
         Returns: string
