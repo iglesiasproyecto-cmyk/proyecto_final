@@ -178,7 +178,7 @@ export function EvaluationsPage() {
 
         <AnimatedCard index={2} className="p-5">
            <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white shadow-lg">
                  <Zap className="w-5 h-5" />
               </div>
               <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-500 border-0">Estado</Badge>
