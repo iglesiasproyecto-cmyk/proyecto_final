@@ -20,7 +20,7 @@ function BackgroundAnimation() {
           opacity: [0.1, 0.2, 0.1]
         }}
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="absolute -top-[20%] -left-[10%] w-[100%] h-[100%] bg-gradient-to-br from-purple-600/20 via-transparent to-cyan-500/20 rounded-full blur-[150px]"
+        className="absolute -top-[20%] -left-[10%] w-[100%] h-[100%] bg-gradient-to-br from-cyan-600/20 via-transparent to-blue-500/20 rounded-full blur-[150px]"
       />
       
       {/* Technical Grid Overlay */}
@@ -47,7 +47,7 @@ function BackgroundAnimation() {
              ease: "linear",
              delay: Math.random() * 10
            }}
-           className={`absolute w-1 h-1 ${i % 3 === 0 ? 'bg-purple-400' : 'bg-cyan-400'} rounded-full blur-[1px]`}
+           className={`absolute w-1 h-1 ${i % 3 === 0 ? 'bg-blue-400' : 'bg-cyan-400'} rounded-full blur-[1px]`}
         />
       ))}
       
@@ -128,6 +128,7 @@ function FlyingEagle() {
 
 export function LandingPage() {
   const navigate = useNavigate();
+  // Forzar recompilación - Versión 2
 
   return (
     <div className="relative min-h-screen w-full bg-[#0c2340] flex flex-col items-center justify-center overflow-hidden px-4">
@@ -163,7 +164,7 @@ export function LandingPage() {
               className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic leading-[0.8] drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
             >
               Bienvenidos a <br/>
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-400 to-purple-400 animate-gradient-x">S.E.I.</span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-400 to-blue-400 animate-gradient-x">S.E.I.</span>
             </motion.h1>
           </div>
 
@@ -191,16 +192,29 @@ export function LandingPage() {
             transition={{ duration: 0.8, delay: 1.4 }}
             className="pt-10 flex flex-col items-center gap-4"
           >
-            <Button
-              onClick={() => navigate("/login")}
-              className="group relative h-20 px-16 rounded-[40px] bg-white text-[#0c2340] font-black uppercase italic tracking-[5px] text-xl shadow-[0_25px_60px_rgba(255,255,255,0.2)] hover:bg-cyan-400 hover:text-white transition-all duration-500 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-              <span className="relative flex items-center gap-4">
-                Ingresar al Sistema
-                <ArrowRight className="w-8 h-8 group-hover:translate-x-3 transition-transform duration-500" />
-              </span>
-            </Button>
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
+              <Button
+                onClick={() => navigate("/login")}
+                className="group relative h-20 w-72 md:w-96 rounded-[40px] bg-white text-[#0c2340] font-black uppercase italic tracking-[5px] text-xl shadow-[0_25px_60px_rgba(255,255,255,0.2)] hover:bg-cyan-400 hover:text-white transition-all duration-500 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+                <span className="relative flex items-center justify-center gap-4">
+                  Ingresar al Sistema
+                  <ArrowRight className="w-8 h-8 group-hover:translate-x-3 transition-transform duration-500" />
+                </span>
+              </Button>
+
+              <Button
+                onClick={() => navigate("/register")}
+                className="group relative h-20 w-72 md:w-96 rounded-[40px] bg-[#1a7fa8] text-white font-black uppercase italic tracking-[5px] text-xl shadow-[0_25px_60px_rgba(26,127,168,0.3)] hover:bg-[#2596be] hover:shadow-[0_25px_60px_rgba(37,150,190,0.5)] transition-all duration-500 overflow-hidden border-2 border-[#2596be]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-300/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+                <span className="relative flex items-center justify-center gap-4">
+                  Crear Cuenta
+                  <ArrowRight className="w-8 h-8 group-hover:translate-x-3 transition-transform duration-500" />
+                </span>
+              </Button>
+            </div>
             
             <motion.div 
                animate={{ opacity: [0.3, 0.6, 0.3] }}
@@ -224,7 +238,7 @@ export function LandingPage() {
              animate={{ y: [0, 40, 0], rotate: [0, -10, 0] }} 
              transition={{ duration: 14, repeat: Infinity }}
              className="absolute bottom-[20%] right-[5%] hidden lg:block"
-           ><Globe className="w-20 h-20 text-purple-500" /></motion.div>
+           ><Globe className="w-20 h-20 text-blue-500" /></motion.div>
         </div>
       </div>
 
