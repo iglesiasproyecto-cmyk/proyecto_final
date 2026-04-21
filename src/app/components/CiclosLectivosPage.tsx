@@ -249,7 +249,9 @@ export function CiclosLectivosPage() {
   const [showConfirmDelete, setShowConfirmDelete] = useState<number | null>(null);
   const deleteProcesaMutation = useDeleteProcesoAsignadoCurso();
   const createMutation = useCreateProcesoAsignadoCurso();
-  const { iglesiaActual } = useApp();
+  const { iglesiaActual, rolActual } = useApp();
+  const canManageCiclos =
+    rolActual === "super_admin" || rolActual === "admin_iglesia" || rolActual === "lider";
   const [cicloForm, setCicloForm] = useState<{
     idCurso: string;
     fechaInicio: string;
@@ -264,6 +266,7 @@ export function CiclosLectivosPage() {
   };
 
   const handleCreateCiclo = () => {
+    if (!canManageCiclos) return;
     setCicloError(null);
     if (!cicloForm.idCurso) return setCicloError("Selecciona un curso.");
     if (!cicloForm.fechaInicio || !cicloForm.fechaFin) return setCicloError("Fechas requeridas.");
@@ -380,9 +383,15 @@ export function CiclosLectivosPage() {
               {uniqueCursoIds.map(id => <option key={id} value={id}>{getCursoNombre(id)}</option>)}
             </select>
           </div>
-          <Button onClick={() => setShowCreateCiclo(true)} className="h-10 rounded-xl font-medium shrink-0">
-            <Plus className="w-4 h-4 mr-1.5" /> Nuevo Ciclo
-          </Button>
+          {canManageCiclos ? (
+            <Button onClick={() => setShowCreateCiclo(true)} className="h-10 rounded-xl font-medium shrink-0">
+              <Plus className="w-4 h-4 mr-1.5" /> Nuevo Ciclo
+            </Button>
+          ) : (
+            <Badge variant="outline" className="h-10 px-3 rounded-xl text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-white/10 bg-background/40 shrink-0 flex items-center">
+              Modo lectura
+            </Badge>
+          )}
         </div>
       </motion.div>
 
@@ -447,12 +456,14 @@ export function CiclosLectivosPage() {
                   </div>
 
                   <div className="flex items-center gap-2 relative z-10 shrink-0">
-                    <button
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
-                      onClick={e => { e.stopPropagation(); setShowConfirmDelete(ciclo.idProcesoAsignadoCurso); }}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {canManageCiclos && (
+                      <button
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                        onClick={e => { e.stopPropagation(); setShowConfirmDelete(ciclo.idProcesoAsignadoCurso); }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </motion.div>
@@ -464,7 +475,7 @@ export function CiclosLectivosPage() {
 
       {/* ── Create Dialog ── */}
       <Dialog
-        open={showCreateCiclo}
+        open={showCreateCiclo && canManageCiclos}
         onOpenChange={(o) => {
           if (!o) resetCicloForm();
           setShowCreateCiclo(o);
@@ -551,7 +562,7 @@ export function CiclosLectivosPage() {
       </Dialog>
 
       {/* ── Delete Confirm ── */}
-      <AlertDialog open={!!showConfirmDelete} onOpenChange={o => !o && setShowConfirmDelete(null)}>
+      <AlertDialog open={!!showConfirmDelete && canManageCiclos} onOpenChange={o => !o && setShowConfirmDelete(null)}>
         <AlertDialogContent className="rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-bold">Eliminar Ciclo Lectivo</AlertDialogTitle>

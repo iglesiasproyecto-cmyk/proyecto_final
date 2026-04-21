@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useEvaluacionesEnriquecidas, useDeleteEvaluacion, useCreateEvaluacion, useUpdateEvaluacion, useCursos } from "@/hooks/useCursos";
+import { useMemo, useState } from "react";
+import { useEvaluacionesEnriquecidas, useDeleteEvaluacion, useCreateEvaluacion, useUpdateEvaluacion, useCursos, useInscritosPorCurso } from "@/hooks/useCursos";
 import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -46,18 +46,20 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function EvaluationsPage() {
-  const { usuarioActual, rolActual } = useApp();
+  const { rolActual } = useApp();
   const { data: evaluaciones = [], isLoading } = useEvaluacionesEnriquecidas();
   const { data: cursos = [] } = useCursos();
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [cursoFilter, setCursoFilter] = useState("all");
   const [editTarget, setEditTarget] = useState<{ id: number; calificacion: string; estado: string; observaciones: string } | null>(null);
-  const [createForm, setCreateForm] = useState({ idModulo: 0, calificacion: "", estado: "pendiente" as string, observaciones: "", fechaEvaluacion: "" });
-  
-  const resetCreateForm = () => setCreateForm({ idModulo: 0, calificacion: "", estado: "pendiente", observaciones: "", fechaEvaluacion: "" });
+  const [createForm, setCreateForm] = useState({ idCurso: 0, idModulo: 0, idUsuarioEvaluado: 0, calificacion: "", estado: "pendiente" as string, observaciones: "", fechaEvaluacion: "" });
+
+  const resetCreateForm = () => setCreateForm({ idCurso: 0, idModulo: 0, idUsuarioEvaluado: 0, calificacion: "", estado: "pendiente", observaciones: "", fechaEvaluacion: "" });
   const canManageEvaluaciones =
     rolActual === "super_admin" || rolActual === "admin_iglesia" || rolActual === "lider";
+
+  const { data: inscritos = [], isLoading: isLoadingInscritos } = useInscritosPorCurso(createForm.idCurso || null);
 
   const deleteEvaluacionMutation = useDeleteEvaluacion();
   const createEvaluacionMutation = useCreateEvaluacion();
@@ -95,11 +97,11 @@ export function EvaluationsPage() {
 
   const handleCreate = () => {
     if (!canManageEvaluaciones) return;
-    if (!createForm.idModulo || !usuarioActual) return;
+    if (!createForm.idModulo || !createForm.idUsuarioEvaluado) return;
     createEvaluacionMutation.mutate(
       {
         idModulo: createForm.idModulo,
-        idUsuario: usuarioActual.idUsuario,
+        idUsuario: createForm.idUsuarioEvaluado,
         calificacion: createForm.calificacion ? Number(createForm.calificacion) : null,
         estado: createForm.estado as any,
         observaciones: createForm.observaciones.trim() || null,
@@ -125,8 +127,13 @@ export function EvaluationsPage() {
     );
   };
 
-  const moduleOptions = cursos.flatMap(c =>
-    (c.modulos || []).map(m => ({ idModulo: m.idModulo, label: `${c.nombre} — ${m.titulo}` }))
+  const cursosDisponibles = useMemo(
+    () => cursos.filter(c => (c.modulos || []).length > 0),
+    [cursos]
+  );
+  const modulosDelCurso = useMemo(
+    () => cursosDisponibles.find(c => c.idCurso === createForm.idCurso)?.modulos ?? [],
+    [cursosDisponibles, createForm.idCurso]
   );
 
   return (
@@ -263,6 +270,9 @@ export function EvaluationsPage() {
                           <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">{ev.moduloNombre}</span>
                         </div>
                         <p className="text-sm font-semibold truncate text-foreground/90 group-hover:text-primary transition-colors">
+                          {ev.evaluadoNombre || `Usuario ${ev.idUsuario}`}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground truncate">
                           Evaluación de {ev.moduloNombre}
                         </p>
                         {ev.observaciones && (
@@ -327,10 +337,50 @@ export function EvaluationsPage() {
           </DialogHeader>
           <div className="space-y-5 py-4">
             <div className="space-y-2">
+              <FieldLabel>Curso *</FieldLabel>
+              <select
+                className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20"
+                value={createForm.idCurso}
+                onChange={e => setCreateForm(p => ({ ...p, idCurso: Number(e.target.value), idModulo: 0, idUsuarioEvaluado: 0 }))}
+              >
+                <option value={0}>Seleccionar curso...</option>
+                {cursosDisponibles.map(c => <option key={c.idCurso} value={c.idCurso}>{c.nombre}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
               <FieldLabel>Módulo Académico *</FieldLabel>
-              <select className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20" value={createForm.idModulo} onChange={e => setCreateForm(p => ({ ...p, idModulo: Number(e.target.value) }))}>
-                <option value={0}>Seleccionar módulo...</option>
-                {moduleOptions.map(mo => <option key={mo.idModulo} value={mo.idModulo}>{mo.label}</option>)}
+              <select
+                className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-40"
+                value={createForm.idModulo}
+                onChange={e => setCreateForm(p => ({ ...p, idModulo: Number(e.target.value) }))}
+                disabled={!createForm.idCurso}
+              >
+                <option value={0}>{createForm.idCurso ? "Seleccionar módulo..." : "Selecciona un curso primero"}</option>
+                {modulosDelCurso.map(m => <option key={m.idModulo} value={m.idModulo}>{m.titulo}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <FieldLabel>Miembro Evaluado *</FieldLabel>
+              <select
+                className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-40"
+                value={createForm.idUsuarioEvaluado}
+                onChange={e => setCreateForm(p => ({ ...p, idUsuarioEvaluado: Number(e.target.value) }))}
+                disabled={!createForm.idCurso || isLoadingInscritos}
+              >
+                <option value={0}>
+                  {!createForm.idCurso
+                    ? "Selecciona un curso primero"
+                    : isLoadingInscritos
+                    ? "Cargando inscritos..."
+                    : inscritos.length === 0
+                    ? "Sin inscritos activos en este curso"
+                    : "Seleccionar miembro..."}
+                </option>
+                {inscritos.map(u => (
+                  <option key={u.idUsuario} value={u.idUsuario}>
+                    {`${u.nombres ?? ""} ${u.apellidos ?? ""}`.trim() || `Usuario ${u.idUsuario}`}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -359,7 +409,7 @@ export function EvaluationsPage() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
-            <Button className="rounded-xl px-8" onClick={handleCreate} disabled={createEvaluacionMutation.isPending || !createForm.idModulo}>
+            <Button className="rounded-xl px-8" onClick={handleCreate} disabled={createEvaluacionMutation.isPending || !createForm.idModulo || !createForm.idUsuarioEvaluado}>
               {createEvaluacionMutation.isPending ? "Guardando..." : "Guardar Evaluación"}
             </Button>
           </DialogFooter>

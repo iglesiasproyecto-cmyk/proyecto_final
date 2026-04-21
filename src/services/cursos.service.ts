@@ -97,35 +97,87 @@ export interface CursoEnriquecido extends Curso {
 export interface EvaluacionEnriquecida extends Evaluacion {
   moduloNombre: string
   cursoNombre: string
+  evaluadoNombre: string
 }
 
 export async function getCursosEnriquecidos(idMinisterio?: number): Promise<CursoEnriquecido[]> {
   let q = supabase
     .from('curso')
-    .select('*, modulo(*, recurso(*)), proceso_asignado_curso(count)')
+    .select('*, modulo(*, recurso(*)), proceso_asignado_curso(detalle_proceso_curso(id_usuario, estado))')
     .order('nombre')
   if (idMinisterio !== undefined) q = q.eq('id_ministerio', idMinisterio)
   const { data, error } = await q
   if (error) throw error
-  return (data as any[]).map(r => ({
-    ...mapCurso(r),
-    modulos: Array.isArray(r.modulo)
-      ? (r.modulo as any[])
-          .map((m) => ({
-            ...mapModulo(m),
-            recursos: Array.isArray(m.recurso) ? (m.recurso as any[]).map(mapRecurso) : [],
-          }))
-          .sort((a, b) => a.orden - b.orden)
-      : [],
-    cantidadModulos: Array.isArray(r.modulo) ? r.modulo.length : 0,
-    cantidadInscritos: Array.isArray(r.proceso_asignado_curso) ? r.proceso_asignado_curso[0]?.count ?? 0 : 0,
-  }))
+  return (data as any[]).map(r => {
+    // Deduplicar por id_usuario: un usuario inscrito en varios ciclos del mismo curso cuenta 1.
+    const inscritosUnicos = new Set<number>()
+    if (Array.isArray(r.proceso_asignado_curso)) {
+      for (const p of r.proceso_asignado_curso as any[]) {
+        if (!Array.isArray(p?.detalle_proceso_curso)) continue
+        for (const d of p.detalle_proceso_curso) {
+          if (d?.estado !== 'retirado' && typeof d?.id_usuario === 'number') {
+            inscritosUnicos.add(d.id_usuario)
+          }
+        }
+      }
+    }
+    return {
+      ...mapCurso(r),
+      modulos: Array.isArray(r.modulo)
+        ? (r.modulo as any[])
+            .map((m) => ({
+              ...mapModulo(m),
+              recursos: Array.isArray(m.recurso) ? (m.recurso as any[]).map(mapRecurso) : [],
+            }))
+            .sort((a, b) => a.orden - b.orden)
+        : [],
+      cantidadModulos: Array.isArray(r.modulo) ? r.modulo.length : 0,
+      cantidadInscritos: inscritosUnicos.size,
+    }
+  })
+}
+
+export interface InscritoCurso {
+  idUsuario: number
+  nombres: string
+  apellidos: string
+}
+
+// Devuelve inscritos activos (no retirados) de cualquier ciclo del curso,
+// deduplicados por usuario. Respeta la RLS del invocador vía v_companeros_ciclo.
+export async function getInscritosPorCurso(idCurso: number): Promise<InscritoCurso[]> {
+  const { data: ciclos, error: cErr } = await supabase
+    .from('proceso_asignado_curso')
+    .select('id_proceso_asignado_curso')
+    .eq('id_curso', idCurso)
+  if (cErr) throw cErr
+  if (!ciclos?.length) return []
+
+  const cicloIds = ciclos.map((c) => c.id_proceso_asignado_curso as number)
+  const { data, error } = await supabase
+    .from('v_companeros_ciclo')
+    .select('id_usuario, nombres, apellidos')
+    .in('id_proceso_asignado_curso', cicloIds)
+    .order('apellidos', { ascending: true })
+  if (error) throw error
+
+  const unique = new Map<number, InscritoCurso>()
+  for (const r of (data ?? []) as Array<{ id_usuario: number; nombres: string; apellidos: string }>) {
+    if (!unique.has(r.id_usuario)) {
+      unique.set(r.id_usuario, {
+        idUsuario: r.id_usuario,
+        nombres: r.nombres,
+        apellidos: r.apellidos,
+      })
+    }
+  }
+  return Array.from(unique.values())
 }
 
 export async function getEvaluacionesEnriquecidas(idModulo?: number): Promise<EvaluacionEnriquecida[]> {
   let q = supabase
     .from('evaluacion')
-    .select('*, modulo(titulo, curso(nombre))')
+    .select('*, modulo(titulo, curso(nombre)), usuario(nombres, apellidos)')
     .order('creado_en', { ascending: false })
   if (idModulo !== undefined) q = q.eq('id_modulo', idModulo)
   const { data, error } = await q
@@ -134,6 +186,9 @@ export async function getEvaluacionesEnriquecidas(idModulo?: number): Promise<Ev
     ...mapEvaluacion(r),
     moduloNombre: r.modulo?.titulo ?? '',
     cursoNombre: r.modulo?.curso?.nombre ?? '',
+    evaluadoNombre: r.usuario
+      ? `${r.usuario.nombres ?? ''} ${r.usuario.apellidos ?? ''}`.trim()
+      : '',
   }))
 }
 
@@ -375,10 +430,43 @@ export async function createRecurso(data: {
   return mapRecurso(result)
 }
 
+export const AULA_RECURSOS_MAX_BYTES = 25 * 1024 * 1024
+export const AULA_RECURSOS_ALLOWED_MIME = new Set<string>([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'text/csv',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'application/zip',
+  'application/x-zip-compressed',
+])
+
+export function validateRecursoFile(file: File): string | null {
+  if (file.size > AULA_RECURSOS_MAX_BYTES) {
+    return `El archivo supera el limite de ${Math.floor(AULA_RECURSOS_MAX_BYTES / (1024 * 1024))} MB.`
+  }
+  if (file.type && !AULA_RECURSOS_ALLOWED_MIME.has(file.type)) {
+    return `Tipo de archivo no permitido (${file.type}).`
+  }
+  return null
+}
+
+// Sube un archivo al bucket privado aula-recursos y devuelve el path relativo
+// (p.ej. "modulo-5/...pdf"). El bucket es privado, por lo que el consumo se
+// hace con createSignedUrl en tiempo de acceso.
 export async function uploadRecursoArchivo(data: {
   idModulo: number
   file: File
 }): Promise<string> {
+  const err = validateRecursoFile(data.file)
+  if (err) throw new Error(err)
   const safeName = data.file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
   const rand = typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
@@ -394,16 +482,19 @@ export async function uploadRecursoArchivo(data: {
     })
 
   if (uploadError) throw uploadError
+  return uploaded.path
+}
 
-  const { data: publicData } = supabase.storage
+// Firma un path almacenado en recurso.url. Acepta tambien URLs publicas
+// legacy (las reduce al path antes de firmar).
+export async function getRecursoSignedUrl(pathOrUrl: string, expiresInSeconds = 3600): Promise<string> {
+  const path = pathOrUrl.replace(/^https?:\/\/[^/]+\/storage\/v1\/object\/public\/aula-recursos\//, '')
+  const { data, error } = await supabase.storage
     .from('aula-recursos')
-    .getPublicUrl(uploaded.path)
-
-  if (!publicData.publicUrl) {
-    throw new Error('No se pudo obtener URL pública del archivo')
-  }
-
-  return publicData.publicUrl
+    .createSignedUrl(path, expiresInSeconds)
+  if (error) throw error
+  if (!data?.signedUrl) throw new Error('No se pudo generar URL firmada')
+  return data.signedUrl
 }
 
 export async function createProcesoAsignadoCurso(data: {

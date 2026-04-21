@@ -12,8 +12,9 @@ import {
   useDeleteRecurso,
   useProcesosAsignadoCurso,
 } from "@/hooks/useCursos";
-import { uploadRecursoArchivo } from "@/services/cursos.service";
+import { uploadRecursoArchivo, getRecursoSignedUrl, validateRecursoFile } from "@/services/cursos.service";
 import { useMinisterios } from "@/hooks/useMinisterios";
+import { useFinalizarCiclo } from "@/hooks/useAvance";
 import type { ProcesoAsignadoCurso } from "@/types/app.types";
 import { useApp } from "../store/AppContext";
 import { EnrollmentPickerModal } from "./classroom/EnrollmentPickerModal";
@@ -25,9 +26,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { 
-  Plus, ChevronRight, ChevronDown, FileText, Link as LinkIcon, Download, 
-  ExternalLink, GraduationCap, Layers, ArrowLeft, Pencil, Trash2, 
-  PlusCircle, BookOpen, Clock, Users, CheckCircle2, MoreVertical
+  Plus, ChevronRight, ChevronDown, FileText, Link as LinkIcon, Download,
+  ExternalLink, GraduationCap, Layers, ArrowLeft, Pencil, Trash2,
+  PlusCircle, BookOpen, Clock, Users, CheckCircle2, MoreVertical, Flag
 } from "lucide-react";
 
 export function ClassroomPage() {
@@ -35,7 +36,7 @@ export function ClassroomPage() {
   const { data: ministerios = [] } = useMinisterios();
   const [selectedMinId, setSelectedMinId] = useState<number | null>(null);
   const actualMinId = selectedMinId ?? ministerios[0]?.idMinisterio ?? 0;
-  const { data: cursos = [], isLoading } = useCursosEnriquecidos();
+  const { data: cursos = [], isLoading } = useCursosEnriquecidos(actualMinId || undefined);
   const deleteCursoMutation = useDeleteCurso();
   const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null);
   const [selectedModuloId, setSelectedModuloId] = useState<number | null>(null);
@@ -44,6 +45,16 @@ export function ClassroomPage() {
   const [showCreateModulo, setShowCreateModulo] = useState(false);
   const { usuarioActual, rolActual } = useApp();
   const { data: todosProcesos = [] } = useProcesosAsignadoCurso();
+  const finalizarCicloMutation = useFinalizarCiclo();
+  const handleFinalizarCiclo = async (idProceso: number) => {
+    if (!confirm('¿Finalizar el ciclo? Se marcará como completado a quienes hayan terminado todos los módulos publicados.')) return;
+    try {
+      await finalizarCicloMutation.mutateAsync(idProceso);
+      toast.success('Ciclo finalizado');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'No se pudo finalizar el ciclo');
+    }
+  };
   const [pickerForCiclo, setPickerForCiclo] = useState<{ ciclo: ProcesoAsignadoCurso; cursoNombre: string } | null>(null);
   const createCursoMutation = useCreateCurso();
   const createModuloMutation = useCreateModulo();
@@ -146,6 +157,14 @@ export function ClassroomPage() {
     if (recursoForm.tipo === "enlace" && (!nombre || !recursoForm.url.trim())) return;
     if (recursoForm.tipo === "archivo" && !recursoFile) return;
 
+    if (recursoForm.tipo === "archivo" && recursoFile) {
+      const err = validateRecursoFile(recursoFile);
+      if (err) {
+        toast.error(err);
+        return;
+      }
+    }
+
     try {
       let finalUrl = recursoForm.url.trim();
       const finalNombre = nombre || recursoFile?.name || "Archivo";
@@ -236,9 +255,26 @@ export function ClassroomPage() {
                       <span className="block text-[10px] text-muted-foreground uppercase tracking-widest font-medium">{r.tipo}</span>
                     </div>
                     <div className="flex items-center gap-1 group-hover:opacity-100 opacity-0 md:opacity-0 transition-opacity">
-                      <a href={r.url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors">
-                        {r.tipo === "archivo" ? <Download className="w-4 h-4" /> : <ExternalLink className="w-4 h-4" />}
-                      </a>
+                      {r.tipo === "archivo" ? (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const url = await getRecursoSignedUrl(r.url);
+                              window.open(url, "_blank", "noopener,noreferrer");
+                            } catch (e) {
+                              toast.error(e instanceof Error ? e.message : "No se pudo abrir el archivo");
+                            }
+                          }}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <a href={r.url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors">
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
                       {canManageAula && (
                         <button 
                           className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors shrink-0"
@@ -521,14 +557,25 @@ export function ClassroomPage() {
                                       <p className="text-muted-foreground capitalize">{p.estado.replace("_", " ")}</p>
                                     </div>
                                     {canManageAula && (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="h-8 rounded-lg text-xs"
-                                        onClick={() => setPickerForCiclo({ ciclo: p, cursoNombre: curso.nombre })}
-                                      >
-                                        <Plus className="w-3.5 h-3.5 mr-1" /> Inscribir
-                                      </Button>
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-8 rounded-lg text-xs"
+                                          onClick={() => setPickerForCiclo({ ciclo: p, cursoNombre: curso.nombre })}
+                                        >
+                                          <Plus className="w-3.5 h-3.5 mr-1" /> Inscribir
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-8 rounded-lg text-xs"
+                                          disabled={finalizarCicloMutation.isPending}
+                                          onClick={() => handleFinalizarCiclo(p.idProcesoAsignadoCurso)}
+                                        >
+                                          <Flag className="w-3.5 h-3.5 mr-1" /> Finalizar ciclo
+                                        </Button>
+                                      </div>
                                     )}
                                   </div>
                                 ))}
