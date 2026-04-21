@@ -305,7 +305,7 @@ export function ClassroomPage() {
   }
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
+    <div className="space-y-5 max-w-6xl mx-auto">
       {/* Header Panorámico */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
@@ -343,7 +343,7 @@ export function ClassroomPage() {
           {canManageAula ? (
             <Button 
               onClick={() => setShowCreateCurso(true)} 
-              className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:scale-105 transition-all"
+              className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:scale-105 transition-all"
             >
               <Plus className="w-4 h-4 mr-2" /> Nuevo Curso
             </Button>
@@ -457,8 +457,7 @@ export function ClassroomPage() {
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                        className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-md shadow-blue-900/20 transition-all"
                         onClick={(e) => { e.stopPropagation(); toggleCurso(curso.idCurso); }}
                       >
                         {isExpanded ? "Ocultar módulos" : "Ver módulos"}
@@ -523,8 +522,7 @@ export function ClassroomPage() {
                                     {canManageAula && (
                                       <Button
                                         size="sm"
-                                        variant="outline"
-                                        className="h-8 rounded-lg text-xs"
+                                        className="h-8 rounded-lg text-xs bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-md shadow-blue-900/20 transition-all"
                                         onClick={() => setPickerForCiclo({ ciclo: p, cursoNombre: curso.nombre })}
                                       >
                                         <Plus className="w-3.5 h-3.5 mr-1" /> Inscribir

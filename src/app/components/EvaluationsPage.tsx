@@ -138,7 +138,7 @@ export function EvaluationsPage() {
   );
 
   return (
-    <div className="space-y-5 max-w-5xl mx-auto">
+    <div className="space-y-5 max-w-6xl mx-auto">
       {/* Header Panorámico */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
@@ -160,7 +160,7 @@ export function EvaluationsPage() {
         {canManageEvaluaciones ? (
           <Button 
             onClick={() => setShowCreate(true)} 
-            className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:scale-105 transition-all"
+            className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:scale-105 transition-all"
           >
             <Plus className="w-4 h-4 mr-2" /> Nueva Evaluación
           </Button>
