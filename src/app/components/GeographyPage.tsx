@@ -105,11 +105,11 @@ export function GeographyPage() {
   const dialogTitle = dialog ? `${dialog.mode === "add" ? "Nuevo" : "Editar"} ${dialog.type === "pais" ? "País" : dialog.type === "dep" ? "Departamento" : "Ciudad"}` : "";
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+    <div className="space-y-6 max-w-6xl mx-auto pb-10">
       {/* HEADER */}
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] shadow-blue-900/20 shrink-0">
             <Globe className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -117,13 +117,13 @@ export function GeographyPage() {
             <h1 className="text-3xl font-light tracking-tight">Gestión Geográfica</h1>
           </div>
         </div>
-        <Button onClick={() => openDialog("pais", "add")} className="shrink-0 shadow-md shadow-cyan-600/20 rounded-full px-6 bg-cyan-600 hover:bg-cyan-700 text-white h-11"><Plus className="w-4 h-4 mr-2" /> Nuevo País</Button>
+        <Button onClick={() => openDialog("pais", "add")} className="shrink-0 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-lg shadow-blue-900/20"><Plus className="w-4 h-4 mr-2" /> Nuevo País</Button>
       </motion.div>
 
       {/* STATS ROW */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }} className="grid grid-cols-3 gap-4">
         <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm dark:border-white/10 dark:bg-card/20 flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
-          <p className="text-3xl font-light text-cyan-600 dark:text-cyan-400">{paises.length}</p>
+          <p className="text-3xl font-light text-[#4682b4] dark:text-[#709dbd]">{paises.length}</p>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5"/> Países</p>
         </div>
         <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm dark:border-white/10 dark:bg-card/20 flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
@@ -145,7 +145,7 @@ export function GeographyPage() {
               placeholder="Buscar países, departamentos o ciudades..." 
               value={search} 
               onChange={e => setSearch(e.target.value)} 
-              className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-cyan-600/20 h-11 rounded-xl w-full" 
+              className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl w-full" 
             />
           </div>
         </div>
@@ -157,9 +157,9 @@ export function GeographyPage() {
           const deps = departamentosGeo.filter(d => d.idPais === pais.idPais);
           const isExpP = expandedPais.has(pais.idPais);
           return (
-             <div key={pais.idPais} className="rounded-2xl bg-card/50 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden dark:border-white/10 dark:bg-card/20 transition-all">
+             <div key={pais.idPais} className="rounded-2xl bg-card/50 backdrop-blur-2xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden dark:border-white/10 dark:bg-card/20 transition-all">
                 <div className="flex items-center gap-4 p-4 md:px-6 cursor-pointer hover:bg-white/40 dark:hover:bg-white/5 transition-colors" onClick={() => togglePais(pais.idPais)}>
-                   <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shrink-0">
+                   <div className="w-10 h-10 rounded-xl bg-[#4682b4]/10 dark:bg-[#4682b4]/20 text-[#4682b4] dark:text-[#709dbd] shrink-0 flex items-center justify-center">
                       <Globe className="w-5 h-5" />
                    </div>
                    <div className="flex-1 min-w-0">
@@ -260,7 +260,7 @@ export function GeographyPage() {
         <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
           <div className="px-6 py-4 bg-muted/30 border-b border-border/40">
              <DialogHeader><DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
-               {dialog?.mode === "edit" ? <Pencil className="w-5 h-5 text-cyan-600" /> : <Plus className="w-5 h-5 text-cyan-600" />} {dialogTitle}
+               {dialog?.mode === "edit" ? <Pencil className="w-5 h-5 text-[#4682b4]" /> : <Plus className="w-5 h-5 text-[#4682b4]" />} {dialogTitle}
              </DialogTitle></DialogHeader>
           </div>
           <div className="px-6 py-5">
@@ -269,13 +269,13 @@ export function GeographyPage() {
               value={formNombre} 
               onChange={e => setFormNombre(e.target.value)} 
               placeholder={`Ej. ${dialog?.type === 'pais' ? 'Colombia' : dialog?.type === 'dep' ? 'Antioquia' : 'Medellín'}`} 
-              className="bg-input-background focus-visible:ring-cyan-600/30 h-11" 
+              className="bg-input-background focus-visible:ring-[#4682b4]/30 h-11" 
               onKeyDown={e => e.key === "Enter" && handleSubmit()} 
             />
           </div>
           <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
              <Button variant="ghost" onClick={() => setDialog(null)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
-             <Button onClick={handleSubmit} disabled={!formNombre.trim() || isMutating} className="rounded-full px-5 bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm shadow-cyan-600/20">Guardar</Button>
+             <Button onClick={handleSubmit} disabled={!formNombre.trim() || isMutating} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-lg shadow-blue-900/20">Guardar</Button>
           </div>
         </DialogContent>
       </Dialog>

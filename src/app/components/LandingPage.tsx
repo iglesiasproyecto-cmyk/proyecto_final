@@ -1,327 +1,248 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "./ui/button";
-import { Card } from "./ui/card";
-import { motion } from "motion/react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { SEILogo } from "./SEILogo";
 import {
-  Users, CalendarDays, BarChart3, FileText, TrendingUp, Activity
+  Users, CalendarDays, BarChart3, FileText, TrendingUp, Activity,
+  ArrowRight, ShieldCheck, Zap, Globe
 } from "lucide-react";
 
-// Mock data para las tarjetas
-const operationalData = [
-  { icon: Users, value: "2,800", label: "Miembros Registrados", iconBg: "bg-[#0c2340]" },
-  { icon: CalendarDays, value: "15", label: "Eventos Próximos", iconBg: "bg-[#0c2340]" },
-  { icon: Activity, value: "40", label: "Grupos Activos", iconBg: "bg-[#0c2340]" },
-  { icon: FileText, value: "120", label: "Reportes Generados", iconBg: "bg-[#0c2340]" },
-];
-
-const calendarData = [
-  { day: "Dom", date: 26, events: [] },
-  { day: "Lun", date: 27, events: [{ title: "Reunión de Enlace", time: "PM", color: "bg-blue-200" }] },
-  { day: "Mar", date: 21, events: [{ title: "Taller de...", time: "AM", color: "bg-blue-100" }] },
-  { day: "Mie", date: 29, events: [{ title: "Liderazgo", time: "AM", color: "bg-blue-200" }] },
-  { day: "Jue", date: 1, events: [{ title: "Evento Bols", time: "PM", color: "bg-blue-100" }] },
-  { day: "Vie", date: 2, events: [{ title: "Pin-azgo", time: "PM", color: "bg-blue-300" }] },
-  { day: "Sab", date: 3, events: [] },
-];
-
-const financialData = [
-  { id: 1, month: "Ene", actual: 800, projected: 750 },
-  { id: 2, month: "Feb", actual: 900, projected: 850 },
-  { id: 3, month: "Mar", actual: 850, projected: 900 },
-  { id: 4, month: "Abr", actual: 950, projected: 920 },
-  { id: 5, month: "May", actual: 1000, projected: 980 },
-  { id: 6, month: "Jun", actual: 900, projected: 950 },
-  { id: 7, month: "Jul", actual: 950, projected: 1000 },
-  { id: 8, month: "Ago", actual: 1000, projected: 1050 },
-  { id: 9, month: "Sep", actual: 1100, projected: 1100 },
-  { id: 10, month: "Oct", actual: 1050, projected: 1150 },
-  { id: 11, month: "Nov", actual: 1150, projected: 1200 },
-  { id: 12, month: "Dic", actual: 1200, projected: 1250 },
-];
-
-// Simple SVG Area Chart Component
-function SimpleAreaChart({ data }: { data: typeof financialData }) {
-  const width = 100;
-  const height = 100;
-  const padding = 10;
-  
-  const maxValue = Math.max(...data.map(d => Math.max(d.actual, d.projected)));
-  const minValue = Math.min(...data.map(d => Math.min(d.actual, d.projected)));
-  const valueRange = maxValue - minValue;
-  
-  const getX = (index: number) => padding + (index / (data.length - 1)) * (width - 2 * padding);
-  const getY = (value: number) => height - padding - ((value - minValue) / valueRange) * (height - 2 * padding);
-  
-  const actualPath = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(d.actual)}`).join(' ');
-  const projectedPath = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(d.projected)}`).join(' ');
-  
-  const actualAreaPath = `${actualPath} L ${getX(data.length - 1)} ${height - padding} L ${getX(0)} ${height - padding} Z`;
-  const projectedAreaPath = `${projectedPath} L ${getX(data.length - 1)} ${height - padding} L ${getX(0)} ${height - padding} Z`;
-  
+// Advanced Background with HUD and Aurora effects
+function BackgroundAnimation() {
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="areaGradientActual" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0c2340" stopOpacity={0.3} />
-          <stop offset="100%" stopColor="#0c2340" stopOpacity={0.05} />
-        </linearGradient>
-        <linearGradient id="areaGradientProjected" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2596be" stopOpacity={0.3} />
-          <stop offset="100%" stopColor="#2596be" stopOpacity={0.05} />
-        </linearGradient>
-      </defs>
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Aurora Pulses (Multi-color) */}
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.2, 1],
+          rotate: [0, 90, 0],
+          opacity: [0.1, 0.2, 0.1]
+        }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        className="absolute -top-[20%] -left-[10%] w-[100%] h-[100%] bg-gradient-to-br from-cyan-600/20 via-transparent to-blue-500/20 rounded-full blur-[150px]"
+      />
       
-      {/* Projected area */}
-      <path d={projectedAreaPath} fill="url(#areaGradientProjected)" />
-      
-      {/* Actual area */}
-      <path d={actualAreaPath} fill="url(#areaGradientActual)" />
-      
-      {/* Projected line */}
-      <path d={projectedPath} stroke="#2596be" strokeWidth="0.5" fill="none" />
-      
-      {/* Actual line */}
-      <path d={actualPath} stroke="#0c2340" strokeWidth="0.5" fill="none" />
-      
-      {/* X-axis labels */}
-      {data.map((d, i) => (
-        <text
-          key={`label-x-${d.id}`}
-          x={getX(i)}
-          y={height - 2}
-          textAnchor="middle"
-          fontSize="3"
-          fill="#94a3b8"
-        >
-          {d.month}
-        </text>
+      {/* Technical Grid Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(70,130,180,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(70,130,180,0.05)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_20%,transparent_100%)]" />
+
+      {/* Floating Dynamic Particles */}
+      {[...Array(30)].map((_, i) => (
+        <motion.div
+           key={i}
+           initial={{ 
+             opacity: 0, 
+             x: Math.random() * 100 + "%", 
+             y: Math.random() * 100 + "%",
+             scale: Math.random() * 0.5 + 0.2
+           }}
+           animate={{ 
+             opacity: [0, 0.5, 0],
+             y: [null, "-=" + (Math.random() * 200 + 100)],
+             x: [null, i % 2 === 0 ? "+=100" : "-=100"]
+           }}
+           transition={{ 
+             duration: Math.random() * 15 + 10, 
+             repeat: Infinity, 
+             ease: "linear",
+             delay: Math.random() * 10
+           }}
+           className={`absolute w-1 h-1 ${i % 3 === 0 ? 'bg-blue-400' : 'bg-cyan-400'} rounded-full blur-[1px]`}
+        />
       ))}
-    </svg>
+      
+      {/* HUD Scanner Beam */}
+      <motion.div 
+        animate={{ y: ["-100%", "200%"] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent z-10"
+      />
+
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#4682b4]/5 rounded-full blur-[160px] animate-pulse" />
+    </div>
   );
 }
 
-// Patrón geométrico de fondo
-function GeometricPattern() {
+// Flying Eagle with Parallax Mouse Interaction
+function FlyingEagle() {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  // Smooth springs for natural movement
+  const springConfig = { damping: 25, stiffness: 150 };
+  const rotateX = useSpring(useTransform(mouseY, [-300, 300], [15, -15]), springConfig);
+  const rotateY = useSpring(useTransform(mouseX, [-300, 300], [-15, 15]), springConfig);
+  const translateX = useSpring(useTransform(mouseX, [-300, 300], [-20, 20]), springConfig);
+  const translateY = useSpring(useTransform(mouseY, [-300, 300], [-20, 20]), springConfig);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const { clientX, clientY } = e;
+      const x = clientX - window.innerWidth / 2;
+      const y = clientY - window.innerHeight / 2;
+      mouseX.set(x);
+      mouseY.set(y);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [mouseX, mouseY]);
+
   return (
-    <div className="absolute inset-0 overflow-hidden opacity-10">
-      {/* Patrones en las esquinas */}
-      <svg className="absolute top-0 left-0 w-64 h-64" viewBox="0 0 200 200">
-        <path d="M 0,100 L 50,50 L 50,0" stroke="#0c2340" strokeWidth="1" fill="none" />
-        <path d="M 10,100 L 60,50 L 60,0" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-        <path d="M 20,100 L 70,50 L 70,0" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-        <path d="M 30,100 L 80,50 L 80,0" stroke="#0c2340" strokeWidth="1" fill="none" />
-        <path d="M 40,100 L 90,50 L 90,0" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-      </svg>
-      <svg className="absolute top-0 right-0 w-64 h-64" viewBox="0 0 200 200">
-        <path d="M 200,100 L 150,50 L 150,0" stroke="#0c2340" strokeWidth="1" fill="none" />
-        <path d="M 190,100 L 140,50 L 140,0" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-        <path d="M 180,100 L 130,50 L 130,0" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-        <path d="M 170,100 L 120,50 L 120,0" stroke="#0c2340" strokeWidth="1" fill="none" />
-        <path d="M 160,100 L 110,50 L 110,0" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-      </svg>
-      <svg className="absolute bottom-0 left-0 w-64 h-64" viewBox="0 0 200 200">
-        <path d="M 0,100 L 50,150 L 50,200" stroke="#0c2340" strokeWidth="1" fill="none" />
-        <path d="M 10,100 L 60,150 L 60,200" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-        <path d="M 20,100 L 70,150 L 70,200" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-        <path d="M 30,100 L 80,150 L 80,200" stroke="#0c2340" strokeWidth="1" fill="none" />
-        <path d="M 40,100 L 90,150 L 90,200" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-      </svg>
-      <svg className="absolute bottom-0 right-0 w-64 h-64" viewBox="0 0 200 200">
-        <path d="M 200,100 L 150,150 L 150,200" stroke="#0c2340" strokeWidth="1" fill="none" />
-        <path d="M 190,100 L 140,150 L 140,200" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-        <path d="M 180,100 L 130,150 L 130,200" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-        <path d="M 170,100 L 120,150 L 120,200" stroke="#0c2340" strokeWidth="1" fill="none" />
-        <path d="M 160,100 L 110,150 L 110,200" stroke="#0c2340" strokeWidth="0.5" fill="none" />
-      </svg>
-    </div>
+    <motion.div
+      style={{ rotateX, rotateY, x: translateX, y: translateY, perspective: 1000 }}
+      initial={{ y: 100, opacity: 0, scale: 0.8 }}
+      animate={{ 
+        y: [100, 0], 
+        opacity: [0, 1],
+        scale: [0.8, 1]
+      }}
+      transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+      className="relative z-30 mb-2 cursor-pointer group"
+    >
+      <motion.div
+        animate={{ 
+          y: [0, -10, 0],
+          rotate: [0, 0.5, 0, -0.5, 0]
+        }}
+        transition={{ 
+          duration: 5, 
+          repeat: Infinity, 
+          ease: "easeInOut" 
+        }}
+        className="w-64 h-64 md:w-[550px] md:h-[350px] relative"
+      >
+        {/* Logo with massive glow */}
+        <div className="absolute inset-0 bg-white/10 blur-[80px] rounded-full group-hover:bg-cyan-500/20 transition-colors duration-1000" />
+        <SEILogo className="w-full h-full object-contain filter drop-shadow-[0_0_60px_rgba(255,255,255,0.3)] group-hover:drop-shadow-[0_0_80px_rgba(34,211,238,0.5)] transition-all duration-700" />
+      </motion.div>
+      
+      {/* Expansion shockwave effect */}
+      <motion.div 
+        animate={{ opacity: [0, 0.4, 0], scale: [1, 1.8, 1.3] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeOut" }}
+        className="absolute inset-0 bg-cyan-400/10 rounded-full blur-3xl -z-10"
+      />
+    </motion.div>
   );
 }
 
 export function LandingPage() {
   const navigate = useNavigate();
-
-  // Memoize chart data to prevent unnecessary re-renders
-  const chartData = React.useMemo(() => financialData.slice(-4), []);
+  // Forzar recompilación - Versión 2
 
   return (
-    <div className="min-h-screen bg-background relative">
-      {/* Header */}
-      <header className="bg-[#0c2340] text-white px-8 py-4 relative z-20">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex items-center gap-3"
-          >
-            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1.5">
-              <SEILogo className="w-full h-full" />
-            </div>
-            <h1 className="text-xl tracking-tight text-white">S.E.I. (Soporte Estructural de Iglesias)</h1>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Button
-              onClick={() => navigate("/login")}
-              className="bg-[#2596be] hover:bg-[#1a7fa8] text-white px-6"
+    <div className="relative min-h-screen w-full bg-[#0c2340] flex flex-col items-center justify-center overflow-hidden px-4">
+      {/* Cinematic Deep Atmosphere */}
+      <div className="absolute inset-0 bg-[#061424]" />
+      <BackgroundAnimation />
+      
+      {/* Glossy Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0c2340]/40 to-[#061424] pointer-events-none" />
+
+      {/* Main Container */}
+      <div className="relative z-20 flex flex-col items-center text-center max-w-5xl mx-auto">
+        <FlyingEagle />
+        
+        {/* Content Section */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="space-y-6"
+        >
+          {/* Title */}
+          <div className="space-y-2">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              transition={{ delay: 1.2 }}
+              className="text-[10px] font-black uppercase tracking-[0.8em] text-cyan-400 mb-1"
             >
-              Iniciar Sesión
-            </Button>
-          </motion.div>
-        </div>
-      </header>
+              Protocolo de Acceso Seguro
+            </motion.p>
+            <motion.h1 
+              className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic leading-[0.8] drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+            >
+              Bienvenidos a <br/>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-400 to-blue-400 animate-gradient-x">S.E.I.</span>
+            </motion.h1>
+          </div>
 
-      {/* Background Pattern */}
-      <GeometricPattern />
-
-      {/* Main Content */}
-      <main className="relative z-10 px-4 py-12">
-        <div className="max-w-7xl mx-auto">
-          {/* Hero Section */}
+          {/* Subtitle / Description */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-center mb-12"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 1 }}
+            className="space-y-4"
           >
-            <h2 className="text-4xl md:text-5xl tracking-tight mb-4">
-              S.E.I. (Soporte Estructural de Iglesias)
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Un ecosistema operativo y estratégico para el fortalecimiento y la cohesión de comunidades eclesiales.
+            <p className="text-xl md:text-3xl font-black text-white max-w-2xl mx-auto leading-tight uppercase tracking-widest italic flex items-center justify-center gap-3">
+              <span className="w-8 h-px bg-cyan-500/50" />
+              Liderazgo con Visión Técnica
+              <span className="w-8 h-px bg-cyan-500/50" />
+            </p>
+            <p className="text-[11px] md:text-xs text-slate-400 max-w-xl mx-auto font-bold uppercase tracking-[0.4em] leading-relaxed">
+              La arquitectura digital definitiva para la expansión de ministerios locales con excelencia profesional.
             </p>
           </motion.div>
 
-          {/* Three Main Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Panel Operativo */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+          {/* Primary Action */}
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 1.4 }}
+            className="pt-10 flex flex-col items-center gap-4"
+          >
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
+              <Button
+                onClick={() => navigate("/login", { replace: true })}
+                className="group relative h-20 w-72 md:w-96 rounded-[40px] bg-white text-[#0c2340] font-black uppercase italic tracking-[5px] text-xl shadow-[0_25px_60px_rgba(255,255,255,0.2)] hover:bg-cyan-400 hover:text-white transition-all duration-500 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+                <span className="relative flex items-center justify-center gap-4">
+                  Ingresar al Sistema
+                  <ArrowRight className="w-8 h-8 group-hover:translate-x-3 transition-transform duration-500" />
+                </span>
+              </Button>
+            </div>
+            
+            <motion.div 
+               animate={{ opacity: [0.3, 0.6, 0.3] }}
+               transition={{ duration: 2, repeat: Infinity }}
+               className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/60"
             >
-              <Card className="p-6 bg-[#0c2340] text-white shadow-xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                    <Activity className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-lg text-white">Panel Operativo</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {operationalData.map((item, idx) => {
-                    const Icon = item.icon;
-                    return (
-                      <div key={idx} className="bg-white/5 rounded-xl p-4 backdrop-blur-sm">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/10 mb-3">
-                          <Icon className="w-5 h-5 text-[#5cbcd6]" />
-                        </div>
-                        <p className="text-2xl md:text-3xl text-[#5cbcd6] mb-1">{item.value}</p>
-                        <p className="text-xs text-white/70">{item.label}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Card>
+               <Zap className="w-3 h-3 fill-current" /> Encriptación AES-256 Activa
             </motion.div>
+          </motion.div>
+        </motion.div>
 
-            {/* Calendario Integral */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-            >
-              <Card className="p-6 bg-[#0c2340] text-white shadow-xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                    <CalendarDays className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-lg text-white">Calendario Integral</h3>
-                </div>
-                <div className="space-y-3">
-                  {/* Calendar Header */}
-                  <div className="grid grid-cols-7 gap-1 text-center text-xs text-white/60 mb-2">
-                    {calendarData.map((day, idx) => (
-                      <div key={idx}>
-                        <div className="mb-1">{day.day}</div>
-                        <div className="text-white text-sm">{day.date}</div>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Calendar Events */}
-                  <div className="grid grid-cols-7 gap-1">
-                    {calendarData.map((day, idx) => (
-                      <div key={idx} className="min-h-[80px] bg-white/5 rounded-lg p-1">
-                        {day.events.map((event, eventIdx) => (
-                          <div
-                            key={eventIdx}
-                            className={`text-[9px] ${event.color} text-[#0c2340] rounded px-1 py-0.5 mb-1`}
-                          >
-                            {event.title}
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-
-            {/* Visión de Finanzas */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
-              <Card className="p-6 bg-white shadow-xl relative overflow-hidden">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-[#0c2340] flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-lg">Visión de Finanzas</h3>
-                </div>
-                
-                {/* Tabs */}
-                <div className="flex gap-4 mb-4 text-sm border-b border-border pb-2">
-                  <button className="text-[#0c2340] font-medium border-b-2 border-[#2596be] pb-2">Dashboard</button>
-                  <button className="text-muted-foreground hover:text-foreground">Rinomera</button>
-                </div>
-
-                {/* Eagle watermark */}
-                <div className="absolute top-1/2 right-8 -translate-y-1/2 opacity-20">
-                  <SEILogo className="w-32 h-32" />
-                </div>
-
-                {/* Chart */}
-                <div className="h-48 relative z-10" style={{ minHeight: '192px' }}>
-                  <SimpleAreaChart data={chartData} />
-                </div>
-
-                {/* Legend */}
-                <div className="flex items-center gap-4 mt-4 text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-[#0c2340] rounded-sm"></div>
-                    <span className="text-muted-foreground">Contribuciones Semanales</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-[#2596be] rounded-sm"></div>
-                    <span className="text-muted-foreground">Semana Actual 2023 • Contr. 2,773</span>
-                  </div>
-                </div>
-
-                {/* Button */}
-                <Button className="w-full mt-4 bg-[#5cbcd6] hover:bg-[#2596be] text-white">
-                  Contribuciones
-                </Button>
-              </Card>
-            </motion.div>
-          </div>
+        {/* Floating Interactive Elements */}
+        <div className="absolute inset-x-0 top-0 h-full pointer-events-none opacity-30">
+           <motion.div 
+             animate={{ y: [0, -40, 0], rotate: [0, 10, 0] }} 
+             transition={{ duration: 10, repeat: Infinity }}
+             className="absolute top-[20%] left-[5%] hidden lg:block"
+           ><ShieldCheck className="w-16 h-16 text-cyan-500" /></motion.div>
+           
+           <motion.div 
+             animate={{ y: [0, 40, 0], rotate: [0, -10, 0] }} 
+             transition={{ duration: 14, repeat: Infinity }}
+             className="absolute bottom-[20%] right-[5%] hidden lg:block"
+           ><Globe className="w-20 h-20 text-blue-500" /></motion.div>
         </div>
-      </main>
+      </div>
+
+      {/* Footer Branding */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1, delay: 2.2 }}
+        className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-2"
+      >
+        <div className="w-24 h-px bg-white/5" />
+        <p className="text-[9px] text-white/20 font-black uppercase tracking-[0.6em] italic">
+          © MMXXVI &middot; SOPORTE ESTRUCTURAL DE IGLESIAS
+        </p>
+      </motion.div>
     </div>
   );
 }

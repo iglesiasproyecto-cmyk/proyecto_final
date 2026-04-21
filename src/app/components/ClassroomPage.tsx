@@ -12,9 +12,8 @@ import {
   useDeleteRecurso,
   useProcesosAsignadoCurso,
 } from "@/hooks/useCursos";
-import { uploadRecursoArchivo, getRecursoSignedUrl, validateRecursoFile } from "@/services/cursos.service";
+import { uploadRecursoArchivo } from "@/services/cursos.service";
 import { useMinisterios } from "@/hooks/useMinisterios";
-import { useFinalizarCiclo } from "@/hooks/useAvance";
 import type { ProcesoAsignadoCurso } from "@/types/app.types";
 import { useApp } from "../store/AppContext";
 import { EnrollmentPickerModal } from "./classroom/EnrollmentPickerModal";
@@ -26,9 +25,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { 
-  Plus, ChevronRight, ChevronDown, FileText, Link as LinkIcon, Download,
-  ExternalLink, GraduationCap, Layers, ArrowLeft, Pencil, Trash2,
-  PlusCircle, BookOpen, Clock, Users, CheckCircle2, MoreVertical, Flag
+  Plus, ChevronRight, ChevronDown, FileText, Link as LinkIcon, Download, 
+  ExternalLink, GraduationCap, Layers, ArrowLeft, Pencil, Trash2, 
+  PlusCircle, BookOpen, Clock, Users, CheckCircle2
 } from "lucide-react";
 
 export function ClassroomPage() {
@@ -36,7 +35,7 @@ export function ClassroomPage() {
   const { data: ministerios = [] } = useMinisterios();
   const [selectedMinId, setSelectedMinId] = useState<number | null>(null);
   const actualMinId = selectedMinId ?? ministerios[0]?.idMinisterio ?? 0;
-  const { data: cursos = [], isLoading } = useCursosEnriquecidos(actualMinId || undefined);
+  const { data: cursos = [], isLoading } = useCursosEnriquecidos();
   const deleteCursoMutation = useDeleteCurso();
   const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null);
   const [selectedModuloId, setSelectedModuloId] = useState<number | null>(null);
@@ -45,16 +44,6 @@ export function ClassroomPage() {
   const [showCreateModulo, setShowCreateModulo] = useState(false);
   const { usuarioActual, rolActual } = useApp();
   const { data: todosProcesos = [] } = useProcesosAsignadoCurso();
-  const finalizarCicloMutation = useFinalizarCiclo();
-  const handleFinalizarCiclo = async (idProceso: number) => {
-    if (!confirm('¿Finalizar el ciclo? Se marcará como completado a quienes hayan terminado todos los módulos publicados.')) return;
-    try {
-      await finalizarCicloMutation.mutateAsync(idProceso);
-      toast.success('Ciclo finalizado');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'No se pudo finalizar el ciclo');
-    }
-  };
   const [pickerForCiclo, setPickerForCiclo] = useState<{ ciclo: ProcesoAsignadoCurso; cursoNombre: string } | null>(null);
   const createCursoMutation = useCreateCurso();
   const createModuloMutation = useCreateModulo();
@@ -157,14 +146,6 @@ export function ClassroomPage() {
     if (recursoForm.tipo === "enlace" && (!nombre || !recursoForm.url.trim())) return;
     if (recursoForm.tipo === "archivo" && !recursoFile) return;
 
-    if (recursoForm.tipo === "archivo" && recursoFile) {
-      const err = validateRecursoFile(recursoFile);
-      if (err) {
-        toast.error(err);
-        return;
-      }
-    }
-
     try {
       let finalUrl = recursoForm.url.trim();
       const finalNombre = nombre || recursoFile?.name || "Archivo";
@@ -213,7 +194,7 @@ export function ClassroomPage() {
           <ArrowLeft className="w-4 h-4" /> Volver al curso
         </button>
 
-        <div className="relative overflow-hidden bg-card/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-sm">
+        <div className="relative overflow-hidden bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-8 shadow-sm">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
           <Badge variant="outline" className="mb-4 bg-primary/5 border-primary/20 text-primary uppercase font-black text-[10px] tracking-widest">
             {selectedCurso.nombre}
@@ -225,7 +206,7 @@ export function ClassroomPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6">
-          <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-3xl p-6 shadow-sm">
+          <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-3xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
               <h3 className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.25em] text-primary/70">
                 <Download className="w-4 h-4" /> Recursos Adjuntos
@@ -246,7 +227,7 @@ export function ClassroomPage() {
             {selectedModulo.recursos && selectedModulo.recursos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {selectedModulo.recursos.map((r) => (
-                  <div key={r.idRecurso} className="flex items-center gap-3 p-4 rounded-2xl bg-background/40 hover:bg-background/60 border border-white/5 transition-all group">
+                  <div key={r.idRecurso} className="flex items-center gap-3 p-4 rounded-2xl bg-background/40 hover:bg-background/60 border border-border/50 transition-all group">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-110 transition-transform">
                       {r.tipo === "archivo" ? <FileText className="w-5 h-5" /> : <LinkIcon className="w-5 h-5" />}
                     </div>
@@ -255,26 +236,9 @@ export function ClassroomPage() {
                       <span className="block text-[10px] text-muted-foreground uppercase tracking-widest font-medium">{r.tipo}</span>
                     </div>
                     <div className="flex items-center gap-1 group-hover:opacity-100 opacity-0 md:opacity-0 transition-opacity">
-                      {r.tipo === "archivo" ? (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            try {
-                              const url = await getRecursoSignedUrl(r.url);
-                              window.open(url, "_blank", "noopener,noreferrer");
-                            } catch (e) {
-                              toast.error(e instanceof Error ? e.message : "No se pudo abrir el archivo");
-                            }
-                          }}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                      ) : (
-                        <a href={r.url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors">
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      )}
+                      <a href={r.url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors">
+                        {r.tipo === "archivo" ? <Download className="w-4 h-4" /> : <ExternalLink className="w-4 h-4" />}
+                      </a>
                       {canManageAula && (
                         <button 
                           className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors shrink-0"
@@ -341,16 +305,16 @@ export function ClassroomPage() {
   }
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
+    <div className="space-y-5 max-w-6xl mx-auto">
       {/* Header Panorámico */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative flex flex-col md:flex-row md:items-center justify-between gap-5 bg-card/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-sm overflow-hidden"
+        className="relative flex flex-col md:flex-row md:items-center justify-between gap-5 bg-card/40 backdrop-blur-xl border border-border/50 p-6 rounded-3xl shadow-sm overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-80 h-48 bg-primary/10 rounded-full blur-[100px] pointer-events-none -z-10" />
         <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shrink-0 shadow-lg shadow-cyan-600/20">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shrink-0 shadow-lg shadow-cyan-600/20">
             <GraduationCap className="w-8 h-8" />
           </div>
           <div className="min-w-0">
@@ -363,14 +327,14 @@ export function ClassroomPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 overflow-x-auto pb-1 md:pb-0">
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1 md:pb-0">
           {ministerios.length > 1 && (
-            <div className="flex items-center gap-2 bg-background/40 border border-white/5 rounded-2xl px-3 h-11 shrink-0">
+            <div className="flex items-center gap-2 bg-background/40 border border-border/50 rounded-2xl px-3 h-11 shrink-0">
               <BookOpen className="w-4 h-4 text-muted-foreground/50" />
               <select
                 value={actualMinId}
                 onChange={(e) => { setSelectedMinId(Number(e.target.value)); setSelectedCursoId(null); }}
-                className="text-xs bg-transparent border-0 outline-none text-foreground/80 cursor-pointer font-bold tracking-tight"
+                className="text-xs bg-transparent border-0 outline-none text-foreground cursor-pointer font-bold tracking-tight"
               >
                 {ministerios.filter((m) => m.estado === "activo").map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
               </select>
@@ -379,12 +343,12 @@ export function ClassroomPage() {
           {canManageAula ? (
             <Button 
               onClick={() => setShowCreateCurso(true)} 
-              className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0"
+              className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:scale-105 transition-all"
             >
               <Plus className="w-4 h-4 mr-2" /> Nuevo Curso
             </Button>
           ) : (
-            <Badge variant="outline" className="h-11 rounded-2xl px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-white/10 bg-background/40">
+            <Badge variant="outline" className="h-11 rounded-2xl px-4 text-[10px] font-bold uppercase tracking-widest bg-blue-600/10 text-blue-700 dark:text-blue-400 border-blue-600/20">
               Modo lectura
             </Badge>
           )}
@@ -404,9 +368,9 @@ export function ClassroomPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + i * 0.05 }}
-            className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-4 group"
+            className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 flex items-center gap-4 group"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shadow-md shadow-cyan-600/10 group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-md shadow-blue-900/10 group-hover:scale-110 transition-transform">
               {s.icon}
             </div>
             <div>
@@ -421,10 +385,10 @@ export function ClassroomPage() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative bg-card/20 backdrop-blur-md border border-white/5 rounded-[40px] p-20 flex flex-col items-center justify-center text-center overflow-hidden"
+          className="relative bg-card/20 backdrop-blur-md border border-border/50 rounded-[40px] p-20 flex flex-col items-center justify-center text-center overflow-hidden"
         >
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white mb-8 shadow-xl shadow-cyan-600/20">
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white mb-8 shadow-xl shadow-blue-900/20">
             <GraduationCap className="w-12 h-12" />
           </div>
           <h3 className="text-2xl font-bold tracking-tight text-foreground/80 mb-3">Aula vacía</h3>
@@ -447,7 +411,7 @@ export function ClassroomPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + idx * 0.05 }}
-                className="group overflow-hidden rounded-3xl bg-card/40 backdrop-blur-xl border border-white/10 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+                className="group overflow-hidden rounded-3xl bg-card/40 backdrop-blur-xl border border-border/50 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
               >
                 <div 
                   className={`flex flex-col sm:flex-row sm:items-center gap-5 p-5 cursor-pointer transition-colors ${isExpanded ? "bg-primary/5" : "hover:bg-white/5"}`}
@@ -483,7 +447,7 @@ export function ClassroomPage() {
                         </div>
                       )}
                       {curso.cantidadInscritos > 0 && (
-                        <div className="flex flex-col items-end border-l border-white/10 pl-4">
+                        <div className="flex flex-col items-end border-l border-border/40 pl-4">
                           <span className="text-base font-black leading-none">{curso.cantidadInscritos}</span>
                           <span className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Inscritos</span>
                         </div>
@@ -493,8 +457,7 @@ export function ClassroomPage() {
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                        className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-md shadow-blue-900/20 transition-all"
                         onClick={(e) => { e.stopPropagation(); toggleCurso(curso.idCurso); }}
                       >
                         {isExpanded ? "Ocultar módulos" : "Ver módulos"}
@@ -557,25 +520,13 @@ export function ClassroomPage() {
                                       <p className="text-muted-foreground capitalize">{p.estado.replace("_", " ")}</p>
                                     </div>
                                     {canManageAula && (
-                                      <div className="flex items-center gap-2">
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="h-8 rounded-lg text-xs"
-                                          onClick={() => setPickerForCiclo({ ciclo: p, cursoNombre: curso.nombre })}
-                                        >
-                                          <Plus className="w-3.5 h-3.5 mr-1" /> Inscribir
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-8 rounded-lg text-xs"
-                                          disabled={finalizarCicloMutation.isPending}
-                                          onClick={() => handleFinalizarCiclo(p.idProcesoAsignadoCurso)}
-                                        >
-                                          <Flag className="w-3.5 h-3.5 mr-1" /> Finalizar ciclo
-                                        </Button>
-                                      </div>
+                                      <Button
+                                        size="sm"
+                                        className="h-8 rounded-lg text-xs bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-md shadow-blue-900/20 transition-all"
+                                        onClick={() => setPickerForCiclo({ ciclo: p, cursoNombre: curso.nombre })}
+                                      >
+                                        <Plus className="w-3.5 h-3.5 mr-1" /> Inscribir
+                                      </Button>
                                     )}
                                   </div>
                                 ))}

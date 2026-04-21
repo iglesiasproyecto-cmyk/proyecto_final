@@ -100,11 +100,11 @@ export function MyDepartmentPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative bg-card/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-sm overflow-hidden flex flex-col md:flex-row md:items-center gap-5"
+        className="relative bg-card/40 backdrop-blur-xl border border-border/50 p-6 rounded-3xl shadow-sm overflow-hidden flex flex-col md:flex-row md:items-center gap-5"
       >
         <div className="absolute top-0 right-0 w-72 h-48 bg-primary/10 rounded-full blur-[90px] pointer-events-none -z-10" />
 
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white text-2xl font-black shrink-0 shadow-lg shadow-cyan-600/20">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white text-xl font-black shadow-lg shadow-blue-900/30">
           {min.nombre.charAt(0)}
         </div>
 
@@ -120,7 +120,7 @@ export function MyDepartmentPage() {
             <Badge variant="outline" className="bg-slate-500/10 text-slate-400 border-slate-500/20 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 flex items-center gap-1">
               <Users className="w-3 h-3" /> {activeMembers.length} miembros
             </Badge>
-            <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border ${min.estado === "activo" ? "bg-primary/10 text-primary border-primary/20" : "bg-slate-500/10 text-slate-400 border-slate-500/20"}`}>
+            <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border ${min.estado === "activo" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : "bg-slate-500/10 text-slate-400 border-slate-500/20"}`}>
               {min.estado}
             </Badge>
           </div>
@@ -146,9 +146,9 @@ export function MyDepartmentPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 + i * 0.04 }}
             onClick={() => navigate(s.nav)}
-            className="group bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 transition-all flex items-center gap-3"
+            className="group bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 transition-all flex items-center gap-3"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shadow-md shadow-cyan-600/10 group-hover:scale-110 transition-transform shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-md shadow-blue-900/20 group-hover:scale-110 transition-transform shrink-0">
               {s.icon}
             </div>
             <div>
@@ -169,7 +169,7 @@ export function MyDepartmentPage() {
           transition={{ delay: 0.12 }}
           className="lg:col-span-3"
         >
-          <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-2xl p-0 overflow-hidden shadow-sm h-full">
+          <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-2xl p-0 overflow-hidden shadow-sm h-full">
             <div className="p-4 border-b border-border/40 bg-card/20 flex items-center justify-between">
               <div>
                 <FieldLabel>Equipo del Ministerio</FieldLabel>
@@ -224,7 +224,7 @@ export function MyDepartmentPage() {
           className="lg:col-span-2 flex flex-col gap-4"
         >
           {/* Próximos Eventos */}
-          <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-2xl p-0 overflow-hidden shadow-sm flex-1">
+          <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-2xl p-0 overflow-hidden shadow-sm flex-1">
             <div className="p-4 border-b border-border/40 bg-card/20 flex items-center justify-between">
               <FieldLabel>Próximos Eventos</FieldLabel>
               <button className="text-[10px] text-primary font-bold hover:underline" onClick={() => navigate("/app/eventos")}>
@@ -256,7 +256,7 @@ export function MyDepartmentPage() {
           </Card>
 
           {/* Cursos de Formación */}
-          <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-2xl p-0 overflow-hidden shadow-sm">
+          <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-2xl p-0 overflow-hidden shadow-sm">
             <div className="p-4 border-b border-border/40 bg-card/20 flex items-center justify-between">
               <FieldLabel>Formación</FieldLabel>
               <button className="text-[10px] text-primary font-bold hover:underline" onClick={() => navigate("/app/aula")}>

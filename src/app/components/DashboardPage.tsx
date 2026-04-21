@@ -10,21 +10,19 @@ import { useCursos } from "@/hooks/useCursos";
 import { useEvaluaciones } from "@/hooks/useCursos";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
 import { usePaises, useDepartamentos, useCiudades } from "@/hooks/useGeografia";
-import { Card } from "./ui/card";
+import { CARD_COLORS } from "@/app/constants/cardColors";
+
 import { Badge } from "./ui/badge";
 import { motion } from "motion/react";
 import { SimpleBarChart, SimpleDonutChart } from "./SimpleCharts";
+import { StatCard } from "./ui/StatCard";
 import {
   Building2, Users, CalendarDays, ListTodo, BookOpen, ClipboardCheck, Bell,
-  ArrowRight, CheckCircle2, Clock, AlertCircle, ChevronRight, Globe,
+  ArrowRight, CheckCircle2, Clock, AlertCircle, Globe,
   Church, UserCheck, Settings, TrendingUp, Sparkles, Activity
 } from "lucide-react";
 
-const statusColors: Record<string, string> = {
-  pendiente: "bg-amber-100 text-amber-700",
-  en_progreso: "bg-blue-100 text-blue-700",
-  completada: "bg-green-100 text-green-700",
-};
+
 const statusLabels: Record<string, string> = {
   pendiente: "Pendiente",
   en_progreso: "En Progreso",
@@ -51,7 +49,7 @@ function AnimatedCard({ children, index = 0, className = "", onClick }: { childr
       className={`h-full ${colSpanClasses}`}
     >
       <div 
-        className={`h-full relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] transition-all duration-300 dark:border-white/10 dark:bg-card/20 ${onClick ? "cursor-pointer hover:shadow-lg hover:bg-card/60 hover:-translate-y-1" : ""} ${innerClasses}`}
+        className={`h-full relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-border/50 shadow-[0_8px_30px_rgb(0,0,0,0.03)] transition-all duration-300 dark:border-white/10 dark:bg-card/20 ${onClick ? "cursor-pointer hover:shadow-lg hover:bg-card/60 hover:-translate-y-1" : ""} ${innerClasses}`}
         onClick={onClick}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent dark:from-white/5 opacity-50 pointer-events-none" />
@@ -60,25 +58,6 @@ function AnimatedCard({ children, index = 0, className = "", onClick }: { childr
         </div>
       </div>
     </motion.div>
-  );
-}
-
-function KPICard({ icon, value, label, sublabel, index, onClick }: {
-  icon: React.ReactNode; value: number | string; label: string; sublabel?: string; index: number; onClick?: () => void;
-}) {
-  return (
-    <AnimatedCard index={index} className="p-4 group" onClick={onClick}>
-      <div className="flex justify-between items-start mb-3">
-        <div className="w-[42px] h-[42px] rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-cyan-600/20 text-white">
-          {icon}
-        </div>
-        {sublabel && <Badge variant="secondary" className="bg-primary/10 text-primary dark:bg-primary/20 border-0 text-[10px] py-0">{sublabel}</Badge>}
-      </div>
-      <div>
-        <p className="text-4xl font-light tracking-tight text-foreground">{value}</p>
-        <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{label}</p>
-      </div>
-    </AnimatedCard>
   );
 }
 
@@ -161,23 +140,25 @@ function SuperAdminDashboard() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      {/* Header unificado */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
-            <Sparkles className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/10 shrink-0 text-white" style={{ backgroundImage: `linear-gradient(135deg, ${CARD_COLORS[0].from}, ${CARD_COLORS[0].to})` }}>
+            <Sparkles className="w-6 h-6" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">S.E.I.</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">Panel de Control</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Panel de Control</h1>
           </div>
         </div>
       </motion.div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KPICard index={0} icon={<Building2 className="w-5 h-5" />} value={iglesias.length} label="Iglesias" sublabel={`${activeIglesias.length} activas`} onClick={() => navigate("/app/iglesias")} />
-        <KPICard index={1} icon={<Church className="w-5 h-5" />} value={sedes.length} label="Sedes" sublabel={`${activeSedes} activas`} onClick={() => navigate("/app/sedes")} />
-        <KPICard index={2} icon={<Users className="w-5 h-5" />} value={usuarios.length} label="Usuarios" sublabel={`${activeUsers} activos`} onClick={() => navigate("/app/usuarios")} />
-        <KPICard index={3} icon={<UserCheck className="w-5 h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/pastores")} />
+        <StatCard index={0} icon={<Building2 className="w-5 h-5" />} value={iglesias.length} label="Iglesias" sublabel={`${activeIglesias.length} activas`} onClick={() => navigate("/app/iglesias")} />
+        <StatCard index={1} icon={<Church className="w-5 h-5" />} value={sedes.length} label="Sedes" sublabel={`${activeSedes} activas`} onClick={() => navigate("/app/sedes")} />
+        <StatCard index={2} icon={<Users className="w-5 h-5" />} value={usuarios.length} label="Usuarios" sublabel={`${activeUsers} activos`} onClick={() => navigate("/app/usuarios")} />
+        <StatCard index={3} icon={<UserCheck className="w-5 h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/pastores")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -219,25 +200,25 @@ function SuperAdminDashboard() {
             {iglesias.map((ig) => (
               <div
                 key={ig.idIglesia}
-                className={`group flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer bg-gradient-to-br border ${ig.estado !== "activa" ? "from-muted/20 to-muted/5 opacity-60 border-dashed border-border" : "from-blue-600/5 to-cyan-600/5 hover:from-blue-600/10 hover:to-cyan-600/10 border-blue-600/10 hover:border-blue-600/20 shadow-sm hover:shadow-md hover:-translate-y-0.5"}`}
+                className={`group flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer bg-gradient-to-br border ${ig.estado !== "activa" ? "from-muted/20 to-muted/5 opacity-60 border-dashed border-border" : "from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm hover:shadow-md hover:-translate-y-0.5"}`}
                 onClick={() => navigate("/app/iglesias")}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${ig.estado !== "activa" ? "bg-muted text-muted-foreground" : "bg-gradient-to-br from-cyan-600 to-blue-700 text-white group-hover:scale-110 transition-transform"}`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${ig.estado !== "activa" ? "bg-muted text-muted-foreground" : "bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white group-hover:scale-110 transition-transform"}`}>
                     <Building2 className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate text-foreground/90">{ig.nombre}</p>
                     <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
-                      <Globe className="w-3 h-3 text-cyan-600/70" /> {ig.ciudadNombre}, {ig.paisNombre}
+                      <Globe className="w-3 h-3 text-[#4682b4]/70" /> {ig.ciudadNombre}, {ig.paisNombre}
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2">
-                  <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className={`text-[9px] px-2 py-0 border-0 ${ig.estado === "activa" ? "bg-blue-600/10 text-blue-700 dark:text-blue-400 font-bold tracking-wider uppercase" : ""}`}>{ig.estado}</Badge>
+                  <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className={`text-[9px] px-2 py-0 border-0 ${ig.estado === "activa" ? "bg-[#4682b4]/10 text-[#4682b4] dark:text-[#709dbd] font-bold tracking-wider uppercase" : ""}`}>{ig.estado}</Badge>
                   <div className="hidden xl:flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
-                    <span className="flex items-center gap-0.5" title="Sedes"><Church className="w-3 h-3 text-blue-600/50" /> {sedes.filter((s) => s.idIglesia === ig.idIglesia).length}</span>
-                    <span className="flex items-center gap-0.5" title="Ministerios"><Settings className="w-3 h-3 text-blue-600/50" /> {ministerios.filter((m) => m.idIglesia === ig.idIglesia).length}</span>
+                    <span className="flex items-center gap-0.5" title="Sedes"><Church className="w-3 h-3 text-[#4682b4]/50" /> {sedes.filter((s) => s.idIglesia === ig.idIglesia).length}</span>
+                    <span className="flex items-center gap-0.5" title="Ministerios"><Settings className="w-3 h-3 text-[#4682b4]/50" /> {ministerios.filter((m) => m.idIglesia === ig.idIglesia).length}</span>
                   </div>
                 </div>
               </div>
@@ -248,9 +229,9 @@ function SuperAdminDashboard() {
         <AnimatedCard index={7} className="p-4 h-fit" onClick={() => navigate("/app/geografia")}>
             <SectionHeader icon={<Globe className="w-4 h-4" />} title="Cobertura Geografica" />
             <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="p-3 rounded-2xl bg-cyan-600/10 border border-cyan-600/10 flex flex-col items-center justify-center hover:bg-cyan-600/20 transition-colors"><p className="text-xl font-light text-cyan-700 dark:text-cyan-400">{paises.length}</p><p className="text-[9px] font-bold uppercase tracking-widest text-cyan-600/70 mt-1">Paises</p></div>
-              <div className="p-3 rounded-2xl bg-blue-600/10 border border-blue-600/10 flex flex-col items-center justify-center hover:bg-blue-600/20 transition-colors"><p className="text-xl font-light text-blue-700 dark:text-blue-400">{departamentosGeo.length}</p><p className="text-[9px] font-bold uppercase tracking-widest text-blue-600/70 mt-1">Deptos.</p></div>
-              <div className="p-3 rounded-2xl bg-indigo-600/10 border border-indigo-600/10 flex flex-col items-center justify-center hover:bg-indigo-600/20 transition-colors"><p className="text-xl font-light text-indigo-700 dark:text-indigo-400">{ciudades.length}</p><p className="text-[9px] font-bold uppercase tracking-widest text-indigo-600/70 mt-1">Ciudades</p></div>
+              <div className="p-3 rounded-2xl bg-[#4682b4]/10 border-[#4682b4]/10 flex flex-col items-center justify-center hover:bg-[#4682b4]/20 transition-colors"><p className="text-xl font-light text-[#4682b4] dark:text-[#709dbd]">{paises.length}</p><p className="text-[9px] font-bold uppercase tracking-widest text-[#4682b4]/70 mt-1">Paises</p></div>
+              <div className="p-3 rounded-2xl bg-[#4682b4]/10 border border-[#4682b4]/10 flex flex-col items-center justify-center hover:bg-[#4682b4]/20 transition-colors"><p className="text-xl font-light text-[#4682b4] dark:text-[#709dbd]">{departamentosGeo.length}</p><p className="text-[9px] font-bold uppercase tracking-widest text-[#4682b4]/70 mt-1">Deptos.</p></div>
+              <div className="p-3 rounded-2xl bg-[#709dbd]/10 border border-[#709dbd]/10 flex flex-col items-center justify-center hover:bg-[#709dbd]/20 transition-colors"><p className="text-xl font-light text-[#709dbd] dark:text-[#4682b4]">{ciudades.length}</p><p className="text-[9px] font-bold uppercase tracking-widest text-[#709dbd]/70 mt-1">Ciudades</p></div>
             </div>
         </AnimatedCard>
 
@@ -258,9 +239,9 @@ function SuperAdminDashboard() {
             <SectionHeader icon={<Clock className="w-4 h-4" />} title="Actividad Reciente" />
             <div className="grid grid-cols-1 gap-2">
               {recentUsers.map((u) => (
-                <div key={u.idUsuario} className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-blue-600/5 transition-colors border border-transparent hover:border-blue-600/10 group cursor-pointer">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-600/20 to-blue-600/10 flex items-center justify-center text-[10px] font-bold text-blue-700 dark:text-blue-400 shrink-0 shadow-sm group-hover:scale-105 transition-transform">{u.nombres[0]}{u.apellidos[0]}</div>
-                  <span className="flex-1 text-[13px] font-medium truncate text-foreground/90 group-hover:text-blue-600 transition-colors">{u.nombres} {u.apellidos}</span>
+                <div key={u.idUsuario} className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-[#4682b4]/5 transition-colors border border-transparent hover:border-[#4682b4]/10 group cursor-pointer">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/10 flex items-center justify-center text-[10px] font-bold text-[#4682b4] dark:text-[#709dbd] shrink-0 shadow-sm group-hover:scale-105 transition-transform">{u.nombres[0]}{u.apellidos[0]}</div>
+                  <span className="flex-1 text-[13px] font-medium truncate text-foreground/90 group-hover:text-[#4682b4] transition-colors">{u.nombres} {u.apellidos}</span>
                   <span className="text-[9px] font-semibold text-muted-foreground shrink-0 bg-muted/50 dark:bg-muted/30 px-2 py-1 rounded-lg uppercase tracking-wider">{u.ultimoAcceso ? new Date(u.ultimoAcceso).toLocaleDateString("es", { day: "2-digit", month: "short" }) : "--"}</span>
                 </div>
               ))}
@@ -276,8 +257,8 @@ function SuperAdminDashboard() {
                 { label: "Usuarios", path: "/app/usuarios", icon: <Users className="w-5 h-5" /> },
                 { label: "Pastores", path: "/app/pastores", icon: <UserCheck className="w-5 h-5" /> },
               ].map((q) => (
-                <button key={q.path + q.label} onClick={() => navigate(q.path)} className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-blue-600/5 hover:bg-blue-600/10 hover:-translate-y-0.5 text-muted-foreground transition-all group border border-transparent hover:border-blue-600/20 shadow-sm">
-                  <span className="text-blue-600/60 group-hover:text-blue-600 transition-colors group-hover:scale-110">{q.icon}</span>
+                <button key={q.path + q.label} onClick={() => navigate(q.path)} className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-[#4682b4]/5 hover:bg-[#4682b4]/10 hover:-translate-y-0.5 text-muted-foreground transition-all group border border-transparent hover:border-[#4682b4]/20 shadow-sm">
+                  <span className="text-[#4682b4]/60 group-hover:text-[#4682b4] transition-colors group-hover:scale-110">{q.icon}</span>
                   <span className="text-[10px] font-bold text-center text-foreground/80 tracking-wide uppercase">{q.label}</span>
                 </button>
               ))}
@@ -311,23 +292,25 @@ function AdminIglesiaDashboard() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+      {/* Header unificado */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0">
             <UserCheck className="w-6 h-6 text-white" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Bienvenido de vuelta</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPICard index={0} icon={<Settings className="w-5 h-5" />} value={activeMins.length} label="Ministerios activos" onClick={() => navigate("/app/departamentos")} />
-        <KPICard index={1} icon={<Users className="w-5 h-5" />} value={activeMembers.length} label="Miembros activos" onClick={() => navigate("/app/miembros")} />
-        <KPICard index={2} icon={<CalendarDays className="w-5 h-5" />} value={globalEvents.length} label="Eventos globales" onClick={() => navigate("/app/eventos")} />
-        <KPICard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate("/app/notificaciones")} />
+        <StatCard index={0} icon={<Settings className="w-5 h-5" />} value={activeMins.length} label="Ministerios activos" onClick={() => navigate("/app/departamentos")} />
+        <StatCard index={1} icon={<Users className="w-5 h-5" />} value={activeMembers.length} label="Miembros activos" onClick={() => navigate("/app/miembros")} />
+        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={globalEvents.length} label="Eventos globales" onClick={() => navigate("/app/eventos")} />
+        <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate("/app/notificaciones")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -346,15 +329,15 @@ function AdminIglesiaDashboard() {
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {ministerios.slice(0, 4).map((min) => (
-              <div key={min.idMinisterio} className={`group flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer bg-gradient-to-br border ${min.estado !== "activo" ? "from-muted/20 to-muted/5 opacity-60 border-dashed border-border" : "from-blue-600/5 to-cyan-600/5 hover:from-blue-600/10 hover:to-cyan-600/10 border-blue-600/10 hover:border-blue-600/20 shadow-sm hover:-translate-y-0.5"}`} onClick={() => navigate("/app/departamentos")}>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${min.estado !== "activo" ? "bg-muted text-muted-foreground" : "bg-gradient-to-br from-cyan-600 to-blue-700 text-white shadow-inner group-hover:scale-110 transition-transform"}`}>
+              <div key={min.idMinisterio} className={`group flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer bg-gradient-to-br border ${min.estado !== "activo" ? "from-muted/20 to-muted/5 opacity-60 border-dashed border-border" : "from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm hover:-translate-y-0.5"}`} onClick={() => navigate("/app/departamentos")}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${min.estado !== "activo" ? "bg-muted text-muted-foreground" : "bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white shadow-inner group-hover:scale-110 transition-transform"}`}>
                   <span className="text-[13px] font-bold">{min.nombre.charAt(0)}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-foreground/90 truncate group-hover:text-blue-600 transition-colors">{min.nombre}</p>
+                  <p className="text-[13px] font-semibold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{min.nombre}</p>
                   <p className="text-[10px] font-medium text-muted-foreground truncate">{min.liderNombre} &middot; {min.cantidadMiembros} miembros</p>
                 </div>
-                <Badge variant={min.estado === "activo" ? "secondary" : "outline"} className={`text-[9px] px-2 py-0 border-0 ${min.estado === "activo" ? "bg-blue-600/10 text-blue-700 dark:text-blue-400 uppercase tracking-widest p-1" : ""}`}>{min.estado}</Badge>
+                <Badge variant={min.estado === "activo" ? "secondary" : "outline"} className={`text-[9px] px-2 py-0 border-0 ${min.estado === "activo" ? "bg-[#4682b4]/10 text-[#4682b4] uppercase tracking-widest p-1" : ""}`}>{min.estado}</Badge>
               </div>
             ))}
           </div>
@@ -364,13 +347,13 @@ function AdminIglesiaDashboard() {
           <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Eventos Globales" action={() => navigate("/app/eventos")} />
           <div className="grid grid-cols-1 gap-2">
             {globalEvents.slice(0, 5).map((ev) => (
-              <div key={ev.idEvento} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-blue-600/5 to-transparent border border-blue-600/10 hover:border-blue-600/20 transition-colors shadow-sm">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 flex flex-col items-center justify-center shrink-0 shadow-sm text-white group-hover:scale-105 transition-transform">
+              <div key={ev.idEvento} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-[#4682b4]/5 to-transparent border border-[#4682b4]/10 hover:border-[#4682b4]/20 transition-colors shadow-sm">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex flex-col items-center justify-center shrink-0 shadow-sm text-white group-hover:scale-105 transition-transform">
                   <span className="text-[9px] font-bold uppercase opacity-80">{new Date(ev.fechaInicio).toLocaleDateString("es", { month: "short" })}</span>
                   <span className="text-[15px] font-black leading-none mt-0.5">{new Date(ev.fechaInicio).getDate()}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold text-foreground/90 truncate group-hover:text-blue-600 transition-colors">{ev.nombre}</p>
+                  <p className="text-[13px] font-bold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{ev.nombre}</p>
                   <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{ev.sedeNombre || ev.tipoEventoNombre}</p>
                 </div>
               </div>
@@ -383,10 +366,10 @@ function AdminIglesiaDashboard() {
           <SectionHeader icon={<Bell className="w-5 h-5" />} title={`Notificaciones ${unread > 0 ? `(${unread})` : ""}`} action={() => navigate("/app/notificaciones")} actionLabel="Ver todas" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {notificaciones.slice(0, 4).map((n) => (
-              <div key={n.idNotificacion} className={`flex items-start gap-3 p-3 rounded-2xl transition-colors border ${n.leida ? "bg-muted/20 border-transparent hover:border-border" : "bg-blue-600/5 border-blue-600/20 shadow-sm"}`}>
-                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 shadow-sm top-0 ${n.leida ? "bg-muted-foreground/30" : "bg-cyan-500 animate-pulse"}`} />
+              <div key={n.idNotificacion} className={`flex items-start gap-3 p-3 rounded-2xl transition-colors border ${n.leida ? "bg-muted/20 border-transparent hover:border-border" : "bg-[#4682b4]/5 border-[#4682b4]/20 shadow-sm"}`}>
+                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 shadow-sm top-0 ${n.leida ? "bg-muted-foreground/30" : "bg-[#4682b4] animate-pulse"}`} />
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[13px] truncate ${n.leida ? "font-medium text-foreground/70" : "font-bold text-blue-700 dark:text-blue-400"}`}>{n.titulo}</p>
+                  <p className={`text-[13px] truncate ${n.leida ? "font-medium text-foreground/70" : "font-bold text-[#4682b4] dark:text-[#709dbd]"}`}>{n.titulo}</p>
                   <p className={`text-[11px] truncate mt-0.5 ${n.leida ? "text-muted-foreground" : "text-foreground/80 font-medium"}`}>{n.mensaje}</p>
                 </div>
               </div>
@@ -418,30 +401,32 @@ function LiderDashboard() {
 
   const taskStatusData = [
     { name: "Pendiente", value: tareas.filter((t) => t.estado === "pendiente").length, fill: "#f59e0b" },
-    { name: "En Progreso", value: tareas.filter((t) => t.estado === "en_progreso").length, fill: "#3b82f6" },
+    { name: "En Progreso", value: tareas.filter((t) => t.estado === "en_progreso").length, fill: "#709dbd" },
     { name: "Completada", value: tareas.filter((t) => t.estado === "completada").length, fill: "#1a7fa8" },
   ];
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+    <div className="space-y-4 max-w-6xl mx-auto pb-10">
+      {/* Header unificado */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0 text-white">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
             <Users className="w-6 h-6" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Líder &mdash; {min?.nombre}</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <KPICard index={0} icon={<Users className="w-5 h-5" />} value={minMembers.length} label="Miembros" onClick={() => navigate("/app/miembros")} />
-        <KPICard index={1} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
-        <KPICard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
-        <KPICard index={3} icon={<ClipboardCheck className="w-5 h-5" />} value={evaluaciones.length} label="Evaluaciones" onClick={() => navigate("/app/evaluaciones")} />
-        <KPICard index={4} icon={<BookOpen className="w-5 h-5" />} value={cursos.length} label="Cursos" onClick={() => navigate("/app/aula")} />
+        <StatCard index={0} icon={<Users className="w-5 h-5" />} value={minMembers.length} label="Miembros" onClick={() => navigate("/app/miembros")} />
+        <StatCard index={1} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
+        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
+        <StatCard index={3} icon={<ClipboardCheck className="w-5 h-5" />} value={evaluaciones.length} label="Evaluaciones" onClick={() => navigate("/app/evaluaciones")} />
+        <StatCard index={4} icon={<BookOpen className="w-5 h-5" />} value={cursos.length} label="Cursos" onClick={() => navigate("/app/aula")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -449,13 +434,13 @@ function LiderDashboard() {
           <SectionHeader icon={<ListTodo className="w-5 h-5" />} title="Tareas del Ministerio" action={() => navigate("/app/tareas")} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {tareas.slice(0, 5).map((t) => (
-              <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-blue-600/5 to-cyan-600/5 hover:from-blue-600/10 hover:to-cyan-600/10 border border-blue-600/10 hover:border-blue-600/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate("/app/tareas")}>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform bg-gradient-to-br from-blue-600 to-cyan-600 text-white`}>{statusIcons[t.estado]}</div>
+              <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate("/app/tareas")}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white`}>{statusIcons[t.estado]}</div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "Completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-blue-600"}`}>{t.titulo}</p>
+                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-[#4682b4]"}`}>{t.titulo}</p>
                   <p className="text-[10px] font-medium text-muted-foreground truncate mt-0.5">{t.asignados?.map((a) => a.nombreCompleto).join(", ")}</p>
                 </div>
-                <Badge variant="outline" className={`text-[9px] px-2 py-0 border-0 bg-blue-600/10 text-blue-700 dark:text-blue-400 uppercase tracking-widest p-1`}>{statusLabels[t.estado]}</Badge>
+                <Badge variant="outline" className={`text-[9px] px-2 py-0 border-0 bg-[#4682b4]/10 text-[#4682b4] uppercase tracking-widest p-1`}>{statusLabels[t.estado]}</Badge>
               </div>
             ))}
             {tareas.length === 0 && <p className="text-[11px] font-medium text-muted-foreground text-center py-6 col-span-2">Sin tareas</p>}
@@ -479,16 +464,16 @@ function LiderDashboard() {
           <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Proximos Eventos" action={() => navigate("/app/eventos")} />
           <div className="grid grid-cols-1 gap-2">
             {upcomingEvents.map((ev) => (
-              <div key={ev.idEvento} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-blue-600/5 to-transparent border border-blue-600/10 hover:border-blue-600/20 transition-colors shadow-sm">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 flex flex-col items-center justify-center shrink-0 shadow-sm text-white group-hover:scale-105 transition-transform">
+              <div key={ev.idEvento} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-[#4682b4]/5 to-transparent border border-[#4682b4]/10 hover:border-[#4682b4]/20 transition-colors shadow-sm">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex flex-col items-center justify-center shrink-0 shadow-sm text-white group-hover:scale-105 transition-transform">
                   <span className="text-[9px] font-bold uppercase opacity-80">{new Date(ev.fechaInicio).toLocaleDateString("es", { month: "short" })}</span>
                   <span className="text-[15px] font-black leading-none mt-0.5">{new Date(ev.fechaInicio).getDate()}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold text-foreground/90 truncate group-hover:text-blue-600 transition-colors">{ev.nombre}</p>
+                  <p className="text-[13px] font-bold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{ev.nombre}</p>
                   <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{ev.sedeNombre || ev.tipoEventoNombre}</p>
                 </div>
-                <Badge variant="secondary" className={`text-[9px] px-2 py-0 border-0 ${ev.idMinisterio ? "bg-amber-500/10 text-amber-600" : "bg-blue-600/10 text-blue-700"} uppercase tracking-widest`}>{ev.idMinisterio ? "Min." : "Global"}</Badge>
+                <Badge variant="secondary" className={`text-[9px] px-2 py-0 border-0 ${ev.idMinisterio ? "bg-amber-500/10 text-amber-600" : "bg-[#4682b4]/10 text-[#4682b4]"} uppercase tracking-widest`}>{ev.idMinisterio ? "Min." : "Global"}</Badge>
               </div>
             ))}
           </div>
@@ -498,12 +483,12 @@ function LiderDashboard() {
           <SectionHeader icon={<Users className="w-5 h-5" />} title="Equipo" action={() => navigate("/app/miembros")} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {minMembers.slice(0, 5).map((mm) => (
-              <div key={mm.idMiembroMinisterio} className="group flex items-center gap-3 p-2.5 rounded-2xl border border-transparent hover:border-blue-600/10 hover:bg-blue-600/5 transition-colors cursor-default">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-600/20 to-blue-600/10 shadow-sm flex items-center justify-center text-blue-700 font-bold group-hover:scale-110 transition-transform">{(mm.nombreCompleto || "?").charAt(0)}</div>
+              <div key={mm.idMiembroMinisterio} className="group flex items-center gap-3 p-2.5 rounded-2xl border border-transparent hover:border-[#4682b4]/10 hover:bg-[#4682b4]/5 transition-colors cursor-default">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/10 shadow-sm flex items-center justify-center text-[#4682b4] font-bold group-hover:scale-110 transition-transform">{(mm.nombreCompleto || "?").charAt(0)}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-foreground/90 truncate group-hover:text-blue-600 transition-colors">{mm.nombreCompleto}</p>
+                  <p className="text-[13px] font-semibold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{mm.nombreCompleto}</p>
                 </div>
-                <Badge variant="outline" className={`text-[9px] px-2 py-0 border-0 ${mm.rolEnMinisterio === "lider" ? "bg-amber-500/10 text-amber-600" : "bg-cyan-600/10 text-cyan-600"} uppercase tracking-widest`}>{mm.rolEnMinisterio === "lider" ? "Líder" : "Serv. "}</Badge>
+                <Badge variant="outline" className={`text-[9px] px-2 py-0 border-0 ${mm.rolEnMinisterio === "lider" ? "bg-amber-500/10 text-amber-600" : "bg-[#709dbd]/10 text-[#709dbd]"} uppercase tracking-widest`}>{mm.rolEnMinisterio === "lider" ? "Líder" : "Serv. "}</Badge>
               </div>
             ))}
           </div>
@@ -535,24 +520,26 @@ function ServidorDashboard() {
     : 0;
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+    <div className="space-y-4 max-w-6xl mx-auto pb-10">
+      {/* Header unificado */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0 text-white">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
             <UserCheck className="w-6 h-6" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Servidor &mdash; {min?.nombre}</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPICard index={0} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
-        <KPICard index={1} icon={<CheckCircle2 className="w-5 h-5" />} value={completedTareas.length} label="Completadas" onClick={() => navigate("/app/tareas")} />
-        <KPICard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
-        <KPICard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate("/app/notificaciones")} />
+        <StatCard index={0} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
+        <StatCard index={1} icon={<CheckCircle2 className="w-5 h-5" />} value={completedTareas.length} label="Completadas" onClick={() => navigate("/app/tareas")} />
+        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
+        <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate("/app/notificaciones")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -560,13 +547,13 @@ function ServidorDashboard() {
           <SectionHeader icon={<ListTodo className="w-5 h-5" />} title="Mis Tareas" action={() => navigate("/app/tareas")} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {myTareas.slice(0, 5).map((t) => (
-              <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-blue-600/5 to-cyan-600/5 hover:from-blue-600/10 hover:to-cyan-600/10 border border-blue-600/10 hover:border-blue-600/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate("/app/tareas")}>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform bg-gradient-to-br from-blue-600 to-cyan-600 text-white`}>{statusIcons[t.estado]}</div>
+              <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate("/app/tareas")}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white`}>{statusIcons[t.estado]}</div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "Completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-blue-600"}`}>{t.titulo}</p>
+                  <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-[#4682b4]"}`}>{t.titulo}</p>
                   <p className="text-[10px] font-medium text-muted-foreground truncate mt-0.5">Limite: {t.fechaLimite || "Sin fecha"}</p>
                 </div>
-                <Badge variant="outline" className={`text-[9px] px-2 py-0 border-0 bg-blue-600/10 text-blue-700 dark:text-blue-400 uppercase tracking-widest p-1`}>{statusLabels[t.estado]}</Badge>
+                <Badge variant="outline" className={`text-[9px] px-2 py-0 border-0 bg-[#4682b4]/10 text-[#4682b4] uppercase tracking-widest p-1`}>{statusLabels[t.estado]}</Badge>
               </div>
             ))}
             {myTareas.length === 0 && <p className="text-[11px] font-medium text-muted-foreground text-center py-6 col-span-2">Sin tareas asignadas</p>}
@@ -577,13 +564,13 @@ function ServidorDashboard() {
           <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Proximos Eventos" action={() => navigate("/app/eventos")} />
           <div className="grid grid-cols-1 gap-2">
             {eventos.slice(0, 4).map((ev) => (
-              <div key={ev.idEvento} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-blue-600/5 to-transparent border border-blue-600/10 hover:border-blue-600/20 transition-colors shadow-sm">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 flex flex-col items-center justify-center shrink-0 shadow-sm text-white group-hover:scale-105 transition-transform">
+              <div key={ev.idEvento} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-[#4682b4]/5 to-transparent border border-[#4682b4]/10 hover:border-[#4682b4]/20 transition-colors shadow-sm">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex flex-col items-center justify-center shrink-0 shadow-sm text-white group-hover:scale-105 transition-transform">
                   <span className="text-[9px] font-bold uppercase opacity-80">{new Date(ev.fechaInicio).toLocaleDateString("es", { month: "short" })}</span>
                   <span className="text-[15px] font-black leading-none mt-0.5">{new Date(ev.fechaInicio).getDate()}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold text-foreground/90 truncate group-hover:text-blue-600 transition-colors">{ev.nombre}</p>
+                  <p className="text-[13px] font-bold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{ev.nombre}</p>
                   <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{ev.sedeNombre || ev.tipoEventoNombre}</p>
                 </div>
               </div>
@@ -595,13 +582,13 @@ function ServidorDashboard() {
           <SectionHeader icon={<ClipboardCheck className="w-5 h-5" />} title="Mis Evaluaciones" action={() => navigate("/app/evaluaciones")} />
           {evaluaciones.length > 0 ? (
             <div>
-              <div className="flex items-center justify-between gap-3 mb-3 p-3 rounded-2xl bg-gradient-to-r from-cyan-600/10 to-blue-600/10 border border-blue-600/10">
-                <div className="flex items-baseline gap-2"><span className="text-3xl font-light tracking-tight text-blue-700 dark:text-blue-400">{avgCal.toFixed(1)}</span><span className="text-[10px] font-bold uppercase tracking-widest text-blue-600/70">Promedio</span></div>
+              <div className="flex items-center justify-between gap-3 mb-3 p-3 rounded-2xl bg-gradient-to-r from-[#709dbd]/10 to-[#4682b4]/10 border-[#4682b4]/10">
+                <div className="flex items-baseline gap-2"><span className="text-3xl font-light tracking-tight text-[#4682b4] dark:text-[#709dbd]">{avgCal.toFixed(1)}</span><span className="text-[10px] font-bold uppercase tracking-widest text-[#4682b4]/70">Promedio</span></div>
                 <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-2 py-1 rounded-lg uppercase tracking-wider">{evaluaciones.length} Eval.</span>
               </div>
               <div className="grid grid-cols-1 gap-2">
                 {evaluaciones.slice(0, 3).map((ev) => (
-                  <div key={ev.idEvaluacion} className="flex items-center justify-between p-2.5 rounded-2xl border border-transparent hover:border-blue-600/10 hover:bg-blue-600/5 transition-colors cursor-default">
+                  <div key={ev.idEvaluacion} className="flex items-center justify-between p-2.5 rounded-2xl border border-transparent hover:border-[#4682b4]/10 hover:bg-[#4682b4]/5 transition-colors cursor-default">
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-semibold text-foreground/90 truncate">{ev.nombreCurso} &mdash; <span className="font-normal text-muted-foreground">{ev.tituloModulo}</span></p>
                     </div>
@@ -621,10 +608,10 @@ function ServidorDashboard() {
           <SectionHeader icon={<BookOpen className="w-5 h-5" />} title="Aula de Formacion" action={() => navigate("/app/aula")} actionLabel="Ir al aula" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {cursos.slice(0, 3).map((c, idx) => (
-              <div key={c.idCurso} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-br from-blue-600/5 to-cyan-600/5 hover:from-blue-600/10 hover:to-cyan-600/10 border border-blue-600/10 hover:border-blue-600/20 shadow-sm cursor-pointer transition-all hover:-translate-y-0.5" onClick={() => navigate("/app/aula")}>
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white font-bold shadow-inner group-hover:scale-110 transition-transform">{idx + 1}</div>
+              <div key={c.idCurso} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm cursor-pointer transition-all hover:-translate-y-0.5" onClick={() => navigate("/app/aula")}>
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white font-bold shadow-inner group-hover:scale-110 transition-transform">{idx + 1}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-foreground/90 truncate group-hover:text-blue-600 transition-colors">{c.nombre}</p>
+                  <p className="text-[13px] font-semibold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{c.nombre}</p>
                   <p className="text-[10px] font-medium text-muted-foreground truncate">{c.modulos?.length || 0} modulos</p>
                 </div>
               </div>

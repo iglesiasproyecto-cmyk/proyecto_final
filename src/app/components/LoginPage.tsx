@@ -14,9 +14,9 @@ import {
 
 const testCredentials = [
   { email: 'admin@iglesiabd.com',    label: 'Super Admin',    desc: 'Gestión global',       icon: Crown,     color: 'from-blue-600 to-cyan-400' },
-  { email: 'pastor@iglesiabd.com',   label: 'Admin Iglesia',  desc: 'Gestión de iglesia',   icon: Building2, color: 'from-slate-600 to-slate-400' },
-  { email: 'lider@iglesiabd.com',    label: 'Líder',          desc: 'Ministerio & equipo',  icon: Shield,    color: 'from-blue-500 to-blue-300' },
-  { email: 'servidor@iglesiabd.com', label: 'Servidor',       desc: 'Vista personal',       icon: User,      color: 'from-slate-500 to-slate-300' },
+  { email: 'pastor@iglesiabd.com',   label: 'Admin Iglesia',  desc: 'Gestión de iglesia',   icon: Building2, color: 'from-blue-600 to-cyan-400' },
+  { email: 'lider@iglesiabd.com',    label: 'Líder',          desc: 'Ministerio & equipo',  icon: Shield,    color: 'from-blue-600 to-cyan-400' },
+  { email: 'servidor@iglesiabd.com', label: 'Servidor',       desc: 'Vista personal',       icon: User,      color: 'from-blue-600 to-cyan-400' },
 ]
 
 export function LoginPage() {
@@ -49,16 +49,35 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!email || !password) {
+    
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanEmail || !password) {
       setError('Por favor completa todos los campos.')
       return
     }
+    
     setIsLoading(true)
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const { error: authError } = await supabase.auth.signInWithPassword({ 
+      email: cleanEmail, 
+      password 
+    })
+    
     if (authError) {
-      setError('Credenciales incorrectas.')
+      console.error('Login error:', authError)
+      
+      // Mensajes de error más descriptivos
+      if (authError.message.includes('Email not confirmed')) {
+        setError('Por favor verifica tu email antes de continuar. Revisa tu bandeja de entrada.')
+      } else if (authError.message.includes('Invalid login credentials')) {
+        setError('Correo o contraseña incorrectos.')
+      } else if (authError.message.includes('User not found')) {
+        setError('El usuario no existe. Por favor regístrate primero.')
+      } else {
+        setError(authError.message || 'Error al iniciar sesión.')
+      }
       setIsLoading(false)
     } else {
+      toast.success('¡Bienvenido!')
       navigate('/app')
     }
   }
@@ -139,7 +158,7 @@ export function LoginPage() {
           animate={{ opacity: 1, x: 0 }}
           className="relative z-10 flex items-center gap-4"
         >
-          <div className="w-14 h-14 rounded-[20px] bg-white/5 backdrop-blur-xl border border-white/10 p-2.5 shadow-2xl shadow-primary/20">
+          <div className="w-20 h-20 rounded-[28px] bg-white/5 backdrop-blur-xl border border-white/10 p-3 shadow-2xl shadow-primary/20">
             <SEILogo className="w-full h-full object-contain filter drop-shadow-lg" />
           </div>
           <div className="h-10 w-px bg-white/10" />
@@ -220,7 +239,7 @@ export function LoginPage() {
         >
           {/* Mobile Header */}
           <div className="lg:hidden flex flex-col items-center mb-10">
-            <div className="w-16 h-16 rounded-2xl bg-[#0c2340] flex items-center justify-center p-3 shadow-xl mb-4">
+            <div className="w-24 h-24 rounded-3xl bg-[#0c2340] flex items-center justify-center p-4 shadow-2xl mb-6">
               <SEILogo className="w-full h-full object-contain" />
             </div>
             <h1 className="text-2xl font-black tracking-tight leading-none text-foreground">S.E.I.</h1>
@@ -366,14 +385,21 @@ export function LoginPage() {
               )}
             </Button>
 
-            <button
-              type="button"
-              onClick={handleResetPassword}
-              disabled={isResettingPassword || isLoading}
-              className="w-full text-center text-xs font-semibold text-primary/80 hover:text-primary transition-colors disabled:opacity-60"
+            {/* Forgot Password Link */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="text-center pt-2"
             >
-              {isResettingPassword ? 'Enviando correo de recuperacion...' : 'Olvide mi contrasena'}
-            </button>
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors underline underline-offset-2"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </motion.div>
           </motion.form>
 
           {/* Demo Button - Estilo discreto pero premium */}

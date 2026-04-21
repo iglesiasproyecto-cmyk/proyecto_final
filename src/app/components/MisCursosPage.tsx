@@ -127,7 +127,7 @@ export function MisCursosPage() {
       >
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
         <div className="flex items-center gap-4 flex-1">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -137,12 +137,14 @@ export function MisCursosPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-background/50 border border-white/5 rounded-xl p-1">
+        <div className="flex items-center gap-2 bg-background/50 border border-border/50 rounded-xl p-1">
           {(['activos', 'finalizados'] as const).map((t) => (
             <button
               key={t}
               className={`px-4 h-9 rounded-lg text-xs font-bold uppercase tracking-wider transition-all capitalize ${
-                tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                tab === t 
+                  ? 'bg-[#4682b4] text-white shadow-md shadow-blue-900/20' 
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => setTab(t)}
             >
@@ -209,9 +211,8 @@ export function MisCursosPage() {
                 />
                 <div className="flex items-center gap-2 pt-1">
                   <Button
-                    variant="outline"
                     size="sm"
-                    className="flex-1 h-9 rounded-xl text-xs"
+                    className="flex-1 h-9 rounded-xl text-xs bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-md shadow-blue-900/20"
                     onClick={() => setDrawerCiclo({ id: i.idProcesoAsignadoCurso, curso: i.nombreCurso })}
                   >
                     <Users className="w-3.5 h-3.5 mr-1" /> Compañeros

@@ -116,14 +116,16 @@ export function PastoresPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* HEADER */}
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
+
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <UserCheck className="w-6 h-6 text-white" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Pastores</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Gestión de Pastores</h1>
           </div>
         </div>
       </motion.div>
@@ -131,10 +133,10 @@ export function PastoresPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <div className="flex justify-start">
           <TabsList className="bg-card/40 backdrop-blur-xl border border-white/20 dark:border-white/10 dark:bg-card/20 rounded-2xl h-14 px-1.5 shadow-sm">
-            <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-foreground">
+            <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
               Directorio ({pastores.length})
             </TabsTrigger>
-            <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-foreground">
+            <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
               Asignaciones ({iglesiaPastores.filter(ip => !ip.fechaFin).length})
             </TabsTrigger>
           </TabsList>
@@ -150,10 +152,10 @@ export function PastoresPage() {
                   placeholder="Buscar pastores por nombre o correo..." 
                   value={search} 
                   onChange={e => setSearch(e.target.value)} 
-                  className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-blue-600/20 h-11 rounded-xl" 
+                  className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
                 />
               </div>
-              <Button onClick={openAddPastor} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-6 bg-blue-600 hover:bg-blue-700 text-white h-11">
+              <Button onClick={openAddPastor} className="shrink-0 shadow-md shadow-blue-900/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
                 <Plus className="w-4 h-4 mr-2" /> Nuevo Pastor
               </Button>
             </div>
@@ -167,7 +169,7 @@ export function PastoresPage() {
                 <GlassCard key={p.idPastor} index={i}>
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600/20 to-primary/10 flex items-center justify-center text-lg font-bold text-blue-700 dark:text-blue-400 border border-blue-600/10 shadow-sm">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/10 text-[#4682b4] dark:text-[#709dbd] border-[#4682b4]/10 flex items-center justify-center font-bold">
                         {p.nombres[0]}{p.apellidos[0]}
                       </div>
                       <div className="min-w-0">
@@ -195,10 +197,10 @@ export function PastoresPage() {
                     )}
                     
                     <div className="p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-blue-600/60 dark:text-blue-400/60 mb-2">Asignaciones de Liderazgo:</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#4682b4]/60 dark:text-[#709dbd]/60 mb-2">Asignaciones de Liderazgo:</p>
                       <div className="flex flex-wrap gap-1.5">
                         {asignaciones.map(a => (
-                          <Badge key={a.idIglesiaPastor} variant={a.esPrincipal ? "default" : "outline"} className={`text-[11px] font-semibold border ${a.esPrincipal ? "bg-blue-600 hover:bg-blue-700 border-blue-600 text-white shadow-sm" : "bg-card border-blue-200 text-blue-700 dark:border-blue-900/50 dark:text-blue-400"}`}>
+                          <Badge key={a.idIglesiaPastor} variant={a.esPrincipal ? "default" : "outline"} className={`text-[11px] font-semibold border ${a.esPrincipal ? "bg-[#4682b4] hover:bg-[#4682b4]/90 border-[#4682b4] shadow-sm" : "bg-card border-[#4682b4]/30 text-[#4682b4] dark:border-[#4682b4]/20 dark:text-[#709dbd]"}`}>
                             <Church className="w-3 h-3 mr-1.5 opacity-80" /> {a.iglesiaNombre} {a.esPrincipal && "(Principal)"}
                           </Badge>
                         ))}
@@ -208,10 +210,10 @@ export function PastoresPage() {
 
                     {linkedUser && (
                       <div className="flex items-center gap-2 pt-2 px-1">
-                        <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                          <Link2 className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                        <div className="w-6 h-6 rounded-full bg-[#4682b4]/10 flex items-center justify-center shrink-0">
+                          <Link2 className="w-3 h-3 text-[#4682b4] dark:text-[#709dbd]" />
                         </div>
-                        <p className="text-[11px] font-medium text-blue-700 dark:text-blue-300 truncate">Usuario: {linkedUser.nombres} {linkedUser.apellidos}</p>
+                        <p className="text-[11px] font-medium text-[#4682b4] dark:text-[#709dbd] truncate">Usuario: {linkedUser.nombres} {linkedUser.apellidos}</p>
                       </div>
                     )}
                   </div>
@@ -241,7 +243,7 @@ export function PastoresPage() {
         <TabsContent value="asignaciones" className="space-y-4 mt-6">
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
             <div className="flex justify-end mb-4">
-              <Button onClick={openAsign} className="shadow-md shadow-primary/20 rounded-full px-6 bg-blue-600 hover:bg-blue-700 text-white h-11">
+              <Button onClick={openAsign} className="shadow-md shadow-primary/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
                 <Plus className="w-4 h-4 mr-2" /> Nueva Asignación
               </Button>
             </div>
@@ -295,19 +297,19 @@ export function PastoresPage() {
       <Dialog open={dialogPastor} onOpenChange={setDialogPastor}>
         <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
           <div className="px-6 py-4 bg-muted/30 border-b border-border/40">
-            <DialogHeader><DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">{editingPastor ? <Pencil className="w-5 h-5 text-blue-600" /> : <Plus className="w-5 h-5 text-blue-600" />} {editingPastor ? "Editar Pastor" : "Registrar Nuevo Pastor"}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">{editingPastor ? <Pencil className="w-5 h-5 text-[#4682b4]" /> : <Plus className="w-5 h-5 text-[#4682b4]" />} {editingPastor ? "Editar Pastor" : "Registrar Nuevo Pastor"}</DialogTitle></DialogHeader>
           </div>
           <div className="px-6 py-5 space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nombres <span className="text-destructive">*</span></label><Input value={formP.nombres} onChange={e => setFormP(f => ({ ...f, nombres: e.target.value }))} className="bg-input-background focus-visible:ring-blue-600/30" /></div>
-              <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Apellidos <span className="text-destructive">*</span></label><Input value={formP.apellidos} onChange={e => setFormP(f => ({ ...f, apellidos: e.target.value }))} className="bg-input-background focus-visible:ring-blue-600/30" /></div>
+              <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nombres <span className="text-destructive">*</span></label><Input value={formP.nombres} onChange={e => setFormP(f => ({ ...f, nombres: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
+              <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Apellidos <span className="text-destructive">*</span></label><Input value={formP.apellidos} onChange={e => setFormP(f => ({ ...f, apellidos: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
             </div>
-            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Correo Electrónico <span className="text-destructive">*</span></label><Input type="email" value={formP.correo} onChange={e => setFormP(f => ({ ...f, correo: e.target.value }))} className="bg-input-background focus-visible:ring-blue-600/30" /></div>
-            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Teléfono Móvil</label><Input value={formP.telefono} onChange={e => setFormP(f => ({ ...f, telefono: e.target.value }))} className="bg-input-background focus-visible:ring-blue-600/30" /></div>
+            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Correo Electrónico <span className="text-destructive">*</span></label><Input type="email" value={formP.correo} onChange={e => setFormP(f => ({ ...f, correo: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
+            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Teléfono Móvil</label><Input value={formP.telefono} onChange={e => setFormP(f => ({ ...f, telefono: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block flex items-center gap-1.5"><Link2 className="w-3 h-3 text-blue-500" /> Vincular a Usuario Sist. (Opcional)</label>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block flex items-center gap-1.5"><Link2 className="w-3 h-3 text-[#4682b4]" /> Vincular a Usuario Sist. (Opcional)</label>
               <Select value={formP.idUsuario ? String(formP.idUsuario) : "none"} onValueChange={v => setFormP(f => ({ ...f, idUsuario: v === "none" ? 0 : Number(v) }))}>
-                <SelectTrigger className="bg-input-background focus:ring-blue-600/30"><SelectValue placeholder="Sin vincular" /></SelectTrigger>
+                <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30"><SelectValue placeholder="Sin vincular" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sin vincular</SelectItem>
                   {usuarios.map(u => <SelectItem key={u.idUsuario} value={String(u.idUsuario)}>{u.nombres} {u.apellidos} ({u.correo})</SelectItem>)}
@@ -317,7 +319,7 @@ export function PastoresPage() {
           </div>
           <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setDialogPastor(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
-            <Button onClick={handleSubmitPastor} disabled={!formP.nombres.trim() || !formP.apellidos.trim() || !formP.correo.trim()} className="rounded-full px-5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/20"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
+            <Button onClick={handleSubmitPastor} disabled={!formP.nombres.trim() || !formP.apellidos.trim() || !formP.correo.trim()} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -326,31 +328,31 @@ export function PastoresPage() {
       <Dialog open={dialogAsign} onOpenChange={setDialogAsign}>
         <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
           <div className="px-6 py-4 bg-muted/30 border-b border-border/40">
-            <DialogHeader><DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground"><Plus className="w-5 h-5 text-blue-600" /> Nueva Asignación de Liderazgo</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground"><Plus className="w-5 h-5 text-[#4682b4]" /> Nueva Asignación de Liderazgo</DialogTitle></DialogHeader>
           </div>
           <div className="px-6 py-5 space-y-4">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Dignatario Pastor <span className="text-destructive">*</span></label>
               <Select value={formA.idPastor ? String(formA.idPastor) : ""} onValueChange={v => setFormA(f => ({ ...f, idPastor: Number(v) }))}>
-                <SelectTrigger className="bg-input-background focus:ring-blue-600/30"><SelectValue placeholder="Seleccionar Pastor" /></SelectTrigger>
+                <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30"><SelectValue placeholder="Seleccionar Pastor" /></SelectTrigger>
                 <SelectContent>{pastores.map(p => <SelectItem key={p.idPastor} value={String(p.idPastor)}>{p.nombres} {p.apellidos}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Iglesia Destino <span className="text-destructive">*</span></label>
               <Select value={formA.idIglesia ? String(formA.idIglesia) : ""} onValueChange={v => setFormA(f => ({ ...f, idIglesia: Number(v) }))}>
-                <SelectTrigger className="bg-input-background focus:ring-blue-600/30"><SelectValue placeholder="Seleccionar Iglesia" /></SelectTrigger>
+                <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30"><SelectValue placeholder="Seleccionar Iglesia" /></SelectTrigger>
                 <SelectContent>{iglesias.map(i => <SelectItem key={i.idIglesia} value={String(i.idIglesia)}>{i.nombre}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
                <div>
                   <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Fecha Inicio <span className="text-destructive">*</span></label>
-                  <Input type="date" value={formA.fechaInicio} onChange={e => setFormA(f => ({ ...f, fechaInicio: e.target.value }))} className="bg-input-background focus-visible:ring-blue-600/30" />
+                  <Input type="date" value={formA.fechaInicio} onChange={e => setFormA(f => ({ ...f, fechaInicio: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" />
                </div>
                <div className="flex flex-col justify-end pb-2">
                  <div className="flex items-center gap-2.5 p-2 rounded-xl border border-border/50 bg-white/50 dark:bg-black/10">
-                   <input type="checkbox" id="es-principal" checked={formA.esPrincipal} onChange={e => setFormA(f => ({ ...f, esPrincipal: e.target.checked }))} className="rounded border-border text-blue-600 focus:ring-blue-600/30 w-4 h-4" />
+                   <input type="checkbox" id="es-principal" checked={formA.esPrincipal} onChange={e => setFormA(f => ({ ...f, esPrincipal: e.target.checked }))} className="rounded border-border text-[#4682b4] focus:ring-[#4682b4]/30 w-4 h-4" />
                    <label htmlFor="es-principal" className="text-xs font-semibold text-foreground/80 cursor-pointer">Pastor Principal</label>
                  </div>
                </div>
@@ -362,7 +364,7 @@ export function PastoresPage() {
           </div>
           <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setDialogAsign(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
-            <Button onClick={handleSubmitAsign} disabled={!formA.idIglesia || !formA.idPastor || !formA.fechaInicio} className="rounded-full px-5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/20"><Save className="w-4 h-4 mr-1.5" /> Misionar Pastor</Button>
+            <Button onClick={handleSubmitAsign} disabled={!formA.idIglesia || !formA.idPastor || !formA.fechaInicio} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"><Save className="w-4 h-4 mr-1.5" /> Misionar Pastor</Button>
           </div>
         </DialogContent>
       </Dialog>
