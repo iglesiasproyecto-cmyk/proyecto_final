@@ -101,14 +101,6 @@ export function ProfilePage() {
                    </span>
                 </div>
              </div>
-             <motion.div 
-               initial={{ scale: 0 }}
-               animate={{ scale: 1 }}
-               delay={0.5}
-               className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-2xl border-4 border-[#1a2a3d] flex items-center justify-center shadow-xl shadow-emerald-500/20"
-             >
-                <CheckCircle2 className="w-5 h-5 text-white" />
-             </motion.div>
           </motion.div>
 
           <div className="flex-1 z-10 text-center md:text-left space-y-4">

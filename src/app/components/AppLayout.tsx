@@ -373,7 +373,7 @@ export function AppLayout() {
                         {isActive && (
                           <motion.div
                             layoutId="active-nav-bg"
-                            className="absolute inset-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] rounded-2xl z-0 shadow-[0_4px_25px_rgba(70,157,189,0.3)] overflow-hidden"
+                            className="absolute inset-0 bg-gradient-to-r from-[#1a7fa8] to-[#1a7fa8] rounded-2xl z-0 shadow-[0_4px_25px_rgba(26,127,168,0.3)] overflow-hidden"
                             initial={false}
                             transition={{ type: "spring", stiffness: 350, damping: 30 }}
                           >
@@ -519,15 +519,17 @@ export function AppLayout() {
 
           {/* Main Area */}
           <main className="flex-1 overflow-y-auto">
-            <div className="p-4 md:p-6 lg:p-8">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-              >
-                <Outlet />
-              </motion.div>
+            <div className="flex justify-center px-4 md:px-6 lg:px-8 min-h-full">
+              <div className="w-full max-w-7xl py-4 md:py-6 lg:py-8">
+                <motion.div
+                  key={location.pathname}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                >
+                  <Outlet />
+                </motion.div>
+              </div>
             </div>
           </main>
         </div>

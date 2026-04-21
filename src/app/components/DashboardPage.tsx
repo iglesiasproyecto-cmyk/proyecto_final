@@ -10,10 +10,12 @@ import { useCursos } from "@/hooks/useCursos";
 import { useEvaluaciones } from "@/hooks/useCursos";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
 import { usePaises, useDepartamentos, useCiudades } from "@/hooks/useGeografia";
+import { CARD_COLORS } from "@/app/constants/cardColors";
 
 import { Badge } from "./ui/badge";
 import { motion } from "motion/react";
 import { SimpleBarChart, SimpleDonutChart } from "./SimpleCharts";
+import { StatCard } from "./ui/StatCard";
 import {
   Building2, Users, CalendarDays, ListTodo, BookOpen, ClipboardCheck, Bell,
   ArrowRight, CheckCircle2, Clock, AlertCircle, Globe,
@@ -56,25 +58,6 @@ function AnimatedCard({ children, index = 0, className = "", onClick }: { childr
         </div>
       </div>
     </motion.div>
-  );
-}
-
-function KPICard({ icon, value, label, sublabel, index, onClick }: {
-  icon: React.ReactNode; value: number | string; label: string; sublabel?: string; index: number; onClick?: () => void;
-}) {
-  return (
-    <AnimatedCard index={index} className="p-4 group" onClick={onClick}>
-      <div className="flex justify-between items-start mb-3">
-        <div className="w-[42px] h-[42px] rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-900/10 text-white">
-          {icon}
-        </div>
-        {sublabel && <Badge variant="secondary" className="bg-primary/10 text-primary dark:bg-primary/20 border-0 text-[10px] py-0">{sublabel}</Badge>}
-      </div>
-      <div>
-        <p className="text-4xl font-light tracking-tight text-foreground">{value}</p>
-        <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{label}</p>
-      </div>
-    </AnimatedCard>
   );
 }
 
@@ -161,8 +144,8 @@ function SuperAdminDashboard() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/10 shrink-0">
-            <Sparkles className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/10 shrink-0 text-white" style={{ backgroundImage: `linear-gradient(135deg, ${CARD_COLORS[0].from}, ${CARD_COLORS[0].to})` }}>
+            <Sparkles className="w-6 h-6" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">S.E.I.</p>
@@ -172,10 +155,10 @@ function SuperAdminDashboard() {
       </motion.div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KPICard index={0} icon={<Building2 className="w-5 h-5" />} value={iglesias.length} label="Iglesias" sublabel={`${activeIglesias.length} activas`} onClick={() => navigate("/app/iglesias")} />
-        <KPICard index={1} icon={<Church className="w-5 h-5" />} value={sedes.length} label="Sedes" sublabel={`${activeSedes} activas`} onClick={() => navigate("/app/sedes")} />
-        <KPICard index={2} icon={<Users className="w-5 h-5" />} value={usuarios.length} label="Usuarios" sublabel={`${activeUsers} activos`} onClick={() => navigate("/app/usuarios")} />
-        <KPICard index={3} icon={<UserCheck className="w-5 h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/pastores")} />
+        <StatCard index={0} icon={<Building2 className="w-5 h-5" />} value={iglesias.length} label="Iglesias" sublabel={`${activeIglesias.length} activas`} onClick={() => navigate("/app/iglesias")} />
+        <StatCard index={1} icon={<Church className="w-5 h-5" />} value={sedes.length} label="Sedes" sublabel={`${activeSedes} activas`} onClick={() => navigate("/app/sedes")} />
+        <StatCard index={2} icon={<Users className="w-5 h-5" />} value={usuarios.length} label="Usuarios" sublabel={`${activeUsers} activos`} onClick={() => navigate("/app/usuarios")} />
+        <StatCard index={3} icon={<UserCheck className="w-5 h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/pastores")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -324,10 +307,10 @@ function AdminIglesiaDashboard() {
       </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPICard index={0} icon={<Settings className="w-5 h-5" />} value={activeMins.length} label="Ministerios activos" onClick={() => navigate("/app/departamentos")} />
-        <KPICard index={1} icon={<Users className="w-5 h-5" />} value={activeMembers.length} label="Miembros activos" onClick={() => navigate("/app/miembros")} />
-        <KPICard index={2} icon={<CalendarDays className="w-5 h-5" />} value={globalEvents.length} label="Eventos globales" onClick={() => navigate("/app/eventos")} />
-        <KPICard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate("/app/notificaciones")} />
+        <StatCard index={0} icon={<Settings className="w-5 h-5" />} value={activeMins.length} label="Ministerios activos" onClick={() => navigate("/app/departamentos")} />
+        <StatCard index={1} icon={<Users className="w-5 h-5" />} value={activeMembers.length} label="Miembros activos" onClick={() => navigate("/app/miembros")} />
+        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={globalEvents.length} label="Eventos globales" onClick={() => navigate("/app/eventos")} />
+        <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate("/app/notificaciones")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -423,7 +406,7 @@ function LiderDashboard() {
   ];
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-10">
+    <div className="space-y-4 max-w-6xl mx-auto pb-10">
       {/* Header unificado */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
@@ -439,11 +422,11 @@ function LiderDashboard() {
       </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <KPICard index={0} icon={<Users className="w-5 h-5" />} value={minMembers.length} label="Miembros" onClick={() => navigate("/app/miembros")} />
-        <KPICard index={1} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
-        <KPICard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
-        <KPICard index={3} icon={<ClipboardCheck className="w-5 h-5" />} value={evaluaciones.length} label="Evaluaciones" onClick={() => navigate("/app/evaluaciones")} />
-        <KPICard index={4} icon={<BookOpen className="w-5 h-5" />} value={cursos.length} label="Cursos" onClick={() => navigate("/app/aula")} />
+        <StatCard index={0} icon={<Users className="w-5 h-5" />} value={minMembers.length} label="Miembros" onClick={() => navigate("/app/miembros")} />
+        <StatCard index={1} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
+        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
+        <StatCard index={3} icon={<ClipboardCheck className="w-5 h-5" />} value={evaluaciones.length} label="Evaluaciones" onClick={() => navigate("/app/evaluaciones")} />
+        <StatCard index={4} icon={<BookOpen className="w-5 h-5" />} value={cursos.length} label="Cursos" onClick={() => navigate("/app/aula")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -537,7 +520,7 @@ function ServidorDashboard() {
     : 0;
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-10">
+    <div className="space-y-4 max-w-6xl mx-auto pb-10">
       {/* Header unificado */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
@@ -553,10 +536,10 @@ function ServidorDashboard() {
       </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPICard index={0} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
-        <KPICard index={1} icon={<CheckCircle2 className="w-5 h-5" />} value={completedTareas.length} label="Completadas" onClick={() => navigate("/app/tareas")} />
-        <KPICard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
-        <KPICard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate("/app/notificaciones")} />
+        <StatCard index={0} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
+        <StatCard index={1} icon={<CheckCircle2 className="w-5 h-5" />} value={completedTareas.length} label="Completadas" onClick={() => navigate("/app/tareas")} />
+        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
+        <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate("/app/notificaciones")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -194,23 +194,12 @@ export function LandingPage() {
           >
             <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
               <Button
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/login", { replace: true })}
                 className="group relative h-20 w-72 md:w-96 rounded-[40px] bg-white text-[#0c2340] font-black uppercase italic tracking-[5px] text-xl shadow-[0_25px_60px_rgba(255,255,255,0.2)] hover:bg-cyan-400 hover:text-white transition-all duration-500 overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
                 <span className="relative flex items-center justify-center gap-4">
                   Ingresar al Sistema
-                  <ArrowRight className="w-8 h-8 group-hover:translate-x-3 transition-transform duration-500" />
-                </span>
-              </Button>
-
-              <Button
-                onClick={() => navigate("/register")}
-                className="group relative h-20 w-72 md:w-96 rounded-[40px] bg-[#1a7fa8] text-white font-black uppercase italic tracking-[5px] text-xl shadow-[0_25px_60px_rgba(26,127,168,0.3)] hover:bg-[#2596be] hover:shadow-[0_25px_60px_rgba(37,150,190,0.5)] transition-all duration-500 overflow-hidden border-2 border-[#2596be]"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-300/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-                <span className="relative flex items-center justify-center gap-4">
-                  Crear Cuenta
                   <ArrowRight className="w-8 h-8 group-hover:translate-x-3 transition-transform duration-500" />
                 </span>
               </Button>

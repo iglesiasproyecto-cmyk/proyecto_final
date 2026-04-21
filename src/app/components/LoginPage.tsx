@@ -49,16 +49,35 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!email || !password) {
+    
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanEmail || !password) {
       setError('Por favor completa todos los campos.')
       return
     }
+    
     setIsLoading(true)
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const { error: authError } = await supabase.auth.signInWithPassword({ 
+      email: cleanEmail, 
+      password 
+    })
+    
     if (authError) {
-      setError('Credenciales incorrectas.')
+      console.error('Login error:', authError)
+      
+      // Mensajes de error más descriptivos
+      if (authError.message.includes('Email not confirmed')) {
+        setError('Por favor verifica tu email antes de continuar. Revisa tu bandeja de entrada.')
+      } else if (authError.message.includes('Invalid login credentials')) {
+        setError('Correo o contraseña incorrectos.')
+      } else if (authError.message.includes('User not found')) {
+        setError('El usuario no existe. Por favor regístrate primero.')
+      } else {
+        setError(authError.message || 'Error al iniciar sesión.')
+      }
       setIsLoading(false)
     } else {
+      toast.success('¡Bienvenido!')
       navigate('/app')
     }
   }
@@ -380,25 +399,6 @@ export function LoginPage() {
               >
                 ¿Olvidaste tu contraseña?
               </button>
-            </motion.div>
-
-            {/* Register Link */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-              className="text-center pt-4 text-sm"
-            >
-              <p className="text-muted-foreground">
-                ¿No tienes cuenta?{" "}
-                <button
-                  type="button"
-                  onClick={() => navigate("/register")}
-                  className="font-bold text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
-                >
-                  Regístrate aquí
-                </button>
-              </p>
             </motion.div>
           </motion.form>
 

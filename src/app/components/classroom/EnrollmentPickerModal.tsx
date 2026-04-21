@@ -94,9 +94,8 @@ export function EnrollmentPickerModal({ ciclo, cursoNombre, open, onOpenChange, 
               </p>
             </div>
             <Button
-              variant="outline"
               size="sm"
-              className="h-8 rounded-lg text-xs"
+              className="h-8 rounded-lg text-xs bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-md shadow-blue-900/20"
               onClick={() => {
                 setOverrideMinisterio((v) => !v)
                 setSelected(new Set())

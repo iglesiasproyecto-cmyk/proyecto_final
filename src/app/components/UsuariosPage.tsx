@@ -249,53 +249,6 @@ export function UsuariosPage() {
         </Button>
       </motion.div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: "Total Usuarios", value: enriched.length, icon: <Users className="w-4 h-4" /> },
-          { label: "Activos", value: enriched.filter(u => u.activo).length, icon: <ShieldCheck className="w-4 h-4" /> },
-          { label: "Inactivos", value: enriched.filter(u => !u.activo).length, icon: <X className="w-4 h-4" /> },
-          { label: "Con acceso reciente", value: enriched.filter(u => u.ultimoAcceso).length, icon: <Clock className="w-4 h-4" /> },
-        ].map((s, i) => (
-          <motion.div
-            key={s.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + i * 0.05 }}
-            className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-4 group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-md shadow-blue-900/10 group-hover:scale-110 transition-transform shrinking-0">
-              {s.icon}
-            </div>
-            <div className="min-w-0">
-              <p className="text-2xl font-black text-foreground leading-none mb-1">{s.value}</p>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest truncate">{s.label}</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar por nombre o correo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-card" />
-        </div>
-        <Select value={filterEstado} onValueChange={setFilterEstado}>
-          <SelectTrigger className="w-36 bg-card"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="activo">Activos</SelectItem>
-            <SelectItem value="inactivo">Inactivos</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filterRol} onValueChange={setFilterRol}>
-          <SelectTrigger className="w-52 bg-card"><SelectValue placeholder="Rol" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los roles</SelectItem>
-            {roles.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-
       <Card>
         <Table>
           <TableHeader>
