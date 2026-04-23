@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useIglesiasEnriquecidas, useCreateIglesia, useUpdateIglesia, useToggleIglesiaEstado, useDeleteIglesia } from "@/hooks/useIglesias";
-import type { Iglesia } from "@/types/app.types";
+
 import type { IglesiaEnriquecida } from "@/services/iglesias.service";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useCiudades } from "@/hooks/useGeografia";
 import { motion } from "motion/react";
-import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar, MoreVertical } from "lucide-react";
+import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar } from "lucide-react";
 
 const estadoLabels: Record<string, string> = {
   activa: "Activa",
@@ -141,10 +141,10 @@ export function ChurchesPage() {
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+    <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <Building2 className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -152,49 +152,46 @@ export function ChurchesPage() {
             <h1 className="text-3xl font-light tracking-tight mt-0.5">Gestión de Iglesias</h1>
           </div>
         </div>
-        <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-6">
+        <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
           <Plus className="w-4 h-4 mr-2" /> Nueva Iglesia
         </Button>
       </motion.div>
 
-      {/* Action Bar with Glassmorphism */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-        <div className="p-2.5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm flex flex-col sm:flex-row gap-3 dark:border-white/10 dark:bg-card/20">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input 
-              placeholder="Buscar por nombre o ciudad..." 
-              value={search} 
-              onChange={(e) => setSearch(e.target.value)} 
-              className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-primary/20 h-11 rounded-xl" 
-            />
-          </div>
-          <div className="flex gap-1.5 p-1 bg-muted/20 rounded-xl overflow-x-auto">
-            {(["all", "activa", "inactiva"] as const).map((f) => (
-              <Button 
-                key={f} 
-                variant={filter === f ? "default" : "ghost"} 
-                size="sm" 
-                onClick={() => setFilter(f)} 
-                className={`h-9 px-4 rounded-lg font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
-              >
-                {f === "all" ? "Todas" : f === "activa" ? "Activas" : "Inactivas"}
-              </Button>
-            ))}
-          </div>
+      <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+          <Input 
+            placeholder="Buscar por nombre o ciudad..." 
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)} 
+            className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
+          />
         </div>
-      </motion.div>
+        <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto h-10 items-center">
+          {(["all", "activa", "inactiva"] as const).map((f) => (
+            <Button 
+              key={f} 
+              variant={filter === f ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setFilter(f)} 
+              className={`h-full px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm bg-[#4682b4] text-white hover:bg-[#4682b4]/90" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
+            >
+              {f === "all" ? "Todas" : f === "activa" ? "Activas" : "Inactivas"}
+            </Button>
+          ))}
+        </div>
+      </div>
 
       {/* Grid de Iglesias */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((ig, i) => (
           <GlassCard key={ig.idIglesia} index={i} isActive={ig.estado === "activa"}>
             <div className="flex items-start justify-between mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-inner border border-primary/10 transition-transform hover:scale-105">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/5 flex items-center justify-center shadow-inner border border-primary/10 transition-transform hover:scale-105">
                 <Building2 className="w-7 h-7 text-primary/80" />
               </div>
               <div className="flex flex-col items-end gap-1.5">
-                <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className="shadow-sm tracking-wide">{estadoLabels[ig.estado]}</Badge>
+                <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className={`shadow-sm tracking-wide ${ig.estado === "activa" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : ""}`}>{estadoLabels[ig.estado]}</Badge>
                 {ig.cantidadSedes > 0 && (
                   <Badge variant="outline" className="text-[10px] bg-card/50 border-white/50 dark:border-white/10 uppercase font-semibold">
                     {ig.cantidadSedes} {ig.cantidadSedes === 1 ? "sede" : "sedes"}

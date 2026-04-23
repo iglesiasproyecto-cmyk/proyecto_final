@@ -219,6 +219,7 @@ export interface Modulo {
   idModulo: number
   titulo: string
   descripcion: string | null
+  contenidoMd: string | null
   orden: number
   estado: 'borrador' | 'publicado' | 'archivado'
   idCurso: number

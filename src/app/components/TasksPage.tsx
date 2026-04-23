@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
+import { AnimatedCard } from "./ui/AnimatedCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -15,14 +16,14 @@ import {
 
 const statusConfig = {
   pendiente:   { label: "Pendiente",   color: "bg-amber-500/10 text-amber-400 border-amber-500/20",   dot: "bg-amber-400",   icon: <AlertCircle className="w-3.5 h-3.5" /> },
-  en_progreso: { label: "En Progreso", color: "bg-blue-500/10 text-blue-400 border-blue-500/20",      dot: "bg-blue-400",    icon: <Clock className="w-3.5 h-3.5" /> },
+  en_progreso: { label: "En Progreso", color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",      dot: "bg-[#4682b4]",    icon: <Clock className="w-3.5 h-3.5" /> },
   completada:  { label: "Completada",  color: "bg-primary/10 text-primary border-primary/20",         dot: "bg-primary",     icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
   cancelada:   { label: "Cancelada",   color: "bg-rose-500/10 text-rose-400 border-rose-500/20",      dot: "bg-rose-400",    icon: <AlertCircle className="w-3.5 h-3.5" /> },
 };
 
 const prioridadConfig: Record<string, { label: string; color: string; dot: string }> = {
   baja:    { label: "Baja",    color: "bg-slate-500/10 text-slate-400 border-slate-500/20",   dot: "bg-slate-400" },
-  media:   { label: "Media",   color: "bg-blue-500/10 text-blue-400 border-blue-500/20",      dot: "bg-blue-400" },
+  media:   { label: "Media",   color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",      dot: "bg-[#4682b4]" },
   alta:    { label: "Alta",    color: "bg-amber-500/10 text-amber-400 border-amber-500/20",   dot: "bg-amber-400" },
   urgente: { label: "Urgente", color: "bg-rose-500/10 text-rose-400 border-rose-500/20",      dot: "bg-rose-500" },
 };
@@ -88,56 +89,61 @@ export function TasksPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden"
+        className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
-            Tareas
-          </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Gestión de tareas operativas del ministerio</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <ListTodo className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Operaciones</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
+              Tareas
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">Gestión de tareas operativas del ministerio</p>
+          </div>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="h-10 rounded-xl font-medium shrink-0">
+        <Button onClick={() => setShowCreate(true)} className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all">
           <Plus className="w-4 h-4 mr-1.5" /> Nueva Tarea
         </Button>
       </motion.div>
 
       {/* ── Stats row ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="grid grid-cols-4 gap-3"
-      >
-        {COLS.map((s) => {
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {COLS.map((s, idx) => {
           const cfg = statusConfig[s];
           const count = tasksByStatus(s).length;
+          const gradient = s === "pendiente" ? "from-amber-500 to-orange-600" : s === "en_progreso" ? "from-[#709dbd] to-[#4682b4]" : "from-emerald-500 to-teal-600";
           return (
-            <div key={s} className={`bg-card/40 backdrop-blur-xl border rounded-2xl p-4 flex items-center gap-3 ${cfg.color.includes("border") ? "border-white/10" : "border-white/10"}`}>
-              <div className={`w-9 h-9 rounded-xl ${cfg.color} border flex items-center justify-center shrink-0`}>{cfg.icon}</div>
-              <div>
-                <p className="text-2xl font-black leading-none">{count}</p>
-                <p className="text-[11px] font-medium text-muted-foreground mt-0.5">{cfg.label}</p>
+            <AnimatedCard key={s} index={idx} className="p-4 group">
+              <div className="flex justify-between items-start mb-3">
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg text-white`}>
+                  {cfg.icon}
+                </div>
+                <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-[10px] py-0 tracking-widest uppercase">KPI</Badge>
               </div>
-            </div>
+              <div>
+                <p className="text-4xl font-light tracking-tight text-foreground">{count}</p>
+                <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{cfg.label}</p>
+              </div>
+            </AnimatedCard>
           );
         })}
-        <div className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-500/10 text-slate-400 border border-slate-500/20 flex items-center justify-center shrink-0"><ListTodo className="w-3.5 h-3.5" /></div>
-          <div>
-            <p className="text-2xl font-black leading-none">{tareas.length}</p>
-            <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Total</p>
-          </div>
-        </div>
-      </motion.div>
+      </div>
+
 
       {/* ── Kanban Board ── */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+        className="flex lg:grid lg:grid-cols-3 gap-6 overflow-x-auto pb-6 lg:pb-0 snap-x lg:snap-none -mx-4 px-4 lg:mx-0 lg:px-0 hide-scrollbar"
       >
+        <style dangerouslySetInnerHTML={{ __html: `
+          .hide-scrollbar::-webkit-scrollbar { display: none; }
+          .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        `}} />
         {COLS.map((status, colIdx) => {
           const cfg = statusConfig[status];
           const statusTasks = tasksByStatus(status);
@@ -148,7 +154,8 @@ export function TasksPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.12 + colIdx * 0.06 }}
             >
-              {/* Column header */}
+              <div className="w-[85vw] sm:w-[350px] lg:w-full shrink-0 snap-center">
+                {/* Column header */}
               <div className={`flex items-center gap-2 px-4 py-3 rounded-t-2xl bg-card/60 backdrop-blur-xl border border-white/10 border-b-0`}>
                 <div className={`w-2 h-2 rounded-full ${cfg.dot} shadow-[0_0_6px_currentColor]`} />
                 <span className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/70">{cfg.label}</span>
@@ -156,85 +163,77 @@ export function TasksPage() {
               </div>
 
               {/* Cards */}
-              <div className="space-y-2 bg-card/20 backdrop-blur-xl rounded-b-2xl border border-white/10 border-t-0 p-3 min-h-[260px]">
+              <div className="space-y-3 bg-white/5 dark:bg-black/20 backdrop-blur-xl rounded-b-3xl border border-white/5 border-t-0 p-3 min-h-[400px]">
                 <AnimatePresence>
                   {statusTasks.map((t, tIdx) => {
                     const next = nextStatus(t.estado);
                     const prio = prioridadConfig[t.prioridad] ?? prioridadConfig.media;
                     return (
-                      <motion.div
+                      <AnimatedCard
                         key={t.idTarea}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ delay: tIdx * 0.03 }}
+                        index={tIdx}
+                        className="p-4 group cursor-pointer"
+                        onClick={() => setSelectedTask(t.idTarea)}
                       >
-                        <div
-                          className="group relative bg-card/60 backdrop-blur-xl border border-white/10 rounded-xl p-3.5 cursor-pointer hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
-                          onClick={() => setSelectedTask(t.idTarea)}
-                        >
-                          {/* Subtle hover glow */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-
-                          {/* Prioridad dot bar on left */}
-                          <div className={`absolute left-0 top-3 bottom-3 w-0.5 rounded-full ${prio.dot}`} />
-
-                          <div className="flex items-start justify-between gap-2 mb-1.5 relative z-10 pl-2">
-                            <h4 className="text-[13px] font-semibold leading-snug tracking-tight group-hover:text-primary transition-colors flex-1">{t.titulo}</h4>
-                            <button
-                              className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground/40 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all shrink-0"
-                              onClick={e => { e.stopPropagation(); handleDeleteTarea(t.idTarea, t.titulo); }}
-                              disabled={deleteTareaMutation.isPending}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-
-                          {t.eventoNombre && (
-                            <p className="text-[10px] text-primary/60 mb-1.5 truncate pl-2 relative z-10">{t.eventoNombre}</p>
-                          )}
-                          {t.descripcion && (
-                            <p className="text-[11px] text-muted-foreground mb-2.5 line-clamp-2 pl-2 relative z-10 leading-relaxed">{t.descripcion}</p>
-                          )}
-
-                          {/* Meta row */}
-                          <div className="flex items-center gap-1.5 flex-wrap pl-2 relative z-10">
-                            <Badge variant="outline" className={`${prio.color} border text-[9px] uppercase font-bold tracking-wider px-1.5 py-0`}>
+                        <div className="relative z-10">
+                          {/* Prioridad indicator */}
+                          <div className="flex items-center justify-between mb-3">
+                            <Badge variant="outline" className={`${prio.color} border-0 text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-lg`}>
                               {prio.label}
                             </Badge>
                             {t.fechaLimite && (
-                              <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground bg-background/40 px-1.5 py-0.5 rounded-md border border-white/5">
+                              <span className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase bg-white/5 px-2 py-0.5 rounded-lg">
                                 <Calendar className="w-2.5 h-2.5" /> {t.fechaLimite}
                               </span>
                             )}
-                            {t.asignados && t.asignados.length > 0 && (
-                              <div className="flex -space-x-1.5 ml-auto">
-                                {t.asignados.slice(0, 3).map(a => (
-                                  <div key={a.idTareaAsignada} className="w-5 h-5 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-background flex items-center justify-center text-[8px] text-primary font-bold" title={a.nombreCompleto}>
-                                    {(a.nombreCompleto || "?").charAt(0).toUpperCase()}
-                                  </div>
-                                ))}
-                                {t.asignados.length > 3 && (
-                                  <div className="w-5 h-5 rounded-full bg-card border border-background flex items-center justify-center text-[8px] text-muted-foreground font-bold">+{t.asignados.length - 3}</div>
-                                )}
-                              </div>
-                            )}
                           </div>
 
-                          {/* Move button */}
-                          {next && (
-                            <button
-                              className="relative z-10 w-full mt-2.5 flex items-center justify-center gap-1 text-[10px] font-bold text-muted-foreground/50 hover:text-primary opacity-0 group-hover:opacity-100 transition-all py-1 rounded-lg hover:bg-primary/5"
-                              onClick={e => { e.stopPropagation(); updateEstadoMutation.mutate({ id: t.idTarea, estado: next }); }}
-                            >
-                              Mover a {statusConfig[next].label} <ChevronRight className="w-3 h-3" />
-                            </button>
+                          <h4 className="text-[14px] font-bold leading-snug tracking-tight group-hover:text-[#4682b4] transition-colors mb-2 uppercase italic">{t.titulo}</h4>
+                          
+                          {t.eventoNombre && (
+                            <p className="text-[10px] font-bold text-[#4682b4]/70 mb-2 truncate uppercase tracking-wider">{t.eventoNombre}</p>
                           )}
+                          
+                          {t.descripcion && (
+                            <p className="text-[11px] text-muted-foreground mb-3 line-clamp-2 leading-relaxed">{t.descripcion}</p>
+                          )}
+
+                          <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                            <div className="flex -space-x-2">
+                              {t.asignados && t.asignados.slice(0, 3).map(a => (
+                                <div key={a.idTareaAsignada} className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#709dbd] to-[#4682b4] border-2 border-card flex items-center justify-center text-[9px] text-white font-black shadow-sm" title={a.nombreCompleto}>
+                                  {(a.nombreCompleto || "?").charAt(0).toUpperCase()}
+                                </div>
+                              ))}
+                              {t.asignados && t.asignados.length > 3 && (
+                                <div className="w-6 h-6 rounded-lg bg-white/10 border-2 border-card flex items-center justify-center text-[9px] text-muted-foreground font-black">+{t.asignados.length - 3}</div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                onClick={e => { e.stopPropagation(); handleDeleteTarea(t.idTarea, t.titulo); }}
+                                disabled={deleteTareaMutation.isPending}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                              {next && (
+                                <button
+                                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
+                                  onClick={e => { e.stopPropagation(); updateEstadoMutation.mutate({ id: t.idTarea, estado: next }); }}
+                                >
+                                  <ChevronRight className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </motion.div>
+                      </AnimatedCard>
                     );
                   })}
                 </AnimatePresence>
+
 
                 {statusTasks.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
@@ -243,7 +242,8 @@ export function TasksPage() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
+          </motion.div>
           );
         })}
       </motion.div>

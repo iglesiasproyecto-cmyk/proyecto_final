@@ -10,6 +10,7 @@ import {
   Settings, FolderHeart, Globe, UserCheck, Settings2,
   PanelLeftClose, PanelLeftOpen, GraduationCap, Moon, Sun
 } from "lucide-react";
+import { SEILogo } from "./SEILogo";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -48,6 +49,7 @@ const pageTitles: Record<string, string> = {
   "/app/aula": "Aula de Formacion",
   "/app/evaluaciones": "Evaluaciones",
   "/app/ciclos-lectivos": "Ciclos Lectivos",
+  "/app/mis-cursos": "Mis Cursos",
   "/app/notificaciones": "Notificaciones",
   "/app/perfil": "Mi Perfil",
 };
@@ -61,6 +63,7 @@ function getNavItemsForRole(role: string): NavItem[] {
         { label: "Sedes", path: "/app/sedes", icon: <Church className="w-5 h-5" />, section: "Gestion" },
         { label: "Pastores", path: "/app/pastores", icon: <UserCheck className="w-5 h-5" />, section: "Gestion" },
         { label: "Usuarios", path: "/app/usuarios", icon: <Users className="w-5 h-5" />, section: "Gestion" },
+        { label: "Mis Cursos", path: "/app/mis-cursos", icon: <BookOpen className="w-5 h-5" />, section: "Formacion" },
         { label: "Geografia", path: "/app/geografia", icon: <Globe className="w-5 h-5" />, section: "Configuracion" },
         { label: "Catalogos", path: "/app/catalogos", icon: <Settings2 className="w-5 h-5" />, section: "Configuracion" },
         { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
@@ -70,8 +73,10 @@ function getNavItemsForRole(role: string): NavItem[] {
       return [
         { label: "Dashboard", path: "/app", icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
         { label: "Ministerios", path: "/app/departamentos", icon: <Settings className="w-5 h-5" />, section: "Iglesia" },
+        { label: "Usuarios", path: "/app/usuarios", icon: <Users className="w-5 h-5" />, section: "Iglesia" },
         { label: "Miembros", path: "/app/miembros", icon: <Users className="w-5 h-5" />, section: "Iglesia" },
         { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Iglesia" },
+        { label: "Mis Cursos", path: "/app/mis-cursos", icon: <BookOpen className="w-5 h-5" />, section: "Formacion" },
         { label: "Ciclos Lectivos", path: "/app/ciclos-lectivos", icon: <GraduationCap className="w-5 h-5" />, section: "Formacion" },
         { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: "/app/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
@@ -84,6 +89,7 @@ function getNavItemsForRole(role: string): NavItem[] {
         { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: "/app/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
         { label: "Aula", path: "/app/aula", icon: <BookOpen className="w-5 h-5" />, section: "Formacion" },
+        { label: "Mis Cursos", path: "/app/mis-cursos", icon: <BookOpen className="w-5 h-5" />, section: "Formacion" },
         { label: "Evaluaciones", path: "/app/evaluaciones", icon: <ClipboardCheck className="w-5 h-5" />, section: "Formacion" },
         { label: "Ciclos Lectivos", path: "/app/ciclos-lectivos", icon: <GraduationCap className="w-5 h-5" />, section: "Formacion" },
         { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
@@ -96,6 +102,7 @@ function getNavItemsForRole(role: string): NavItem[] {
         { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Mis Tareas", path: "/app/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
         { label: "Aula", path: "/app/aula", icon: <BookOpen className="w-5 h-5" />, section: "Formacion" },
+        { label: "Mis Cursos", path: "/app/mis-cursos", icon: <BookOpen className="w-5 h-5" />, section: "Formacion" },
         { label: "Mis Evaluaciones", path: "/app/evaluaciones", icon: <ClipboardCheck className="w-5 h-5" />, section: "Formacion" },
         { label: "Mis Ciclos", path: "/app/ciclos-lectivos", icon: <GraduationCap className="w-5 h-5" />, section: "Formacion" },
         { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
@@ -131,6 +138,11 @@ export function AppLayout() {
   useEffect(() => {
     if (!authLoading && !usuarioActual) navigate("/login");
   }, [authLoading, usuarioActual, navigate]);
+
+  useEffect(() => {
+    const sectionTitle = pageTitles[location.pathname] || "Panel"
+    document.title = `${sectionTitle} | IGLESIABD`
+  }, [location.pathname]);
 
   if (authLoading) {
     return (
@@ -182,13 +194,13 @@ export function AppLayout() {
             <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
             {!isCollapsed ? (
               <div className="flex items-center gap-4 flex-1 min-w-0 relative z-10">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(100,116,139,0.3)] relative overflow-hidden group-hover:shadow-[0_0_25px_rgba(100,116,139,0.5)] transition-all duration-500">
+                <div className="w-14 h-14 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center shrink-0 shadow-lg relative overflow-hidden group-hover:shadow-primary/20 transition-all duration-500">
                    <motion.div 
-                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12"
-                     animate={{ x: ["-200%", "300%"] }}
+                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                     animate={{ x: ["-150%", "150%"] }}
                      transition={{ repeat: Infinity, duration: 3, ease: "linear", repeatDelay: 1 }}
                    />
-                  <Church className="w-6 h-6 text-white relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
+                  <SEILogo className="w-10 h-10 relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[17px] font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-200 tracking-tight drop-shadow-sm">S.E.I.</h3>
@@ -196,13 +208,13 @@ export function AppLayout() {
                 </div>
               </div>
             ) : (
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(100,116,139,0.3)] relative overflow-hidden group-hover:shadow-[0_0_25px_rgba(100,116,139,0.5)] transition-all duration-500">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center mx-auto shadow-lg relative overflow-hidden group-hover:shadow-primary/20 transition-all duration-500">
                    <motion.div 
-                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12"
-                     animate={{ x: ["-200%", "300%"] }}
+                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
+                     animate={{ x: ["-150%", "150%"] }}
                      transition={{ repeat: Infinity, duration: 3, ease: "linear", repeatDelay: 1 }}
                    />
-                <Church className="w-6 h-6 text-white relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
+                <SEILogo className="w-10 h-10 relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
               </div>
             )}
             <button
@@ -315,7 +327,7 @@ export function AppLayout() {
                                 {isActive && (
                                   <motion.div
                                     layoutId="active-nav-bg"
-                                    className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-700 rounded-2xl z-0 shadow-[0_4px_25px_rgba(6,182,212,0.5)] overflow-hidden"
+                                    className="absolute inset-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] rounded-2xl z-0 shadow-[0_4px_25px_rgba(70,157,189,0.3)] overflow-hidden"
                                     initial={false}
                                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                                   >
@@ -341,7 +353,7 @@ export function AppLayout() {
                               </button>
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-700 text-white border-none shadow-[0_0_20px_rgba(6,182,212,0.4)]">
+                          <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5 bg-gradient-to-r from-[#709dbd] to-[#4682b4] text-white border-none shadow-[0_0_20px_rgba(70,157,189,0.4)]">
                             {item.label}
                           </TooltipContent>
                         </Tooltip>
@@ -361,7 +373,7 @@ export function AppLayout() {
                         {isActive && (
                           <motion.div
                             layoutId="active-nav-bg"
-                            className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-700 rounded-2xl z-0 shadow-[0_4px_25px_rgba(6,182,212,0.5)] overflow-hidden"
+                            className="absolute inset-0 bg-gradient-to-r from-[#1a7fa8] to-[#1a7fa8] rounded-2xl z-0 shadow-[0_4px_25px_rgba(26,127,168,0.3)] overflow-hidden"
                             initial={false}
                             transition={{ type: "spring", stiffness: 350, damping: 30 }}
                           >
@@ -416,7 +428,7 @@ export function AppLayout() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
-          <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md flex items-center px-4 md:px-6 gap-4 shrink-0 sticky top-0 z-20">
+          <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-4 md:px-6 gap-4 shrink-0 sticky top-0 z-20">
             <button
               onClick={toggleSidebar}
               className="text-muted-foreground hover:text-foreground transition-colors lg:hidden"
@@ -507,15 +519,17 @@ export function AppLayout() {
 
           {/* Main Area */}
           <main className="flex-1 overflow-y-auto">
-            <div className="p-4 md:p-6 lg:p-8">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-              >
-                <Outlet />
-              </motion.div>
+            <div className="flex justify-center px-4 md:px-6 lg:px-8 min-h-full">
+              <div className="w-full max-w-7xl py-4 md:py-6 lg:py-8">
+                <motion.div
+                  key={location.pathname}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                >
+                  <Outlet />
+                </motion.div>
+              </div>
             </div>
           </main>
         </div>

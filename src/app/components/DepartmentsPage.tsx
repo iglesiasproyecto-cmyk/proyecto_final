@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   useMinisteriosEnriquecidos, useDeleteMinisterio, useMiembrosMinisterio, useToggleMinisterioEstado, useCreateMinisterio,
 } from "@/hooks/useMinisterios";
+import { useSedes } from "@/hooks/useIglesias";
 import type { Ministerio } from "@/types/app.types";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -9,8 +10,9 @@ import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { motion } from "motion/react";
-import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2 } from "lucide-react";
+import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2, Settings } from "lucide-react";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-700", servidor: "bg-gray-100 text-gray-700" };
@@ -18,16 +20,16 @@ const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-70
 function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void }) {
   const { data: minMembers = [] } = useMiembrosMinisterio(min.idMinisterio);
   return (
-    <div className="space-y-4 max-w-7xl mx-auto motion-preset-fade">
+    <div className="space-y-4 max-w-6xl mx-auto motion-preset-fade">
       {/* Header Compacto tipo Tarjeta */}
-      <div className="bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
+      <div className="bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -z-10 pointer-events-none" />
         <div className="flex items-center gap-4">
            <button onClick={onBack} className="w-10 h-10 rounded-xl bg-background/50 border border-white/5 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors hover:-translate-x-1 shrink-0">
              &larr;
            </button>
            <div className="flex items-center gap-3">
-             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
                 <Users className="w-6 h-6 text-white" />
              </div>
              <div>
@@ -37,17 +39,17 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
            </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-           <Badge variant={min.estado === "activo" ? "default" : "secondary"} className={`px-3 py-1 text-[10px] uppercase font-bold tracking-widest ${min.estado === 'activo' ? 'bg-primary/10 text-primary border border-white/10' : ''}`}>{min.estado === "activo" ? "Activo" : "Inactivo"}</Badge>
+           <Badge variant={min.estado === "activo" ? "default" : "secondary"} className={`px-3 py-1 text-[10px] uppercase font-bold tracking-widest ${min.estado === 'activo' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200' : ''}`}>{min.estado === "activo" ? "Activo" : "Inactivo"}</Badge>
         </div>
       </div>
 
       <Tabs defaultValue="miembros" className="w-full">
-        <TabsList className="bg-card/40 backdrop-blur-md border border-white/10 p-1 rounded-xl mb-4 w-fit mx-auto md:mx-0 flex">
+        <TabsList className="bg-card/40 backdrop-blur-md border border-border/50 p-1 rounded-xl mb-4 w-fit mx-auto md:mx-0 flex">
           <TabsTrigger value="miembros" className="rounded-lg text-xs font-medium px-4"><UsersRound className="w-4 h-4 mr-2" /> Directorio ({minMembers.length})</TabsTrigger>
           <TabsTrigger value="config" className="rounded-lg text-xs font-medium px-4"><UserCog className="w-4 h-4 mr-2" /> Configuración</TabsTrigger>
         </TabsList>
         <TabsContent value="miembros" className="outline-none">
-          <Card className="bg-card/40 backdrop-blur-xl border-white/10 p-0 overflow-hidden shadow-sm rounded-2xl">
+          <Card className="bg-card/40 backdrop-blur-xl border border-border/50 p-0 overflow-hidden shadow-sm rounded-2xl">
             <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card/20">
                <div>
                   <h3 className="font-bold text-sm">Equipo Ministerial</h3>
@@ -60,7 +62,7 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
               {minMembers.map((mm) => (
                 <div key={mm.idMiembroMinisterio} className="group flex flex-col sm:flex-row sm:items-center gap-4 p-4 hover:bg-accent/30 transition-colors">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center text-primary text-xs font-bold ring-2 ring-background shadow-inner">{(mm.nombreCompleto || "?").charAt(0).toUpperCase()}</div>
+                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#709dbd]/10 to-[#4682b4]/5 flex items-center justify-center text-primary text-xs font-bold ring-2 ring-background shadow-inner">{(mm.nombreCompleto || "?").charAt(0).toUpperCase()}</div>
                      <div className="flex-1 min-w-0">
                        <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{mm.nombreCompleto}</p>
                        <p className="text-[11px] text-muted-foreground truncate">{mm.correo}</p>
@@ -68,7 +70,7 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
                   </div>
                   <div className="flex items-center gap-2 sm:shrink-0 justify-end">
                      <Badge variant="outline" className={`${rolColors[mm.rolEnMinisterio || "servidor"]} border-white/10 text-[10px] uppercase font-bold tracking-widest px-2 py-0.5`}>{rolLabels[mm.rolEnMinisterio || "servidor"] || mm.rolEnMinisterio}</Badge>
-                     <Badge variant={mm.activo ? "secondary" : "outline"} className={`text-[10px] bg-background/50 border-white/5`}>{mm.activo ? "Activo" : "Inactivo"}</Badge>
+                     <Badge variant={mm.activo ? "secondary" : "outline"} className={`text-[10px] ${mm.activo ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200' : 'bg-background/50 border-white/5'}`}>{mm.activo ? "Activo" : "Inactivo"}</Badge>
                   </div>
                 </div>
               ))}
@@ -116,6 +118,7 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
 
 export function DepartmentsPage() {
   const { data: ministerios = [], isLoading } = useMinisteriosEnriquecidos();
+  const { data: sedes = [] } = useSedes(); // Fetch all sedes, but we'll filter in UI
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedMin, setSelectedMin] = useState<number | null>(null);
@@ -128,7 +131,7 @@ export function DepartmentsPage() {
     if (!confirm(`¿Eliminar ministerio "${nombre}"? Esta acción no se puede deshacer.`)) return;
     deleteMinisterioMutation.mutate(id);
   }
-  const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "" });
+  const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idSede: "" });
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
@@ -140,40 +143,46 @@ export function DepartmentsPage() {
   }
 
   const handleCreateMinisterio = () => {
-    if (!createForm.nombre.trim()) return;
+    if (!createForm.nombre.trim() || !createForm.idSede) return;
     createMinisterioMutation.mutate(
       {
         nombre: createForm.nombre.trim(),
         descripcion: createForm.descripcion.trim() || null,
-        idSede: 1, // MVP: single-sede demo
+        idSede: parseInt(createForm.idSede),
         estado: 'activo',
       },
       {
         onSuccess: () => {
           setShowCreate(false);
-          setCreateForm({ nombre: "", descripcion: "" });
+          setCreateForm({ nombre: "", descripcion: "", idSede: "" });
         },
       }
     );
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Encabezado Principal y Controles Acoplados */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm relative overflow-hidden">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Ministerios</h1>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Gestiona la estructura organizativa de la iglesia</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <Settings className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Ministerios</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">Gestiona la estructura organizativa de la iglesia</p>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 w-full md:w-64">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
-            <Input placeholder="Buscar ministerio..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10 bg-background/50 border-white/5 rounded-xl focus-visible:ring-primary/20 text-sm" />
+            <Input placeholder="Buscar ministerio..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" />
           </div>
-          <Button onClick={() => setShowCreate(true)} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium">
+          <Button onClick={() => setShowCreate(true)} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all">
             <Plus className="w-4 h-4 mr-2" /> Nuevo
           </Button>
         </div>
@@ -183,15 +192,15 @@ export function DepartmentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map((m, i) => (
           <motion.div key={m.idMinisterio} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05, ease: "easeOut" }}>
-            <Card className={`group relative p-4 h-full bg-card/40 backdrop-blur-xl border border-white/10 cursor-pointer shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 rounded-2xl flex flex-col justify-between overflow-hidden ${m.estado !== "activo" ? "opacity-70 grayscale-[20%]" : ""}`} onClick={() => setSelectedMin(m.idMinisterio)}>
+            <Card className={`group relative p-4 h-full bg-card/40 backdrop-blur-xl border border-border/50 cursor-pointer shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 rounded-2xl flex flex-col justify-between overflow-hidden ${m.estado !== "activo" ? "opacity-70 grayscale-[20%]" : ""}`} onClick={() => setSelectedMin(m.idMinisterio)}>
                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                
                <div>
                  <div className="relative z-10 flex items-start justify-between mb-3">
-                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 group-hover:scale-105 transition-transform shrink-0">
+                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-md shadow-blue-900/20 group-hover:scale-105 transition-transform shrink-0">
                       <Users className="w-5 h-5 text-white" />
                    </div>
-                   <Badge variant={m.estado === "activo" ? "default" : "secondary"} className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 ${m.estado === 'activo' ? 'bg-primary/10 text-primary border border-primary/20' : ''}`}>{m.estado === "activo" ? "Activo" : "Inactivo"}</Badge>
+                   <Badge variant={m.estado === "activo" ? "default" : "secondary"} className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 ${m.estado === 'activo' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200' : ''}`}>{m.estado === "activo" ? "Activo" : "Inactivo"}</Badge>
                  </div>
                  
                  <div className="relative z-10">
@@ -261,12 +270,27 @@ export function DepartmentsPage() {
                 className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
               />
             </div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">Sede</label>
+              <Select value={createForm.idSede} onValueChange={(value) => setCreateForm(p => ({ ...p, idSede: value }))}>
+                <SelectTrigger className="h-11 bg-background/50 border-white/10 rounded-xl text-sm">
+                  <SelectValue placeholder="Selecciona una sede" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sedes.map((sede) => (
+                    <SelectItem key={sede.idSede} value={sede.idSede.toString()}>
+                      {sede.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter className="mt-2 border-t border-border/50 pt-4">
-            <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); setCreateForm({ nombre: "", descripcion: "" }); }}>
+            <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); setCreateForm({ nombre: "", descripcion: "", idSede: "" }); }}>
               Cancelar
             </Button>
-            <Button variant="default" className="rounded-xl" onClick={handleCreateMinisterio} disabled={!createForm.nombre.trim() || createMinisterioMutation.isPending}>
+            <Button variant="default" className="rounded-xl" onClick={handleCreateMinisterio} disabled={!createForm.nombre.trim() || !createForm.idSede || createMinisterioMutation.isPending}>
               {createMinisterioMutation.isPending ? "Creando..." : "Crear Ministerio"}
             </Button>
           </DialogFooter>
