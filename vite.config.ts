@@ -11,15 +11,12 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    host: '0.0.0.0',
+    host: 'localhost',
     port: 5173,
     strictPort: false,
-    middlewareMode: false,
-    open: 'http://localhost:5173/',
-    hmr: {
-      protocol: 'ws',
-      host: '127.0.0.1',
-      port: 5173,
+    open: false,
+    fs: {
+      strict: false,
     },
   },
   resolve: {

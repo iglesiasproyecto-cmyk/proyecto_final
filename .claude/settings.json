@@ -5,7 +5,14 @@
       "Bash(npm run:*)",
       "Bash(curl -s -w \"\\\\nHTTP_CODE: %{http_code}\" \"https://heibyjbvfiokmduwwawm.supabase.co/auth/v1/settings\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlaWJ5amJ2Zmlva21kdXd3YXdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDAzNjEsImV4cCI6MjA4OTA3NjM2MX0.dCwu7xz1hExRFX1brCGDZySW0aacxBaV-yjPt0bqVZI\")",
       "Bash(curl -s \"http://localhost:5173/login\")",
-      "Bash(curl -s \"http://localhost:5173/src/main.tsx\")"
+      "Bash(curl -s \"http://localhost:5173/src/main.tsx\")",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_4461e1449bcd33820459bffec40a24bdeda604b2 npx -y @supabase/mcp-server-supabase@latest --help)",
+      "mcp__plugin_supabase_supabase__list_projects",
+      "mcp__claude_ai_Supabase__list_migrations",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Supabase__get_advisors",
+      "mcp__claude_ai_Supabase__generate_typescript_types"
     ]
   }
 }

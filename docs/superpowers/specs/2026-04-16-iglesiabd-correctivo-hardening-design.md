@@ -37,6 +37,98 @@ Este spec describe el plan completo. Se excluye deliberadamente la mejora de UX 
 
 ---
 
+## Extensión solicitada — Gestión de usuarios por Administrador de Iglesia
+
+### Diagnóstico actual (estado real)
+
+1. El flujo de invitación permite enviar `idIglesia` e `idRol` desde cliente hasta Edge Function sin validación fuerte de alcance del actor.
+2. Las políticas de mutación de `usuario` y `usuario_rol` siguen permisivas (`USING (true)` / `WITH CHECK (true)`), por lo que el control real depende de la UI y no de la BD.
+3. No existe separación explícita entre:
+  - Identidad (Auth)
+  - Perfil de aplicación (`usuario`)
+  - Pertenencia eclesial (tenant)
+  - Membresía ministerial (`miembro_ministerio`)
+
+### Principios de ingeniería aplicables
+
+- Menor privilegio: toda autorización se valida en DB/API, nunca solo en frontend.
+- Fuente única de verdad: la iglesia del actor se resuelve en backend, no por payload del cliente.
+- Separación de responsabilidades: Auth para identidad; tablas de dominio para permisos y pertenencia.
+- Auditabilidad: cada asignación/cambio de rol debe quedar trazable.
+
+### Diseño recomendado (target)
+
+1. Mantener `auth.users` como identidad.
+2. Mantener `public.usuario` como perfil local (ya enlazado por `auth_user_id`).
+3. Usar `usuario_rol` como asignación de rol por iglesia/sede, pero con reglas estrictas:
+  - `Administrador de Iglesia` solo puede gestionar usuarios dentro de sus iglesias activas.
+  - No puede asignar `Super Administrador`.
+  - No puede gestionar usuarios fuera de su `id_iglesia`.
+4. Mantener `miembro_ministerio` para pertenencia a ministerios, desacoplada del alta de usuario.
+
+### Alternativas de modelado para relación con miembros
+
+**Alternativa A (rápida, mínima migración):**
+- El usuario existe en `usuario` y su pertenencia a iglesia se interpreta por `usuario_rol` activo (`id_iglesia`).
+- La relación con ministerio se mantiene en `miembro_ministerio`.
+- Ventaja: menor costo inmediato.
+- Riesgo: cuesta modelar "miembro sin rol de plataforma" y cambios históricos de membresía general.
+
+**Alternativa B (recomendada mediano plazo):**
+- Crear tabla `miembro_iglesia` (o `membresia_iglesia`) para separar membresía general de roles operativos.
+- `usuario_rol` queda solo para permisos, `miembro_iglesia` para ciclo de vida pastoral/administrativo.
+- Ventaja: dominio más limpio, mejor trazabilidad y escalabilidad.
+- Costo: migración y ajustes en servicios/UI.
+
+### Plan por fases (antes de implementar)
+
+#### Fase A — Cerradura de seguridad inmediata
+
+1. Reemplazar políticas permisivas de `usuario` y `usuario_rol` por políticas por alcance (super admin global, admin iglesia solo su tenant).
+2. Estandarizar helpers SQL `SECURITY DEFINER` con `SET search_path = public`:
+  - `is_super_admin()`
+  - `get_user_iglesias()`
+  - `is_admin_of_iglesia(target_iglesia_id bigint)`
+3. Ajustar Edge Function `invite-user`:
+  - Validar JWT del caller.
+  - Resolver roles/iglesias del caller en backend.
+  - Ignorar o validar estrictamente `idIglesia` recibido.
+  - Bloquear asignación de rol fuera de catálogo permitido por actor.
+
+#### Fase B — Flujo funcional Admin Iglesia
+
+1. Caso "crear/invitar usuario":
+  - Admin iglesia invita correo.
+  - Sistema crea perfil (`handle_new_user`) y asigna rol en su misma iglesia.
+  - Estado inicial recomendado: activo en plataforma, sin membresía ministerial.
+2. Caso "relacionar con miembro/ministerio":
+  - Acción separada posterior (no en el mismo paso de invitación).
+  - Asignación en `miembro_ministerio` validando que ministerio pertenezca a la iglesia del admin.
+3. Caso "cambio de rol":
+  - Cierre histórico vía `fecha_fin` y alta nueva fila en `usuario_rol`.
+
+#### Fase C — Robustez de dominio (si se aprueba Alternativa B)
+
+1. Crear `miembro_iglesia` con estado y vigencia.
+2. Migrar reglas de negocio para que "miembro" no dependa de tener rol de plataforma.
+3. Ajustar reportes/listados para usar membresía y no inferencias por `usuario_rol`.
+
+### Reglas funcionales propuestas
+
+1. `Super Administrador` puede crear/gestionar usuarios en cualquier iglesia.
+2. `Administrador de Iglesia` solo en sus iglesias activas.
+3. `Administrador de Iglesia` no puede elevar privilegios a `Super Administrador`.
+4. Toda asignación requiere `id_iglesia` válido dentro del alcance del actor.
+5. El frontend no decide permisos; solo muestra acciones que el backend ya autoriza.
+
+### Entregables de planificación (siguiente paso)
+
+1. Especificación de políticas RLS tabla por tabla (`usuario`, `usuario_rol`, `miembro_ministerio`).
+2. Contrato de Edge Function `invite-user` v2 (payload permitido, validaciones, errores).
+3. Decisión formal entre Alternativa A y B con impacto en migraciones y UI.
+
+---
+
 ## Estrategia de ejecución
 
 - Cada fase es **independiente y testeable** — el agente ejecuta, verifica, y solo pasa a la siguiente cuando la verificación pasa.
