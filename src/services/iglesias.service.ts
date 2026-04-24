@@ -74,6 +74,40 @@ export interface SedeEnriquecida extends Sede {
   ciudadNombre: string
 }
 
+export interface IglesiaDetalle extends IglesiaEnriquecida {
+  sedes: Sede[]
+  pastores: Pastor[]
+}
+
+export async function getIglesiaEnriquecidaById(id: number): Promise<IglesiaEnriquecida | null> {
+  const { data, error } = await supabase
+    .from('iglesia')
+    .select('*, sede(count), ciudad(nombre, departamento(nombre), pais(nombre))')
+    .eq('id_iglesia', id)
+    .single()
+  if (error) {
+    if (error.code === 'PGRST116') return null
+    throw error
+  }
+  return {
+    ...mapIglesia(data),
+    cantidadSedes: Array.isArray(data.sede) ? data.sede[0]?.count ?? 0 : 0,
+    ciudadNombre: data.ciudad?.nombre ?? '',
+    departamentoNombre: data.ciudad?.departamento?.nombre ?? '',
+    paisNombre: data.ciudad?.pais?.nombre ?? '',
+  }
+}
+
+export async function getPastoresPorIglesia(idIglesia: number): Promise<Pastor[]> {
+  const { data, error } = await supabase
+    .from('iglesia_pastor')
+    .select('pastor(*)')
+    .eq('id_iglesia', idIglesia)
+    .is('fecha_fin', null)
+  if (error) throw error
+  return (data as any[]).map((r: any) => mapPastor(r.pastor))
+}
+
 export async function getIglesiasEnriquecidas(): Promise<IglesiaEnriquecida[]> {
   const { data, error } = await supabase
     .from('iglesia')

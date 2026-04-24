@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useCiudades } from "@/hooks/useGeografia";
 import { motion } from "motion/react";
-import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar } from "lucide-react";
+import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar, Eye } from "lucide-react";
+import { useNavigate } from "react-router";
 
 const estadoLabels: Record<string, string> = {
   activa: "Activa",
@@ -46,6 +47,7 @@ function GlassCard({ children, index = 0, isActive = true }: { children: React.R
 }
 
 export function ChurchesPage() {
+  const navigate = useNavigate();
   const { data: iglesias = [], isLoading } = useIglesiasEnriquecidas();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "activa" | "inactiva">("all");
@@ -226,6 +228,14 @@ export function ChurchesPage() {
             </div>
 
             <div className="mt-auto pt-4 border-t border-border/40 flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="flex-1 rounded-xl bg-[#4682b4]/10 hover:bg-[#4682b4]/20 text-[#4682b4] transition-colors"
+                onClick={() => navigate(`/app/iglesias/${ig.idIglesia}`)}
+              >
+                <Eye className="w-3.5 h-3.5 mr-1.5" /> Ver detalle
+              </Button>
               <Button variant="secondary" size="sm" className="flex-1 rounded-xl bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 transition-colors" onClick={() => {
                 setFormErrors({});
                 setForm({ nombre: ig.nombre, fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "", idCiudad: ig.idCiudad || 0 });
