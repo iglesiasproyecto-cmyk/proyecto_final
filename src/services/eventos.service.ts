@@ -1,6 +1,7 @@
-﻿import { supabase } from '@/lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 import type { TipoEvento, Evento, Tarea, TareaAsignada } from '@/types/app.types'
 import type { Database } from '@/types/database.types'
+import { sendEmail } from './email.service'
 
 type TipoEventoRow = Database['public']['Tables']['tipo_evento']['Row']
 type EventoRow = Database['public']['Tables']['evento']['Row']
@@ -340,6 +341,33 @@ export async function createTareaAsignada(data: {
     .from('tarea_asignada')
     .insert({ id_tarea: data.idTarea, id_usuario: data.idUsuario })
   if (error) throw error
+
+  // Notificar por correo
+  try {
+    const [{ data: user }, { data: task }] = await Promise.all([
+      supabase.from('usuario').select('correo, nombres').eq('id_usuario', data.idUsuario).single(),
+      supabase.from('tarea').select('titulo').eq('id_tarea', data.idTarea).single()
+    ])
+
+    if (user && user.correo && task) {
+      await sendEmail({
+        to: user.correo,
+        subject: 'Nueva tarea asignada',
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2 style="color: #4682b4;">¡Hola, ${user.nombres}!</h2>
+            <p>Se te ha asignado una nueva tarea en el sistema de la iglesia:</p>
+            <p><strong>${task.titulo}</strong></p>
+            <p>Por favor, inicia sesión para revisar el panel de tareas y ver más detalles.</p>
+            <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;" />
+            <p style="font-size: 12px; color: #888;">Este es un correo generado automáticamente.</p>
+          </div>
+        `
+      })
+    }
+  } catch (err) {
+    console.error('[createTareaAsignada] Error enviando correo:', err)
+  }
 }
 
 export async function updateTareaAsignada(
