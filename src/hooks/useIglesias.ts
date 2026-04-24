@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getIglesias, getPastores, getIglesiaPastores, getSedes,
   getIglesiasEnriquecidas, getPastoresEnriquecidos, getSedesEnriquecidas,
+  getIglesiaEnriquecidaById, getPastoresPorIglesia,
   createIglesia, updateIglesia, toggleIglesiaEstado, deleteIglesia,
   createSede, updateSede, toggleSedeEstado, deleteSede,
   createPastor, updatePastor, deletePastor,
@@ -40,6 +41,24 @@ export function useSedesEnriquecidas(idIglesia?: number) {
   return useQuery({
     queryKey: ['sedes-enriquecidas', idIglesia],
     queryFn: () => getSedesEnriquecidas(idIglesia),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useIglesiaEnriquecidaById(idIglesia?: number) {
+  return useQuery({
+    queryKey: ['iglesia-enriquecida', idIglesia],
+    queryFn: () => getIglesiaEnriquecidaById(idIglesia!),
+    enabled: !!idIglesia,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function usePastoresPorIglesia(idIglesia?: number) {
+  return useQuery({
+    queryKey: ['pastores-por-iglesia', idIglesia],
+    queryFn: () => getPastoresPorIglesia(idIglesia!),
+    enabled: !!idIglesia,
     staleTime: 5 * 60 * 1000,
   })
 }
