@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  CalendarDays, Plus, MapPin, Clock, Globe, Users, Pencil, Trash2,
+  CalendarDays, Plus, MapPin, Clock, Globe, Users, Pencil, Trash2, Eye,
   CheckCircle2, XCircle, PlayCircle, BookMarked,
 } from "lucide-react";
 
@@ -108,6 +108,7 @@ export function EventsPage() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [editEvento, setEditEvento] = useState<EventoEnriquecido | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<EventoEnriquecido | null>(null);
 
   const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "" });
   const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "", estado: "programado" as string });
@@ -215,6 +216,13 @@ export function EventsPage() {
                       <h4 className="text-lg font-bold tracking-tight leading-snug group-hover:text-[#4682b4] transition-colors truncate pr-1 uppercase italic">{evento.nombre}</h4>
                       {/* Action buttons — appear on hover */}
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                        <button
+                          className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
+                          onClick={() => setSelectedEvent(evento)}
+                          title="Ver detalle"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <button
                           className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
                           onClick={() => openEditDialog(evento)}
@@ -390,6 +398,87 @@ export function EventsPage() {
               {updateEventoMutation.isPending ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Detail Dialog ── */}
+      <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
+        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          {selectedEvent && (() => {
+            const isGlobal = !selectedEvent.idMinisterio;
+            const scope = isGlobal ? scopeConfig.global : scopeConfig.ministerio;
+            const estado = estadoConfig[selectedEvent.estado] ?? estadoConfig.programado;
+            return (
+              <>
+                <DialogHeader>
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex flex-col items-center justify-center text-white shadow-lg">
+                      <span className="text-[9px] font-black uppercase leading-none opacity-80">{getMon(selectedEvent.fechaInicio)}</span>
+                      <span className="text-2xl font-black leading-none mt-0.5">{getDay(selectedEvent.fechaInicio)}</span>
+                    </div>
+                    <div>
+                      <DialogTitle className="text-xl font-bold tracking-tight">{selectedEvent.nombre}</DialogTitle>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <Badge variant="outline" className={`${estado.color} border-0 text-[10px] uppercase font-black tracking-widest px-2.5 py-1 flex items-center gap-1.5 rounded-lg`}>
+                          {estado.icon} {estado.label}
+                        </Badge>
+                        <Badge variant="outline" className={`${scope.color} border-0 text-[10px] uppercase font-black tracking-widest px-2.5 py-1 flex items-center gap-1.5 rounded-lg`}>
+                          {scope.icon} {isGlobal ? "Global" : selectedEvent.ministerioNombre}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </DialogHeader>
+                <div className="space-y-5 py-2">
+                  {selectedEvent.descripcion && (
+                    <div className="p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2">Descripción</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{selectedEvent.descripcion}</p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Inicio</p>
+                      <p className="text-sm font-medium">{formatDate(selectedEvent.fechaInicio)}</p>
+                      <p className="text-xs text-muted-foreground">{formatTime(selectedEvent.fechaInicio)}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Fin</p>
+                      <p className="text-sm font-medium">{formatDate(selectedEvent.fechaFin)}</p>
+                      <p className="text-xs text-muted-foreground">{formatTime(selectedEvent.fechaFin)}</p>
+                    </div>
+                  </div>
+
+                  {selectedEvent.tipoEventoNombre && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo:</span>
+                      <Badge variant="outline" className="bg-white/5 border-0 text-muted-foreground text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-lg">
+                        {selectedEvent.tipoEventoNombre}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {selectedEvent.sedeNombre && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="w-4 h-4 text-[#4682b4]" />
+                      <span>{selectedEvent.sedeNombre}</span>
+                    </div>
+                  )}
+
+                  {selectedEvent.cantidadTareas > 0 && (
+                    <div className="p-3 rounded-xl bg-[#4682b4]/5 border border-[#4682b4]/10">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#4682b4]/60 mb-1">Tareas asociadas</p>
+                      <p className="text-sm font-medium text-[#4682b4]">{selectedEvent.cantidadTareas} tarea{selectedEvent.cantidadTareas > 1 ? "s" : ""}</p>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter className="border-t border-border/50 pt-4">
+                  <Button variant="ghost" className="rounded-xl" onClick={() => setSelectedEvent(null)}>Cerrar</Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
