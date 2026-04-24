@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabaseClient'
 import type { Ministerio, MiembroMinisterio } from '@/types/app.types'
 import type { Database } from '@/types/database.types'
+import { sendEmail } from './email.service'
 
 type MinisterioRow = Database['public']['Tables']['ministerio']['Row']
 type MiembroRow = Database['public']['Tables']['miembro_ministerio']['Row']
@@ -156,6 +157,34 @@ export async function createMiembroMinisterio(
     .select()
     .single()
   if (error) throw error
+
+  // Notificar por correo
+  try {
+    const [{ data: user }, { data: ministerio }] = await Promise.all([
+      supabase.from('usuario').select('correo, nombres').eq('id_usuario', data.idUsuario).single(),
+      supabase.from('ministerio').select('nombre').eq('id_ministerio', data.idMinisterio).single()
+    ])
+
+    if (user && user.correo && ministerio) {
+      await sendEmail({
+        to: user.correo,
+        subject: 'Has sido asignado a un Ministerio',
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2 style="color: #4682b4;">¡Hola, ${user.nombres}!</h2>
+            <p>Has sido asignado al ministerio <strong>${ministerio.nombre}</strong>.</p>
+            <p>Tu rol en este ministerio será: <strong>${data.rolEnMinisterio || 'Miembro'}</strong></p>
+            <p>Inicia sesión en el sistema para conocer más detalles sobre tus actividades.</p>
+            <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;" />
+            <p style="font-size: 12px; color: #888;">Este es un correo generado automáticamente.</p>
+          </div>
+        `
+      })
+    }
+  } catch (err) {
+    console.error('[createMiembroMinisterio] Error enviando correo:', err)
+  }
+
   return mapMiembro(result)
 }
 

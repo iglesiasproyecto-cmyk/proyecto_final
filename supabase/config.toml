@@ -1,5 +1,4 @@
 # Supabase project configuration
-# https://supabase.com/docs/guides/cli/config
 
 [api]
 enabled = true
@@ -19,13 +18,14 @@ port = 54324
 [auth]
 enabled = true
 site_url = "http://localhost:5173"
-uri_allow_list = ["localhost", "127.0.0.1"]
-redirect_urls = ["http://localhost:5173/app", "http://localhost:5173/auth/callback"]
 
 [auth.email]
 enable_confirmations = false
-auto_confirm = true
 
 [project]
-# Remote project ref (heibyjbvfiokmduwwawm)
-# Used by: supabase link --project-ref $SUPABASE_PROJECT_ID
+
+[functions.send-email]
+enabled = true
+verify_jwt = true
+import_map = "./functions/send-email/deno.json"
+entrypoint = "./functions/send-email/index.ts"
