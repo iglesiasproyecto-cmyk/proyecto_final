@@ -275,6 +275,79 @@ export interface DetalleProcesoCurso {
   correo?: string
 }
 
+// ── Evaluaciones con Preguntas y Opciones ──
+export interface Pregunta {
+  idPregunta: number
+  idEvaluacion: number
+  titulo: string
+  descripcion?: string
+  tipo: 'multiple_choice' | 'verdadero_falso' | 'abierta'
+  orden: number
+  activo: boolean
+  creadoEn: string
+  actualizadoEn: string
+}
+
+export interface OpcionRespuesta {
+  idOpcion: number
+  idPregunta: number
+  textoOpcion: string
+  esCorrecta: boolean
+  puntos: number
+  orden: number // 1=A, 2=B, 3=C, 4=D
+  creadoEn: string
+  actualizadoEn: string
+}
+
+export interface RespuestaEvaluacion {
+  idRespuesta: number
+  idPregunta: number
+  idIntento: number
+  idOpcionSelected?: number
+  puntosObtenidos?: number
+  respondidoEn: string
+  creadoEn: string
+}
+
+export interface EvaluacionIntento {
+  idIntento: number
+  idEvaluacion: number
+  idUsuario: number
+  numeroIntento: number
+  fechaInicio: string
+  fechaFin?: string
+  estado: 'en_progreso' | 'completado' | 'abandonado'
+  puntajeTotal?: number
+  puntajeMaximo?: number
+  porcentaje?: number
+  tiempoDuracion?: number // En segundos
+  creadoEn: string
+}
+
+export interface EvaluacionConPreguntas {
+  evaluacion: Evaluacion
+  preguntas: Pregunta[]
+  puntajeMaximo: number
+}
+
+export interface PreguntaConOpciones {
+  pregunta: Pregunta
+  opciones: OpcionRespuesta[]
+}
+
+export interface ResultadoEvaluacion {
+  intento: EvaluacionIntento
+  respuestas: RespuestaEvaluacion[]
+  detalles: {
+    totalPreguntas: number
+    respondidas: number
+    correctas: number
+    puntajeObtenido: number
+    puntajeMaximo: number
+    porcentaje: number
+  }
+}
+
 // ── Session ──
 export type RolClave = 'super_admin' | 'admin_iglesia' | 'lider' | 'servidor'
 
