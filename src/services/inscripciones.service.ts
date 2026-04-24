@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient'
 import type { DetalleProcesoCurso } from '@/types/app.types'
+import { sendEmail } from './email.service'
 
 // -------------------------------------------------------------------------
 // Tipos del dominio de inscripciones
@@ -77,11 +78,61 @@ export async function enrollUsers(
     p_override_ministerio: overrideMinisterio,
   })
   if (error) throw error
-  return (data ?? []).map((r: { id_usuario: number; estado: EnrollOutcome; id_detalle: number | null }) => ({
+  const results = (data ?? []).map((r: { id_usuario: number; estado: EnrollOutcome; id_detalle: number | null }) => ({
     idUsuario: r.id_usuario,
     estado: r.estado,
     idDetalle: r.id_detalle,
   }))
+
+  // Enviar correos a los inscritos exitosamente
+  try {
+    const enrolledUsers = results.filter(r => r.estado === 'inscrito' || r.estado === 'reactivado');
+    if (enrolledUsers.length > 0) {
+      // Obtener datos del ciclo/curso
+      const { data: cicloInfo } = await supabase
+        .from('proceso_asignado_curso')
+        .select(`curso(nombre)`)
+        .eq('id_proceso_asignado_curso', idCiclo)
+        .single();
+      
+      const courseName = (cicloInfo?.curso as any)?.nombre || 'un nuevo curso';
+
+      // Obtener los correos de los usuarios
+      const userIdsEnrolled = enrolledUsers.map(r => r.idUsuario);
+      const { data: users } = await supabase
+        .from('usuario')
+        .select('correo, nombres')
+        .in('id_usuario', userIdsEnrolled);
+
+      if (users && users.length > 0) {
+        // Enviar correos en paralelo
+        await Promise.all(
+          users.map(u => {
+            if (u.correo) {
+              return sendEmail({
+                to: u.correo,
+                subject: 'Inscripción a curso confirmada',
+                html: `
+                  <div style="font-family: Arial, sans-serif; color: #333;">
+                    <h2 style="color: #4682b4;">¡Hola, ${u.nombres}!</h2>
+                    <p>Has sido matriculado exitosamente en el curso: <strong>${courseName}</strong>.</p>
+                    <p>Ya puedes acceder al aula virtual para revisar el material y las evaluaciones asignadas.</p>
+                    <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;" />
+                    <p style="font-size: 12px; color: #888;">Este es un correo generado automáticamente.</p>
+                  </div>
+                `
+              })
+            }
+            return Promise.resolve();
+          })
+        );
+      }
+    }
+  } catch (err) {
+    console.error('[enrollUsers] Error enviando correos de inscripción:', err);
+  }
+
+  return results;
 }
 
 // -------------------------------------------------------------------------

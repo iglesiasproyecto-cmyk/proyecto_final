@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTareasEnriquecidas, useCreateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada } from "@/hooks/useEventos";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useApp } from "../store/AppContext";
@@ -49,6 +49,9 @@ export function TasksPage() {
     titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as "baja" | "media" | "alta" | "urgente",
   });
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; titulo: string }>({ open: false, id: 0, titulo: "" });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" });
 
@@ -101,6 +104,30 @@ export function TasksPage() {
     );
   };
 
+  const filteredAndSortedTareas = useMemo(() => {
+    let result = [...tareas];
+    
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(t => 
+        t.titulo.toLowerCase().includes(q) || 
+        (t.descripcion && t.descripcion.toLowerCase().includes(q))
+      );
+    }
+    
+    if (dateFilter) {
+      result = result.filter(t => t.fechaLimite === dateFilter);
+    }
+    
+    result.sort((a, b) => {
+      const dateA = new Date(a.creadoEn).getTime();
+      const dateB = new Date(b.creadoEn).getTime();
+      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+    });
+
+    return result;
+  }, [tareas, searchQuery, dateFilter, sortOrder]);
+
   if (isLoading) return (
     <div className="flex items-center justify-center h-48">
       <div className="flex flex-col items-center gap-3 text-muted-foreground">
@@ -116,7 +143,9 @@ export function TasksPage() {
     if (current === "en_progreso") return "completada";
     return null;
   };
-  const tasksByStatus = (status: string) => tareas.filter(t => t.estado === status);
+
+
+  const tasksByStatus = (status: string) => filteredAndSortedTareas.filter(t => t.estado === status);
   const COLS = ["pendiente", "en_progreso", "completada"] as const;
 
   return (
@@ -169,6 +198,38 @@ export function TasksPage() {
         })}
       </div>
 
+      {/* ── Filtros y Buscador ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row gap-3 bg-card/40 backdrop-blur-xl border border-border/50 p-4 rounded-2xl shadow-sm"
+      >
+        <div className="flex-1 relative">
+          <Input 
+            placeholder="Buscar por título o descripción..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-background/50 border-white/10 h-11"
+          />
+        </div>
+        <div className="flex gap-3">
+          <Input 
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="w-[150px] bg-background/50 border-white/10 h-11"
+            title="Filtrar por Fecha Límite"
+          />
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
+            className="w-[180px] h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+          >
+            <option value="newest">Más recientes primero</option>
+            <option value="oldest">Más antiguas primero</option>
+          </select>
+        </div>
+      </motion.div>
 
       {/* ── Kanban Board ── */}
       <motion.div

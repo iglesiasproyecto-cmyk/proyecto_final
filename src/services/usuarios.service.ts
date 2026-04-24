@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabaseClient'
 import type { Rol, Usuario, UsuarioRol } from '@/types/app.types'
 import type { Database } from '@/types/database.types'
+import { sendEmail } from './email.service'
 
 type RolRow = Database['public']['Tables']['rol']['Row']
 type UsuarioRow = Database['public']['Tables']['usuario']['Row']
@@ -175,23 +176,48 @@ export async function inviteUser(data: {
   }
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('No hay sesión activa')
-  const res = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify(payload),
-    }
-  )
+  let res: Response;
+  try {
+    res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    )
+  } catch (error: any) {
+    console.error("[inviteUser] Fetch error:", error);
+    throw new Error(error.message === "Failed to fetch" ? "Error de red o CORS al contactar Edge Function. Verifica que invite-user esté desplegada y tenga CORS habilitado." : error.message);
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }))
     throw new Error(err.message ?? 'Error al invitar usuario')
   }
 
-  return await res.json()
+  const result = await res.json()
+
+  if (result.success) {
+    // Enviar notificación por correo
+    await sendEmail({
+      to: payload.correo,
+      subject: '¡Bienvenido al sistema de gestión!',
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h2 style="color: #4682b4;">¡Hola, ${payload.nombres}!</h2>
+          <p>Has sido agregado exitosamente al sistema de la iglesia.</p>
+          <p>Tu cuenta ya está configurada para que puedas acceder y gestionar tus actividades.</p>
+          <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #888;">Este es un correo generado automáticamente. Por favor, no respondas a este mensaje.</p>
+        </div>
+      `
+    });
+  }
+
+  return result
 }
 
 export async function toggleUsuarioActivo(id: number): Promise<void> {
