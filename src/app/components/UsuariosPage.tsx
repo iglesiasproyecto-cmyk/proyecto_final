@@ -60,8 +60,15 @@ export function UsuariosPage() {
 
   const filtered = enriched.filter(u => {
     if (search) {
-      const q = search.toLowerCase();
-      if (!`${u.nombres} ${u.apellidos}`.toLowerCase().includes(q) && !u.correo.toLowerCase().includes(q)) return false;
+      const q = search.toLowerCase().trim();
+      const fullName = `${u.nombres} ${u.apellidos}`.toLowerCase();
+      const matchesName = fullName.includes(q);
+      const matchesEmail = u.correo.toLowerCase().includes(q);
+      const matchesPhone = (u.telefono || "").toLowerCase().includes(q);
+      const matchesRol = u.roleNames.some(rn => rn.rolNombre.toLowerCase().includes(q));
+      const matchesIglesia = u.roleNames.some(rn => rn.iglesiaNombre.toLowerCase().includes(q));
+      const matchesMinisterio = u.minNames.some(mn => mn.nombre.toLowerCase().includes(q));
+      if (!matchesName && !matchesEmail && !matchesPhone && !matchesRol && !matchesIglesia && !matchesMinisterio) return false;
     }
     if (filterEstado === "activo" && !u.activo) return false;
     if (filterEstado === "inactivo" && u.activo) return false;

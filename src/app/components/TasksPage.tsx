@@ -5,13 +5,13 @@ import { useApp } from "../store/AppContext";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
-import { Card } from "./ui/card";
 import { AnimatedCard } from "./ui/AnimatedCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar,
-  ChevronRight, Inbox, Trash2, Users, UserPlus, X,
+  ChevronRight, Inbox, Trash2, UserPlus, X,
 } from "lucide-react";
 
 const statusConfig = {
@@ -33,7 +33,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function TasksPage() {
-  const { usuarioActual } = useApp();
+  const { usuarioActual, session } = useApp();
   const { data: tareas = [], isLoading } = useTareasEnriquecidas();
   const createTareaMutation = useCreateTarea();
   const updateEstadoMutation = useUpdateTareaEstado();
@@ -48,19 +48,56 @@ export function TasksPage() {
   const [createForm, setCreateForm] = useState({
     titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as "baja" | "media" | "alta" | "urgente",
   });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; titulo: string }>({ open: false, id: 0, titulo: "" });
 
   const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" });
 
   const handleDeleteTarea = (id: number, titulo: string) => {
-    if (!confirm(`¿Eliminar tarea "${titulo}"?`)) return;
-    deleteTareaMutation.mutate(id);
+    setDeleteConfirm({ open: true, id, titulo });
+  };
+
+  const confirmDeleteTarea = () => {
+    if (!deleteConfirm.id) return;
+    deleteTareaMutation.mutate(deleteConfirm.id, {
+      onSuccess: () => {
+        setDeleteConfirm({ open: false, id: 0, titulo: "" });
+        setSelectedTask(null);
+      },
+    });
   };
 
   const handleCreateTarea = () => {
-    if (!createForm.titulo.trim() || !usuarioActual) return;
+    if (!createForm.titulo.trim()) {
+      toast.error("El título es obligatorio");
+      return;
+    }
+    if (!usuarioActual) {
+      toast.error("Debes iniciar sesión para crear tareas");
+      return;
+    }
     createTareaMutation.mutate(
       { titulo: createForm.titulo.trim(), descripcion: createForm.descripcion.trim() || null, fechaLimite: createForm.fechaLimite || null, prioridad: createForm.prioridad, idUsuarioCreador: usuarioActual.idUsuario },
-      { onSuccess: () => { setShowCreate(false); resetCreateForm(); } }
+      {
+        onSuccess: (tareaCreada) => {
+          toast.success(`Tarea "${tareaCreada.titulo}" creada exitosamente`);
+          setShowCreate(false);
+          resetCreateForm();
+          setSelectedTask(tareaCreada.idTarea);
+        },
+        onError: (error) => {
+          console.error('[TasksPage] Error creating task:', error);
+          const msg = error?.message || "";
+          if (msg.includes("403") || msg.includes("401") || msg.includes("JWT") || msg.includes("auth")) {
+            toast.error("Error de autenticación. Tu sesión puede haber expirado. Intenta cerrar sesión y volver a entrar.");
+          } else if (msg.includes("foreign key") || msg.includes("violates")) {
+            toast.error("Error de validación. Verifica que todos los datos sean correctos.");
+          } else if (msg.includes("row-level security") || msg.includes("RLS") || msg.includes("new row violates")) {
+            toast.error("Error de permisos (RLS). Contacta al administrador.");
+          } else {
+            toast.error("Error al crear tarea: " + msg);
+          }
+        }
+      }
     );
   };
 
@@ -251,19 +288,23 @@ export function TasksPage() {
       {/* ── Task Detail Dialog ── */}
       <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogHeader>
+            {task ? (
+              <div className="flex items-start gap-3">
+                <div className={`w-9 h-9 rounded-xl ${statusConfig[task.estado]?.color} border flex items-center justify-center shrink-0 mt-0.5`}>
+                  {statusConfig[task.estado]?.icon}
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-bold tracking-tight leading-snug">{task.titulo}</DialogTitle>
+                  {task.eventoNombre && <p className="text-[11px] text-primary/60 mt-0.5">{task.eventoNombre}</p>}
+                </div>
+              </div>
+            ) : (
+              <DialogTitle className="text-lg font-bold tracking-tight leading-snug">Detalle de Tarea</DialogTitle>
+            )}
+          </DialogHeader>
           {task && (
             <>
-              <DialogHeader>
-                <div className="flex items-start gap-3">
-                  <div className={`w-9 h-9 rounded-xl ${statusConfig[task.estado]?.color} border flex items-center justify-center shrink-0 mt-0.5`}>
-                    {statusConfig[task.estado]?.icon}
-                  </div>
-                  <div>
-                    <DialogTitle className="text-lg font-bold tracking-tight leading-snug">{task.titulo}</DialogTitle>
-                    {task.eventoNombre && <p className="text-[11px] text-primary/60 mt-0.5">{task.eventoNombre}</p>}
-                  </div>
-                </div>
-              </DialogHeader>
 
               <div className="space-y-5 py-1">
                 {task.descripcion && (
@@ -429,6 +470,35 @@ export function TasksPage() {
             <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
             <Button className="rounded-xl" onClick={handleCreateTarea} disabled={createTareaMutation.isPending || !usuarioActual}>
               {createTareaMutation.isPending ? "Creando..." : "Crear Tarea"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Confirmation Dialog ── */}
+      <Dialog open={deleteConfirm.open} onOpenChange={(open) => setDeleteConfirm(prev => ({ ...prev, open }))}>
+        <DialogContent className="sm:max-w-sm rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogHeader>
+            <div className="flex flex-col items-center gap-3 pt-2">
+              <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+                <Trash2 className="w-7 h-7 text-rose-400" />
+              </div>
+              <DialogTitle className="text-lg font-bold tracking-tight text-center">¿Eliminar tarea?</DialogTitle>
+              <p className="text-sm text-muted-foreground text-center">
+                Estás a punto de eliminar <span className="font-semibold text-foreground">"{deleteConfirm.titulo}"</span>. Esta acción no se puede deshacer.
+              </p>
+            </div>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
+            <Button variant="ghost" className="rounded-xl w-full" onClick={() => setDeleteConfirm({ open: false, id: 0, titulo: "" })}>
+              Cancelar
+            </Button>
+            <Button
+              className="rounded-xl w-full bg-rose-500 hover:bg-rose-600 text-white"
+              onClick={confirmDeleteTarea}
+              disabled={deleteTareaMutation.isPending}
+            >
+              {deleteTareaMutation.isPending ? "Eliminando..." : "Sí, eliminar"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getTiposEvento, getEventos, getTareas, getTareasAsignadas,
   getEventosEnriquecidos, getTareasEnriquecidas,
@@ -66,7 +66,7 @@ export function useCreateEvento() {
     mutationFn: createEvento,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['eventos'] })
-      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
+      qc.refetchQueries({ queryKey: ['eventos-enriquecidos'], type: 'all' })
     },
   })
 }
@@ -79,6 +79,7 @@ export function useCreateTarea() {
       qc.invalidateQueries({ queryKey: ['tareas'] })
       qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
       qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
+      qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
     },
   })
 }
@@ -89,13 +90,13 @@ export function useUpdateTareaEstado() {
     mutationFn: ({ id, estado }: { id: number; estado: Tarea['estado'] }) =>
       updateTareaEstado(id, estado),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['tareas'] })
-      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      qc.refetchQueries({ queryKey: ['tareas'], type: 'all' })
+      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
     },
   })
 }
 
-// ── Enriched query hooks ──
+// â”€â”€ Enriched query hooks â”€â”€
 
 export function useEventosEnriquecidos(idIglesia?: number) {
   return useQuery({
@@ -113,7 +114,7 @@ export function useTareasEnriquecidas(idEvento?: number) {
   })
 }
 
-// ── Evento update/delete mutations ──
+// â”€â”€ Evento update/delete mutations â”€â”€
 
 export function useUpdateEvento() {
   const qc = useQueryClient()
@@ -122,7 +123,7 @@ export function useUpdateEvento() {
       updateEvento(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['eventos'] })
-      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
+      qc.refetchQueries({ queryKey: ['eventos-enriquecidos'], type: 'all' })
     },
   })
 }
@@ -133,12 +134,12 @@ export function useDeleteEvento() {
     mutationFn: (id: number) => deleteEvento(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['eventos'] })
-      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
+      qc.refetchQueries({ queryKey: ['eventos-enriquecidos'], type: 'all' })
     },
   })
 }
 
-// ── Tarea update/delete mutations ──
+// â”€â”€ Tarea update/delete mutations â”€â”€
 
 export function useUpdateTarea() {
   const qc = useQueryClient()
@@ -146,8 +147,8 @@ export function useUpdateTarea() {
     mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateTarea>[1] }) =>
       updateTarea(id, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['tareas'] })
-      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      qc.refetchQueries({ queryKey: ['tareas'], type: 'all' })
+      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
     },
   })
 }
@@ -157,14 +158,14 @@ export function useDeleteTarea() {
   return useMutation({
     mutationFn: (id: number) => deleteTarea(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['tareas'] })
-      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
-      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
+      qc.refetchQueries({ queryKey: ['tareas'], type: 'all' })
+      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
+      qc.refetchQueries({ queryKey: ['eventos-enriquecidos'], type: 'all' })
     },
   })
 }
 
-// ── TareaAsignada mutations ──
+// â”€â”€ TareaAsignada mutations â”€â”€
 
 export function useCreateTareaAsignada() {
   const qc = useQueryClient()
@@ -172,7 +173,7 @@ export function useCreateTareaAsignada() {
     mutationFn: (data: Parameters<typeof createTareaAsignada>[0]) => createTareaAsignada(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
-      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
     },
   })
 }
@@ -194,7 +195,7 @@ export function useDeleteTareaAsignada() {
     mutationFn: (id: number) => deleteTareaAsignada(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
-      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
     },
   })
 }
