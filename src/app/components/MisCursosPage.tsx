@@ -1,17 +1,20 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router'
 import { motion } from 'motion/react'
+import { toast } from 'sonner'
 import { useApp } from '../store/AppContext'
-import { useModulos } from '@/hooks/useCursos'
 import { useMisInscripciones } from '@/hooks/useInscripciones'
 import { useMiAvanceCurso } from '@/hooks/useAvance'
-import { useEvaluaciones } from '@/hooks/useCursos'
+import { useEvaluaciones, useCursos, useModulos } from '@/hooks/useCursos'
+import { useIntentosUsuario, useIniciarIntento } from '@/hooks/useEvaluaciones'
 import { Card } from './ui/card'
 import { Button } from './ui/button'
 import { Progress } from './ui/progress'
 import { EstadoInscripcionBadge } from './classroom/EstadoInscripcionBadge'
 import { CompanerosDrawer } from './classroom/CompanerosDrawer'
-import { BookOpen, Calendar, GraduationCap, Users, Award } from 'lucide-react'
+import { ResolucionEvaluacion } from './classroom/ResolucionEvaluacion'
+import { ResultadosEvaluacion } from './classroom/ResultadosEvaluacion'
+import { BookOpen, Calendar, GraduationCap, Users, Award, ClipboardCheck, Play, Eye } from 'lucide-react'
 import type { Evaluacion } from '@/types/app.types'
 
 const ACTIVOS = new Set(['inscrito', 'en_progreso'] as const)
@@ -93,8 +96,16 @@ export function MisCursosPage() {
   const { data: inscripciones = [], isLoading } = useMisInscripciones(usuarioActual?.idUsuario)
   const { data: avances = [] } = useMiAvanceCurso(usuarioActual?.idUsuario)
   const { data: evaluaciones = [] } = useEvaluaciones(usuarioActual?.idUsuario)
-  const [tab, setTab] = useState<'activos' | 'finalizados'>('activos')
+  const { data: cursos = [] } = useCursos()
+  const [tab, setTab] = useState<'activos' | 'finalizados' | 'evaluaciones'>('activos')
   const [drawerCiclo, setDrawerCiclo] = useState<{ id: number; curso: string } | null>(null)
+
+  // Estado para evaluaciones de cuestionario
+  const [evaluacionActual, setEvaluacionActual] = useState<{ idEvaluacion: number; titulo: string } | null>(null)
+  const [idIntentoActual, setIdIntentoActual] = useState<number | null>(null)
+  const [mostrandoResultado, setMostrandoResultado] = useState(false)
+
+  const iniciarEvaluacion = useIniciarIntento()
 
   const activos = inscripciones.filter((i) => ACTIVOS.has(i.estado as 'inscrito' | 'en_progreso'))
   const finalizados = inscripciones.filter((i) => !ACTIVOS.has(i.estado as 'inscrito' | 'en_progreso'))
@@ -107,8 +118,32 @@ export function MisCursosPage() {
     ]),
   )
 
+  // Lógica básica para evaluaciones (placeholder hasta implementar completamente)
+  const evaluacionesDisponibles = React.useMemo(() => {
+    // Placeholder: retornar array vacío por ahora
+    // TODO: Implementar lógica completa para obtener evaluaciones disponibles
+    return []
+  }, [])
+
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+
+  const handleIniciarEvaluacion = async (idEvaluacion: number, titulo: string) => {
+    if (!usuarioActual) return
+
+    try {
+      const result = await iniciarEvaluacion.mutateAsync({
+        idEvaluacion,
+        idUsuario: usuarioActual.idUsuario
+      })
+
+      setEvaluacionActual({ idEvaluacion, titulo })
+      setIdIntentoActual(result.idIntento)
+      setMostrandoResultado(false)
+    } catch (error) {
+      toast.error('Error al iniciar la evaluación')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -138,7 +173,7 @@ export function MisCursosPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 bg-background/50 border border-border/50 rounded-xl p-1">
-          {(['activos', 'finalizados'] as const).map((t) => (
+          {(['activos', 'finalizados', 'evaluaciones'] as const).map((t) => (
             <button
               key={t}
               className={`px-4 h-9 rounded-lg text-xs font-bold uppercase tracking-wider transition-all capitalize ${
@@ -154,7 +189,89 @@ export function MisCursosPage() {
         </div>
       </motion.div>
 
-      {visibles.length === 0 ? (
+      {tab === 'evaluaciones' ? (
+        // Sección de Evaluaciones
+        <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative bg-card/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-sm"
+          >
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20">
+                <ClipboardCheck className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight">Mis Evaluaciones</h2>
+                <p className="text-muted-foreground text-sm">
+                  Evalúa tus conocimientos con cuestionarios interactivos
+                </p>
+              </div>
+            </div>
+
+            {evaluacionesDisponibles.length === 0 ? (
+              <div className="py-12 flex flex-col items-center gap-3 text-muted-foreground text-center">
+                <div className="w-16 h-16 rounded-2xl bg-accent/40 flex items-center justify-center">
+                  <ClipboardCheck className="w-7 h-7 opacity-40" />
+                </div>
+                <p className="font-semibold text-sm">No hay evaluaciones disponibles</p>
+                <p className="text-xs">Las evaluaciones aparecerán aquí cuando tus instructores las publiquen.</p>
+              </div>
+            ) : (
+              // Lista de evaluaciones disponibles
+              <div className="space-y-4">
+                {evaluacionesDisponibles.map((item) => (
+                  <Card key={item.evaluacion.idEvaluacion} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{item.evaluacion.titulo}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {item.curso.nombre} • {item.modulo.titulo}
+                        </p>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          <span>Intentos: {item.intentosPrevios}</span>
+                          <span>Máx: {item.evaluacion.maxIntentos}</span>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleIniciarEvaluacion(item.evaluacion.idEvaluacion, item.evaluacion.titulo)}
+                        disabled={!item.puedeTomar}
+                        className="rounded-xl"
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        {item.intentosPrevios === 0 ? 'Iniciar' : 'Reintentar'}
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </motion.div>
+
+          {/* Modales para evaluación y resultados */}
+          {evaluacionActual && idIntentoActual && !mostrandoResultado && (
+            <ResolucionEvaluacion
+              idEvaluacion={evaluacionActual.idEvaluacion}
+              idIntento={idIntentoActual}
+              onFinalized={(idIntento) => {
+                setIdIntentoActual(idIntento)
+                setMostrandoResultado(true)
+              }}
+            />
+          )}
+
+          {mostrandoResultado && idIntentoActual && (
+            <ResultadosEvaluacion
+              idIntento={idIntentoActual}
+              onVolver={() => {
+                setEvaluacionActual(null)
+                setIdIntentoActual(null)
+                setMostrandoResultado(false)
+              }}
+            />
+          )}
+        </div>
+      ) : visibles.length === 0 ? (
         <div className="py-20 flex flex-col items-center gap-3 text-muted-foreground text-center">
           <div className="w-16 h-16 rounded-2xl bg-accent/40 flex items-center justify-center">
             <BookOpen className="w-7 h-7 opacity-40" />
@@ -162,10 +279,15 @@ export function MisCursosPage() {
           <p className="font-semibold text-sm">
             {tab === 'activos'
               ? 'Aún no estás inscrito en ningún curso.'
-              : 'Todavía no tienes cursos finalizados.'}
+              : tab === 'finalizados'
+              ? 'Todavía no tienes cursos finalizados.'
+              : 'No hay evaluaciones disponibles.'}
           </p>
           {tab === 'activos' && (
             <p className="text-xs">Tu líder o admin te inscribirá cuando haya un ciclo disponible.</p>
+          )}
+          {tab === 'evaluaciones' && (
+            <p className="text-xs">Las evaluaciones aparecerán aquí cuando tus instructores las publiquen.</p>
           )}
         </div>
       ) : (
