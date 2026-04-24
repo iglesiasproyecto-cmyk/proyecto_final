@@ -30,16 +30,16 @@ import { EnrollmentPickerModal } from "./classroom/EnrollmentPickerModal";
 
 const estadoCicloConfig: Record<string, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
   programado: { label: "Programado", color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",      dot: "bg-[#4682b4]",    icon: <BookMarked className="w-3 h-3" /> },
-  en_curso:   { label: "En Curso",   color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-400", icon: <PlayCircle className="w-3 h-3" /> },
+  en_curso:   { label: "En Curso",   color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20", dot: "bg-[#4682b4]", icon: <PlayCircle className="w-3 h-3" /> },
   finalizado: { label: "Finalizado", color: "bg-slate-500/10 text-slate-400 border-slate-500/20",   dot: "bg-slate-400",   icon: <CheckCircle2 className="w-3 h-3" /> },
-  cancelado:  { label: "Cancelado",  color: "bg-rose-500/10 text-rose-400 border-rose-500/20",      dot: "bg-rose-400",    icon: <XCircle className="w-3 h-3" /> },
+  cancelado:  { label: "Cancelado",  color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",      dot: "bg-[#4682b4]",    icon: <XCircle className="w-3 h-3" /> },
 };
 
 const estadoInscripcionConfig: Record<string, { label: string; color: string }> = {
   inscrito:    { label: "Inscrito",    color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20" },
-  en_progreso: { label: "En Progreso", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-  completado:  { label: "Completado",  color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  retirado:    { label: "Retirado",    color: "bg-rose-500/10 text-rose-400 border-rose-500/20" },
+  en_progreso: { label: "En Progreso", color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20" },
+  completado:  { label: "Completado",  color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20" },
+  retirado:    { label: "Retirado",    color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20" },
 };
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
@@ -142,7 +142,7 @@ function CicloDetail({
               <p className="text-xs text-muted-foreground mt-0.5">{detalles.length} personas en este ciclo lectivo</p>
             </div>
             {canEnroll && (
-              <Button size="sm" className="h-9 rounded-xl" onClick={() => setShowPicker(true)}>
+              <Button size="sm" className="h-9 rounded-xl bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-md shadow-blue-900/20" onClick={() => setShowPicker(true)}>
                 <UserPlus className="w-4 h-4 mr-1.5" /> Inscribir
               </Button>
             )}
@@ -174,7 +174,7 @@ function CicloDetail({
                       title="Retirar"
                       disabled={mutating}
                       onClick={() => setPendingRetiro(d.idDetalleProcesoCurso)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-rose-400 hover:bg-rose-500/10 transition-all disabled:opacity-40"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all disabled:opacity-40"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -184,7 +184,7 @@ function CicloDetail({
                       title="Reactivar"
                       disabled={mutating}
                       onClick={() => reactivarMutation.mutate(d.idDetalleProcesoCurso)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all disabled:opacity-40"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all disabled:opacity-40"
                     >
                       <Undo2 className="w-3.5 h-3.5" />
                     </button>
@@ -228,7 +228,7 @@ function CicloDetail({
                 }
               }}
               disabled={retirarMutation.isPending}
-              className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white border-0"
+              className="rounded-xl bg-[#4682b4] hover:bg-[#4682b4]/80 text-white border-0"
             >
               {retirarMutation.isPending ? "Retirando..." : "Retirar"}
             </AlertDialogAction>
@@ -303,7 +303,7 @@ export function CiclosLectivosPage() {
   );
 
   if (error) return (
-    <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-6 rounded-2xl text-sm">
+    <div className="bg-[#4682b4]/10 border border-[#4682b4]/20 text-[#4682b4] p-6 rounded-2xl text-sm">
       Error cargando ciclos lectivos: {String((error as any)?.message ?? "")}
     </div>
   );
@@ -341,7 +341,7 @@ export function CiclosLectivosPage() {
   const formatDate = (d: string) => new Date(d).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" });
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
+    <div className="space-y-5 max-w-6xl mx-auto">
 
       {/* ── Header ── */}
       <motion.div
@@ -381,7 +381,7 @@ export function CiclosLectivosPage() {
               {uniqueCursoIds.map(id => <option key={id} value={id}>{getCursoNombre(id)}</option>)}
             </select>
           </div>
-          <Button onClick={() => setShowCreateCiclo(true)} className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all">
+          <Button onClick={() => setShowCreateCiclo(true)} className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all">
             <Plus className="w-4 h-4 mr-1.5" /> Nuevo Ciclo
           </Button>
         </div>
@@ -453,7 +453,7 @@ export function CiclosLectivosPage() {
 
                     <div className="flex items-center gap-2 shrink-0">
                       <button
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 opacity-0 group-hover:opacity-100 transition-all duration-300"
                         onClick={e => { e.stopPropagation(); setShowConfirmDelete(ciclo.idProcesoAsignadoCurso); }}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -526,7 +526,7 @@ export function CiclosLectivosPage() {
               </div>
             </div>
             {cicloError && (
-              <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
+              <p className="text-xs text-[#4682b4] bg-[#4682b4]/10 border border-[#4682b4]/20 rounded-lg px-3 py-2">
                 {cicloError}
               </p>
             )}
@@ -558,7 +558,7 @@ export function CiclosLectivosPage() {
             <AlertDialogAction
               onClick={() => { if (showConfirmDelete) deleteProcesaMutation.mutate(showConfirmDelete, { onSuccess: () => setShowConfirmDelete(null) }); }}
               disabled={deleteProcesaMutation.isPending}
-              className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white border-0"
+              className="rounded-xl bg-[#4682b4] hover:bg-[#4682b4]/80 text-white border-0"
             >
               {deleteProcesaMutation.isPending ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>

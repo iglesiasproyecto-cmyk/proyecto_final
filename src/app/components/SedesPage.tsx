@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSedesEnriquecidas, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado, useDeleteSede } from "@/hooks/useIglesias";
+import { useSedesEnriquecidas, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado, useDeleteSede, useIglesiaPastores, usePastoresEnriquecidos } from "@/hooks/useIglesias";
 import { useApp } from "@/app/store/AppContext";
 import { useCiudades } from "@/hooks/useGeografia";
 import { Button } from "./ui/button";
@@ -8,7 +8,7 @@ import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
-import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Save, Globe, Users } from "lucide-react";
+import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Save, Globe, Users, Eye, Church, UserCheck } from "lucide-react";
 import { motion } from "motion/react";
 import { AnimatedCard } from "./ui/AnimatedCard";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ export function SedesPage() {
   const [filterEstado, setFilterEstado] = useState("all");
   const [dialog, setDialog] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
+  const [selectedSede, setSelectedSede] = useState<number | null>(null);
   const [form, setForm] = useState({ nombre: "", direccion: "", idCiudad: 0, idIglesia: 0, estado: "activa" as "activa" | "inactiva" | "en_construccion" });
 
   const { iglesiaActual, rolActual } = useApp();
@@ -28,6 +29,8 @@ export function SedesPage() {
   const { data: sedes = [], isLoading } = useSedesEnriquecidas(queryIglesiaId);
   const { data: iglesias = [] } = useIglesias();
   const { data: ciudades = [] } = useCiudades();
+  const { data: iglesiaPastores = [] } = useIglesiaPastores();
+  const { data: pastores = [] } = usePastoresEnriquecidos();
 
   const createSedeMutation = useCreateSede();
   const updateSedeMutation = useUpdateSede();
@@ -251,6 +254,9 @@ export function SedesPage() {
               </div>
 
               <div className="flex gap-1.5">
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl hover:bg-[#4682b4]/10" onClick={() => setSelectedSede(s.idSede)} title="Ver detalle">
+                  <Eye className="w-4 h-4 text-[#4682b4]" />
+                </Button>
                 <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl hover:bg-black/5 dark:hover:bg-white/10" onClick={() => openEdit(s.idSede)}>
                   <Pencil className="w-4 h-4 text-foreground/70" />
                 </Button>
@@ -278,6 +284,82 @@ export function SedesPage() {
           <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">No se encontraron sedes activas con los criterios de búsqueda actuales.</p>
         </div>
       )}
+
+      {/* DIALOG DETAIL */}
+      {(() => {
+        const sedeDetail = sedes.find(s => s.idSede === selectedSede);
+        if (!sedeDetail) return null;
+        const iglesia = iglesias.find(i => i.idIglesia === sedeDetail.idIglesia);
+        const pastorLink = iglesiaPastores.find(ip => ip.idIglesia === sedeDetail.idIglesia && ip.esPrincipal);
+        const pastor = pastorLink ? pastores.find(p => p.idPastor === pastorLink.idPastor) : null;
+        return (
+          <Dialog open={!!selectedSede} onOpenChange={() => setSelectedSede(null)}>
+            <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
+              <div className="px-6 py-4 bg-gradient-to-r from-[#4682b4] to-[#709dbd] border-b border-white/10">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-white">
+                    <Building2 className="w-5 h-5" /> 
+                    Detalle de Sede
+                  </DialogTitle>
+                </DialogHeader>
+              </div>
+              <div className="px-6 py-5 space-y-5">
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#4682b4]/20 to-[#709dbd]/10 border border-[#4682b4]/20 flex items-center justify-center mx-auto mb-3">
+                    <MapPin className="w-8 h-8 text-[#4682b4]" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground uppercase italic">{sedeDetail.nombre}</h3>
+                  <Badge variant="outline" className={`mt-2 text-[9px] font-black uppercase tracking-widest border-0 py-1 px-3 rounded-lg shadow-sm ${estadoColor(sedeDetail.estado)}`}>
+                    {estadoLabel(sedeDetail.estado)}
+                  </Badge>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                    <div className="w-9 h-9 rounded-lg bg-[#4682b4]/10 flex items-center justify-center shrink-0">
+                      <Church className="w-4 h-4 text-[#4682b4]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Iglesia Madre</p>
+                      <p className="text-sm font-semibold text-foreground">{iglesia?.nombre || "No asignada"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                      <UserCheck className="w-4 h-4 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pastor Líder</p>
+                      <p className="text-sm font-semibold text-foreground">{pastor ? `${pastor.nombres} ${pastor.apellidos || ""}` : "Sin pastor asignado"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                    <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ubicación</p>
+                      <p className="text-sm font-semibold text-foreground">{sedeDetail.ciudadNombre || "Ciudad no definida"}</p>
+                      {sedeDetail.direccion && <p className="text-xs text-muted-foreground italic">{sedeDetail.direccion}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                    <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+                      <Users className="w-4 h-4 text-indigo-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ministerios</p>
+                      <p className="text-sm font-semibold text-foreground">{sedeDetail.cantidadMinisterios || 0} operativos</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end">
+                <Button variant="ghost" onClick={() => setSelectedSede(null)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cerrar</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
 
       {/* MODAL (Diálogo de Creación / Edición) */}
       <Dialog open={dialog} onOpenChange={setDialog}>

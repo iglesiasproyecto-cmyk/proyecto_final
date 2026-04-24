@@ -3,6 +3,7 @@ import {
   getCursos, getModulos, getRecursos, getEvaluaciones,
   getProcesosAsignadoCurso, getDetallesProcesoCurso,
   getCursosEnriquecidos, getEvaluacionesEnriquecidas,
+  getInscritosPorCurso,
   createCurso, createModulo,
   updateCurso, deleteCurso, updateModulo, deleteModulo,
   createEvaluacion, updateEvaluacion,
@@ -63,11 +64,20 @@ export function useDetallesProcesoCurso(idProceso: number) {
   })
 }
 
-export function useCursosEnriquecidos(idSede?: number) {
+export function useCursosEnriquecidos(idMinisterio?: number) {
   return useQuery({
-    queryKey: ['cursos-enriquecidos', idSede],
-    queryFn: () => getCursosEnriquecidos(idSede),
+    queryKey: ['cursos-enriquecidos', idMinisterio],
+    queryFn: () => getCursosEnriquecidos(idMinisterio),
     staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useInscritosPorCurso(idCurso: number | null | undefined) {
+  return useQuery({
+    queryKey: ['inscritos-por-curso', idCurso],
+    queryFn: () => getInscritosPorCurso(idCurso as number),
+    enabled: !!idCurso,
+    staleTime: 60 * 1000,
   })
 }
 

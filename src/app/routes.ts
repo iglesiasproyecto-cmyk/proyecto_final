@@ -1,9 +1,9 @@
 import { createBrowserRouter } from "react-router";
 import { RootLayout } from "./components/RootLayout";
 import { AppLayout } from "./components/AppLayout";
+import { IndexRedirect } from "./components/IndexRedirect";
 import { LandingPage } from "./components/LandingPage";
 import { LoginPage } from "./components/LoginPage";
-import { RegisterPage } from "./components/RegisterPage";
 import { ForgotPasswordPage } from "./components/ForgotPasswordPage";
 import { DashboardPage } from "./components/DashboardPage";
 import { ChurchesPage } from "./components/ChurchesPage";
@@ -26,6 +26,7 @@ import { CiclosLectivosPage } from "./components/CiclosLectivosPage";
 import { MisCursosPage } from "./components/MisCursosPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
 import { SitemapPage } from "./components/SitemapPage";
+import { ChurchDetailPage } from "./components/ChurchDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -43,11 +44,6 @@ export const router = createBrowserRouter([
         ErrorBoundary: ErrorPage,
       },
       {
-        path: "register",
-        Component: RegisterPage,
-        ErrorBoundary: ErrorPage,
-      },
-      {
         path: "forgot-password",
         Component: ForgotPasswordPage,
         ErrorBoundary: ErrorPage,
@@ -58,7 +54,9 @@ export const router = createBrowserRouter([
         ErrorBoundary: ErrorPage,
         children: [
           { index: true, Component: DashboardPage, ErrorBoundary: ErrorPage },
+          { path: "index", Component: IndexRedirect, ErrorBoundary: ErrorPage },
           { path: "iglesias", Component: ChurchesPage, ErrorBoundary: ErrorPage },
+          { path: "iglesias/:idIglesia", Component: ChurchDetailPage, ErrorBoundary: ErrorPage },
           { path: "departamentos", Component: DepartmentsPage, ErrorBoundary: ErrorPage },
           { path: "mi-departamento", Component: MyDepartmentPage, ErrorBoundary: ErrorPage },
           { path: "miembros", Component: MembersPage, ErrorBoundary: ErrorPage },

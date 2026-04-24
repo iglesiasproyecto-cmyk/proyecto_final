@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { motion } from "motion/react";
-import { UserCheck, Plus, Pencil, Trash2, Search, Link2, Church, Mail, Phone, Save, X } from "lucide-react";
+import { UserCheck, Plus, Pencil, Trash2, Search, Link2, Church, Mail, Phone, Save, X, Eye, Calendar } from "lucide-react";
 
 function GlassCard({ children, index = 0 }: { children: React.ReactNode; index?: number }) {
   return (
@@ -52,6 +52,7 @@ export function PastoresPage() {
   const [formP, setFormP] = useState({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
   const [formA, setFormA] = useState({ idIglesia: 0, idPastor: 0, esPrincipal: false, fechaInicio: "", observaciones: "" });
   const [confirmDeleteAsign, setConfirmDeleteAsign] = useState<{ id: number; pastorName: string; iglesiaName: string } | null>(null);
+  const [selectedPastor, setSelectedPastor] = useState<number | null>(null);
 
   const createPastorMutation = useCreatePastor();
   const updatePastorMutation = useUpdatePastor();
@@ -133,10 +134,10 @@ export function PastoresPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <div className="flex justify-start">
           <TabsList className="bg-card/40 backdrop-blur-xl border border-white/20 dark:border-white/10 dark:bg-card/20 rounded-2xl h-14 px-1.5 shadow-sm">
-            <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 dark:data-[state=active]:from-cyan-600 dark:data-[state=active]:to-blue-700 data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
+            <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
               Directorio ({pastores.length})
             </TabsTrigger>
-            <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 dark:data-[state=active]:from-cyan-600 dark:data-[state=active]:to-blue-700 data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
+            <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
               Asignaciones ({iglesiaPastores.filter(ip => !ip.fechaFin).length})
             </TabsTrigger>
           </TabsList>
@@ -219,6 +220,9 @@ export function PastoresPage() {
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-border/40 flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-[#4682b4]/10" onClick={() => setSelectedPastor(p.idPastor)} title="Ver detalle">
+                      <Eye className="w-4 h-4 text-[#4682b4]" />
+                    </Button>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10" onClick={() => openEditPastor(p.idPastor)}>
                       <Pencil className="w-4 h-4 text-foreground/70" />
                     </Button>
@@ -366,6 +370,90 @@ export function PastoresPage() {
             <Button variant="ghost" onClick={() => setDialogAsign(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
             <Button onClick={handleSubmitAsign} disabled={!formA.idIglesia || !formA.idPastor || !formA.fechaInicio} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"><Save className="w-4 h-4 mr-1.5" /> Misionar Pastor</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Detail Dialog ── */}
+      <Dialog open={!!selectedPastor} onOpenChange={() => setSelectedPastor(null)}>
+        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          {(() => {
+            const p = pastores.find(x => x.idPastor === selectedPastor);
+            if (!p) return null;
+            const asignaciones = getIglesiasForPastor(p.idPastor);
+            const linkedUser = p.idUsuario ? usuarios.find(u => u.idUsuario === p.idUsuario) : null;
+            return (
+              <>
+                <DialogHeader>
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white text-lg font-bold shadow-lg">
+                      {p.nombres[0]}{p.apellidos[0]}
+                    </div>
+                    <div>
+                      <DialogTitle className="text-xl font-bold tracking-tight">{p.nombres} {p.apellidos}</DialogTitle>
+                      <p className="text-xs text-muted-foreground mt-0.5">Pastor</p>
+                    </div>
+                  </div>
+                </DialogHeader>
+                <div className="space-y-5 py-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Mail className="w-4 h-4 text-[#4682b4]" />
+                      <span className="truncate">{p.correo}</span>
+                    </div>
+                    {p.telefono && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="w-4 h-4 text-[#4682b4]" />
+                        <span>{p.telefono}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {linkedUser && (
+                    <div className="p-3 rounded-xl bg-[#4682b4]/5 border border-[#4682b4]/10">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#4682b4]/60 mb-1">Usuario vinculado</p>
+                      <p className="text-sm font-medium">{linkedUser.nombres} {linkedUser.apellidos}</p>
+                      <p className="text-xs text-muted-foreground">{linkedUser.correo}</p>
+                    </div>
+                  )}
+
+                  {asignaciones.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-3">Iglesias asignadas</p>
+                      <div className="space-y-2">
+                        {asignaciones.map(a => (
+                          <div key={a.idIglesiaPastor} className="flex items-center justify-between p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
+                            <div className="flex items-center gap-2">
+                              <Church className="w-4 h-4 text-[#4682b4]" />
+                              <span className="text-sm font-medium">{a.iglesiaNombre}</span>
+                            </div>
+                            {a.esPrincipal && (
+                              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold uppercase tracking-wider">Principal</Badge>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {p.iglesiasActivas.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2">También miembro en</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {p.iglesiasActivas.map((nombre, i) => (
+                          <Badge key={i} variant="secondary" className="bg-white/60 dark:bg-black/20 text-xs font-medium border-0 tracking-wide text-muted-foreground">
+                            <Church className="w-3 h-3 mr-1.5 opacity-70" /> {nombre}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter className="border-t border-border/50 pt-4">
+                  <Button variant="ghost" className="rounded-xl" onClick={() => setSelectedPastor(null)}>Cerrar</Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 

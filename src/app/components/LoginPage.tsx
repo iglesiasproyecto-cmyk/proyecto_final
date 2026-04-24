@@ -8,16 +8,9 @@ import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'motion/react'
 import { SEILogo } from './SEILogo'
 import {
-  Church, Eye, EyeOff, LogIn, Shield, Building2, Crown,
-  User, ChevronRight, Sparkles, Activity, Layers, Globe
+  Eye, EyeOff, LogIn, Shield,
+  User, Activity, Layers, Globe
 } from 'lucide-react'
-
-const testCredentials = [
-  { email: 'admin@iglesiabd.com',    label: 'Super Admin',    desc: 'Gestión global',       icon: Crown,     color: 'from-blue-600 to-cyan-400' },
-  { email: 'pastor@iglesiabd.com',   label: 'Admin Iglesia',  desc: 'Gestión de iglesia',   icon: Building2, color: 'from-blue-600 to-cyan-400' },
-  { email: 'lider@iglesiabd.com',    label: 'Líder',          desc: 'Ministerio & equipo',  icon: Shield,    color: 'from-blue-600 to-cyan-400' },
-  { email: 'servidor@iglesiabd.com', label: 'Servidor',       desc: 'Vista personal',       icon: User,      color: 'from-blue-600 to-cyan-400' },
-]
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -49,32 +42,35 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!email || !password) {
+    
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanEmail || !password) {
       setError('Por favor completa todos los campos.')
       return
     }
+    
     setIsLoading(true)
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
-    if (authError) {
-      setError('Credenciales incorrectas.')
-      setIsLoading(false)
-    } else {
-      navigate('/app')
-    }
-  }
-
-  const handleQuickLogin = async (credEmail: string) => {
-    setEmail(credEmail)
-    setError('')
-    setIsLoading(true)
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: credEmail,
-      password: 'Password123!',
+    const { error: authError } = await supabase.auth.signInWithPassword({ 
+      email: cleanEmail, 
+      password 
     })
+    
     if (authError) {
-      setError('Error en el acceso rápido.')
+      console.error('Login error:', authError)
+      
+      // Mensajes de error más descriptivos
+      if (authError.message.includes('Email not confirmed')) {
+        setError('Por favor verifica tu email antes de continuar. Revisa tu bandeja de entrada.')
+      } else if (authError.message.includes('Invalid login credentials')) {
+        setError('Correo o contraseña incorrectos.')
+      } else if (authError.message.includes('User not found')) {
+        setError('El usuario no existe. Por favor regístrate primero.')
+      } else {
+        setError(authError.message || 'Error al iniciar sesión.')
+      }
       setIsLoading(false)
     } else {
+      toast.success('¡Bienvenido!')
       navigate('/app')
     }
   }
@@ -249,46 +245,6 @@ export function LoginPage() {
             </motion.p>
           </div>
 
-          {/* Quick Login Section - Mas limpio y profesional */}
-          <div className="space-y-3 mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Acceso Rápido (Roles de Prueba)</p>
-              <div className="flex-1 h-px bg-border/50" />
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {testCredentials.map((cred, i) => {
-                const Icon = cred.icon;
-                return (
-                  <motion.button
-                    key={cred.email}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.3 + i * 0.05 }}
-                    onClick={() => handleQuickLogin(cred.email)}
-                    disabled={isLoading}
-                    className="group relative flex items-center gap-4 p-3.5 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-md hover:border-primary/50 hover:bg-card/80 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 disabled:opacity-50"
-                  >
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${cred.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="text-left min-w-0">
-                      <p className="text-xs font-bold text-foreground leading-none">{cred.label}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1 truncate">{cred.desc}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="relative flex items-center justify-center my-10">
-            <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-            <span className="relative z-10 px-4 bg-background text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50">o credenciales manuales</span>
-          </div>
-
           {/* Login Form */}
           <motion.form 
             initial={{ opacity: 0, y: 15 }}
@@ -381,51 +337,13 @@ export function LoginPage() {
                 ¿Olvidaste tu contraseña?
               </button>
             </motion.div>
-
-            {/* Register Link */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-              className="text-center pt-4 text-sm"
-            >
-              <p className="text-muted-foreground">
-                ¿No tienes cuenta?{" "}
-                <button
-                  type="button"
-                  onClick={() => navigate("/register")}
-                  className="font-bold text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
-                >
-                  Regístrate aquí
-                </button>
-              </p>
-            </motion.div>
           </motion.form>
 
-          {/* Demo Button - Estilo discreto pero premium */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="mt-10"
-          >
-            <button
-              onClick={() => {
-                localStorage.setItem('sei-mock-mode', 'true');
-                window.location.href = '/app/sitemap';
-              }}
-              className="w-full group flex items-center justify-center gap-3 py-4 rounded-3xl border-2 border-dashed border-primary/20 text-primary/70 hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all text-xs font-black uppercase tracking-widest"
-            >
-              <Sparkles className="w-4 h-4 transition-transform group-hover:rotate-12" />
-              Explorar Interfaz (Modo Demo)
-            </button>
-          </motion.div>
-
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.7 }}
-            className="mt-8 text-center"
+            className="mt-10 text-center"
           >
             <p className="text-[10px] text-muted-foreground/40 uppercase font-bold tracking-[0.2em]">
               Soporte Estructural &copy; MMXXVI
