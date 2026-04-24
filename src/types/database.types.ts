@@ -1301,6 +1301,29 @@ export type Database = {
         Args: { target_role_id: number }
         Returns: boolean
       }
+      create_tarea: {
+        Args: {
+          p_titulo: string
+          p_descripcion?: string | null
+          p_fecha_limite?: string | null
+          p_prioridad?: string
+          p_id_usuario_creador?: number | null
+        }
+        Returns: Database['public']['Tables']['tarea']['Row']
+      }
+      update_tarea_estado_rpc: {
+        Args: {
+          p_id_tarea: number
+          p_estado: string
+        }
+        Returns: Database['public']['Tables']['tarea']['Row']
+      }
+      delete_tarea_rpc: {
+        Args: {
+          p_id_tarea: number
+        }
+        Returns: void
+      }
     }
     Enums: {
       estado_curso: "borrador" | "activo" | "inactivo" | "archivado"

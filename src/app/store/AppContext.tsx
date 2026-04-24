@@ -79,6 +79,10 @@ async function fetchUsuarioRaw(accessToken: string, authUserId: string): Promise
         return rows[0]
       }
       console.warn('[AUTH] RPC returned empty array')
+    } else if (res.status === 401 || res.status === 403) {
+      // Token inválido o expirado
+      console.warn('[AUTH] RPC returned 401/403 — token inválido')
+      return 'UNAUTHORIZED'
     } else {
       const text = await res.text()
       console.warn('[AUTH] RPC status:', res.status, text)
@@ -102,6 +106,9 @@ async function fetchUsuarioRaw(accessToken: string, authUserId: string): Promise
         return rows[0]
       }
       console.warn('[AUTH] Direct query returned empty array')
+    } else if (res.status === 401 || res.status === 403) {
+      console.warn('[AUTH] Direct query returned 401/403 — token inválido')
+      return 'UNAUTHORIZED'
     } else {
       const text = await res.text()
       console.warn('[AUTH] Direct query status:', res.status, text)
@@ -130,6 +137,9 @@ async function fetchRolesRaw(accessToken: string): Promise<any[]> {
       5000
     )
     if (res.ok) return await res.json()
+    if (res.status === 401 || res.status === 403) {
+      console.warn('[AUTH] get_my_roles returned 401/403')
+    }
   } catch { /* skip */ }
   return []
 }
@@ -153,6 +163,9 @@ async function fetchNotifCountRaw(accessToken: string): Promise<number> {
     if (res.ok) {
       const val = await res.json()
       return typeof val === 'number' ? val : 0
+    }
+    if (res.status === 401 || res.status === 403) {
+      console.warn('[AUTH] get_my_unread_notifications_count returned 401/403')
     }
   } catch { /* skip */ }
   return 0
@@ -234,6 +247,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         try {
           const data = await fetchUsuarioRaw(token, authUserId)
           if (callId !== callCounter) return
+
+          if (data === 'UNAUTHORIZED') {
+            console.warn('[AUTH] ❌ Token inválido o expirado — forzando logout')
+            await supabase.auth.signOut()
+            setUsuarioActual(null)
+            setSession(null)
+            resolveLoading()
+            return
+          }
 
           if (!data) {
             console.warn('[AUTH] ❌ No usuario found in public.usuario table')
@@ -370,7 +392,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       value={{
         session,
         usuarioActual,
-        isAuthenticated: !!session,
+        isAuthenticated: !!session || isMockMode,
         authLoading,
         iglesiaActual,
         setIglesiaActual,
