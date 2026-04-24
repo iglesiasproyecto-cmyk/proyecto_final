@@ -10,6 +10,7 @@ import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { motion, AnimatePresence } from "motion/react";
 import { Plus, Search, Mail, Phone, Filter, Inbox, Trash2, Users, ShieldCheck, User } from "lucide-react";
+import { toast } from "sonner";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolIcons: Record<string, React.ReactNode> = {
@@ -30,6 +31,7 @@ export function MembersPage() {
   const [search, setSearch] = useState("");
   const [selectedMinisterioId, setSelectedMinisterioId] = useState<number>(0);
   const [showInvite, setShowInvite] = useState(false);
+  const [highlightFilter, setHighlightFilter] = useState(false);
 
   const ministerioIdsLider = useMemo(() => new Set(ministeriosIdsUsuario), [ministeriosIdsUsuario]);
   const ministeriosVisibles = useMemo(() => {
@@ -111,7 +113,7 @@ export function MembersPage() {
   const showMinisterioColumn = !isLider && selectedMinisterioId === 0;
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
+    <div className="space-y-5 max-w-6xl mx-auto">
 
       {/* Header unificado con controles */}
       <motion.div
@@ -122,7 +124,7 @@ export function MembersPage() {
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
 
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-600/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <Users className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -149,28 +151,44 @@ export function MembersPage() {
           </div>
 
           {/* Filtro de ministerio */}
-          <div className="flex items-center gap-2 bg-background/60 border border-border/40 rounded-xl px-3 h-10 shadow-sm shrink-0">
-            <Filter className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+          <motion.div
+            animate={highlightFilter ? { x: [0, -6, 6, -4, 4, 0] } : {}}
+            transition={{ duration: 0.45 }}
+            className={`flex items-center gap-2 bg-background/60 border rounded-xl px-3 h-10 shadow-sm shrink-0 transition-colors ${
+              highlightFilter
+                ? "border-amber-400/80 ring-2 ring-amber-400/30 shadow-amber-500/20"
+                : "border-border/40"
+            }`}
+          >
+            <Filter className={`w-3.5 h-3.5 shrink-0 transition-colors ${highlightFilter ? "text-amber-500" : "text-muted-foreground/60"}`} />
             <select
               value={effectiveMinisterioId}
-              onChange={(e) => setSelectedMinisterioId(Number(e.target.value))}
+              onChange={(e) => {
+                setSelectedMinisterioId(Number(e.target.value));
+                setHighlightFilter(false);
+              }}
               disabled={isLider}
               className="text-sm bg-transparent border-0 outline-none text-foreground/80 min-w-0 cursor-pointer [&_option]:bg-white [&_option]:text-gray-900 dark:[&_option]:bg-gray-800 dark:[&_option]:text-gray-100"
             >
               {!isLider && <option value={0}>Todos los ministerios</option>}
               {ministeriosVisibles.map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
             </select>
-          </div>
+          </motion.div>
 
           <Button
             onClick={() => {
               if (!effectiveMinisterioId) {
-                alert("Selecciona un ministerio en el filtro antes de agregar un miembro.");
+                setHighlightFilter(true);
+                toast.warning("Elige un ministerio específico", {
+                  description: "Usa el filtro para elegir a qué ministerio agregarás al miembro.",
+                  duration: 4000,
+                });
+                window.setTimeout(() => setHighlightFilter(false), 2500);
                 return;
               }
               setShowInvite(true);
             }}
-            className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:shadow-cyan-500/40 transition-all"
+            className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all"
           >
             <Plus className="w-4 h-4 mr-1.5" /> Agregar
           </Button>

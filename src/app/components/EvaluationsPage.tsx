@@ -54,7 +54,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 export function EvaluationsPage() {
   const { usuarioActual, rolActual } = useApp();
-  const { data: evaluaciones = [], isLoading } = useEvaluacionesEnriquecidas();
+  const { data: evaluaciones = [], isLoading, error } = useEvaluacionesEnriquecidas();
   const { data: cursos = [] } = useCursos();
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
@@ -62,7 +62,7 @@ export function EvaluationsPage() {
   const [editTarget, setEditTarget] = useState<{ id: number; calificacion: string; estado: string; observaciones: string } | null>(null);
   const [studentSearch, setStudentSearch] = useState("");
   const [createForm, setCreateForm] = useState({ idModulo: 0, calificacion: "", estado: "pendiente" as string, observaciones: "", fechaEvaluacion: "" });
-  
+
   const resetCreateForm = () => setCreateForm({ idModulo: 0, calificacion: "", estado: "pendiente", observaciones: "", fechaEvaluacion: "" });
   const canManageEvaluaciones =
     rolActual === "super_admin" || rolActual === "admin_iglesia" || rolActual === "lider";
@@ -79,6 +79,21 @@ export function EvaluationsPage() {
       </div>
     </div>
   );
+
+  if (error) {
+    console.error('Error loading evaluations:', error);
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+            <span className="text-red-600 text-lg">⚠️</span>
+          </div>
+          <p className="text-sm font-medium">Error al cargar evaluaciones</p>
+          <p className="text-xs">Verifica que tengas permisos para gestionar evaluaciones</p>
+        </div>
+      </div>
+    );
+  }
 
   const uniqueCursos = [...new Set(evaluaciones.map((e) => e.cursoNombre).filter(Boolean))] as string[];
 
@@ -138,7 +153,7 @@ export function EvaluationsPage() {
   );
 
   return (
-    <div className="space-y-5 max-w-5xl mx-auto">
+    <div className="space-y-5 max-w-6xl mx-auto">
       {/* Header Panorámico */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
@@ -160,7 +175,7 @@ export function EvaluationsPage() {
         {canManageEvaluaciones ? (
           <Button 
             onClick={() => setShowCreate(true)} 
-            className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white shadow-lg shadow-cyan-600/30 hover:scale-105 transition-all"
+            className="h-11 rounded-2xl font-bold uppercase tracking-widest text-[10px] shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:scale-105 transition-all"
           >
             <Plus className="w-4 h-4 mr-2" /> Nueva Evaluación
           </Button>

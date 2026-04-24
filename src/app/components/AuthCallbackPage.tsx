@@ -7,7 +7,6 @@ import { supabase } from "@/lib/supabaseClient";
 type CallbackState = "processing" | "error";
 
 const OTP_TYPES = new Set<EmailOtpType>([
-  "signup",
   "invite",
   "recovery",
   "email",

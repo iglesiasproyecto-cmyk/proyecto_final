@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useCiudades } from "@/hooks/useGeografia";
 import { motion } from "motion/react";
-import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar } from "lucide-react";
+import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar, Eye } from "lucide-react";
+import { useNavigate } from "react-router";
 
 const estadoLabels: Record<string, string> = {
   activa: "Activa",
@@ -46,6 +47,7 @@ function GlassCard({ children, index = 0, isActive = true }: { children: React.R
 }
 
 export function ChurchesPage() {
+  const navigate = useNavigate();
   const { data: iglesias = [], isLoading } = useIglesiasEnriquecidas();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "activa" | "inactiva">("all");
@@ -141,7 +143,7 @@ export function ChurchesPage() {
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+    <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
@@ -174,7 +176,7 @@ export function ChurchesPage() {
               variant={filter === f ? "default" : "ghost"} 
               size="sm" 
               onClick={() => setFilter(f)} 
-              className={`h-full px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm bg-gradient-to-r from-cyan-600 to-blue-700 text-white hover:from-cyan-500 hover:to-blue-600" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
+              className={`h-full px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm bg-[#4682b4] text-white hover:bg-[#4682b4]/90" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
             >
               {f === "all" ? "Todas" : f === "activa" ? "Activas" : "Inactivas"}
             </Button>
@@ -226,6 +228,14 @@ export function ChurchesPage() {
             </div>
 
             <div className="mt-auto pt-4 border-t border-border/40 flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="flex-1 rounded-xl bg-[#4682b4]/10 hover:bg-[#4682b4]/20 text-[#4682b4] transition-colors"
+                onClick={() => navigate(`/app/iglesias/${ig.idIglesia}`)}
+              >
+                <Eye className="w-3.5 h-3.5 mr-1.5" /> Ver detalle
+              </Button>
               <Button variant="secondary" size="sm" className="flex-1 rounded-xl bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 transition-colors" onClick={() => {
                 setFormErrors({});
                 setForm({ nombre: ig.nombre, fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "", idCiudad: ig.idCiudad || 0 });
