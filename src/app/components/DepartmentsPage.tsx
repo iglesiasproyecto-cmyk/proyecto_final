@@ -1,8 +1,11 @@
 import { useState } from "react";
 import {
-  useMinisteriosEnriquecidos, useDeleteMinisterio, useMiembrosMinisterio, useToggleMinisterioEstado, useCreateMinisterio,
+  useMinisteriosEnriquecidos, useDeleteMinisterio, useMiembrosMinisterio, useToggleMinisterioEstado, useCreateMinisterio, useCreateMiembroMinisterio,
 } from "@/hooks/useMinisterios";
 import { useSedes } from "@/hooks/useIglesias";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
+import { useApp } from "../store/AppContext";
 import type { Ministerio } from "@/types/app.types";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -10,7 +13,6 @@ import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { motion } from "motion/react";
 import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2, Settings } from "lucide-react";
 
@@ -18,7 +20,34 @@ const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor
 const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-700", servidor: "bg-gray-100 text-gray-700" };
 
 function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void }) {
+  const { rolActual } = useApp();
   const { data: minMembers = [] } = useMiembrosMinisterio(min.idMinisterio);
+  const { data: allUsers = [] } = useUsuariosEnriquecidos();
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [memberForm, setMemberForm] = useState({ idUsuario: "", rolEnMinisterio: "servidor" });
+  const createMemberMutation = useCreateMiembroMinisterio();
+
+  const canManageMembers = rolActual === "super_admin" || rolActual === "admin_iglesia" || rolActual === "lider";
+
+  const availableUsers = allUsers.filter(user =>
+    !minMembers.some(member => member.idUsuario === user.idUsuario)
+  );
+
+  const handleAddMember = () => {
+    if (!memberForm.idUsuario) return;
+    createMemberMutation.mutate({
+      idUsuario: parseInt(memberForm.idUsuario),
+      idMinisterio: min.idMinisterio,
+      rolEnMinisterio: memberForm.rolEnMinisterio,
+      fechaIngreso: new Date().toISOString().split('T')[0],
+    }, {
+      onSuccess: () => {
+        setShowAddMember(false);
+        setMemberForm({ idUsuario: "", rolEnMinisterio: "servidor" });
+      },
+    });
+  };
+
   return (
     <div className="space-y-4 max-w-6xl mx-auto motion-preset-fade">
       {/* Header Compacto tipo Tarjeta */}
@@ -55,7 +84,9 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
                   <h3 className="font-bold text-sm">Equipo Ministerial</h3>
                   <p className="text-xs text-muted-foreground">Gestiona los servidores y líderes asignados a esta área.</p>
                </div>
-               <Button size="sm" className="h-9 rounded-xl text-xs transition-colors shadow-sm"><Plus className="w-3.5 h-3.5 mr-1.5" /> Agregar Miembro</Button>
+                {canManageMembers && (
+                  <Button size="sm" className="h-9 rounded-xl text-xs transition-colors shadow-sm" onClick={() => setShowAddMember(true)}><Plus className="w-3.5 h-3.5 mr-1.5" /> Agregar Miembro</Button>
+                )}
             </div>
             
             <div className="divide-y divide-border/30">
@@ -112,6 +143,81 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog: Agregar Miembro */}
+      {canManageMembers && (
+        <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
+        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+              Agregar Miembro
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Agregar un nuevo servidor al ministerio {min.nombre}
+            </p>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                Seleccionar Usuario
+              </label>
+              <Select
+                value={memberForm.idUsuario}
+                onValueChange={(value) => setMemberForm(p => ({ ...p, idUsuario: value }))}
+              >
+                <SelectTrigger className="h-11 bg-background/50 border-white/10 rounded-xl text-sm">
+                  <SelectValue placeholder="Selecciona un usuario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableUsers.map((user) => (
+                    <SelectItem key={user.idUsuario} value={user.idUsuario.toString()}>
+                      {user.nombres} {user.apellidos} ({user.correo})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                Rol en el Ministerio
+              </label>
+              <Select
+                value={memberForm.rolEnMinisterio}
+                onValueChange={(value) => setMemberForm(p => ({ ...p, rolEnMinisterio: value }))}
+              >
+                <SelectTrigger className="h-11 bg-background/50 border-white/10 rounded-xl text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="servidor">Servidor</SelectItem>
+                  <SelectItem value="lider">Líder</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className="mt-2 border-t border-border/50 pt-4">
+            <Button
+              variant="ghost"
+              className="rounded-xl"
+              onClick={() => {
+                setShowAddMember(false);
+                setMemberForm({ idUsuario: "", rolEnMinisterio: "servidor" });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="default"
+              className="rounded-xl"
+              onClick={handleAddMember}
+              disabled={!memberForm.idUsuario || createMemberMutation.isPending}
+            >
+              {createMemberMutation.isPending ? "Agregando..." : "Agregar Miembro"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      )}
     </div>
   );
 }
