@@ -1,8 +1,6 @@
-import { useContext } from 'react'
 import { useObtenerResultadoIntento, usePreguntasPorEvaluacion } from '@/hooks/useEvaluaciones'
 import { Card } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'
-import { AppContext } from '@/app/store/AppContext'
 import { CheckCircle, XCircle, Clock, Award, TrendingUp } from 'lucide-react'
 
 interface ResultadosEvaluacionProps {

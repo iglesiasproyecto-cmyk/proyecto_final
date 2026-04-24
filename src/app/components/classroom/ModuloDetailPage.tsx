@@ -4,8 +4,8 @@ import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { useApp } from '../../store/AppContext'
 import { useModulo } from '@/hooks/useModulo'
-import { useCreateRecurso, useCursos, useDeleteRecurso, useModulos, useRecursos } from '@/hooks/useCursos'
-import { uploadRecursoArchivo, getRecursoSignedUrl, validateRecursoFile } from '@/services/cursos.service'
+import { useCreateRecurso, useCursos, useDeleteRecurso, useModulos, useRecursos, useEvaluacionesEnriquecidas } from '@/hooks/useCursos'
+import { uploadRecursoArchivo, getRecursoSignedUrl, validateRecursoFile, createEvaluacion } from '@/services/cursos.service'
 import { useMisInscripciones } from '@/hooks/useInscripciones'
 import { useMinisteriosIdsDeUsuario } from '@/hooks/useMinisterios'
 import {
@@ -17,10 +17,12 @@ import { ModuloBreadcrumb } from './ModuloBreadcrumb'
 import { ModuloNavegacion } from './ModuloNavegacion'
 import { ModuloContenidoEditor } from './ModuloContenidoEditor'
 import { ModuloContenidoView } from './ModuloContenidoView'
+import { CreadorPreguntas } from './CreadorPreguntas'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
-import { Link as LinkIcon, FileText, Trash2, Plus, CheckCircle2, Circle } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog'
+import { Link as LinkIcon, FileText, Trash2, Plus, CheckCircle2, Circle, ClipboardCheck } from 'lucide-react'
 
 export function ModuloDetailPage() {
   const { idCurso: idCursoStr, idModulo: idModuloStr } = useParams()
@@ -35,6 +37,8 @@ export function ModuloDetailPage() {
   const { data: cursos = [], isLoading: loadingCursos } = useCursos()
   const curso = cursos.find((c) => c.idCurso === idCurso)
 
+  const { data: evaluaciones = [] } = useEvaluacionesEnriquecidas(idModulo)
+
   const { data: misInscripciones = [], isLoading: loadingInscripciones } = useMisInscripciones(usuarioActual?.idUsuario)
   const { isLoading: loadingMinisterios } = useMinisteriosIdsDeUsuario(usuarioActual?.idUsuario)
   const createRecursoMutation = useCreateRecurso()
@@ -42,6 +46,18 @@ export function ModuloDetailPage() {
   const [recursoForm, setRecursoForm] = useState({ nombre: '', tipo: 'archivo' as 'archivo' | 'enlace', url: '' })
   const [recursoFile, setRecursoFile] = useState<File | null>(null)
   const [isUploadingFile, setIsUploadingFile] = useState(false)
+
+  // Estado para evaluaciones
+  const [showCreateEvaluacion, setShowCreateEvaluacion] = useState(false)
+  const [showCreadorPreguntas, setShowCreadorPreguntas] = useState(false)
+  const [evaluacionSeleccionada, setEvaluacionSeleccionada] = useState<number | null>(null)
+  const [evaluacionForm, setEvaluacionForm] = useState({
+    titulo: '',
+    descripcion: '',
+    puntajeMinimo: 60,
+    maxIntentos: 3,
+    activo: true
+  })
 
   const canEdit = useMemo(() => {
     if (rolActual === 'super_admin') return true
@@ -182,6 +198,48 @@ export function ModuloDetailPage() {
         toast.error(msg)
       },
     })
+  }
+
+  const handleCreateEvaluacion = async () => {
+    if (!usuarioActual || !evaluacionForm.titulo.trim()) {
+      toast.error('Completa el título de la evaluación')
+      return
+    }
+
+    try {
+      // Crear la evaluación primero
+      const nuevaEvaluacion = await createEvaluacion({
+        idModulo: idModulo,
+        titulo: evaluacionForm.titulo.trim(),
+        descripcion: evaluacionForm.descripcion.trim() || null,
+        puntajeMinimo: evaluacionForm.puntajeMinimo,
+        maxIntentos: evaluacionForm.maxIntentos,
+        activo: evaluacionForm.activo,
+        idUsuario: usuarioActual.idUsuario
+      })
+
+      toast.success('Evaluación creada exitosamente')
+
+      // Reset form y mostrar creador de preguntas
+      setEvaluacionForm({
+        titulo: '',
+        descripcion: '',
+        puntajeMinimo: 60,
+        maxIntentos: 3,
+        activo: true
+      })
+      setShowCreateEvaluacion(false)
+      setEvaluacionSeleccionada(nuevaEvaluacion.idEvaluacion)
+      setShowCreadorPreguntas(true)
+
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error creando evaluación')
+    }
+  }
+
+  const handleEditarPreguntas = (idEvaluacion: number) => {
+    setEvaluacionSeleccionada(idEvaluacion)
+    setShowCreadorPreguntas(true)
   }
 
   return (
@@ -354,6 +412,190 @@ export function ModuloDetailPage() {
           </div>
         )}
       </Card>
+
+      {/* Sección de Evaluaciones */}
+      <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-3xl p-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <ClipboardCheck className="w-4 h-4" />
+            Evaluaciones del módulo
+          </h2>
+          {canEdit && (
+            <Button
+              size="sm"
+              onClick={() => setShowCreateEvaluacion(true)}
+              className="rounded-xl"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Nueva Evaluación
+            </Button>
+          )}
+        </div>
+
+        {evaluaciones.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {canEdit
+              ? 'Aún no hay evaluaciones. Crea la primera para agregar preguntas y opciones.'
+              : 'No hay evaluaciones disponibles para este módulo.'
+            }
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {evaluaciones.map((evaluacion) => (
+              <div
+                key={evaluacion.idEvaluacion}
+                className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-background/40"
+              >
+                <div className="flex-1">
+                  <h3 className="font-semibold">{evaluacion.titulo}</h3>
+                  {evaluacion.descripcion && (
+                    <p className="text-sm text-muted-foreground mt-1">{evaluacion.descripcion}</p>
+                  )}
+                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                    <span>Puntaje mín: {evaluacion.puntajeMinimo}%</span>
+                    <span>Máx intentos: {evaluacion.maxIntentos}</span>
+                    <span className={`px-2 py-1 rounded ${evaluacion.activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {evaluacion.activo ? 'Activa' : 'Inactiva'}
+                    </span>
+                  </div>
+                </div>
+                {canEdit && (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditarPreguntas(evaluacion.idEvaluacion)}
+                      className="rounded-xl"
+                    >
+                      Editar Preguntas
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Dialog: Crear Evaluación */}
+      {canEdit && (
+        <Dialog open={showCreateEvaluacion} onOpenChange={setShowCreateEvaluacion}>
+          <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+                Nueva Evaluación
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Crea una evaluación con preguntas para el módulo: {modulo?.titulo}
+              </p>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Título de la Evaluación *
+                </label>
+                <Input
+                  value={evaluacionForm.titulo}
+                  onChange={(e) => setEvaluacionForm(p => ({ ...p, titulo: e.target.value }))}
+                  placeholder="Ej: Evaluación de Conceptos Básicos"
+                  className="h-11 bg-background/50 border-white/10 rounded-xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Descripción (opcional)
+                </label>
+                <textarea
+                  value={evaluacionForm.descripcion}
+                  onChange={(e) => setEvaluacionForm(p => ({ ...p, descripcion: e.target.value }))}
+                  placeholder="Describe el propósito de esta evaluación..."
+                  className="w-full h-20 rounded-xl border border-white/10 bg-background/50 p-3 text-sm resize-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Puntaje Mínimo (%)
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={evaluacionForm.puntajeMinimo}
+                    onChange={(e) => setEvaluacionForm(p => ({ ...p, puntajeMinimo: Number(e.target.value) }))}
+                    className="h-11 bg-background/50 border-white/10 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Máximo de Intentos
+                  </label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={evaluacionForm.maxIntentos}
+                    onChange={(e) => setEvaluacionForm(p => ({ ...p, maxIntentos: Number(e.target.value) }))}
+                    className="h-11 bg-background/50 border-white/10 rounded-xl"
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="ghost"
+                className="rounded-xl"
+                onClick={() => {
+                  setShowCreateEvaluacion(false)
+                  setEvaluacionForm({
+                    titulo: '',
+                    descripcion: '',
+                    puntajeMinimo: 60,
+                    maxIntentos: 3,
+                    activo: true
+                  })
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="rounded-xl px-8"
+                onClick={handleCreateEvaluacion}
+              >
+                Crear Evaluación
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Dialog: Creador de Preguntas */}
+      {canEdit && evaluacionSeleccionada && (
+        <Dialog open={showCreadorPreguntas} onOpenChange={setShowCreadorPreguntas}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+                Editor de Preguntas
+              </DialogTitle>
+            </DialogHeader>
+            <div className="overflow-y-auto max-h-[70vh]">
+              <CreadorPreguntas idEvaluacion={evaluacionSeleccionada} />
+            </div>
+            <DialogFooter className="gap-2 border-t border-white/10 pt-4">
+              <Button
+                variant="ghost"
+                className="rounded-xl"
+                onClick={() => {
+                  setShowCreadorPreguntas(false)
+                  setEvaluacionSeleccionada(null)
+                }}
+              >
+                Cerrar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <ModuloNavegacion
         modulos={modulos}

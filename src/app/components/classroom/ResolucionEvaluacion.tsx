@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/app/components/ui/button'
 import { Card } from '@/app/components/ui/card'
 import {
@@ -7,7 +7,7 @@ import {
   useFinalizarIntento,
   useAbandonarIntento
 } from '@/hooks/useEvaluaciones'
-import { AppContext } from '@/app/store/AppContext'
+import { useApp } from '@/app/store/AppContext'
 import type { PreguntaConOpciones } from '@/types/app.types'
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 
@@ -22,7 +22,7 @@ export function ResolucionEvaluacion({
   idIntento,
   onFinalized
 }: ResolucionEvaluacionProps) {
-  const { usuarioActual } = useContext(AppContext)!
+  const { usuarioActual } = useApp()
   const [indicePregunta, setIndicePregunta] = useState(0)
   const [respuestas, setRespuestas] = useState<{ [key: number]: number }>({})
   const [tiempoInicio] = useState(Date.now())
