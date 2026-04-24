@@ -1,32 +1,31 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { serve } from "https://deno.land/std/http/server.ts";
+import { Resend } from "npm:resend";
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "@supabase/functions-js/edge-runtime.d.ts"
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-console.log("Hello from Functions!")
+serve(async (req) => {
+  try {
+    const { email, nombre } = await req.json();
 
-Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
+    const response = await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: email,
+      subject: "Registro exitoso",
+      html: `
+        <h1>Hola ${nombre}</h1>
+        <p>Tu registro fue exitoso.</p>
+        <p>Bienvenido a nuestra plataforma.</p>
+      `,
+    });
+
+    return new Response(JSON.stringify(response), {
+      headers: { "Content-Type": "application/json" },
+      status: 200,
+    });
+
+  } catch (error) {
+    return new Response(JSON.stringify({ error }), {
+      status: 500,
+    });
   }
-
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/send-email' \
-    --header 'Authorization: Bearer ' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/
+});
