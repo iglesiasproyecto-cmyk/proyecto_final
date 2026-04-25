@@ -59,7 +59,7 @@ export function ClassroomPage() {
   const [recursoFile, setRecursoFile] = useState<File | null>(null);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const canManageAula =
-    rolActual === "super_admin" || rolActual === "lider";
+    rolActual === "lider";
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-48">

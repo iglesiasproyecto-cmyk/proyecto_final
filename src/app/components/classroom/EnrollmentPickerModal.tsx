@@ -19,7 +19,7 @@ interface Props {
 
 export function EnrollmentPickerModal({ ciclo, cursoNombre, open, onOpenChange, onEnrolled }: Props) {
   const { rolActual } = useApp()
-  const isAdmin = rolActual === 'super_admin'
+  const isAdmin = false
   const [overrideMinisterio, setOverrideMinisterio] = useState(false)
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())

@@ -65,7 +65,7 @@ export function EvaluationsPage() {
 
   const resetCreateForm = () => setCreateForm({ idModulo: 0, calificacion: "", estado: "pendiente", observaciones: "", fechaEvaluacion: "" });
   const canManageEvaluaciones =
-    rolActual === "super_admin" || rolActual === "lider";
+    rolActual === "lider";
 
   const deleteEvaluacionMutation = useDeleteEvaluacion();
   const createEvaluacionMutation = useCreateEvaluacion();
@@ -292,7 +292,7 @@ export function EvaluationsPage() {
       </motion.div>
 
       {/* Seccion Estadistica por Estudiante (Solo Admins y Lideres) */}
-      {(rolActual === 'super_admin' || rolActual === 'lider') && (
+      {rolActual === 'lider' && (
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -534,11 +534,6 @@ export function EvaluationsPage() {
                           <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-tighter bg-primary/5 text-primary border-primary/20 border-0 px-2 h-4">
                             {ev.cursoNombre}
                           </Badge>
-                          {rolActual === 'super_admin' && (
-                            <Badge variant="outline" className="text-[9px] uppercase font-black tracking-tighter bg-amber-500/10 text-amber-600 border-0 px-2 h-4 flex items-center gap-1">
-                              <User className="w-2 h-2" /> {ev.usuarioNombre}
-                            </Badge>
-                          )}
                           <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">{ev.moduloNombre}</span>
                         </div>
                         <p className="text-sm font-semibold truncate text-foreground/90 group-hover:text-primary transition-colors">

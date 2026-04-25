@@ -278,7 +278,8 @@ graph TD
 
 #### **1. Super Administrador**
 - **Alcance**: Todo el sistema
-- **Permisos**: CRUD completo en todas las entidades
+- **Permisos**: Gestión administrativa completa (iglesias, usuarios, ministerios, eventos)
+- **Limitaciones**: No gestiona contenido educativo
 - **Responsabilidades**: Configuración global, gestión de iglesias
 
 #### **2. Administrador de Iglesia**
@@ -339,8 +340,6 @@ function normalizeAppRole(rawRoles: string[]): string {
 | **Pastores** | ✅ CRUD completo de pastores |
 | **Usuarios** | ✅ Gestionar todos los usuarios y roles |
 | **Ministerios** | ✅ Acceso completo a todos los ministerios |
-| **Cursos** | ✅ Crear cursos en cualquier ministerio |
-| **Evaluaciones** | ✅ Gestionar todas las evaluaciones |
 | **Eventos** | ✅ Organizar eventos globales |
 | **Geografía** | ✅ Administrar países/departamentos/ciudades |
 
