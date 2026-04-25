@@ -354,10 +354,7 @@ function normalizeAppRole(rawRoles: string[]): string {
 | **Ministerios** | ✅ Crear y gestionar ministerios |
 | **Miembros** | ✅ Agregar miembros a ministerios |
 | **Usuarios** | ✅ Gestionar usuarios de su iglesia |
-| **Cursos** | ✅ Crear cursos en ministerios de su iglesia |
-| **Evaluaciones** | ✅ Gestionar evaluaciones de su iglesia |
 | **Eventos** | ✅ Organizar eventos de iglesia |
-| **Ciclos** | ✅ Gestionar ciclos lectivos |
 
 ### 🟡 **Líder de Ministerio**
 

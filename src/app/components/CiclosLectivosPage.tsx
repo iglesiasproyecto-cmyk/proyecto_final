@@ -72,7 +72,6 @@ function CicloDetail({
     !cicloCerrado &&
     (
       rolActual === "super_admin" ||
-      (rolActual === "admin_iglesia" && iglesiaActual?.id === ciclo.idIglesia) ||
       (rolActual === "lider" && cursoMinisterioId != null && misMinisterios.includes(cursoMinisterioId))
     );
 
