@@ -19,7 +19,7 @@ import { StatCard } from "./ui/StatCard";
 import {
   Building2, Users, CalendarDays, ListTodo, BookOpen, ClipboardCheck, Bell,
   ArrowRight, CheckCircle2, Clock, AlertCircle, Globe,
-  Church, UserCheck, Settings, TrendingUp, Sparkles, Activity
+  Church, UserCheck, User, Settings, TrendingUp, Sparkles, Activity
 } from "lucide-react";
 
 
