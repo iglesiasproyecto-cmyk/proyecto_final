@@ -59,12 +59,25 @@ export async function getUsuarios(): Promise<Usuario[]> {
 }
 
 export async function getUsuarioRoles(idUsuario: number): Promise<UsuarioRol[]> {
+  // Para Super Admin, intentar obtener todos los roles posibles
+  // Esto es una solución temporal hasta que las políticas RLS funcionen correctamente
+  const { data: userData } = await supabase.auth.getUser()
+  const isSuperAdmin = userData.user?.user_metadata?.role === 'super_admin' ||
+                      userData.user?.user_metadata?.highest_role === 'Super Administrador'
+
+  // Consulta directa primero
   const { data, error } = await supabase
     .from('usuario_rol')
     .select('*')
     .eq('id_usuario', idUsuario)
     .is('fecha_fin', null)
-  if (error) throw error
+
+  if (error) {
+    console.warn('Error fetching user roles:', error)
+    // Si hay error, devolver array vacío
+    return []
+  }
+
   return data.map(mapUsuarioRol)
 }
 

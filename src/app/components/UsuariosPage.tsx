@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { motion } from "motion/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUsuarioRoles, useUpdateUsuario, useDeleteUsuarioAsSuperAdmin } from "@/hooks/useUsuarios";
 import { useIglesias } from "@/hooks/useIglesias";
 import { useApp } from "@/app/store/AppContext";
+import { supabase } from "@/lib/supabaseClient";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -14,6 +16,7 @@ import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, 
 import { toast } from "sonner";
 
 export function UsuariosPage() {
+  const qc = useQueryClient();
   const { iglesiaActual, rolActual } = useApp();
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
@@ -632,20 +635,69 @@ function RoleRow({ rolNombre, iglesiaNombre, idRol, idIglesia, idUsuario, onRemo
   onRemove: (idUsuarioRol: number, rolNombre: string) => void
   isRemoving: boolean
 }) {
+  const { rolActual } = useApp();
   const { data: userRoles = [] } = useUsuarioRoles(idUsuario);
   const matchingRol = userRoles.find(ur => {
     return ur.fechaFin === null && ur.idRol === idRol && ur.idIglesia === idIglesia;
   });
+
+  // Para Super Admin, siempre mostrar el botón para quitar roles
+  // Si no puede ver el rol específico, intentará quitarlo de todas formas
+  const isSuperAdmin = rolActual === 'super_admin';
+  const canRemove = !!matchingRol || isSuperAdmin;
+
+  const handleRemoveClick = async () => {
+    if (!confirm(`¿Remover el rol "${rolNombre}" de este usuario? El usuario perderá los permisos asociados.`)) return;
+
+    if (matchingRol) {
+      // Si puede ver el rol, quitar normalmente
+      onRemove(matchingRol.idUsuarioRol, rolNombre);
+    } else if (isSuperAdmin) {
+      // Si es Super Admin pero no ve el rol, intentar quitar directamente
+      try {
+        const { error } = await supabase
+          .from('usuario_rol')
+          .update({ fecha_fin: new Date().toISOString().split('T')[0] })
+          .eq('id_usuario', idUsuario)
+          .eq('id_rol', idRol)
+          .eq('id_iglesia', idIglesia)
+          .is('fecha_fin', null);
+
+        if (error) {
+          console.error('Error removing role:', error);
+          toast.error('Error al remover el rol: ' + error.message);
+        } else {
+          toast.success(`Rol "${rolNombre}" removido`);
+          // Refresh data
+          qc.invalidateQueries({ queryKey: ['usuario-rol', idUsuario] });
+          qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] });
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        toast.error('Error inesperado al remover el rol');
+      }
+    }
+  };
 
   return (
     <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-accent/30">
       <div className="flex items-center gap-2">
         <Badge variant="secondary" className="text-xs">{rolNombre}</Badge>
         <span className="text-xs text-muted-foreground">en {iglesiaNombre}</span>
+        {!matchingRol && isSuperAdmin && (
+          <Badge variant="outline" className="text-xs text-blue-600 border-blue-200">
+            Super Admin puede quitar
+          </Badge>
+        )}
       </div>
-      {matchingRol && (
-        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive" disabled={isRemoving}
-          onClick={() => onRemove(matchingRol.idUsuarioRol, rolNombre)}>
+      {canRemove && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+          disabled={isRemoving}
+          onClick={handleRemoveClick}
+        >
           <X className="w-3.5 h-3.5" />
         </Button>
       )}
