@@ -311,9 +311,11 @@ export function UsuariosPage() {
                     <Button variant="ghost" size="sm" title="Editar usuario" onClick={() => openEditDialog(u.idUsuario)}>
                       <Pencil className="w-3.5 h-3.5 text-amber-600" />
                     </Button>
-                    <Button variant="ghost" size="sm" title="Asignar rol" onClick={() => { setShowAssignRol(u.idUsuario); resetAssignForm(); }}>
-                      <ShieldPlus className="w-3.5 h-3.5 text-[#4682b4] dark:text-[#709dbd]" />
-                    </Button>
+                    {isSuperAdmin && (
+                      <Button variant="ghost" size="sm" title="Asignar rol" onClick={() => { setShowAssignRol(u.idUsuario); resetAssignForm(); }}>
+                        <ShieldPlus className="w-3.5 h-3.5 text-[#4682b4] dark:text-[#709dbd]" />
+                      </Button>
+                    )}
                     {isSuperAdmin && (
                       <Button variant="ghost" size="sm" title="Eliminar usuario" onClick={() => openDeleteDialog(u.idUsuario)}>
                         <Trash2 className="w-3.5 h-3.5 text-red-600" />
