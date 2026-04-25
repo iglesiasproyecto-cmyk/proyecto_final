@@ -28,6 +28,7 @@ import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
 import { SitemapPage } from "./components/SitemapPage";
 import { ChurchDetailPage } from "./components/ChurchDetailPage";
 
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -55,8 +56,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, Component: DashboardPage, ErrorBoundary: ErrorPage },
           { path: "index", Component: IndexRedirect, ErrorBoundary: ErrorPage },
-          { path: "iglesias", Component: ChurchesPage, ErrorBoundary: ErrorPage },
-          { path: "iglesias/:idIglesia", Component: ChurchDetailPage, ErrorBoundary: ErrorPage },
+           { path: "iglesias", Component: ChurchesPage, ErrorBoundary: ErrorPage },
+           { path: "iglesias/:idIglesia", Component: ChurchDetailPage, ErrorBoundary: ErrorPage },
           { path: "departamentos", Component: DepartmentsPage, ErrorBoundary: ErrorPage },
           { path: "mi-departamento", Component: MyDepartmentPage, ErrorBoundary: ErrorPage },
           { path: "miembros", Component: MembersPage, ErrorBoundary: ErrorPage },

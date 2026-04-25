@@ -1,10 +1,13 @@
 import { useState } from "react";
 import {
-  usePastoresEnriquecidos, useIglesias, useIglesiaPastores,
+  usePastoresEnriquecidos, useIglesias, useSedePastores, useSedesEnriquecidas,
   useCreatePastor, useUpdatePastor, useDeletePastor,
-  useCreateIglesiaPastor, useCloseIglesiaPastor,
+  useCreateSedePastor, useCloseSedePastor,
 } from "@/hooks/useIglesias";
 import { useUsuarios } from "@/hooks/useUsuarios";
+import { useApp } from "../store/AppContext";
+import { useCreateNotificacion } from "@/hooks/useNotificaciones";
+import { supabase } from "@/lib/supabaseClient";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -40,25 +43,30 @@ function GlassCard({ children, index = 0 }: { children: React.ReactNode; index?:
 }
 
 export function PastoresPage() {
+  const { rolActual } = useApp();
   const { data: pastores = [], isLoading } = usePastoresEnriquecidos();
-  const { data: iglesiaPastores = [] } = useIglesiaPastores();
+  const { data: sedePastores = [] } = useSedePastores();
   const { data: iglesias = [] } = useIglesias();
+  const { data: sedes = [] } = useSedesEnriquecidas();
   const { data: usuarios = [] } = useUsuarios();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("pastores");
   const [dialogPastor, setDialogPastor] = useState(false);
   const [dialogAsign, setDialogAsign] = useState(false);
+  const [dialogSolicitud, setDialogSolicitud] = useState(false);
   const [editingPastor, setEditingPastor] = useState<number | null>(null);
   const [formP, setFormP] = useState({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
-  const [formA, setFormA] = useState({ idIglesia: 0, idPastor: 0, esPrincipal: false, fechaInicio: "", observaciones: "" });
+  const [formA, setFormA] = useState({ idSede: 0, idPastor: 0, esPrincipal: false, fechaInicio: "", observaciones: "" });
+  const [formSolicitud, setFormSolicitud] = useState({ idPastorActual: 0, idSede: 0, idPastorNuevo: 0, esPrincipal: false, motivo: "" });
   const [confirmDeleteAsign, setConfirmDeleteAsign] = useState<{ id: number; pastorName: string; iglesiaName: string } | null>(null);
   const [selectedPastor, setSelectedPastor] = useState<number | null>(null);
 
   const createPastorMutation = useCreatePastor();
   const updatePastorMutation = useUpdatePastor();
   const deletePastorMutation = useDeletePastor();
-  const createAsignMutation = useCreateIglesiaPastor();
-  const closeAsignMutation = useCloseIglesiaPastor();
+  const createAsignMutation = useCreateSedePastor();
+  const closeAsignMutation = useCloseSedePastor();
+  const createNotificacionMutation = useCreateNotificacion();
 
   if (isLoading) return (
     <div className="max-w-7xl mx-auto flex items-center justify-center p-12">
@@ -92,19 +100,79 @@ export function PastoresPage() {
     );
   };
 
-  const openAsign = () => { setFormA({ idIglesia: 0, idPastor: 0, esPrincipal: false, fechaInicio: new Date().toISOString().split("T")[0], observaciones: "" }); setDialogAsign(true); };
+  const openAsign = () => { setFormA({ idSede: 0, idPastor: 0, esPrincipal: false, fechaInicio: new Date().toISOString().split("T")[0], observaciones: "" }); setDialogAsign(true); };
   const handleSubmitAsign = () => {
-    if (!formA.idIglesia || !formA.idPastor || !formA.fechaInicio) return;
+    if (!formA.idSede || !formA.idPastor || !formA.fechaInicio) return;
     createAsignMutation.mutate(
-      { idIglesia: formA.idIglesia, idPastor: formA.idPastor, esPrincipal: formA.esPrincipal, fechaInicio: formA.fechaInicio, fechaFin: null, observaciones: formA.observaciones || null },
+      { idSede: formA.idSede, idPastor: formA.idPastor, esPrincipal: formA.esPrincipal, fechaInicio: formA.fechaInicio, fechaFin: null, observaciones: formA.observaciones || null },
       { onSuccess: () => setDialogAsign(false) }
     );
   };
 
-  const getIglesiasForPastor = (idPastor: number) => {
-    return iglesiaPastores.filter(ip => ip.idPastor === idPastor && !ip.fechaFin).map(ip => {
-      const ig = iglesias.find(i => i.idIglesia === ip.idIglesia);
-      return { ...ip, iglesiaNombre: ig?.nombre || "—" };
+  const handleSolicitarCambio = async () => {
+    if (!usuarioActual || !formSolicitud.idPastorActual || !formSolicitud.idSede || !formSolicitud.idPastorNuevo || !formSolicitud.motivo.trim()) return;
+
+    // Buscar los pastores
+    const pastorActual = pastores.find(p => p.idPastor === formSolicitud.idPastorActual);
+    const pastorNuevo = pastores.find(p => p.idPastor === formSolicitud.idPastorNuevo);
+    const sede = sedes.find(s => s.idSede === formSolicitud.idSede);
+
+    if (!pastorActual || !pastorNuevo || !sede) return;
+
+    try {
+      // Buscar super admins para enviarles la notificación
+      const { data: superAdmins, error } = await supabase
+        .from('usuario_rol')
+        .select('id_usuario')
+        .eq('id_rol', 1); // Rol super_admin
+
+      if (error) throw error;
+
+      if (!superAdmins || superAdmins.length === 0) {
+        console.error('No se encontraron super admins');
+        return;
+      }
+
+      // Enviar notificación a todos los super admins
+      const notificacionesPromises = superAdmins.map(admin =>
+        createNotificacionMutation.mutateAsync({
+          titulo: `Solicitud de cambio pastoral`,
+          mensaje: `El administrador ${usuarioActual.nombres} ${usuarioActual.apellidos} solicita cambiar al pastor de la sede ${sede.nombre}.
+
+**Cambio solicitado:**
+- Pastor actual: ${pastorActual.nombres} ${pastorActual.apellidos}
+- Nuevo pastor: ${pastorNuevo.nombres} ${pastorNuevo.apellidos}
+- Rol: ${formSolicitud.esPrincipal ? 'Pastor Principal' : 'Pastor Regular'}
+
+**Motivo:** ${formSolicitud.motivo}
+
+Por favor, revise y apruebe esta solicitud desde la página de gestión de pastores.`,
+          tipo: "tarea",
+          idUsuario: admin.id_usuario
+        })
+      );
+
+      await Promise.all(notificacionesPromises);
+
+      toast.success('Solicitud de cambio enviada a Super Administradores');
+      setDialogSolicitud(false);
+      setFormSolicitud({ idPastorActual: 0, idSede: 0, idPastorNuevo: 0, esPrincipal: false, motivo: "" });
+
+    } catch (error) {
+      console.error('Error al enviar solicitud:', error);
+      toast.error('Error al enviar la solicitud');
+    }
+  };
+
+  const getSedesForPastor = (idPastor: number) => {
+    return sedePastores.filter(sp => sp.idPastor === idPastor && !sp.fechaFin).map(sp => {
+      const sede = sedes.find(s => s.idSede === sp.idSede);
+      const iglesia = sede ? iglesias.find(i => i.idIglesia === sede.idIglesia) : null;
+      return {
+        ...sp,
+        iglesiaNombre: iglesia?.nombre || "—",
+        sedeNombre: sede?.nombre || `Sede ${sp.idSede}`
+      };
     });
   };
 
@@ -138,7 +206,7 @@ export function PastoresPage() {
               Directorio ({pastores.length})
             </TabsTrigger>
             <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
-              Asignaciones ({iglesiaPastores.filter(ip => !ip.fechaFin).length})
+              Asignaciones ({sedePastores.filter(sp => !sp.fechaFin).length})
             </TabsTrigger>
           </TabsList>
         </div>
@@ -164,7 +232,7 @@ export function PastoresPage() {
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
             {filteredPastores.map((p, i) => {
-              const asignaciones = getIglesiasForPastor(p.idPastor);
+              const asignaciones = getSedesForPastor(p.idPastor);
               const linkedUser = p.idUsuario ? usuarios.find(u => u.idUsuario === p.idUsuario) : null;
               return (
                 <GlassCard key={p.idPastor} index={i}>
@@ -246,10 +314,17 @@ export function PastoresPage() {
 
         <TabsContent value="asignaciones" className="space-y-4 mt-6">
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
-            <div className="flex justify-end mb-4">
-              <Button onClick={openAsign} className="shadow-md shadow-primary/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
-                <Plus className="w-4 h-4 mr-2" /> Nueva Asignación
-              </Button>
+            <div className="flex justify-end mb-4 gap-2">
+              {rolActual === "super_admin" && (
+                <Button onClick={openAsign} className="shadow-md shadow-primary/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
+                  <Plus className="w-4 h-4 mr-2" /> Nueva Asignación
+                </Button>
+              )}
+              {rolActual === "admin_iglesia" && (
+                <Button onClick={() => setDialogSolicitud(true)} className="shadow-md shadow-amber-500/20 rounded-full px-6 bg-amber-600 hover:bg-amber-700 shadow-amber-900/20">
+                  <Plus className="w-4 h-4 mr-2" /> Solicitar Asignación
+                </Button>
+              )}
             </div>
             
             <div className="rounded-2xl bg-card/50 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden dark:border-white/10 dark:bg-card/20">
@@ -258,7 +333,7 @@ export function PastoresPage() {
                   <TableHeader className="bg-muted/30">
                     <TableRow className="hover:bg-transparent border-border/40">
                       <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Dignatario Pastor</TableHead>
-                      <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Iglesia Destino</TableHead>
+                      <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Sede Asignada</TableHead>
                       <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Pastor Principal</TableHead>
                       <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Fecha Inicio</TableHead>
                       <TableHead className="py-4 text-xs font-bold uppercase tracking-widest text-primary/70">Observaciones</TableHead>
@@ -266,27 +341,27 @@ export function PastoresPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {iglesiaPastores.filter(ip => !ip.fechaFin).map(ip => {
-                      const pa = pastores.find(p => p.idPastor === ip.idPastor);
-                      const ig = iglesias.find(i => i.idIglesia === ip.idIglesia);
+                    {sedePastores.filter(sp => !sp.fechaFin).map(sp => {
+                      const pa = pastores.find(p => p.idPastor === sp.idPastor);
+                      // Aquí necesitaríamos obtener información completa de la sede
+                      // Por ahora mostraremos información básica
                       return (
-                        <TableRow key={ip.idIglesiaPastor} className="transition-colors hover:bg-white/40 dark:hover:bg-white/5 border-border/40">
+                        <TableRow key={sp.idSedePastor} className="transition-colors hover:bg-white/40 dark:hover:bg-white/5 border-border/40">
                           <TableCell className="py-4 font-medium text-foreground">{pa ? `${pa.nombres} ${pa.apellidos}` : "—"}</TableCell>
-                          <TableCell className="py-4 text-sm font-medium text-muted-foreground flex items-center gap-1.5"><Church className="w-3.5 h-3.5"/>{ig?.nombre || "—"}</TableCell>
-                          <TableCell className="py-4">{ip.esPrincipal ? <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800 tracking-wide font-semibold">SÍ P. PRINCIPAL</Badge> : <span className="text-xs font-medium text-muted-foreground ml-2">No</span>}</TableCell>
-                          <TableCell className="py-4 text-xs font-medium text-foreground/80">{new Date(ip.fechaInicio).toLocaleDateString("es", { month: "short", year: "numeric", day: "numeric" })}</TableCell>
-                          <TableCell className="py-4 text-xs text-muted-foreground max-w-48 truncate">{ip.observaciones || "—"}</TableCell>
+                          <TableCell className="py-4 text-sm font-medium text-muted-foreground flex items-center gap-1.5"><Church className="w-3.5 h-3.5"/>Sede #{sp.idSede}</TableCell>
+                          <TableCell className="py-4">{sp.esPrincipal ? <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800 tracking-wide font-semibold">SÍ P. PRINCIPAL</Badge> : <span className="text-xs font-medium text-muted-foreground ml-2">No</span>}</TableCell>
+                          <TableCell className="py-4 text-xs font-medium text-foreground/80">{new Date(sp.fechaInicio).toLocaleDateString("es", { month: "short", year: "numeric", day: "numeric" })}</TableCell>
+                          <TableCell className="py-4 text-xs text-muted-foreground max-w-48 truncate">{sp.observaciones || "—"}</TableCell>
                           <TableCell className="py-4 text-right">
                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10 text-destructive" onClick={() => {
                               const paName = pa ? `${pa.nombres} ${pa.apellidos}` : "Pastor";
-                              const igName = ig?.nombre || "Iglesia";
-                              setConfirmDeleteAsign({ id: ip.idIglesiaPastor, pastorName: paName, iglesiaName: igName });
+                              setConfirmDeleteAsign({ id: sp.idSedePastor, pastorName: paName, iglesiaName: `Sede ${sp.idSede}` });
                             }}><Trash2 className="w-3.5 h-3.5" /></Button>
                           </TableCell>
                         </TableRow>
                       );
                     })}
-                    {iglesiaPastores.filter(ip => !ip.fechaFin).length === 0 && (
+                    {sedePastores.filter(sp => !sp.fechaFin).length === 0 && (
                       <TableRow><TableCell colSpan={6} className="text-center py-12 text-sm text-muted-foreground">Sin asignaciones de pastores activas</TableCell></TableRow>
                     )}
                   </TableBody>
@@ -343,10 +418,16 @@ export function PastoresPage() {
               </Select>
             </div>
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Iglesia Destino <span className="text-destructive">*</span></label>
-              <Select value={formA.idIglesia ? String(formA.idIglesia) : ""} onValueChange={v => setFormA(f => ({ ...f, idIglesia: Number(v) }))}>
-                <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30"><SelectValue placeholder="Seleccionar Iglesia" /></SelectTrigger>
-                <SelectContent>{iglesias.map(i => <SelectItem key={i.idIglesia} value={String(i.idIglesia)}>{i.nombre}</SelectItem>)}</SelectContent>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Sede Destino <span className="text-destructive">*</span></label>
+              <Select value={formA.idSede ? String(formA.idSede) : ""} onValueChange={v => setFormA(f => ({ ...f, idSede: Number(v) }))}>
+                <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30"><SelectValue placeholder="Seleccionar Sede" /></SelectTrigger>
+                <SelectContent>
+                  {sedes.filter(s => s.estado === 'activa').map(s => (
+                    <SelectItem key={s.idSede} value={String(s.idSede)}>
+                      {s.nombre} - {iglesias.find(i => i.idIglesia === s.idIglesia)?.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -373,13 +454,129 @@ export function PastoresPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog Solicitud de Cambio */}
+      <Dialog open={dialogSolicitud} onOpenChange={setDialogSolicitud}>
+        <DialogContent className="sm:max-w-lg rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
+          <div className="px-6 py-4 bg-amber-50/50 dark:bg-amber-900/10 border-b border-amber-200/50 dark:border-amber-800/30">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                <Plus className="w-5 h-5 text-amber-600" />
+                Solicitar Cambio de Pastor
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Solicite autorización para cambiar al pastor de una sede
+              </p>
+            </DialogHeader>
+          </div>
+          <div className="px-6 py-5 space-y-4">
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Sede a Modificar <span className="text-destructive">*</span></label>
+                <Select value={formSolicitud.idSede ? String(formSolicitud.idSede) : ""} onValueChange={v => {
+                  const sedeId = Number(v);
+                  const sedeSeleccionada = sedes.find(s => s.idSede === sedeId);
+                  const pastorActual = sedeSeleccionada ?
+                    sedePastores.find(sp => sp.idSede === sedeSeleccionada.idSede && !sp.fechaFin)?.idPastor : 0;
+
+                  setFormSolicitud(f => ({
+                    ...f,
+                    idSede: sedeId,
+                    idPastorActual: pastorActual || 0
+                  }));
+                }}>
+                  <SelectTrigger className="bg-input-background focus:ring-amber-500/30">
+                    <SelectValue placeholder="Seleccionar Sede" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sedes.filter(s => s.estado === 'activa').map(s => (
+                      <SelectItem key={s.idSede} value={String(s.idSede)}>
+                        {s.nombre} - {iglesias.find(i => i.idIglesia === s.idIglesia)?.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Pastor Actual</label>
+                <Select
+                  value={formSolicitud.idPastorActual ? String(formSolicitud.idPastorActual) : ""}
+                  disabled
+                >
+                  <SelectTrigger className="bg-gray-100 dark:bg-gray-800">
+                    <SelectValue placeholder={formSolicitud.idPastorActual ?
+                      pastores.find(p => p.idPastor === formSolicitud.idPastorActual)?.nombres + ' ' +
+                      pastores.find(p => p.idPastor === formSolicitud.idPastorActual)?.apellidos
+                      : "Seleccione una sede primero"} />
+                  </SelectTrigger>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Solo lectura - se carga desde la sede</p>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nuevo Pastor <span className="text-destructive">*</span></label>
+                <Select value={formSolicitud.idPastorNuevo ? String(formSolicitud.idPastorNuevo) : ""} onValueChange={v => setFormSolicitud(f => ({ ...f, idPastorNuevo: Number(v) }))}>
+                  <SelectTrigger className="bg-input-background focus:ring-amber-500/30">
+                    <SelectValue placeholder="Seleccionar Nuevo Pastor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pastores.map(p => (
+                      <SelectItem key={p.idPastor} value={String(p.idPastor)}>
+                        {p.nombres} {p.apellidos}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 p-2 rounded-xl border border-border/50 bg-white/50 dark:bg-black/10">
+              <input
+                type="checkbox"
+                id="es-principal-cambio"
+                checked={formSolicitud.esPrincipal}
+                onChange={e => setFormSolicitud(f => ({ ...f, esPrincipal: e.target.checked }))}
+                className="rounded border-border text-amber-600 focus:ring-amber-500/30 w-4 h-4"
+              />
+              <label htmlFor="es-principal-cambio" className="text-xs font-semibold text-foreground/80 cursor-pointer">
+                Nuevo pastor será Principal
+              </label>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Motivo del Cambio <span className="text-destructive">*</span></label>
+              <textarea
+                value={formSolicitud.motivo}
+                onChange={e => setFormSolicitud(f => ({ ...f, motivo: e.target.value }))}
+                placeholder="Explique detalladamente el motivo del cambio (renovación pastoral, traslado, renuncia, etc.)"
+                className="w-full h-24 rounded-xl border border-white/10 bg-background/50 p-4 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-amber-500/20 resize-none"
+                rows={3}
+              />
+            </div>
+          </div>
+          <div className="px-6 py-4 bg-amber-50/30 dark:bg-amber-900/5 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setDialogSolicitud(false)} className="rounded-full px-5">
+              <X className="w-4 h-4 mr-1.5" /> Cancelar
+            </Button>
+            <Button
+              onClick={handleSolicitarCambio}
+              disabled={!formSolicitud.idSede || !formSolicitud.idPastorNuevo || !formSolicitud.motivo.trim()}
+              className="rounded-full px-5 bg-amber-600 hover:bg-amber-700 shadow-amber-900/20"
+            >
+              <Save className="w-4 h-4 mr-1.5" />
+              Enviar Solicitud de Cambio
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Detail Dialog ── */}
       <Dialog open={!!selectedPastor} onOpenChange={() => setSelectedPastor(null)}>
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           {(() => {
             const p = pastores.find(x => x.idPastor === selectedPastor);
             if (!p) return null;
-            const asignaciones = getIglesiasForPastor(p.idPastor);
+            const asignaciones = getSedesForPastor(p.idPastor);
             const linkedUser = p.idUsuario ? usuarios.find(u => u.idUsuario === p.idUsuario) : null;
             return (
               <>

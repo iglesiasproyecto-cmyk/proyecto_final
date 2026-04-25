@@ -21,6 +21,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_my_usuario() TO authenticated;
 
 -- Función para obtener roles del usuario actual (bypasea RLS)
+-- Super Admin no requiere iglesia asignada, otros roles sí
 CREATE OR REPLACE FUNCTION public.get_my_roles()
 RETURNS TABLE (
   id_rol bigint,
@@ -38,11 +39,17 @@ AS $$
     ur.id_rol,
     ur.fecha_fin,
     r.nombre AS rol_nombre,
-    i.id_iglesia AS iglesia_id,
-    i.nombre AS iglesia_nombre
+    CASE
+      WHEN r.nombre = 'Super Administrador' THEN NULL
+      ELSE i.id_iglesia
+    END AS iglesia_id,
+    CASE
+      WHEN r.nombre = 'Super Administrador' THEN NULL
+      ELSE i.nombre
+    END AS iglesia_nombre
   FROM public.usuario_rol ur
   JOIN public.rol r ON r.id_rol = ur.id_rol
-  JOIN public.iglesia i ON i.id_iglesia = ur.id_iglesia
+  LEFT JOIN public.iglesia i ON i.id_iglesia = ur.id_iglesia
   WHERE ur.id_usuario = (
     SELECT id_usuario FROM public.usuario WHERE auth_user_id = auth.uid() LIMIT 1
   )

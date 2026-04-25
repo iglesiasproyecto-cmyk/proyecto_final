@@ -104,6 +104,7 @@ BEGIN
   -- ========================================
   -- PASO 5: Asignar rol Super Administrador
   -- ========================================
+  -- Super Admin no debe estar ligado a una iglesia específica
   IF NOT EXISTS (
     SELECT 1 FROM public.usuario_rol
     WHERE id_usuario = v_id_usuario
@@ -111,9 +112,9 @@ BEGIN
       AND fecha_fin IS NULL
   ) THEN
     INSERT INTO public.usuario_rol (id_usuario, id_rol, id_iglesia, fecha_inicio)
-    VALUES (v_id_usuario, v_id_rol, v_id_iglesia, CURRENT_DATE);
+    VALUES (v_id_usuario, v_id_rol, NULL, CURRENT_DATE);  -- iglesia_id = NULL para Super Admin
 
-    RAISE NOTICE '✅ Rol Super Administrador asignado';
+    RAISE NOTICE '✅ Rol Super Administrador asignado (sin iglesia específica)';
   ELSE
     RAISE NOTICE 'ℹ️ El usuario ya tiene rol Super Administrador';
   END IF;

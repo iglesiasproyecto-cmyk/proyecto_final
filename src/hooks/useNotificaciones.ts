@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  getNotificaciones, markNotificacionRead, markAllNotificacionesRead,
+  getNotificaciones, markNotificacionRead, markAllNotificacionesRead, createNotificacion,
 } from '@/services/notificaciones.service'
 
 export function useNotificaciones(idUsuario: number) {
@@ -25,5 +25,15 @@ export function useMarkAllNotificacionesRead() {
   return useMutation({
     mutationFn: (idUsuario: number) => markAllNotificacionesRead(idUsuario),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notificaciones'] }),
+  })
+}
+
+export function useCreateNotificacion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createNotificacion,
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['notificaciones', variables.idUsuario] })
+    },
   })
 }

@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useSedesEnriquecidas, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado, useDeleteSede, useIglesiaPastores, usePastoresEnriquecidos } from "@/hooks/useIglesias";
+import { useSedesEnriquecidas, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado, useDeleteSede, useSedePastores, usePastoresEnriquecidos, usePastoresPorSede, useCreateSedePastor, useCreatePastor } from "@/hooks/useIglesias";
 import { useApp } from "@/app/store/AppContext";
 import { useCiudades } from "@/hooks/useGeografia";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Save, Globe, Users, Eye, Church, UserCheck } from "lucide-react";
@@ -18,9 +18,19 @@ export function SedesPage() {
   const [filterIglesia, setFilterIglesia] = useState("all");
   const [filterEstado, setFilterEstado] = useState("all");
   const [dialog, setDialog] = useState(false);
+  const [dialogPastor, setDialogPastor] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const [selectedSede, setSelectedSede] = useState<number | null>(null);
   const [form, setForm] = useState({ nombre: "", direccion: "", idCiudad: 0, idIglesia: 0, estado: "activa" as "activa" | "inactiva" | "en_construccion" });
+  const [pastorForm, setPastorForm] = useState({
+    idSede: 0,
+    idPastor: 0,
+    esPrincipal: true,
+    fechaInicio: new Date().toISOString().split('T')[0],
+    observaciones: "",
+    crearNuevoPastor: false,
+    nuevoPastor: { nombres: "", apellidos: "", correo: "", telefono: "" }
+  });
 
   const { iglesiaActual, rolActual } = useApp();
   const queryIglesiaId = rolActual === "super_admin"
@@ -29,13 +39,15 @@ export function SedesPage() {
   const { data: sedes = [], isLoading } = useSedesEnriquecidas(queryIglesiaId);
   const { data: iglesias = [] } = useIglesias();
   const { data: ciudades = [] } = useCiudades();
-  const { data: iglesiaPastores = [] } = useIglesiaPastores();
+  const { data: sedePastores = [] } = useSedePastores();
   const { data: pastores = [] } = usePastoresEnriquecidos();
 
   const createSedeMutation = useCreateSede();
   const updateSedeMutation = useUpdateSede();
   const toggleSedeMutation = useToggleSedeEstado();
   const deleteSedeMutation = useDeleteSede();
+  const createSedePastorMutation = useCreateSedePastor();
+  const createPastorMutation = useCreatePastor();
 
   if (isLoading) return (
     <div className="max-w-7xl mx-auto flex items-center justify-center p-12">
@@ -80,10 +92,13 @@ export function SedesPage() {
     else createSedeMutation.mutate(
       { nombre: form.nombre, direccion: form.direccion || null, idCiudad: form.idCiudad, idIglesia: form.idIglesia, estado: form.estado },
       {
-        onSuccess: () => {
+        onSuccess: (nuevaSede) => {
           toast.success("Sede creada correctamente");
           setEditing(null);
           setDialog(false);
+          // Abrir diálogo para asignar pastor a la nueva sede
+          setPastorForm(prev => ({ ...prev, idSede: nuevaSede.idSede }));
+          setDialogPastor(true);
         },
         onError: (err: any) => {
           toast.error(err?.message ?? "No se pudo crear la sede");
@@ -98,6 +113,65 @@ export function SedesPage() {
   };
 
   const lookupIglesia = (idIglesia: number) => iglesias.find(i => i.idIglesia === idIglesia)?.nombre || "-";
+
+  const handleAsignarPastor = async () => {
+    if (!pastorForm.idSede) return;
+
+    let idPastor = pastorForm.idPastor;
+
+    // Si se selecciona crear nuevo pastor
+    if (pastorForm.crearNuevoPastor) {
+      if (!pastorForm.nuevoPastor.nombres.trim() || !pastorForm.nuevoPastor.apellidos.trim() || !pastorForm.nuevoPastor.correo.trim()) {
+        toast.error("Completa nombre, apellido y correo del nuevo pastor");
+        return;
+      }
+
+      try {
+        const nuevoPastor = await createPastorMutation.mutateAsync({
+          nombres: pastorForm.nuevoPastor.nombres.trim(),
+          apellidos: pastorForm.nuevoPastor.apellidos.trim(),
+          correo: pastorForm.nuevoPastor.correo.trim(),
+          telefono: pastorForm.nuevoPastor.telefono.trim() || null,
+          idUsuario: null
+        });
+        idPastor = nuevoPastor.idPastor;
+      } catch (error) {
+        toast.error("Error al crear el pastor");
+        return;
+      }
+    }
+
+    if (!idPastor) {
+      toast.error("Selecciona un pastor existente o crea uno nuevo");
+      return;
+    }
+
+    // Asignar pastor a la sede
+    try {
+      await createSedePastorMutation.mutateAsync({
+        idSede: pastorForm.idSede,
+        idPastor: idPastor,
+        esPrincipal: pastorForm.esPrincipal,
+        fechaInicio: pastorForm.fechaInicio,
+        fechaFin: null,
+        observaciones: pastorForm.observaciones || null
+      });
+
+      toast.success("Pastor asignado correctamente a la sede");
+      setDialogPastor(false);
+      setPastorForm({
+        idSede: 0,
+        idPastor: 0,
+        esPrincipal: true,
+        fechaInicio: new Date().toISOString().split('T')[0],
+        observaciones: "",
+        crearNuevoPastor: false,
+        nuevoPastor: { nombres: "", apellidos: "", correo: "", telefono: "" }
+      });
+    } catch (error) {
+      toast.error("Error al asignar el pastor");
+    }
+  };
   const estadoColor = (e: string) => e === "activa" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : e === "inactiva" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200";
   const estadoLabel = (e: string) => e === "activa" ? "Activa" : e === "inactiva" ? "Inactiva" : "En Construcción";
 
@@ -290,7 +364,7 @@ export function SedesPage() {
         const sedeDetail = sedes.find(s => s.idSede === selectedSede);
         if (!sedeDetail) return null;
         const iglesia = iglesias.find(i => i.idIglesia === sedeDetail.idIglesia);
-        const pastorLink = iglesiaPastores.find(ip => ip.idIglesia === sedeDetail.idIglesia && ip.esPrincipal);
+        const pastorLink = sedePastores.find(sp => sp.idSede === sedeDetail.idSede && sp.esPrincipal);
         const pastor = pastorLink ? pastores.find(p => p.idPastor === pastorLink.idPastor) : null;
         return (
           <Dialog open={!!selectedSede} onOpenChange={() => setSelectedSede(null)}>
@@ -421,6 +495,178 @@ export function SedesPage() {
             <Button variant="ghost" onClick={() => setDialog(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
             <Button onClick={handleSubmit} disabled={!form.nombre.trim() || !form.idCiudad || !form.idIglesia} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo: Asignar Pastor a Sede */}
+      <Dialog open={dialogPastor} onOpenChange={setDialogPastor}>
+        <DialogContent className="sm:max-w-lg rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+              Asignar Pastor a Sede
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Cada sede debe tener un pastor asignado para su funcionamiento.
+            </p>
+          </DialogHeader>
+          <div className="space-y-5 py-4">
+            {/* Selector de pastor existente o crear nuevo */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-white/50 dark:bg-black/10">
+                <input
+                  type="radio"
+                  id="pastor-existente"
+                  name="tipo-pastor"
+                  checked={!pastorForm.crearNuevoPastor}
+                  onChange={() => setPastorForm(f => ({ ...f, crearNuevoPastor: false }))}
+                  className="rounded border-border text-[#4682b4] focus:ring-[#4682b4]/30"
+                />
+                <label htmlFor="pastor-existente" className="text-sm font-medium cursor-pointer">
+                  Seleccionar pastor existente
+                </label>
+              </div>
+
+              {!pastorForm.crearNuevoPastor && (
+                <div>
+                  <Select value={pastorForm.idPastor ? String(pastorForm.idPastor) : ""} onValueChange={v => setPastorForm(f => ({ ...f, idPastor: Number(v) }))}>
+                    <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30">
+                      <SelectValue placeholder="Seleccionar Pastor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pastores.map(p => (
+                        <SelectItem key={p.idPastor} value={String(p.idPastor)}>
+                          {p.nombres} {p.apellidos}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-white/50 dark:bg-black/10">
+                <input
+                  type="radio"
+                  id="pastor-nuevo"
+                  name="tipo-pastor"
+                  checked={pastorForm.crearNuevoPastor}
+                  onChange={() => setPastorForm(f => ({ ...f, crearNuevoPastor: true, idPastor: 0 }))}
+                  className="rounded border-border text-[#4682b4] focus:ring-[#4682b4]/30"
+                />
+                <label htmlFor="pastor-nuevo" className="text-sm font-medium cursor-pointer">
+                  Crear nuevo pastor
+                </label>
+              </div>
+
+              {pastorForm.crearNuevoPastor && (
+                <div className="space-y-3 p-4 rounded-xl border border-dashed border-[#4682b4]/30 bg-[#4682b4]/5">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nombres *</label>
+                      <Input
+                        value={pastorForm.nuevoPastor.nombres}
+                        onChange={(e) => setPastorForm(f => ({ ...f, nuevoPastor: { ...f.nuevoPastor, nombres: e.target.value } }))}
+                        placeholder="Juan Carlos"
+                        className="bg-input-background focus-visible:ring-[#4682b4]/30"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Apellidos *</label>
+                      <Input
+                        value={pastorForm.nuevoPastor.apellidos}
+                        onChange={(e) => setPastorForm(f => ({ ...f, nuevoPastor: { ...f.nuevoPastor, apellidos: e.target.value } }))}
+                        placeholder="Pérez García"
+                        className="bg-input-background focus-visible:ring-[#4682b4]/30"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Correo Electrónico *</label>
+                    <Input
+                      type="email"
+                      value={pastorForm.nuevoPastor.correo}
+                      onChange={(e) => setPastorForm(f => ({ ...f, nuevoPastor: { ...f.nuevoPastor, correo: e.target.value } }))}
+                      placeholder="pastor@email.com"
+                      className="bg-input-background focus-visible:ring-[#4682b4]/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Teléfono</label>
+                    <Input
+                      value={pastorForm.nuevoPastor.telefono}
+                      onChange={(e) => setPastorForm(f => ({ ...f, nuevoPastor: { ...f.nuevoPastor, telefono: e.target.value } }))}
+                      placeholder="+57 300 123 4567"
+                      className="bg-input-background focus-visible:ring-[#4682b4]/30"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Configuración de asignación */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Fecha Inicio *</label>
+                <Input
+                  type="date"
+                  value={pastorForm.fechaInicio}
+                  onChange={(e) => setPastorForm(f => ({ ...f, fechaInicio: e.target.value }))}
+                  className="bg-input-background focus-visible:ring-[#4682b4]/30"
+                />
+              </div>
+              <div className="flex flex-col justify-end pb-2">
+                <div className="flex items-center gap-2.5 p-2 rounded-xl border border-border/50 bg-white/50 dark:bg-black/10">
+                  <input
+                    type="checkbox"
+                    id="es-principal-sede"
+                    checked={pastorForm.esPrincipal}
+                    onChange={(e) => setPastorForm(f => ({ ...f, esPrincipal: e.target.checked }))}
+                    className="rounded border-border text-[#4682b4] focus:ring-[#4682b4]/30 w-4 h-4"
+                  />
+                  <label htmlFor="es-principal-sede" className="text-xs font-semibold text-foreground/80 cursor-pointer">
+                    Pastor Principal de la Sede
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Observaciones</label>
+              <textarea
+                value={pastorForm.observaciones}
+                onChange={(e) => setPastorForm(f => ({ ...f, observaciones: e.target.value }))}
+                placeholder="Notas adicionales sobre la asignación..."
+                className="w-full h-20 rounded-xl border border-white/10 bg-background/50 p-4 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-[#4682b4]/20 resize-none"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 border-t border-white/10 pt-4">
+            <Button
+              variant="ghost"
+              className="rounded-xl"
+              onClick={() => {
+                setDialogPastor(false);
+                setPastorForm({
+                  idSede: 0,
+                  idPastor: 0,
+                  esPrincipal: true,
+                  fechaInicio: new Date().toISOString().split('T')[0],
+                  observaciones: "",
+                  crearNuevoPastor: false,
+                  nuevoPastor: { nombres: "", apellidos: "", correo: "", telefono: "" }
+                });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="rounded-xl px-8"
+              onClick={handleAsignarPastor}
+              disabled={createPastorMutation.isPending || createSedePastorMutation.isPending}
+            >
+              {createPastorMutation.isPending || createSedePastorMutation.isPending ? 'Asignando...' : 'Asignar Pastor'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
