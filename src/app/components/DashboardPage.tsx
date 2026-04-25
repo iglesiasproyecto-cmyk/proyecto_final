@@ -289,7 +289,7 @@ function AdminIglesiaDashboard() {
   const unread = notificacionesCount;
 
   // Combinar sedes con información de pastores asignados
-  const sedesConPastores = sedes.map(sede => {
+  let sedesConPastores = sedes.map(sede => {
     const asignacionesActivas = sedePastores.filter(sp =>
       sp.idSede === sede.idSede &&
       sp.fechaFin === null
@@ -306,6 +306,39 @@ function AdminIglesiaDashboard() {
       asignacion: asignacionesActivas[0] || null
     };
   });
+
+  // Si no hay sedes, mostrar datos de ejemplo para demostración
+  if (sedesConPastores.length === 0) {
+    sedesConPastores = [
+      {
+        idSede: 1,
+        nombre: "Sede Centro",
+        ciudadNombre: "Bogotá",
+        cantidadMinisterios: 3,
+        pastorAsignado: { nombres: "Juan", apellidos: "Pérez" },
+        tienePastor: true,
+        asignacion: null
+      },
+      {
+        idSede: 2,
+        nombre: "Sede Norte",
+        ciudadNombre: "Bogotá",
+        cantidadMinisterios: 2,
+        pastorAsignado: { nombres: "María", apellidos: "González" },
+        tienePastor: true,
+        asignacion: null
+      },
+      {
+        idSede: 3,
+        nombre: "Sede Sur",
+        ciudadNombre: "Bogotá",
+        cantidadMinisterios: 1,
+        pastorAsignado: null,
+        tienePastor: false,
+        asignacion: null
+      }
+    ];
+  }
 
   const minChartData = ministerios.map((m) => ({
     name: m.nombre.length > 10 ? m.nombre.substring(0, 8) + "..." : m.nombre,
@@ -413,7 +446,12 @@ function AdminIglesiaDashboard() {
                 </div>
               </div>
             ))}
-            {sedesConPastores.length === 0 && <p className="text-[11px] font-medium text-muted-foreground text-center py-6">No hay sedes configuradas</p>}
+            {sedes.length === 0 && (
+              <div className="text-center py-6 space-y-2">
+                <p className="text-[11px] font-medium text-muted-foreground">Mostrando datos de ejemplo</p>
+                <p className="text-[10px] font-medium text-muted-foreground/60">Configure sedes y pastores para ver datos reales</p>
+              </div>
+            )}
           </div>
         </AnimatedCard>
 
