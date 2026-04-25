@@ -52,7 +52,7 @@ const pageTitles: Record<string, string> = {
   "/app/perfil": "Mi Perfil",
 };
 
-function getNavItemsForRole(role: string): NavItem[] {
+function getNavItemsForRole(role: string, iglesiaActual?: { id: number; nombre: string } | null): NavItem[] {
   switch (role) {
     case "super_admin":
       return [
@@ -150,7 +150,7 @@ export function AppLayout() {
   const rol = rolActual;
   const unreadCount = notificacionesCount;
   const activeChurch = iglesiaActual;
-  const navItems = getNavItemsForRole(rol);
+  const navItems = getNavItemsForRole(rol, iglesiaActual);
   const navGroups = groupBySection(navItems);
   const showChurchSelectorPanel = rol !== "super_admin";
   const fullName = `${usuarioActual.nombres} ${usuarioActual.apellidos}`;
