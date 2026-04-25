@@ -8,7 +8,7 @@ import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
-import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Save, Globe, Users, Eye, Church, UserCheck } from "lucide-react";
+import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Save, Globe, Users, Eye, Church, UserCheck, User } from "lucide-react";
 import { motion } from "motion/react";
 import { AnimatedCard } from "./ui/AnimatedCard";
 import { toast } from "sonner";
