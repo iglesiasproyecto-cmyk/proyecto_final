@@ -57,12 +57,9 @@ function AnimatedCard({ children, index = 0, className = "", onClick }: { childr
           {children}
         </div>
       </div>
-
-
-    </div>
+    </motion.div>
   );
 }
-
 function SectionHeader({ icon, title, action, actionLabel = "Ver todos" }: {
   icon: React.ReactNode; title: string; action?: () => void; actionLabel?: string;
 }) {
