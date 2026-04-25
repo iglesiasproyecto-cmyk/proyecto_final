@@ -71,8 +71,7 @@ function CicloDetail({
   const canEnroll =
     !cicloCerrado &&
     (
-      rolActual === "super_admin" ||
-      (rolActual === "lider" && cursoMinisterioId != null && misMinisterios.includes(cursoMinisterioId))
+      rolActual === "lider" && cursoMinisterioId != null && misMinisterios.includes(cursoMinisterioId)
     );
 
   const completados = detalles.filter(d => d.estado === "completado").length;

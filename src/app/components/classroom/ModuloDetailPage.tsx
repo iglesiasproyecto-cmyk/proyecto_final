@@ -60,7 +60,6 @@ export function ModuloDetailPage() {
   })
 
   const canEdit = useMemo(() => {
-    if (rolActual === 'super_admin') return true
     // Si lider pudo leer el modulo por RLS, su scope le permite gestionarlo.
     if (rolActual === 'lider' && !!modulo) return true
     return false
