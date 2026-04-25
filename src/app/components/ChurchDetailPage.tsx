@@ -1,8 +1,13 @@
 import { useParams, useNavigate } from "react-router";
+import { useState } from "react";
 import { motion } from "motion/react";
-import { useIglesiaEnriquecidaById, useSedes, usePastoresPorIglesia, useAdminsPorIglesia, useSedePastores } from "@/hooks/useIglesias";
+import { useIglesiaEnriquecidaById, useSedes, usePastoresPorIglesia, useAdminsPorIglesia, useSedePastores, useUpdateIglesia } from "@/hooks/useIglesias";
+import { useApp } from "../store/AppContext";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
 import {
   Building2, ArrowLeft, MapPin, Calendar, Globe, Church,
   Users, Mail, Phone, MapPinned, Loader2, ShieldCheck
@@ -31,7 +36,18 @@ const sedeEstadoLabels: Record<string, string> = {
 export function ChurchDetailPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
   const navigate = useNavigate();
+  const { rolActual, iglesiaActual } = useApp();
   const id = Number(idIglesia);
+
+  // Estado para edición
+  const [editDialog, setEditDialog] = useState(false);
+  const [editForm, setEditForm] = useState({
+    descripcion: "",
+    telefono: "",
+    email: "",
+    sitio_web: "",
+    direccion: ""
+  });
 
   const { data: iglesia, isLoading: loadingIglesia } = useIglesiaEnriquecidaById(id);
   const { data: sedes = [], isLoading: loadingSedes } = useSedes(id);
@@ -39,7 +55,42 @@ export function ChurchDetailPage() {
   const { data: admins = [], isLoading: loadingAdmins } = useAdminsPorIglesia(id);
   const { data: sedePastores = [], isLoading: loadingSedePastores } = useSedePastores();
 
+  const updateIglesiaMutation = useUpdateIglesia();
+
   const isLoading = loadingIglesia || loadingSedes || loadingPastores || loadingAdmins || loadingSedePastores;
+
+  // Verificar permisos de edición
+  const canEditIglesia = rolActual === "super_admin" ||
+    (rolActual === "admin_iglesia" && iglesiaActual?.id === id);
+
+  // Funciones de edición
+  const openEditDialog = () => {
+    if (!iglesia) return;
+    setEditForm({
+      descripcion: iglesia.descripcion || "",
+      telefono: iglesia.telefono || "",
+      email: iglesia.email || "",
+      sitio_web: iglesia.sitio_web || "",
+      direccion: iglesia.direccion || ""
+    });
+    setEditDialog(true);
+  };
+
+  const handleSaveEdit = () => {
+    updateIglesiaMutation.mutate(
+      {
+        id,
+        data: editForm
+      },
+      {
+        onSuccess: () => {
+          setEditDialog(false);
+          // Refrescar datos
+          window.location.reload();
+        }
+      }
+    );
+  };
 
   if (isLoading) {
     return (
@@ -86,16 +137,26 @@ export function ChurchDetailPage() {
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <Building2 className="w-10 h-10 text-white" />
           </div>
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold tracking-tight">{iglesia.nombre}</h1>
-              <Badge
-                variant="outline"
-                className={`text-xs font-semibold tracking-wide ${estadoBadgeColors[iglesia.estado] ?? ""}`}
-              >
-                {estadoLabels[iglesia.estado] ?? iglesia.estado}
-              </Badge>
-            </div>
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold tracking-tight">{iglesia.nombre}</h1>
+                <Badge
+                  variant="outline"
+                  className={`text-xs font-semibold tracking-wide ${estadoBadgeColors[iglesia.estado] ?? ""}`}
+                >
+                  {estadoLabels[iglesia.estado] ?? iglesia.estado}
+                </Badge>
+                {canEditIglesia && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={openEditDialog}
+                    className="h-7 px-3 text-xs border-[#4682b4]/30 text-[#4682b4] hover:bg-[#4682b4]/10"
+                  >
+                    ✏️ Editar Iglesia
+                  </Button>
+                )}
+              </div>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-primary/70" />
@@ -348,6 +409,102 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
           <p className="text-lg font-bold text-foreground">{value}</p>
         </div>
       </div>
+
+      {/* Modal de edición de iglesia */}
+      <Dialog open={editDialog} onOpenChange={setEditDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-[#4682b4]" />
+              Editar Iglesia
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-sm font-medium text-foreground">{iglesia?.nombre}</p>
+              <p className="text-xs text-muted-foreground">Modificando datos de la iglesia</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">
+                  Descripción
+                </label>
+                <Textarea
+                  value={editForm.descripcion}
+                  onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))}
+                  placeholder="Descripción de la iglesia..."
+                  className="min-h-[80px] bg-input-background focus-visible:ring-[#4682b4]/30"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">
+                    Teléfono
+                  </label>
+                  <Input
+                    value={editForm.telefono}
+                    onChange={e => setEditForm(f => ({ ...f, telefono: e.target.value }))}
+                    placeholder="+57 300 123 4567"
+                    className="bg-input-background focus-visible:ring-[#4682b4]/30"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">
+                    Email
+                  </label>
+                  <Input
+                    type="email"
+                    value={editForm.email}
+                    onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
+                    placeholder="contacto@iglesia.com"
+                    className="bg-input-background focus-visible:ring-[#4682b4]/30"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">
+                  Sitio Web
+                </label>
+                <Input
+                  value={editForm.sitio_web}
+                  onChange={e => setEditForm(f => ({ ...f, sitio_web: e.target.value }))}
+                  placeholder="https://www.iglesia.com"
+                  className="bg-input-background focus-visible:ring-[#4682b4]/30"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">
+                  Dirección Principal
+                </label>
+                <Input
+                  value={editForm.direccion}
+                  onChange={e => setEditForm(f => ({ ...f, direccion: e.target.value }))}
+                  placeholder="Dirección de la iglesia..."
+                  className="bg-input-background focus-visible:ring-[#4682b4]/30"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setEditDialog(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                disabled={updateIglesiaMutation.isPending}
+                className="bg-[#4682b4] hover:bg-[#4682b4]/90"
+              >
+                {updateIglesiaMutation.isPending ? "Guardando..." : "Guardar Cambios"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
