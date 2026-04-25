@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router";
 import { useApp } from "../store/AppContext";
 import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
-import { useIglesias, usePastores, useSedes } from "@/hooks/useIglesias";
+import { useIglesias, usePastores, useSedes, useSedesEnriquecidas, useSedePastores, usePastoresEnriquecidos } from "@/hooks/useIglesias";
 import { useEventos } from "@/hooks/useEventos";
 import { useMinisterios, useMiembrosMinisterio } from "@/hooks/useMinisterios";
 import { useUsuarios } from "@/hooks/useUsuarios";
@@ -277,6 +277,9 @@ function AdminIglesiaDashboard() {
   const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(0);
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: notificaciones = [] } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
+  const { data: sedes = [] } = useSedesEnriquecidas(iglesiaActual?.id);
+  const { data: sedePastores = [] } = useSedePastores();
+  const { data: pastores = [] } = usePastoresEnriquecidos();
 
   if (!usuarioActual) return null;
 
@@ -284,6 +287,25 @@ function AdminIglesiaDashboard() {
   const activeMembers = miembrosMinisterio.filter((mm) => mm.activo);
   const globalEvents = eventos.filter((e) => !e.idMinisterio);
   const unread = notificacionesCount;
+
+  // Combinar sedes con información de pastores asignados
+  const sedesConPastores = sedes.map(sede => {
+    const asignacionesActivas = sedePastores.filter(sp =>
+      sp.idSede === sede.idSede &&
+      sp.fechaFin === null
+    );
+
+    const pastorAsignado = asignacionesActivas.length > 0
+      ? pastores.find(p => p.idPastor === asignacionesActivas[0].idPastor)
+      : null;
+
+    return {
+      ...sede,
+      pastorAsignado,
+      tienePastor: !!pastorAsignado,
+      asignacion: asignacionesActivas[0] || null
+    };
+  });
 
   const minChartData = ministerios.map((m) => ({
     name: m.nombre.length > 10 ? m.nombre.substring(0, 8) + "..." : m.nombre,
@@ -362,7 +384,40 @@ function AdminIglesiaDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={6} className="p-4 lg:col-span-2">
+        <AnimatedCard index={6} className="p-4">
+          <SectionHeader icon={<UserCheck className="w-5 h-5" />} title="Pastores por Sede" action={() => navigate("/app/pastores")} />
+          <div className="grid grid-cols-1 gap-2">
+            {sedesConPastores.slice(0, 6).map((sede) => (
+              <div key={sede.idSede} className={`group flex items-center gap-3 p-3 rounded-2xl transition-all border ${sede.tienePastor ? "bg-gradient-to-r from-[#4682b4]/5 to-transparent border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm" : "bg-gradient-to-r from-amber-500/5 to-transparent border-amber-500/10 hover:border-amber-500/20 shadow-sm"}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${sede.tienePastor ? "bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white" : "bg-gradient-to-br from-amber-500 to-amber-600 text-white"} group-hover:scale-105 transition-transform`}>
+                  {sede.tienePastor ? (
+                    <UserCheck className="w-5 h-5" />
+                  ) : (
+                    <User className="w-5 h-5" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{sede.nombre}</p>
+                  <p className="text-[11px] font-medium text-muted-foreground truncate">
+                    {sede.tienePastor
+                      ? `${sede.pastorAsignado?.nombres} ${sede.pastorAsignado?.apellidos}`
+                      : "Sin pastor asignado"
+                    }
+                  </p>
+                  <p className="text-[10px] font-medium text-muted-foreground/60 truncate">{sede.ciudadNombre} • {sede.cantidadMinisterios} ministerios</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Badge variant={sede.tienePastor ? "secondary" : "outline"} className={`text-[9px] px-2 py-0.5 ${sede.tienePastor ? "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"}`}>
+                    {sede.tienePastor ? "Asignado" : "Vacante"}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+            {sedesConPastores.length === 0 && <p className="text-[11px] font-medium text-muted-foreground text-center py-6">No hay sedes configuradas</p>}
+          </div>
+        </AnimatedCard>
+
+        <AnimatedCard index={7} className="p-4 lg:col-span-2">
           <SectionHeader icon={<Bell className="w-5 h-5" />} title={`Notificaciones ${unread > 0 ? `(${unread})` : ""}`} action={() => navigate("/app/notificaciones")} actionLabel="Ver todas" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {notificaciones.slice(0, 4).map((n) => (
