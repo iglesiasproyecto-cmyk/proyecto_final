@@ -317,6 +317,43 @@ export function SedesPage() {
                   </p>
                 )}
               </div>
+
+              {/* Información del Pastor Asignado */}
+              <div className="mt-4 pt-4 border-t border-white/5">
+                <div className="flex items-center gap-3 text-[13px]">
+                  <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                    <UserCheck className="w-3.5 h-3.5 text-[#4682b4]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {(() => {
+                      // Buscar asignación actual para esta sede
+                      const asignacionActual = sedePastores.find(sp =>
+                        sp.idSede === s.idSede &&
+                        sp.fechaFin === null
+                      );
+                      const pastorAsignado = asignacionActual
+                        ? pastores.find(p => p.idPastor === asignacionActual.idPastor)
+                        : null;
+
+                      return pastorAsignado ? (
+                        <div>
+                          <p className="font-medium text-foreground/90 truncate">
+                            {pastorAsignado.nombres} {pastorAsignado.apellidos}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground/60">
+                            Asignado desde {asignacionActual.fechaInicio}
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="font-medium text-muted-foreground/70">Sin pastor asignado</p>
+                          <p className="text-[11px] text-muted-foreground/50">Usa "Editar" para asignar</p>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="mt-8 flex items-center justify-between">
