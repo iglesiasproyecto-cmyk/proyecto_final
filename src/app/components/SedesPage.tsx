@@ -441,8 +441,8 @@ export function SedesPage() {
           <div className="px-6 py-4 bg-muted/30 border-b border-border/40">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
-                {editing ? <Pencil className="w-5 h-5 text-[#4682b4]" /> : <Plus className="w-5 h-5 text-[#4682b4]" />} 
-                {editing ? "Editar Sede" : "Registrar Nueva Sede"}
+                {editing ? <Pencil className="w-5 h-5 text-[#4682b4]" /> : <Plus className="w-5 h-5 text-[#4682b4]" />}
+                {editing ? "Gestionar Sede" : "Registrar Nueva Sede"}
               </DialogTitle>
             </DialogHeader>
           </div>
@@ -489,6 +489,101 @@ export function SedesPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Gestión de Pastor Asignado */}
+            {editing && (
+              <div className="border-t border-border/40 pt-4 mt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <UserCheck className="w-4 h-4 text-[#4682b4]" />
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70">Pastor Asignado</label>
+                </div>
+
+                {(() => {
+                  // Buscar asignación actual para esta sede
+                  const asignacionActual = sedePastores.find(sp =>
+                    sp.idSede === editing &&
+                    sp.fechaFin === null
+                  );
+                  const pastorActual = asignacionActual
+                    ? pastores.find(p => p.idPastor === asignacionActual.idPastor)
+                    : null;
+
+                  return (
+                    <div className="space-y-3">
+                      {pastorActual ? (
+                        <div className="p-3 bg-[#4682b4]/5 border border-[#4682b4]/20 rounded-xl">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-[#4682b4]/10 flex items-center justify-center">
+                                <UserCheck className="w-4 h-4 text-[#4682b4]" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-foreground">{pastorActual.nombres} {pastorActual.apellidos}</p>
+                                <p className="text-xs text-muted-foreground">Pastor asignado desde {asignacionActual.fechaInicio}</p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setPastorForm({
+                                  idSede: editing,
+                                  idPastor: 0,
+                                  esPrincipal: true,
+                                  fechaInicio: new Date().toISOString().split('T')[0],
+                                  observaciones: "",
+                                  crearNuevoPastor: false,
+                                  nuevoPastor: { nombres: "", apellidos: "", correo: "", telefono: "" }
+                                });
+                                setDialogPastor(true);
+                              }}
+                              className="text-xs"
+                            >
+                              <RotateCcw className="w-3 h-3 mr-1" />
+                              Cambiar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                                <User className="w-4 h-4 text-amber-600" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-foreground">Sin pastor asignado</p>
+                                <p className="text-xs text-muted-foreground">Esta sede necesita un pastor</p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setPastorForm({
+                                  idSede: editing,
+                                  idPastor: 0,
+                                  esPrincipal: true,
+                                  fechaInicio: new Date().toISOString().split('T')[0],
+                                  observaciones: "",
+                                  crearNuevoPastor: false,
+                                  nuevoPastor: { nombres: "", apellidos: "", correo: "", telefono: "" }
+                                });
+                                setDialogPastor(true);
+                              }}
+                              className="text-xs border-amber-500/30 text-amber-700 hover:bg-amber-500/10"
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Asignar
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
 
           <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
