@@ -1,12 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  getIglesias, getPastores, getIglesiaPastores, getSedes,
-  getIglesiasEnriquecidas, getPastoresEnriquecidos, getSedesEnriquecidas,
-  getIglesiaEnriquecidaById, getPastoresPorIglesia,
-  createIglesia, updateIglesia, toggleIglesiaEstado, deleteIglesia,
-  createSede, updateSede, toggleSedeEstado, deleteSede,
+  getIglesias, getPastores, getSedePastores, getSedes,
+  getIglesiasEnriquecidas, getPastoresEnriquecidos, getSedesEnriquecidas, getPastoresPorSede, getIglesiaEnriquecidaById, getPastoresPorIglesia, getAdminsPorIglesia,
+  createIglesia, updateIglesia, deleteIglesia,
   createPastor, updatePastor, deletePastor,
-  createIglesiaPastor, closeIglesiaPastor,
+  createSedePastor, closeSedePastor,
+  createSede, updateSede, deleteSede, toggleSedeEstado,
 } from '@/services/iglesias.service'
 
 export function useIglesias() {
@@ -17,8 +16,8 @@ export function usePastores() {
   return useQuery({ queryKey: ['pastores'], queryFn: getPastores, staleTime: 5 * 60 * 1000 })
 }
 
-export function useIglesiaPastores() {
-  return useQuery({ queryKey: ['iglesia-pastores'], queryFn: getIglesiaPastores, staleTime: 5 * 60 * 1000 })
+export function useSedePastores() {
+  return useQuery({ queryKey: ['sede-pastores'], queryFn: getSedePastores, staleTime: 5 * 60 * 1000 })
 }
 
 export function useSedes(idIglesia?: number) {
@@ -45,11 +44,22 @@ export function useSedesEnriquecidas(idIglesia?: number) {
   })
 }
 
+
+
+export function usePastoresPorSede(idSede?: number) {
+  return useQuery({
+    queryKey: ['pastores-por-sede', idSede],
+    queryFn: () => getPastoresPorSede(idSede || 0),
+    enabled: !!idSede,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 export function useIglesiaEnriquecidaById(idIglesia?: number) {
   return useQuery({
     queryKey: ['iglesia-enriquecida', idIglesia],
     queryFn: () => getIglesiaEnriquecidaById(idIglesia!),
-    enabled: !!idIglesia,
+    enabled: !!idIglesia && idIglesia > 0,
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -57,7 +67,16 @@ export function useIglesiaEnriquecidaById(idIglesia?: number) {
 export function usePastoresPorIglesia(idIglesia?: number) {
   return useQuery({
     queryKey: ['pastores-por-iglesia', idIglesia],
-    queryFn: () => getPastoresPorIglesia(idIglesia!),
+    queryFn: () => getPastoresPorIglesia(idIglesia || 0),
+    enabled: !!idIglesia,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useAdminsPorIglesia(idIglesia?: number) {
+  return useQuery({
+    queryKey: ['admins-por-iglesia', idIglesia],
+    queryFn: () => getAdminsPorIglesia(idIglesia || 0),
     enabled: !!idIglesia,
     staleTime: 5 * 60 * 1000,
   })
@@ -149,11 +168,25 @@ export function useUpdatePastor() {
   })
 }
 
-export function useCreateIglesiaPastor() {
+export function useCreateSedePastor() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: createIglesiaPastor,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['iglesia-pastores'] }),
+    mutationFn: createSedePastor,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sede-pastores'] })
+      qc.invalidateQueries({ queryKey: ['pastores-enriquecidos'] })
+    },
+  })
+}
+
+export function useCloseSedePastor() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: closeSedePastor,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sede-pastores'] })
+      qc.invalidateQueries({ queryKey: ['pastores-enriquecidos'] })
+    },
   })
 }
 

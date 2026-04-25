@@ -1,10 +1,12 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Iglesia, Pastor, IglesiaPastor, Sede } from '@/types/app.types'
+import type { Iglesia, Pastor, IglesiaPastor, SedePastor, Sede } from '@/types/app.types'
 import type { Database } from '@/types/database.types'
+import type { UsuarioEnriquecido } from './usuarios.service'
 
 type IglesiaRow = Database['public']['Tables']['iglesia']['Row']
 type PastorRow = Database['public']['Tables']['pastor']['Row']
 type IglesiaPastorRow = Database['public']['Tables']['iglesia_pastor']['Row']
+type SedePastorRow = Database['public']['Tables']['sede_pastor']['Row']
 type SedeRow = Database['public']['Tables']['sede']['Row']
 
 function mapIglesia(r: IglesiaRow): Iglesia {
@@ -46,6 +48,20 @@ function mapIglesiaPastor(r: IglesiaPastorRow): IglesiaPastor {
   }
 }
 
+function mapSedePastor(r: SedePastorRow): SedePastor {
+  return {
+    idSedePastor: r.id_sede_pastor,
+    idSede: r.id_sede,
+    idPastor: r.id_pastor,
+    esPrincipal: r.es_principal,
+    fechaInicio: r.fecha_inicio,
+    fechaFin: r.fecha_fin,
+    observaciones: r.observaciones,
+    creadoEn: r.creado_en,
+    actualizadoEn: r.updated_at,
+  }
+}
+
 function mapSede(r: SedeRow): Sede {
   return {
     idSede: r.id_sede,
@@ -63,6 +79,7 @@ export interface IglesiaEnriquecida extends Iglesia {
   cantidadSedes: number
   ciudadNombre: string
   departamentoNombre: string
+  paisNombre: string
 }
 
 export interface PastorEnriquecido extends Pastor {
@@ -82,35 +99,129 @@ export interface IglesiaDetalle extends IglesiaEnriquecida {
 export async function getIglesiaEnriquecidaById(id: number): Promise<IglesiaEnriquecida | null> {
   const { data, error } = await supabase
     .from('iglesia')
-    .select('*, sede(count), ciudad(nombre, departamento(nombre, pais(nombre)))')
+    .select('*, sede(count)')
     .eq('id_iglesia', id)
     .single()
+
   if (error) {
     if (error.code === 'PGRST116') return null
     throw error
   }
+
   return {
     ...mapIglesia(data),
     cantidadSedes: Array.isArray(data.sede) ? data.sede[0]?.count ?? 0 : 0,
-    ciudadNombre: data.ciudad?.nombre ?? '',
-    departamentoNombre: data.ciudad?.departamento?.nombre ?? '',
+    ciudadNombre: '',
+    departamentoNombre: '',
+    paisNombre: '',
   }
 }
 
 export async function getPastoresPorIglesia(idIglesia: number): Promise<Pastor[]> {
-  const { data, error } = await supabase
+  // Obtener pastores asignados directamente a la iglesia
+  const { data: directData, error: directError } = await supabase
     .from('iglesia_pastor')
     .select('pastor(*)')
     .eq('id_iglesia', idIglesia)
+    .is('fecha_fin', null)
+
+  if (directError) throw directError
+
+  // Obtener IDs de sedes de esta iglesia
+  const { data: sedesData, error: sedesError } = await supabase
+    .from('sede')
+    .select('id_sede')
+    .eq('id_iglesia', idIglesia)
+
+  if (sedesError) throw sedesError
+
+  const sedeIds = sedesData.map(s => s.id_sede)
+
+  // Obtener pastores asignados a sedes de esta iglesia
+  const { data: sedeData, error: sedeError } = await supabase
+    .from('sede_pastor')
+    .select('pastor(*)')
+    .in('id_sede', sedeIds)
+    .is('fecha_fin', null)
+
+  if (sedeError) throw sedeError
+
+  // Combinar y eliminar duplicados
+  const directPastores = (directData as any[]).map((r: any) => mapPastor(r.pastor))
+  const sedePastores = (sedeData as any[]).map((r: any) => mapPastor(r.pastor))
+
+  // Unir arrays y eliminar duplicados por id_pastor
+  const allPastores = [...directPastores, ...sedePastores]
+  const uniquePastores = allPastores.filter((pastor, index, self) =>
+    index === self.findIndex(p => p.idPastor === pastor.idPastor)
+  )
+
+  return uniquePastores
+}
+
+export async function getAdminsPorIglesia(idIglesia: number): Promise<UsuarioEnriquecido[]> {
+  const { data, error } = await supabase
+    .from('usuario_rol')
+    .select(`
+      id_usuario,
+      fecha_fin,
+      usuario:usuario!inner(
+        id_usuario,
+        nombres,
+        apellidos,
+        correo,
+        telefono,
+        activo,
+        ultimo_acceso,
+        auth_user_id,
+        creado_en,
+        updated_at
+      ),
+      rol:rol!inner(nombre)
+    `)
+    .eq('id_iglesia', idIglesia)
+    .eq('rol.nombre', 'Administrador de Iglesia')
+    .is('fecha_fin', null)
+
+  if (error) throw error
+
+  return (data as any[]).map((r: any) => ({
+    idUsuario: r.usuario.id_usuario,
+    nombres: r.usuario.nombres,
+    apellidos: r.usuario.apellidos,
+    correo: r.usuario.correo,
+    telefono: r.usuario.telefono,
+    activo: r.usuario.activo,
+    ultimoAcceso: r.usuario.ultimo_acceso,
+    authUserId: r.usuario.auth_user_id,
+    creadoEn: r.usuario.creado_en,
+    actualizadoEn: r.usuario.updated_at,
+    rol: 'admin_iglesia' as const,
+  }))
+}
+
+export async function getPastoresPorSede(idSede: number): Promise<Pastor[]> {
+  const { data, error } = await supabase
+    .from('sede_pastor')
+    .select('pastor(*)')
+    .eq('id_sede', idSede)
     .is('fecha_fin', null)
   if (error) throw error
   return (data as any[]).map((r: any) => mapPastor(r.pastor))
 }
 
+
+
+export async function getSedePastores(): Promise<SedePastor[]> {
+  const { data, error } = await supabase.from('sede_pastor').select('*')
+  if (error) throw error
+  return data.map(mapSedePastor)
+}
+
 export async function getIglesiasEnriquecidas(): Promise<IglesiaEnriquecida[]> {
   const { data, error } = await supabase
     .from('iglesia')
-    .select('*, sede(count), ciudad(nombre, departamento(nombre))')
+    .select('*, sede(count), ciudad(nombre, departamento(nombre, pais(nombre)))')
     .order('nombre')
   if (error) throw error
   return (data as any[]).map(r => ({
@@ -118,6 +229,7 @@ export async function getIglesiasEnriquecidas(): Promise<IglesiaEnriquecida[]> {
     cantidadSedes: Array.isArray(r.sede) ? r.sede[0]?.count ?? 0 : 0,
     ciudadNombre: r.ciudad?.nombre ?? '',
     departamentoNombre: r.ciudad?.departamento?.nombre ?? '',
+    paisNombre: r.ciudad?.departamento?.pais?.nombre ?? '',
   }))
 }
 
@@ -309,6 +421,28 @@ export async function closeIglesiaPastor(id: number): Promise<void> {
     .from('iglesia_pastor')
     .update({ fecha_fin: new Date().toISOString().split('T')[0] })
     .eq('id_iglesia_pastor', id)
+  if (error) throw error
+}
+
+// ── SedePastor mutations ──
+
+export async function createSedePastor(
+  data: { idSede: number; idPastor: number; esPrincipal: boolean; fechaInicio: string; fechaFin: string | null; observaciones: string | null }
+): Promise<SedePastor> {
+  const { data: result, error } = await supabase
+    .from('sede_pastor')
+    .insert([{ id_sede: data.idSede, id_pastor: data.idPastor, es_principal: data.esPrincipal, fecha_inicio: data.fechaInicio, fecha_fin: data.fechaFin, observaciones: data.observaciones }])
+    .select()
+    .single()
+  if (error) throw error
+  return mapSedePastor(result)
+}
+
+export async function closeSedePastor(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('sede_pastor')
+    .update({ fecha_fin: new Date().toISOString().split('T')[0] })
+    .eq('id_sede_pastor', id)
   if (error) throw error
 }
 

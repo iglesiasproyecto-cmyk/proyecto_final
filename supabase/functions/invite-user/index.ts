@@ -12,13 +12,22 @@ const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
 
 function resolveCorsHeaders(origin: string | null): Record<string, string> {
   if (!origin) return baseCorsHeaders
-  if (!allowedOrigins.includes(origin)) return baseCorsHeaders
 
-  return {
-    ...baseCorsHeaders,
-    'Access-Control-Allow-Origin': origin,
-    Vary: 'Origin',
+  // Permitir desarrollo local automáticamente
+  const isLocalDev = origin.startsWith('http://127.0.0.1:') ||
+                     origin.startsWith('http://localhost:') ||
+                     origin === 'http://127.0.0.1' ||
+                     origin === 'http://localhost'
+
+  if (isLocalDev || allowedOrigins.includes(origin)) {
+    return {
+      ...baseCorsHeaders,
+      'Access-Control-Allow-Origin': origin,
+      Vary: 'Origin',
+    }
   }
+
+  return baseCorsHeaders
 }
 
 function jsonResponse(
@@ -76,7 +85,15 @@ Deno.serve(async (req) => {
   const origin = req.headers.get('origin')
   const isBrowserRequest = Boolean(origin)
 
-  if (isBrowserRequest && !allowedOrigins.includes(origin!)) {
+  // Permitir desarrollo local automáticamente
+  const isLocalDev = origin && (
+    origin.startsWith('http://127.0.0.1:') ||
+    origin.startsWith('http://localhost:') ||
+    origin === 'http://127.0.0.1' ||
+    origin === 'http://localhost'
+  )
+
+  if (isBrowserRequest && !isLocalDev && !allowedOrigins.includes(origin!)) {
     return jsonResponse(origin, { message: 'Origin not allowed' }, 403)
   }
 

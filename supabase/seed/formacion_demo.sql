@@ -148,7 +148,7 @@ BEGIN
 
   FOR rec IN
     SELECT * FROM (VALUES
-      ('super@test.dev',    'Super Administrador',      NULL::bigint),
+      ('super@test.dev',    'Super Administrador',      NULL::bigint),  -- Super Admin sin iglesia
       ('admin@test.dev',    'Administrador de Iglesia', v_id_iglesia),
       ('lider@test.dev',    'Líder',                    v_id_iglesia),
       ('servidor@test.dev', 'Servidor',                 v_id_iglesia)

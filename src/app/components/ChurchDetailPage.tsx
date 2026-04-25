@@ -1,11 +1,11 @@
 import { useParams, useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { useIglesiaEnriquecidaById, useSedes, usePastoresPorIglesia } from "@/hooks/useIglesias";
+import { useIglesiaEnriquecidaById, useSedes, usePastoresPorIglesia, useAdminsPorIglesia, useSedePastores } from "@/hooks/useIglesias";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import {
   Building2, ArrowLeft, MapPin, Calendar, Globe, Church,
-  Users, Mail, Phone, MapPinned, Loader2
+  Users, Mail, Phone, MapPinned, Loader2, ShieldCheck
 } from "lucide-react";
 
 const estadoLabels: Record<string, string> = {
@@ -36,8 +36,10 @@ export function ChurchDetailPage() {
   const { data: iglesia, isLoading: loadingIglesia } = useIglesiaEnriquecidaById(id);
   const { data: sedes = [], isLoading: loadingSedes } = useSedes(id);
   const { data: pastores = [], isLoading: loadingPastores } = usePastoresPorIglesia(id);
+  const { data: admins = [], isLoading: loadingAdmins } = useAdminsPorIglesia(id);
+  const { data: sedePastores = [], isLoading: loadingSedePastores } = useSedePastores();
 
-  const isLoading = loadingIglesia || loadingSedes || loadingPastores;
+  const isLoading = loadingIglesia || loadingSedes || loadingPastores || loadingAdmins || loadingSedePastores;
 
   if (isLoading) {
     return (
@@ -97,15 +99,12 @@ export function ChurchDetailPage() {
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-primary/70" />
-                {iglesia.ciudadNombre || "--"}
-                {iglesia.departamentoNombre ? `, ${iglesia.departamentoNombre}` : ""}
+                Ubicación no disponible
               </span>
-              {iglesia.fechaFundacion && (
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-primary/70" />
-                  Fundada {new Date(iglesia.fechaFundacion).toLocaleDateString("es", { year: "numeric", month: "long", day: "numeric" })}
-                </span>
-              )}
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-primary/70" />
+                Fundación no disponible
+              </span>
             </div>
           </div>
         </div>
@@ -120,8 +119,8 @@ export function ChurchDetailPage() {
       >
         <StatCard icon={<Church className="w-5 h-5 text-blue-500" />} label="Sedes" value={sedes.length} />
         <StatCard icon={<Users className="w-5 h-5 text-emerald-500" />} label="Pastores" value={pastores.length} />
-        <StatCard icon={<MapPinned className="w-5 h-5 text-amber-500" />} label="Ciudad" value={iglesia.ciudadNombre || "--"} />
-        <StatCard icon={<Globe className="w-5 h-5 text-indigo-500" />} label="País" value={iglesia.paisNombre || "--"} />
+        <StatCard icon={<ShieldCheck className="w-5 h-5 text-purple-500" />} label="Admins" value={admins.length} />
+        <StatCard icon={<Globe className="w-5 h-5 text-indigo-500" />} label="Estado" value={iglesia.estado} />
       </motion.div>
 
       {/* Sedes */}
@@ -178,59 +177,157 @@ export function ChurchDetailPage() {
         )}
       </motion.section>
 
+      {/* Administradores */}
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.25 }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-primary" /> Administradores
+          </h2>
+          <span className="text-xs font-medium text-muted-foreground bg-muted px-3 py-1 rounded-full">
+            {admins.length} {admins.length === 1 ? "admin" : "admins"}
+          </span>
+        </div>
+
+        {admins.length === 0 ? (
+          <EmptyState message="No hay administradores asignados a esta iglesia." />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {admins.map((admin, i) => (
+              <motion.div
+                key={admin.idUsuario}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 + i * 0.05 }}
+                className="relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] p-5 transition-all hover:shadow-lg hover:bg-card/60"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-50 pointer-events-none" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                      {admin.nombres.charAt(0)}{admin.apellidos.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{admin.nombres} {admin.apellidos}</h3>
+                      <p className="text-xs text-muted-foreground">Administrador de Iglesia</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <Mail className="w-3.5 h-3.5 shrink-0" />
+                      <a href={`mailto:${admin.correo}`} className="hover:text-primary transition-colors">{admin.correo}</a>
+                    </p>
+                    {admin.telefono && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5 shrink-0" />
+                        <a href={`tel:${admin.telefono}`} className="hover:text-primary transition-colors">{admin.telefono}</a>
+                      </p>
+                    )}
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
+                        Activo
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </motion.section>
+
       {/* Pastores */}
       <motion.section
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
+        transition={{ duration: 0.4, delay: 0.35 }}
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" /> Pastores
+            <Users className="w-5 h-5 text-primary" /> Pastores por Sede
           </h2>
           <span className="text-xs font-medium text-muted-foreground bg-muted px-3 py-1 rounded-full">
             {pastores.length} {pastores.length === 1 ? "pastor" : "pastores"}
           </span>
         </div>
 
-        {pastores.length === 0 ? (
-          <EmptyState message="No hay pastores asignados a esta iglesia." />
+        {sedes.length === 0 ? (
+          <EmptyState message="No hay sedes en esta iglesia." />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {pastores.map((pastor, i) => (
-              <motion.div
-                key={pastor.idPastor}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.15 + i * 0.05 }}
-                className="relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] p-5 transition-all hover:shadow-lg hover:bg-card/60"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-50 pointer-events-none" />
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
-                      {pastor.nombres.charAt(0)}{pastor.apellidos.charAt(0)}
+          <div className="space-y-6">
+            {sedes.map((sede, sedeIndex) => {
+              // Filtrar pastores asignados a esta sede
+              const pastoresDeSede = sedePastores
+                .filter(sp => sp.idSede === sede.idSede && sp.fechaFin === null)
+                .map(sp => pastores.find(p => p.idPastor === sp.idPastor))
+                .filter(Boolean);
+
+              return (
+                <motion.div
+                  key={sede.idSede}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.2 + sedeIndex * 0.1 }}
+                  className="border border-border rounded-2xl p-6 bg-card/30"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/5 flex items-center justify-center border border-primary/10">
+                      <Church className="w-5 h-5 text-primary/80" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground">{pastor.nombres} {pastor.apellidos}</h3>
-                      <p className="text-xs text-muted-foreground">Pastor</p>
+                      <h3 className="font-semibold text-foreground">{sede.nombre}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {pastoresDeSede.length} {pastoresDeSede.length === 1 ? "pastor asignado" : "pastores asignados"}
+                      </p>
                     </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <Mail className="w-3.5 h-3.5 shrink-0" />
-                      <a href={`mailto:${pastor.correo}`} className="hover:text-primary transition-colors">{pastor.correo}</a>
-                    </p>
-                    {pastor.telefono && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Phone className="w-3.5 h-3.5 shrink-0" />
-                        <a href={`tel:${pastor.telefono}`} className="hover:text-primary transition-colors">{pastor.telefono}</a>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+
+                  {pastoresDeSede.length === 0 ? (
+                    <EmptyState message={`No hay pastores asignados a la sede "${sede.nombre}".`} />
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {pastoresDeSede.map((pastor, i) => (
+                        <motion.div
+                          key={pastor!.idPastor}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.1 + i * 0.05 }}
+                          className="relative overflow-hidden rounded-xl bg-card/40 backdrop-blur-2xl border border-white/20 shadow-[0_4px_20px_rgb(0,0,0,0.03)] p-4 transition-all hover:shadow-md hover:bg-card/60"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-50 pointer-events-none" />
+                          <div className="relative z-10">
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                                {pastor!.nombres.charAt(0)}{pastor!.apellidos.charAt(0)}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-foreground text-sm">{pastor!.nombres} {pastor!.apellidos}</h3>
+                                <p className="text-xs text-muted-foreground">Pastor</p>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground flex items-center gap-2">
+                                <Mail className="w-3 h-3 shrink-0" />
+                                <a href={`mailto:${pastor!.correo}`} className="hover:text-primary transition-colors truncate">{pastor!.correo}</a>
+                              </p>
+                              {pastor!.telefono && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-2">
+                                  <Phone className="w-3 h-3 shrink-0" />
+                                  <a href={`tel:${pastor!.telefono}`} className="hover:text-primary transition-colors">{pastor!.telefono}</a>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </motion.section>
@@ -262,4 +359,3 @@ function EmptyState({ message }: { message: string }) {
     </div>
   );
 }
-

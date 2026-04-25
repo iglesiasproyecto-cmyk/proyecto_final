@@ -59,6 +59,18 @@ export interface IglesiaPastor {
   actualizadoEn: string
 }
 
+export interface SedePastor {
+  idSedePastor: number
+  idSede: number
+  idPastor: number
+  esPrincipal: boolean
+  fechaInicio: string
+  fechaFin: string | null
+  observaciones: string | null
+  creadoEn: string
+  actualizadoEn: string
+}
+
 export interface Sede {
   idSede: number
   nombre: string

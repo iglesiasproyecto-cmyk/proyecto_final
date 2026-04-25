@@ -44,3 +44,25 @@ export async function markAllNotificacionesRead(idUsuario: number): Promise<void
     .eq('leida', false)
   if (error) throw error
 }
+
+export async function createNotificacion(data: {
+  titulo: string
+  mensaje: string
+  tipo: Notificacion['tipo']
+  idUsuario: number
+}): Promise<Notificacion> {
+  const { data: result, error } = await supabase
+    .from('notificacion')
+    .insert({
+      titulo: data.titulo,
+      mensaje: data.mensaje,
+      tipo: data.tipo,
+      id_usuario: data.idUsuario,
+      leida: false,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return mapNotificacion(result)
+}
