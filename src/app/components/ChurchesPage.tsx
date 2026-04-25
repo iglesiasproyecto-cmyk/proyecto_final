@@ -11,6 +11,7 @@ import { useCiudades } from "@/hooks/useGeografia";
 import { motion } from "motion/react";
 import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar, Eye } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useApp } from "../store/AppContext";
 
 const estadoLabels: Record<string, string> = {
   activa: "Activa",
@@ -48,6 +49,7 @@ function GlassCard({ children, index = 0, isActive = true }: { children: React.R
 
 export function ChurchesPage() {
   const navigate = useNavigate();
+  const { rolActual } = useApp();
   const { data: iglesias = [], isLoading } = useIglesiasEnriquecidas();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "activa" | "inactiva">("all");
@@ -154,9 +156,11 @@ export function ChurchesPage() {
             <h1 className="text-3xl font-light tracking-tight mt-0.5">Gestión de Iglesias</h1>
           </div>
         </div>
-        <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
-          <Plus className="w-4 h-4 mr-2" /> Nueva Iglesia
-        </Button>
+        {rolActual === "super_admin" && (
+          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
+            <Plus className="w-4 h-4 mr-2" /> Nueva Iglesia
+          </Button>
+        )}
       </motion.div>
 
       <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">
@@ -236,32 +240,38 @@ export function ChurchesPage() {
               >
                 <Eye className="w-3.5 h-3.5 mr-1.5" /> Ver detalle
               </Button>
-              <Button variant="secondary" size="sm" className="flex-1 rounded-xl bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 transition-colors" onClick={() => {
-                setFormErrors({});
-                setForm({ nombre: ig.nombre, fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "", idCiudad: ig.idCiudad || 0 });
-                setEditingIglesia(ig);
-              }}>
-                <Pencil className="w-3.5 h-3.5 mr-1.5" /> Editar
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className={`rounded-xl px-3 transition-all ${ig.estado === "activa" ? "text-amber-500 hover:bg-amber-500/10" : "text-emerald-500 hover:bg-emerald-500/10"}`}
-                onClick={() => toggleEstadoMutation.mutate(ig.idIglesia)} 
-                title={ig.estado === "activa" ? "Desactivar" : "Activar"}
-              >
-                {ig.estado === "activa" ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="rounded-xl px-3 text-destructive hover:bg-destructive/10 transition-colors"
-                onClick={() => handleDeleteIglesia(ig.idIglesia, ig.nombre)}
-                disabled={deleteIglesiaMutation.isPending}
-                title="Eliminar iglesia"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              {rolActual === "super_admin" && (
+                <>
+                  <Button variant="secondary" size="sm" className="flex-1 rounded-xl bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 transition-colors" onClick={() => {
+                    setFormErrors({});
+                    setForm({ nombre: ig.nombre, fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "", idCiudad: ig.idCiudad || 0 });
+                    setEditingIglesia(ig);
+                  }}>
+                    <Pencil className="w-3.5 h-3.5 mr-1.5" /> Editar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-xl px-3 text-destructive hover:bg-destructive/10 transition-colors"
+                    onClick={() => handleDeleteIglesia(ig.idIglesia, ig.nombre)}
+                    disabled={deleteIglesiaMutation.isPending}
+                    title="Eliminar iglesia"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+              {rolActual === "super_admin" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`rounded-xl px-3 transition-all ${ig.estado === "activa" ? "text-amber-500 hover:bg-amber-500/10" : "text-emerald-500 hover:bg-emerald-500/10"}`}
+                  onClick={() => toggleEstadoMutation.mutate(ig.idIglesia)}
+                  title={ig.estado === "activa" ? "Desactivar" : "Activar"}
+                >
+                  {ig.estado === "activa" ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                </Button>
+              )}
             </div>
           </GlassCard>
         ))}

@@ -450,9 +450,16 @@ export function UsuariosPage() {
               >
                 <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar rol..." /></SelectTrigger>
                 <SelectContent>
-                  {roles.map(r => (
-                    <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
-                  ))}
+                  {roles
+                    .filter(r => {
+                      // Super Admin puede asignar cualquier rol
+                      if (isSuperAdmin) return true;
+                      // Otros roles no pueden asignar Super Admin
+                      return r.nombre !== 'Super Administrador';
+                    })
+                    .map(r => (
+                      <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -509,9 +516,16 @@ export function UsuariosPage() {
                     >
                       <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                       <SelectContent>
-                        {roles.map(r => (
-                          <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
-                        ))}
+                        {roles
+                          .filter(r => {
+                            // Super Admin puede asignar cualquier rol
+                            if (isSuperAdmin) return true;
+                            // Otros roles no pueden asignar Super Admin
+                            return r.nombre !== 'Super Administrador';
+                          })
+                          .map(r => (
+                            <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
