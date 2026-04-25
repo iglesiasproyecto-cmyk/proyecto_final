@@ -48,7 +48,6 @@ const pageTitles: Record<string, string> = {
   "/app/tareas": "Tareas",
   "/app/aula": "Aula de Formacion",
   "/app/evaluaciones": "Evaluaciones",
-  "/app/ciclos-lectivos": "Ciclos Lectivos",
   "/app/notificaciones": "Notificaciones",
   "/app/perfil": "Mi Perfil",
 };
@@ -74,8 +73,6 @@ function getNavItemsForRole(role: string): NavItem[] {
         { label: "Usuarios", path: "/app/usuarios", icon: <Users className="w-5 h-5" />, section: "Iglesia" },
         { label: "Miembros", path: "/app/miembros", icon: <Users className="w-5 h-5" />, section: "Iglesia" },
         { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Iglesia" },
-        { label: "Mis Cursos", path: "/app/mis-cursos", icon: <BookOpen className="w-5 h-5" />, section: "Formacion" },
-        { label: "Ciclos Lectivos", path: "/app/ciclos-lectivos", icon: <GraduationCap className="w-5 h-5" />, section: "Formacion" },
         { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: "/app/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
