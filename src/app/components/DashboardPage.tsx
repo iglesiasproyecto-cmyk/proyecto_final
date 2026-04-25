@@ -419,7 +419,7 @@ function AdminIglesiaDashboard() {
         </AnimatedCard>
 
         <AnimatedCard index={6} className="p-4">
-          <SectionHeader icon={<UserCheck className="w-5 h-5" />} title="Pastores por Sede" action={() => navigate("/app/pastores")} />
+          <SectionHeader icon={<Building2 className="w-5 h-5" />} title="Sedes y Pastores" action={() => navigate("/app/sedes")} />
           <div className="grid grid-cols-1 gap-2">
             {sedesConPastores.slice(0, 6).map((sede) => (
               <div key={sede.idSede} className={`group flex items-center gap-3 p-3 rounded-2xl transition-all border ${sede.tienePastor ? "bg-gradient-to-r from-[#4682b4]/5 to-transparent border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm" : "bg-gradient-to-r from-amber-500/5 to-transparent border-amber-500/10 hover:border-amber-500/20 shadow-sm"}`}>

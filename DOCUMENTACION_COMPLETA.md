@@ -349,7 +349,6 @@ function normalizeAppRole(rawRoles: string[]): string {
 |--------|-----------------|
 | **Su Iglesia** | ✅ Editar datos de su iglesia |
 | **Sedes** | ✅ Gestionar sedes de su iglesia |
-| **Pastores** | ✅ Gestionar asignaciones de pastores por sede |
 | **Ministerios** | ✅ Crear y gestionar ministerios |
 | **Miembros** | ✅ Agregar miembros a ministerios |
 | **Usuarios** | ✅ Gestionar usuarios de su iglesia |
