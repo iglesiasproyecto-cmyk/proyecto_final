@@ -57,7 +57,9 @@ function AnimatedCard({ children, index = 0, className = "", onClick }: { childr
           {children}
         </div>
       </div>
-    </motion.div>
+
+
+    </div>
   );
 }
 
@@ -280,6 +282,8 @@ function AdminIglesiaDashboard() {
   const { data: sedes = [] } = useSedesEnriquecidas(iglesiaActual?.id);
   const { data: sedePastores = [] } = useSedePastores();
   const { data: pastores = [] } = usePastoresEnriquecidos();
+
+
 
   if (!usuarioActual) return null;
 
