@@ -33,7 +33,8 @@ BEGIN
     WHERE auth_user_id = auth.uid()
     LIMIT 1
   )
-  AND mm.fecha_salida IS NULL;
+  AND mm.fecha_salida IS NULL
+  AND mm.rol_ministerio = 'Líder';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

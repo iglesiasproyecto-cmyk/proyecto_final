@@ -1,13 +1,12 @@
 import { useMinisterios, useMiembrosMinisterio } from "@/hooks/useMinisterios";
 import { useEventos } from "@/hooks/useEventos";
-import { useCursos } from "@/hooks/useCursos";
 import { useApp } from "../store/AppContext";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { motion } from "motion/react";
 import {
-  Users, Mail, CalendarDays, BookOpen, Crown, User,
+  Users, Mail, CalendarDays, Crown, User,
   Plus, Clock, FolderHeart, ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -37,7 +36,6 @@ export function MyDepartmentPage() {
   const min = ministerios[0] ?? null;
   const { data: minMembers = [] } = useMiembrosMinisterio(min?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos();
-  const { data: cursos = [] } = useCursos(min?.idMinisterio);
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-48">
@@ -83,7 +81,7 @@ export function MyDepartmentPage() {
     .sort((a, b) => new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime())
     .slice(0, 4);
 
-  const totalModulos = cursos.reduce((sum, c) => sum + (c.modulos?.length || 0), 0);
+
   const activeMembers = minMembers.filter(mm => mm.activo).sort((a, b) => {
     const order = ["lider", "servidor"];
     return order.indexOf(a.rolEnMinisterio || "servidor") - order.indexOf(b.rolEnMinisterio || "servidor");
@@ -136,7 +134,7 @@ export function MyDepartmentPage() {
       >
         {[
           { label: "Eventos",       value: upcomingEvents.length, icon: <CalendarDays className="w-4 h-4" />, nav: "/app/eventos" },
-          { label: "Cursos",        value: cursos.length,         icon: <BookOpen className="w-4 h-4" />,     nav: "/app/aula" },
+
           { label: "Miembros",      value: activeMembers.length,  icon: <Users className="w-4 h-4" />,        nav: "/app/miembros" },
           { label: "Módulos",       value: totalModulos,          icon: <BookOpen className="w-4 h-4" />,     nav: "/app/aula" },
         ].map((s, i) => (
@@ -255,37 +253,7 @@ export function MyDepartmentPage() {
             </div>
           </Card>
 
-          {/* Cursos de Formación */}
-          <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-2xl p-0 overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-border/40 bg-card/20 flex items-center justify-between">
-              <FieldLabel>Formación</FieldLabel>
-              <button className="text-[10px] text-primary font-bold hover:underline" onClick={() => navigate("/app/aula")}>
-                Ir al Aula
-              </button>
-            </div>
-            <div className="divide-y divide-border/30">
-              {cursos.slice(0, 3).map((curso, idx) => (
-                <div key={curso.idCurso} className="group flex items-center gap-3 px-4 py-3 hover:bg-accent/20 transition-colors cursor-pointer" onClick={() => navigate("/app/aula")}>
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/10 flex items-center justify-center text-primary text-[11px] font-black shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold truncate group-hover:text-primary transition-colors">{curso.nombre}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {curso.modulos?.length || 0} mód.{curso.duracionHoras ? ` · ${curso.duracionHoras}h` : ""}
-                    </p>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
-                </div>
-              ))}
-              {cursos.length === 0 && (
-                <div className="py-8 flex flex-col items-center gap-2 text-muted-foreground">
-                  <BookOpen className="w-7 h-7 opacity-20" />
-                  <p className="text-xs">Sin cursos disponibles</p>
-                </div>
-              )}
-            </div>
-          </Card>
+
         </motion.div>
       </div>
     </div>

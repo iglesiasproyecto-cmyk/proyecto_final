@@ -360,13 +360,9 @@ function normalizeAppRole(rawRoles: string[]): string {
 |--------|-----------------|
 | **Su Ministerio** | ✅ Gestionar datos de su ministerio |
 | **Miembros** | ✅ Agregar/quitar miembros |
-| **Cursos** | ✅ Crear cursos en su ministerio |
-| **Módulos** | ✅ Agregar módulos a sus cursos |
-| **Evaluaciones** | ✅ Crear evaluaciones con preguntas |
-| **Recursos** | ✅ Subir archivos y enlaces |
 | **Eventos** | ✅ Crear eventos de ministerio |
 | **Tareas** | ✅ Asignar tareas a miembros |
-| **Miembros** | ✅ Ver progreso de miembros |
+| **Miembros** | ✅ Ver estado de miembros |
 
 ### 🟢 **Servidor**
 

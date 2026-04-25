@@ -483,8 +483,6 @@ function LiderDashboard() {
   const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(ministerios[0]?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: tareas = [] } = useTareas();
-  const { data: cursos = [] } = useCursos(ministerios[0]?.idMinisterio);
-  const { data: evaluaciones = [] } = useEvaluaciones(usuarioActual?.idUsuario);
 
   if (!usuarioActual) return null;
 
@@ -515,12 +513,11 @@ function LiderDashboard() {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard index={0} icon={<Users className="w-5 h-5" />} value={minMembers.length} label="Miembros" onClick={() => navigate("/app/miembros")} />
         <StatCard index={1} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
         <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
-        <StatCard index={3} icon={<ClipboardCheck className="w-5 h-5" />} value={evaluaciones.length} label="Evaluaciones" onClick={() => navigate("/app/evaluaciones")} />
-        <StatCard index={4} icon={<BookOpen className="w-5 h-5" />} value={cursos.length} label="Cursos" onClick={() => navigate("/app/aula")} />
+        <StatCard index={3} icon={<Activity className="w-5 h-5" />} value={minMembers.filter(m => m.estado === "activo").length} label="Miembros activos" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
