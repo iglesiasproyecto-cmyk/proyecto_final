@@ -11,6 +11,7 @@ interface AppState {
   iglesiaActual: { id: number; nombre: string } | null
   setIglesiaActual: (ig: { id: number; nombre: string } | null) => void
   iglesiasDelUsuario: { id: number; nombre: string }[]
+  sedesDelUsuario: { id: number; nombre: string }[]
   rolActual: string
   sidebarOpen: boolean
   notificacionesCount: number
@@ -195,6 +196,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [authLoading, setAuthLoading] = useState(true)
   const [iglesiaActual, setIglesiaActual] = useState<{ id: number; nombre: string } | null>(null)
   const [iglesiasDelUsuario, setIglesiasDelUsuario] = useState<{ id: number; nombre: string }[]>([])
+  const [sedesDelUsuario, setSedesDelUsuario] = useState<{ id: number; nombre: string }[]>([])
   const [rolActual, setRolActual] = useState<string>('servidor')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [notificacionesCount, setNotificacionesCount] = useState(0)
@@ -320,6 +322,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           if (iglesias.length === 1) setIglesiaActual(iglesias[0])
           else setIglesiaActual(null)
 
+          // Build sedes
+          const sedesMap = new Map<number, string>()
+          roles.forEach((r: any) => {
+            if (r.sede_id) sedesMap.set(r.sede_id, r.sede_nombre || '')
+          })
+          const sedes = Array.from(sedesMap.entries()).map(([id, nombre]) => ({ id, nombre }))
+          setSedesDelUsuario(sedes)
+
           console.log('[AUTH] ✅ Fully loaded — role:', derivedRol, '— iglesias:', iglesias.length)
         } catch (err) {
           console.error('[AUTH] Error loading user data:', err)
@@ -330,6 +340,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setNotificacionesCount(0)
         setIglesiaActual(null)
         setIglesiasDelUsuario([])
+        setSedesDelUsuario([])
         setRolActual('servidor')
       }
       resolveLoading()
@@ -419,6 +430,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         iglesiaActual,
         setIglesiaActual,
         iglesiasDelUsuario,
+        sedesDelUsuario,
         rolActual,
         sidebarOpen,
         notificacionesCount,

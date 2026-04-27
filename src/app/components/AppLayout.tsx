@@ -6,9 +6,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 import { motion, AnimatePresence } from "motion/react";
 import {
   Church, LayoutDashboard, Building2, Users, CalendarDays, ListTodo,
-  BookOpen, ClipboardCheck, Bell, User, LogOut, Menu, X, ChevronDown,
+  Bell, User, LogOut, Menu, X, ChevronDown,
   Settings, FolderHeart, Globe, UserCheck, Settings2,
-  PanelLeftClose, PanelLeftOpen, GraduationCap, Moon, Sun
+  PanelLeftClose, PanelLeftOpen, Moon, Sun
 } from "lucide-react";
 import { SEILogo } from "./SEILogo";
 
@@ -75,9 +75,6 @@ function getNavItemsForRole(role: string, iglesiaActual?: { id: number; nombre: 
         { label: "Usuarios", path: "/app/usuarios", icon: <Users className="w-5 h-5" />, section: "Iglesia" },
         { label: "Miembros", path: "/app/miembros", icon: <Users className="w-5 h-5" />, section: "Iglesia" },
         { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Iglesia" },
-        { label: "Aula", path: "/app/aula", icon: <BookOpen className="w-5 h-5" />, section: "Formacion" },
-        { label: "Ciclos Lectivos", path: "/app/ciclos-lectivos", icon: <GraduationCap className="w-5 h-5" />, section: "Formacion" },
-        { label: "Evaluaciones", path: "/app/evaluaciones", icon: <ClipboardCheck className="w-5 h-5" />, section: "Formacion" },
         { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: "/app/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
@@ -88,9 +85,6 @@ function getNavItemsForRole(role: string, iglesiaActual?: { id: number; nombre: 
         { label: "Miembros", path: "/app/miembros", icon: <Users className="w-5 h-5" />, section: "Ministerio" },
         { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: "/app/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
-        { label: "Aula", path: "/app/aula", icon: <BookOpen className="w-5 h-5" />, section: "Formacion" },
-        { label: "Ciclos Lectivos", path: "/app/ciclos-lectivos", icon: <GraduationCap className="w-5 h-5" />, section: "Formacion" },
-        { label: "Evaluaciones", path: "/app/evaluaciones", icon: <ClipboardCheck className="w-5 h-5" />, section: "Formacion" },
         { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: "/app/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
@@ -100,10 +94,6 @@ function getNavItemsForRole(role: string, iglesiaActual?: { id: number; nombre: 
         { label: "Mi Ministerio", path: "/app/mi-departamento", icon: <FolderHeart className="w-5 h-5" />, section: "Ministerio" },
         { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Mis Tareas", path: "/app/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
-        { label: "Aula", path: "/app/aula", icon: <BookOpen className="w-5 h-5" />, section: "Formacion" },
-        { label: "Mis Cursos", path: "/app/mis-cursos", icon: <BookOpen className="w-5 h-5" />, section: "Formacion" },
-        { label: "Mis Evaluaciones", path: "/app/evaluaciones", icon: <ClipboardCheck className="w-5 h-5" />, section: "Formacion" },
-        { label: "Mis Ciclos", path: "/app/ciclos-lectivos", icon: <GraduationCap className="w-5 h-5" />, section: "Formacion" },
         { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: "/app/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
