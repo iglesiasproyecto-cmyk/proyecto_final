@@ -30,7 +30,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function MyDepartmentPage() {
-  const { usuarioActual } = useApp();
+  const { usuarioActual, rolActual } = useApp();
   const navigate = useNavigate();
   const { data: ministerios = [], isLoading } = useMinisterios();
   const min = ministerios[0] ?? null;
@@ -136,7 +136,6 @@ export function MyDepartmentPage() {
           { label: "Eventos",       value: upcomingEvents.length, icon: <CalendarDays className="w-4 h-4" />, nav: "/app/eventos" },
 
           { label: "Miembros",      value: activeMembers.length,  icon: <Users className="w-4 h-4" />,        nav: "/app/miembros" },
-          { label: "Módulos",       value: totalModulos,          icon: <BookOpen className="w-4 h-4" />,     nav: "/app/aula" },
         ].map((s, i) => (
           <motion.div
             key={s.label}
