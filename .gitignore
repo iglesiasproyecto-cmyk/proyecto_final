@@ -22,3 +22,4 @@ Thumbs.db
 
 # git worktrees
 .worktrees/
+MCP_SUPABASE_SETUP.md
