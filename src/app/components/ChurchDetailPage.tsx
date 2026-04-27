@@ -392,23 +392,6 @@ export function ChurchDetailPage() {
           </div>
         )}
       </motion.section>
-    </div>
-  );
-}
-
-function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
-  return (
-    <div className="relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] p-4 transition-all hover:shadow-lg hover:bg-card/60">
-      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-50 pointer-events-none" />
-      <div className="relative z-10 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-white/50 dark:bg-white/5 flex items-center justify-center border border-white/30 dark:border-white/10">
-          {icon}
-        </div>
-        <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
-          <p className="text-lg font-bold text-foreground">{value}</p>
-        </div>
-      </div>
 
       {/* Modal de edición de iglesia */}
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
@@ -505,6 +488,23 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.03)] p-4 transition-all hover:shadow-lg hover:bg-card/60">
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-50 pointer-events-none" />
+      <div className="relative z-10 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-white/50 dark:bg-white/5 flex items-center justify-center border border-white/30 dark:border-white/10">
+          {icon}
+        </div>
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
+          <p className="text-lg font-bold text-foreground">{value}</p>
+        </div>
+      </div>
     </div>
   );
 }

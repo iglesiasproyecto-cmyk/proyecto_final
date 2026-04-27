@@ -35,7 +35,7 @@ export function ClassroomPage() {
   const { data: ministerios = [] } = useMinisterios();
   const [selectedMinId, setSelectedMinId] = useState<number | null>(null);
   const actualMinId = selectedMinId ?? ministerios[0]?.idMinisterio ?? 0;
-  const { data: cursos = [], isLoading } = useCursosEnriquecidos();
+  const { data: cursos = [], isLoading } = useCursosEnriquecidos(actualMinId);
   const deleteCursoMutation = useDeleteCurso();
   const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null);
   const [selectedModuloId, setSelectedModuloId] = useState<number | null>(null);
