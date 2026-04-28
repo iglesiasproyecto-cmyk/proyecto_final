@@ -20,15 +20,15 @@ export function BarraProgreso({
   size = 'md'
 }: BarraProgresoProps) {
   const getStatusColor = () => {
-    if (porcentaje === 100) return 'text-green-600'
-    if (porcentaje >= 50) return 'text-blue-600'
-    return 'text-orange-600'
+    if (porcentaje === 100) return 'text-emerald-600 dark:text-emerald-400'
+    if (porcentaje >= 50) return 'text-[#4682b4]'
+    return 'text-amber-600 dark:text-amber-400'
   }
 
   const getStatusIcon = () => {
-    if (porcentaje === 100) return <CheckCircle className="h-4 w-4 text-green-600" />
-    if (porcentaje > 0) return <Clock className="h-4 w-4 text-blue-600" />
-    return <Target className="h-4 w-4 text-orange-600" />
+    if (porcentaje === 100) return <CheckCircle className="h-4 w-4 text-emerald-500" />
+    if (porcentaje > 0) return <Clock className="h-4 w-4 text-[#4682b4]" />
+    return <Target className="h-4 w-4 text-amber-500" />
   }
 
   const getStatusText = () => {

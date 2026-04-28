@@ -6,6 +6,7 @@ import {
   createMinisterio, updateMinisterio, toggleMinisterioEstado,
   createMiembroMinisterio,
   deleteMinisterio, deleteMiembroMinisterio, updateMiembroMinisterio,
+  getServidoresMinisterio,
 } from '@/services/ministerios.service'
 
 export function useMinisterios(idSede?: number) {
@@ -128,5 +129,14 @@ export function useUpdateMiembroMinisterio() {
       qc.invalidateQueries({ queryKey: ['miembros-ministerio'] })
       qc.invalidateQueries({ queryKey: ['miembros-ministerio-enriquecidos'] })
     },
+  })
+}
+
+export function useServidoresMinisterio(idMinisterio: number) {
+  return useQuery({
+    queryKey: ['servidores-ministerio', idMinisterio],
+    queryFn: () => getServidoresMinisterio(idMinisterio),
+    enabled: idMinisterio > 0,
+    staleTime: 5 * 60 * 1000,
   })
 }

@@ -217,3 +217,27 @@ export async function updateMiembroMinisterio(
   if (error) throw error
   return mapMiembro(result)
 }
+
+// ── Servidores del Ministerio (para asignación de tareas) ──
+
+export interface ServidorMinisterio {
+  idUsuario: number
+  nombreCompleto: string
+  rolEnMinisterio: string | null
+}
+
+export async function getServidoresMinisterio(idMinisterio: number): Promise<ServidorMinisterio[]> {
+  const { data, error } = await supabase
+    .from('miembro_ministerio')
+    .select('id_usuario, rol_en_ministerio, usuario(nombres, apellidos)')
+    .eq('id_ministerio', idMinisterio)
+    .neq('rol_en_ministerio', 'Líder de Ministerio')
+    .is('fecha_salida', null)
+  if (error) throw error
+  return (data as any[]).map(r => ({
+    idUsuario: r.id_usuario,
+    nombreCompleto: `${r.usuario?.nombres ?? ''} ${r.usuario?.apellidos ?? ''}`.trim(),
+    rolEnMinisterio: r.rol_en_ministerio,
+  }))
+}
+
