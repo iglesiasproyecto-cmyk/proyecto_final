@@ -6,25 +6,21 @@ import { toast } from 'sonner'
 async function emitirCertificadoAutomatico(idUsuario: number, idCurso: number) {
   // Verificar si ya tiene certificado
   const { data: certificadoExistente } = await supabase
-    .from('certificado')
-    .select('id_certificado')
+    .from('aula_certificado')
+    .select('id_aula_certificado')
     .eq('id_usuario', idUsuario)
-    .eq('id_curso', idCurso)
+    .eq('id_aula_curso', idCurso)
     .single()
 
   if (certificadoExistente) return // Ya tiene certificado
 
-  // Generar código único
-  const codigoUnico = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
-
-  // Crear certificado
+  // Crear certificado (codigo_verificacion se genera automáticamente)
   const { error } = await supabase
-    .from('certificado')
+    .from('aula_certificado')
     .insert({
       id_usuario: idUsuario,
-      id_curso: idCurso,
-      fecha_emision: new Date().toISOString(),
-      codigo_unico: codigoUnico
+      id_aula_curso: idCurso,
+      emitido_en: new Date().toISOString()
     })
 
   if (!error) {
@@ -46,33 +42,33 @@ export function useProgresoCurso(vars: {
         return { porcentaje: 0, actividadesCompletadas: 0, evaluacionesAprobadas: 0, totalElementos: 0 }
       }
 
-      // Obtener el proceso asignado curso para el usuario
-      const { data: procesoAsignado, error: procesoError } = await supabase
-        .from('detalle_proceso_curso')
-        .select('id_detalle_proceso_curso')
+      // Verificar que el usuario esté inscrito en el curso
+      const { data: inscripcion, error: inscripcionError } = await supabase
+        .from('aula_inscripcion')
+        .select('id_aula_inscripcion')
         .eq('id_usuario', vars.idUsuario)
-        .eq('estado', 'inscrito')
-        .eq('proceso_asignado_curso.curso.id_curso', vars.idCurso)
+        .eq('id_aula_curso', vars.idCurso)
+        .eq('activo', true)
         .single()
 
-      if (procesoError || !procesoAsignado) {
+      if (inscripcionError || !inscripcion) {
         return { porcentaje: 0, actividadesCompletadas: 0, evaluacionesAprobadas: 0, totalElementos: 0 }
       }
 
       // Contar total de elementos (actividades + evaluaciones)
       const { data: modulos, error: modulosError } = await supabase
-        .from('modulo')
+        .from('aula_modulo')
         .select(`
-          id_modulo,
-          actividad:actividad(count),
-          evaluacion_detalle:evaluacion_detalle(count)
+          id_aula_modulo,
+          actividades:aula_actividad(count),
+          evaluaciones:aula_evaluacion(count)
         `)
-        .eq('id_curso', vars.idCurso)
+        .eq('id_aula_curso', vars.idCurso)
 
       if (modulosError) throw modulosError
 
       const totalElementos = modulos?.reduce((total, modulo) => {
-        return total + (modulo.actividad?.[0]?.count || 0) + (modulo.evaluacion_detalle?.[0]?.count || 0)
+        return total + (modulo.actividades?.[0]?.count || 0) + (modulo.evaluaciones?.[0]?.count || 0)
       }, 0) || 0
 
       if (totalElementos === 0) {
@@ -81,19 +77,29 @@ export function useProgresoCurso(vars: {
 
       // Contar actividades completadas
       const { data: actividadesCompletadas, error: actividadesError } = await supabase
-        .from('progreso_actividad')
-        .select('id_progreso')
-        .eq('id_detalle_proceso_curso', procesoAsignado.id_detalle_proceso_curso)
-        .not('completada_en', 'is', null)
+        .from('aula_progreso_actividad')
+        .select('id_aula_progreso_actividad')
+        .eq('id_usuario', vars.idUsuario)
+        .in('id_aula_actividad', 
+          (await supabase
+            .from('aula_actividad')
+            .select('id_aula_actividad')
+            .in('id_aula_modulo', modulos.map(m => m.id_aula_modulo))
+          ).data?.map(a => a.id_aula_actividad) || []
+        )
+        .eq('completada', true)
 
       if (actividadesError) throw actividadesError
 
-      // Contar evaluaciones aprobadas
+      // Contar evaluaciones aprobadas (último intento aprobado por evaluación)
       const { data: evaluacionesAprobadas, error: evaluacionesError } = await supabase
-        .from('intento_evaluacion')
-        .select('id_intento')
-        .eq('id_detalle_proceso_curso', procesoAsignado.id_detalle_proceso_curso)
-        .eq('estado', 'aprobado')
+        .from('aula_intento_evaluacion')
+        .select('id_aula_evaluacion')
+        .eq('id_usuario', vars.idUsuario)
+        .eq('aprobado', true)
+        .in('id_aula_evaluacion',
+          modulos.flatMap(m => m.evaluaciones?.map(e => e.id_aula_evaluacion) || [])
+        )
 
       if (evaluacionesError) throw evaluacionesError
 
@@ -133,52 +139,69 @@ export function useProgresoGrupoCurso(idCurso: number | null | undefined) {
       if (!idCurso) return []
 
       const { data, error } = await supabase
-        .from('detalle_proceso_curso')
+        .from('aula_inscripcion')
         .select(`
-          id_detalle_proceso_curso,
-          fecha_inscripcion,
-          estado,
-          usuario:usuario(nombres, apellidos, correo),
-          progreso_actividad(count),
-          intento_evaluacion!inner(
-            estado
-          )
+          id_aula_inscripcion,
+          inscrito_en,
+          activo,
+          usuario:usuario(nombres, apellidos, correo)
         `)
-        .eq('estado', 'inscrito')
-        .eq('proceso_asignado_curso.curso.id_curso', idCurso)
+        .eq('activo', true)
+        .eq('id_aula_curso', idCurso)
 
       if (error) throw error
 
       // Calcular progreso para cada usuario
       const progresoGrupo = await Promise.all(
-        data.map(async (detalle) => {
+        data.map(async (inscripcion) => {
           // Obtener total de elementos del curso
           const { data: modulos } = await supabase
-            .from('modulo')
+            .from('aula_modulo')
             .select(`
-              actividad:actividad(count),
-              evaluacion_detalle:evaluacion_detalle(count)
+              actividades:aula_actividad(count),
+              evaluaciones:aula_evaluacion(count)
             `)
-            .eq('id_curso', idCurso)
+            .eq('id_aula_curso', idCurso)
 
           const totalElementos = modulos?.reduce((total, modulo) => {
-            return total + (modulo.actividad?.[0]?.count || 0) + (modulo.evaluacion_detalle?.[0]?.count || 0)
+            return total + (modulo.actividades?.[0]?.count || 0) + (modulo.evaluaciones?.[0]?.count || 0)
           }, 0) || 0
 
-          const actividadesCompletadas = detalle.progreso_actividad?.[0]?.count || 0
-          const evaluacionesAprobadas = detalle.intento_evaluacion?.filter(i => i.estado === 'aprobado').length || 0
+          // Contar actividades completadas
+          const { data: actividadesCompletadas } = await supabase
+            .from('aula_progreso_actividad')
+            .select('id_aula_progreso_actividad', { count: 'exact' })
+            .eq('id_usuario', inscripcion.usuario.id_usuario)
+            .in('id_aula_actividad',
+              modulos.flatMap(m => m.actividades?.map(a => a.id_aula_actividad) || [])
+            )
+            .eq('completada', true)
 
-          const elementosCompletados = actividadesCompletadas + evaluacionesAprobadas
+          const actividadesCount = actividadesCompletadas?.length || 0
+
+          // Contar evaluaciones aprobadas
+          const { data: evaluacionesAprobadas } = await supabase
+            .from('aula_intento_evaluacion')
+            .select('id_aula_evaluacion', { distinct: true })
+            .eq('id_usuario', inscripcion.usuario.id_usuario)
+            .in('id_aula_evaluacion',
+              modulos.flatMap(m => m.evaluaciones?.map(e => e.id_aula_evaluacion) || [])
+            )
+            .eq('aprobado', true)
+
+          const evaluacionesCount = evaluacionesAprobadas?.length || 0
+
+          const elementosCompletados = actividadesCount + evaluacionesCount
           const porcentaje = totalElementos > 0 ? Math.round((elementosCompletados / totalElementos) * 100) : 0
 
           return {
-            idUsuario: detalle.usuario.id_usuario,
-            nombre: `${detalle.usuario.nombres} ${detalle.usuario.apellidos}`,
-            correo: detalle.usuario.correo,
-            fechaInscripcion: detalle.fecha_inscripcion,
+            idUsuario: inscripcion.usuario.id_usuario,
+            nombre: `${inscripcion.usuario.nombres} ${inscripcion.usuario.apellidos}`,
+            correo: inscripcion.usuario.correo,
+            fechaInscripcion: inscripcion.inscrito_en,
             porcentaje,
-            actividadesCompletadas,
-            evaluacionesAprobadas,
+            actividadesCompletadas: actividadesCount,
+            evaluacionesAprobadas: evaluacionesCount,
             totalElementos,
             completado: porcentaje === 100
           }

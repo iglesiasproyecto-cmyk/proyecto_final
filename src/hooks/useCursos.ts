@@ -53,11 +53,7 @@ export function useCursosDisponibles(idUsuario: number | null | undefined) {
         .from('aula_curso')
         .select(`
           *,
-          ministerio:ministerio(nombre),
-          proceso_asignado:proceso_asignado_curso(
-            id_proceso_asignado_curso,
-            estado
-          )
+          ministerio:ministerio(nombre)
         `)
         .in('id_ministerio', ministerioIds)
         .eq('estado', 'activo')
