@@ -103,7 +103,7 @@ export async function getMinisteriosIdsDeUsuario(idUsuario: number): Promise<num
   if (error) throw error
 
   const rows = (data as Array<{ id_ministerio: number; rol_en_ministerio: string | null }>) ?? []
-  const liderRows = rows.filter((r) => r.rol_en_ministerio === 'lider')
+  const liderRows = rows.filter((r) => r.rol_en_ministerio === 'Líder de Ministerio')
   const source = liderRows.length > 0 ? liderRows : rows
   return Array.from(new Set(source.map((r) => r.id_ministerio)))
 }

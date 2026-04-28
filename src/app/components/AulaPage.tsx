@@ -41,7 +41,7 @@ export function AulaPage() {
         console.log('AulaPage - User ministerios:', ministerios)
 
         // Verificar si tiene rol de líder en alguno de sus ministerios
-        const isLiderMinisterio = ministerios.some(ministerio => ministerio.rol_en_ministerio === 'lider')
+        const isLiderMinisterio = ministerios.some(ministerio => ministerio.rol_en_ministerio === 'Líder de Ministerio')
         console.log('AulaPage - Is lider ministerio:', isLiderMinisterio)
 
 
