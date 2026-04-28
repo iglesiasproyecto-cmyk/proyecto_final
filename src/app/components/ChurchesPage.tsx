@@ -146,14 +146,14 @@ export function ChurchesPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <Building2 className="w-6 h-6 text-white" />
           </div>
           <div>
             <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest pl-1">Directorio</p>
-            <h1 className="text-3xl font-light tracking-tight mt-0.5">Gestión de Iglesias</h1>
+            <h1 className="text-3xl font-light tracking-tight leading-tight">Gestión de Iglesias</h1>
           </div>
         </div>
         {rolActual === "super_admin" && (
@@ -163,7 +163,7 @@ export function ChurchesPage() {
         )}
       </motion.div>
 
-      <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">
+      <div className="flex flex-col sm:flex-row gap-3 border-t border-border/30 pt-3 md:pt-0">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
           <Input 

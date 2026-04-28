@@ -187,28 +187,14 @@ export function AppLayout() {
             <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
             {!isCollapsed ? (
               <div className="flex items-center gap-4 flex-1 min-w-0 relative z-10">
-                <div className="w-14 h-14 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center shrink-0 shadow-lg relative overflow-hidden group-hover:shadow-primary/20 transition-all duration-500">
-                   <motion.div 
-                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-                     animate={{ x: ["-150%", "150%"] }}
-                     transition={{ repeat: Infinity, duration: 3, ease: "linear", repeatDelay: 1 }}
-                   />
-                  <SEILogo className="w-10 h-10 relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
-                </div>
+                <SEILogo className="w-16 h-16 shrink-0 drop-shadow-lg group-hover:scale-110 transition-transform duration-500" />
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[17px] font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-200 tracking-tight drop-shadow-sm">S.E.I.</h3>
                   <p className="text-[10px] font-bold text-cyan-400/80 uppercase tracking-[0.2em] mt-0.5">Soporte Estr.</p>
                 </div>
               </div>
             ) : (
-              <div className="w-14 h-14 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center mx-auto shadow-lg relative overflow-hidden group-hover:shadow-primary/20 transition-all duration-500">
-                   <motion.div 
-                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
-                     animate={{ x: ["-150%", "150%"] }}
-                     transition={{ repeat: Infinity, duration: 3, ease: "linear", repeatDelay: 1 }}
-                   />
-                <SEILogo className="w-10 h-10 relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
-              </div>
+              <SEILogo className="w-14 h-14 drop-shadow-lg group-hover:scale-110 transition-transform duration-500" />
             )}
             <button
               onClick={toggleSidebar}
@@ -220,44 +206,46 @@ export function AppLayout() {
 
           {/* Church Selector */}
           {showChurchSelectorPanel && !isCollapsed && (
-            <div className="px-3 py-2.5 border-b border-sidebar-border">
+            <div className="px-3 py-4 border-b border-sidebar-border/50 bg-gradient-to-b from-sidebar-accent/40 to-transparent">
               <div className="relative">
                 <button
                   onClick={() => setShowChurchSelector(!showChurchSelector)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-sidebar-foreground bg-sidebar-accent/50 hover:bg-sidebar-accent transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold text-sidebar-foreground bg-gradient-to-r from-sidebar-primary/20 to-sidebar-primary/10 hover:from-sidebar-primary/30 hover:to-sidebar-primary/20 transition-all duration-300 border border-sidebar-primary/30 hover:border-sidebar-primary/50 shadow-sm hover:shadow-md group"
                 >
-                  <Building2 className="w-4 h-4 text-sidebar-primary shrink-0" />
-                  <span className="flex-1 text-left truncate text-xs">
+                  <Building2 className="w-5 h-5 text-sidebar-primary shrink-0 group-hover:scale-110 transition-transform" />
+                  <span className="flex-1 text-left truncate">
                     {iglesiaActual?.nombre || "Seleccionar iglesia"}
                   </span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showChurchSelector ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`w-5 h-5 text-sidebar-primary/70 shrink-0 transition-all duration-300 ${showChurchSelector ? "rotate-180 text-sidebar-primary" : ""}`} />
                 </button>
                 <AnimatePresence>
                   {showChurchSelector && (
                     <motion.div
-                      initial={{ opacity: 0, y: -5, scaleY: 0.95 }}
+                      initial={{ opacity: 0, y: -8, scaleY: 0.9 }}
                       animate={{ opacity: 1, y: 0, scaleY: 1 }}
-                      exit={{ opacity: 0, y: -5, scaleY: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute top-full left-0 right-0 mt-1 bg-sidebar-accent rounded-lg border border-sidebar-border shadow-xl z-50 overflow-hidden origin-top"
+                      exit={{ opacity: 0, y: -8, scaleY: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full left-0 right-0 mt-2 bg-sidebar-accent rounded-xl border border-sidebar-primary/30 shadow-2xl z-50 overflow-hidden origin-top backdrop-blur-sm"
                     >
-                      {iglesiasDelUsuario.map((ig) => (
-                        <button
-                          key={ig.id}
-                          onClick={() => {
-                            setIglesiaActual(ig);
-                            setShowChurchSelector(false);
-                          }}
-                          className={`w-full text-left px-3 py-2.5 text-xs hover:bg-sidebar-border transition-colors flex items-center gap-2 ${
-                            ig.id === iglesiaActual?.id
-                              ? "text-sidebar-primary bg-sidebar-primary/10"
-                              : "text-sidebar-foreground"
-                          }`}
-                        >
-                          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${ig.id === iglesiaActual?.id ? "bg-sidebar-primary" : "bg-sidebar-foreground/30"}`} />
-                          {ig.nombre}
-                        </button>
-                      ))}
+                      <div className="p-2">
+                        {iglesiasDelUsuario.map((ig) => (
+                          <button
+                            key={ig.id}
+                            onClick={() => {
+                              setIglesiaActual(ig);
+                              setShowChurchSelector(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-3 mb-1 last:mb-0 ${
+                              ig.id === iglesiaActual?.id
+                                ? "text-white bg-gradient-to-r from-sidebar-primary to-sidebar-primary/80 shadow-md"
+                                : "text-sidebar-foreground hover:bg-sidebar-primary/10 hover:text-sidebar-primary"
+                            }`}
+                          >
+                            <div className={`w-2 h-2 rounded-full shrink-0 transition-all ${ig.id === iglesiaActual?.id ? "bg-white scale-100" : "bg-sidebar-foreground/40 scale-75"}`} />
+                            {ig.nombre}
+                          </button>
+                        ))}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -324,18 +312,12 @@ export function AppLayout() {
                                     initial={false}
                                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                                   >
-                                     <div className="absolute top-0 left-0 bottom-0 w-1 bg-white/40 shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
-                                     <motion.div 
-                                       className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-                                       animate={{ x: ["-200%", "300%"] }}
-                                       transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut", repeatDelay: 1 }}
-                                     />
                                   </motion.div>
                                 )}
                                 {!isActive && (
                                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-900/30 to-blue-900/10 opacity-0 group-hover/nav:opacity-100 transition-all duration-500 rounded-2xl z-0 border border-cyan-500/0 group-hover/nav:border-cyan-500/20 scale-95 group-hover/nav:scale-100" />
                                 )}
-                                <span className={`relative z-10 shrink-0 transition-transform duration-500 ${isActive ? "scale-125 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" : "group-hover/nav:scale-125 group-hover/nav:text-cyan-400 group-hover/nav:drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"}`}>
+                                <span className={`relative z-10 shrink-0 transition-transform duration-500 ${isActive ? "scale-125 text-white" : "group-hover/nav:scale-125 group-hover/nav:text-cyan-400 group-hover/nav:drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"}`}>
                                   {item.icon}
                                 </span>
                                 {isCollapsed && isNotif && unreadCount > 0 && (
@@ -370,18 +352,12 @@ export function AppLayout() {
                             initial={false}
                             transition={{ type: "spring", stiffness: 350, damping: 30 }}
                           >
-                             <div className="absolute top-0 left-0 bottom-0 w-1 bg-white/40 shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
-                             <motion.div 
-                               className="absolute inset-y-0 w-[40%] bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[20deg]"
-                               animate={{ x: ["-200%", "400%"] }}
-                               transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut", repeatDelay: 0.5 }}
-                             />
                           </motion.div>
                         )}
                         {!isActive && (
                           <div className="absolute inset-0 bg-gradient-to-r from-cyan-900/30 to-blue-900/10 opacity-0 group-hover/nav:opacity-100 transition-all duration-500 rounded-2xl z-0 border border-cyan-500/0 group-hover/nav:border-cyan-500/20 scale-95 group-hover/nav:scale-100" />
                         )}
-                        <span className={`relative z-10 shrink-0 transition-transform duration-500 ${isActive ? "scale-125 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" : "group-hover/nav:scale-125 group-hover/nav:text-cyan-400 group-hover/nav:drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"}`}>
+                        <span className={`relative z-10 shrink-0 transition-transform duration-500 ${isActive ? "scale-125 text-white" : "group-hover/nav:scale-125 group-hover/nav:text-cyan-400 group-hover/nav:drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"}`}>
                           {item.icon}
                         </span>
                         <span className={`relative z-10 flex-1 text-left truncate transition-all duration-500 ${isActive ? "font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70" : "font-semibold tracking-wide group-hover/nav:translate-x-1.5 group-hover/nav:text-white"}`}>
@@ -431,7 +407,7 @@ export function AppLayout() {
 
             {/* Page Title & Breadcrumb */}
             <div className="flex-1 min-w-0">
-              <h2 className="text-sm truncate">{currentPageTitle}</h2>
+              {/* Page title removed */}
             </div>
 
             {/* Header Actions */}

@@ -133,15 +133,13 @@ export function LoginPage() {
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="relative z-10 flex items-center gap-4"
+          className="relative z-10 flex items-center gap-6"
         >
-          <div className="w-20 h-20 rounded-[28px] bg-white/5 backdrop-blur-xl border border-white/10 p-3 shadow-2xl shadow-primary/20">
-            <SEILogo className="w-full h-full object-contain filter drop-shadow-lg" />
-          </div>
-          <div className="h-10 w-px bg-white/10" />
+          <SEILogo className="w-24 h-24 filter drop-shadow-lg" />
+          <div className="h-12 w-px bg-white/10" />
           <div>
-            <h1 className="text-white text-xl font-bold tracking-widest leading-none">S.E.I.</h1>
-            <p className="text-primary/60 text-[10px] uppercase font-black tracking-[0.2em] mt-1">Soporte Estructural</p>
+            <h1 className="text-white text-2xl font-bold tracking-widest leading-none">S.E.I.</h1>
+            <p className="text-primary/60 text-[10px] uppercase font-black tracking-[0.2em] mt-2">Soporte Estructural</p>
           </div>
         </motion.div>
 
@@ -216,9 +214,7 @@ export function LoginPage() {
         >
           {/* Mobile Header */}
           <div className="lg:hidden flex flex-col items-center mb-10">
-            <div className="w-24 h-24 rounded-3xl bg-[#0c2340] flex items-center justify-center p-4 shadow-2xl mb-6">
-              <SEILogo className="w-full h-full object-contain" />
-            </div>
+            <SEILogo className="w-32 h-32 drop-shadow-lg mb-6" />
             <h1 className="text-2xl font-black tracking-tight leading-none text-foreground">S.E.I.</h1>
             <p className="text-muted-foreground text-xs mt-1 font-medium italic">Soporte Estructural de Iglesias</p>
           </div>

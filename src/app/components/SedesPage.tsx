@@ -186,22 +186,21 @@ export function SedesPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* HEADER: Diferencia clara de títulos y subtítulos por color/tamaño */}
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <MapPin className="w-6 h-6 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Sedes</h1>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-0.5">Estructura</p>
+            <h1 className="text-3xl font-light tracking-tight text-foreground leading-tight">Gestión de Sedes</h1>
           </div>
         </div>
         <Button onClick={openAdd} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
           <Plus className="w-4 h-4 mr-2" /> Nueva Sede
         </Button>
 
-
-        <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">
+        <div className="flex flex-col sm:flex-row gap-3 border-t border-border/30 pt-3 md:pt-0 md:border-t-0">
           <div className="relative flex-1 md:max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
             <Input 

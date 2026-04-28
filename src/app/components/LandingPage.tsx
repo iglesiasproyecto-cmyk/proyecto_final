@@ -63,12 +63,10 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden font-sans">
       {/* Header Fijo */}
-      <header className="fixed top-0 w-full bg-[#0c2340]/95 backdrop-blur-md text-white py-4 z-50 shadow-xl">
+      <header className="fixed top-0 w-full bg-[#0c2340]/95 backdrop-blur-md text-white py-1 z-50 shadow-xl">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1.5">
-              <SEILogo className="w-full h-full" />
-            </div>
+          <div className="flex items-center gap-2">
+            <SEILogo className="w-20 h-20" />
             <span className="font-bold text-xl tracking-tight">S.E.I.</span>
           </div>
           <Button 
