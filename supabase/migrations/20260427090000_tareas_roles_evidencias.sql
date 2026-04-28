@@ -37,7 +37,7 @@ SET id_ministerio = (
   FROM public.miembro_ministerio mm
   WHERE mm.id_usuario = t.id_usuario_creador
     AND mm.fecha_salida IS NULL
-    AND mm.rol_ministerio = 'Líder'
+    AND mm.rol_en_ministerio = 'Líder'
   LIMIT 1
 )
 WHERE t.id_ministerio IS NULL;

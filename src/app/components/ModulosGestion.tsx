@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
+import { CrearModuloDialog } from './CrearModuloDialog'
+import { ModuloEditorPanel } from './ModuloEditorPanel'
+import { Card, CardContent } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/app/components/ui/alert-dialog'
@@ -12,9 +14,9 @@ import {
   Trash2,
   GripVertical,
   BookOpen,
+  ChevronDown,
   FileText,
-  Video,
-  HelpCircle
+  HelpCircle,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { toast } from 'sonner'
@@ -28,23 +30,24 @@ interface ModulosGestionProps {
 export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: ModulosGestionProps) {
   const [showCrearModulo, setShowCrearModulo] = useState(false)
   const [modulosOrdenados, setModulosOrdenados] = useState(modulos.sort((a, b) => a.orden - b.orden))
+  const [moduloEditando, setModuloEditando] = useState<{ id: number; titulo: string } | null>(null)
 
   React.useEffect(() => {
     setModulosOrdenados(modulos.sort((a, b) => a.orden - b.orden))
   }, [modulos])
 
-  const togglePublicacion = async (idModulo: number, estadoActual: string) => {
-    const nuevoEstado = estadoActual === 'publicado' ? 'borrador' : 'publicado'
+  const togglePublicacion = async (idModulo: number, publicadoActual: boolean) => {
+    const nuevoEstado = !publicadoActual
 
     try {
       const { error } = await supabase
-        .from('modulo')
-        .update({ estado: nuevoEstado })
-        .eq('id_modulo', idModulo)
+        .from('aula_modulo')
+        .update({ publicado: nuevoEstado })
+        .eq('id_aula_modulo', idModulo)
 
       if (error) throw error
 
-      toast.success(`Módulo ${nuevoEstado === 'publicado' ? 'publicado' : 'despublicado'}`)
+      toast.success(`Módulo ${nuevoEstado ? 'publicado' : 'despublicado'}`)
 
       // Refrescar la lista
       window.location.reload()
@@ -57,9 +60,9 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
   const eliminarModulo = async (idModulo: number) => {
     try {
       const { error } = await supabase
-        .from('modulo')
+        .from('aula_modulo')
         .delete()
-        .eq('id_modulo', idModulo)
+        .eq('id_aula_modulo', idModulo)
 
       if (error) throw error
 
@@ -90,9 +93,9 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
     try {
       for (const item of updatedItems) {
         await supabase
-          .from('modulo')
+          .from('aula_modulo')
           .update({ orden: item.orden })
-          .eq('id_modulo', item.id_modulo)
+          .eq('id_aula_modulo', item.id_aula_modulo)
       }
 
       toast.success('Orden actualizado')
@@ -103,15 +106,15 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold">Módulos del Curso</h3>
-          <p className="text-sm text-muted-foreground">
-            {desbloqueoSecuencial ? 'Desbloqueo secuencial activado' : 'Todos los módulos disponibles'}
+          <h3 className="text-xl font-black tracking-tight">Módulos del Curso</h3>
+          <p className="text-sm font-medium text-muted-foreground">
+            {desbloqueoSecuencial ? '🔒 Desbloqueo secuencial activado' : '🔓 Todos los módulos disponibles'}
           </p>
         </div>
-        <Button onClick={() => setShowCrearModulo(true)}>
+        <Button onClick={() => setShowCrearModulo(true)} className="rounded-xl bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-md shadow-blue-900/10 h-11 font-bold px-6">
           <Plus className="h-4 w-4 mr-2" />
           Agregar Módulo
         </Button>
@@ -137,88 +140,114 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
             {(provided) => (
               <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
                 {modulosOrdenados.map((modulo, index) => (
-                  <Draggable key={modulo.id_modulo} draggableId={modulo.id_modulo.toString()} index={index}>
+                  <Draggable key={modulo.id_aula_modulo} draggableId={modulo.id_aula_modulo.toString()} index={index}>
                     {(provided) => (
-                      <Card
+                      <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
-                        className="hover:shadow-md transition-shadow"
+                        className="mb-3"
                       >
-                        <CardContent className="p-4">
-                          <div className="flex items-center space-x-4">
-                            <div {...provided.dragHandleProps} className="cursor-grab">
-                              <GripVertical className="h-5 w-5 text-muted-foreground" />
-                            </div>
-
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3">
-                                <Badge variant="outline">#{modulo.orden}</Badge>
-                                <h4 className="font-medium">{modulo.titulo}</h4>
-                                <Badge variant={modulo.estado === 'publicado' ? 'default' : 'secondary'}>
-                                  {modulo.estado}
-                                </Badge>
+                        <Card
+                          className="hover:shadow-md transition-shadow border-white/10 bg-card/50 backdrop-blur-sm rounded-2xl overflow-hidden"
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-center space-x-4">
+                              <div {...provided.dragHandleProps} className="cursor-grab">
+                                <GripVertical className="h-5 w-5 text-muted-foreground" />
                               </div>
 
-                              {modulo.descripcion && (
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {modulo.descripcion}
-                                </p>
-                              )}
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-3">
+                                  <Badge variant="outline">#{modulo.orden}</Badge>
+                                  <h4 className="font-medium">{modulo.titulo}</h4>
+                                  <Badge variant={modulo.publicado ? 'default' : 'secondary'}>
+                                    {modulo.publicado ? 'publicado' : 'borrador'}
+                                  </Badge>
+                                </div>
 
-                              <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
-                                <span className="flex items-center">
-                                  <FileText className="h-3 w-3 mr-1" />
-                                  Contenido
-                                </span>
-                                <span className="flex items-center">
-                                  <HelpCircle className="h-3 w-3 mr-1" />
-                                  Evaluación
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => togglePublicacion(modulo.id_modulo, modulo.estado)}
-                              >
-                                {modulo.estado === 'publicado' ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
+                                {modulo.descripcion && (
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {modulo.descripcion}
+                                  </p>
                                 )}
-                              </Button>
 
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="outline" size="sm">
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>¿Eliminar módulo?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Esta acción no se puede deshacer. Se eliminará el módulo y todo su contenido.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => eliminarModulo(modulo.id_modulo)}>
-                                      Eliminar
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                                <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
+                                  <span className="flex items-center">
+                                    <FileText className="h-3 w-3 mr-1" />
+                                    Contenido
+                                  </span>
+                                  <span className="flex items-center">
+                                    <HelpCircle className="h-3 w-3 mr-1" />
+                                    Evaluación
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  variant={moduloEditando?.id === modulo.id_aula_modulo ? 'default' : 'outline'}
+                                  size="sm"
+                                  onClick={() =>
+                                    setModuloEditando(
+                                      moduloEditando?.id === modulo.id_aula_modulo
+                                        ? null
+                                        : { id: modulo.id_aula_modulo, titulo: modulo.titulo }
+                                    )
+                                  }
+                                >
+                                  {moduloEditando?.id === modulo.id_aula_modulo
+                                    ? <ChevronDown className="h-4 w-4" />
+                                    : <Edit className="h-4 w-4" />}
+                                </Button>
+
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => togglePublicacion(modulo.id_aula_modulo, modulo.publicado)}
+                                >
+                                  {modulo.publicado ? (
+                                    <EyeOff className="h-4 w-4" />
+                                  ) : (
+                                    <Eye className="h-4 w-4" />
+                                  )}
+                                </Button>
+
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>¿Eliminar módulo?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Esta acción no se puede deshacer. Se eliminará el módulo y todo su contenido.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => eliminarModulo(modulo.id_aula_modulo)}>
+                                        Eliminar
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
                             </div>
+                          </CardContent>
+                        </Card>
+
+                        {moduloEditando?.id === modulo.id_aula_modulo && (
+                          <div className="mt-2 rounded-2xl border border-white/10 bg-background/30 p-4">
+                            <ModuloEditorPanel
+                              idModulo={modulo.id_aula_modulo}
+                              tituloModulo={modulo.titulo}
+                              onClose={() => setModuloEditando(null)}
+                            />
                           </div>
-                        </CardContent>
-                      </Card>
+                        )}
+                      </div>
                     )}
                   </Draggable>
                 ))}
@@ -228,6 +257,12 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
           </Droppable>
         </DragDropContext>
       )}
+
+      <CrearModuloDialog
+        open={showCrearModulo}
+        onOpenChange={setShowCrearModulo}
+        idCurso={idCurso}
+      />
     </div>
   )
 }

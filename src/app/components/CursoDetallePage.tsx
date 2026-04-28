@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useAuth } from '@/app/store/AppContext'
+import { getInternalUserId } from '@/lib/userHelpers'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
@@ -27,13 +28,18 @@ import { supabase } from '@/lib/supabaseClient'
 import { useCursos } from '@/hooks/useCursos'
 import { useProgresoGrupoCurso } from '@/hooks/useProgreso'
 import { ModulosGestion } from './ModulosGestion'
-import { CrearModuloDialog } from './CrearModuloDialog'
 
 export function CursoDetallePage() {
   const { idCurso } = useParams<{ idCurso: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [showCrearModulo, setShowCrearModulo] = React.useState(false)
+  const [internalUserId, setInternalUserId] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (user?.id) {
+      getInternalUserId(user.id).then(setInternalUserId)
+    }
+  }, [user?.id])
 
   // Obtener información detallada del curso
   const { data: curso } = useQuery({
@@ -42,20 +48,20 @@ export function CursoDetallePage() {
       if (!idCurso) return null
 
       const { data, error } = await supabase
-        .from('curso')
+        .from('aula_curso')
         .select(`
           *,
           ministerio:ministerio(nombre),
-          modulos:modulo(
-            id_modulo,
+          modulos:aula_modulo(
+            id_aula_modulo,
             titulo,
             orden,
-            estado,
+            publicado,
             descripcion,
             creado_en
           )
         `)
-        .eq('id_curso', parseInt(idCurso))
+        .eq('id_aula_curso', parseInt(idCurso))
         .single()
 
       if (error) throw error
@@ -68,10 +74,10 @@ export function CursoDetallePage() {
   const { data: progresoGrupo } = useProgresoGrupoCurso(idCurso ? parseInt(idCurso) : undefined)
 
   // Verificar si el usuario es líder de este curso
-  const isLider = curso?.id_usuario_creador === user?.id
+  const isLider = internalUserId !== null && curso?.id_usuario_creador === internalUserId
 
   // Calcular estadísticas
-  const modulosPublicados = curso?.modulos?.filter(m => m.estado === 'publicado').length || 0
+  const modulosPublicados = curso?.modulos?.filter(m => m.publicado).length || 0
   const totalModulos = curso?.modulos?.length || 0
   const miembrosActivos = progresoGrupo?.filter(p => p.porcentaje > 0).length || 0
   const miembrosAtrasados = progresoGrupo?.filter(p => p.porcentaje < 25).length || 0
@@ -113,23 +119,35 @@ export function CursoDetallePage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => navigate('/app/aula')}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate('/app/aula')}
+            className="rounded-xl border-white/20 bg-background/50 h-10 px-4"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">{curso.nombre}</h1>
-            <p className="text-muted-foreground">{curso.ministerio?.nombre}</p>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{curso.titulo}</h1>
+            <p className="text-primary/70 font-bold text-xs uppercase tracking-widest">{curso.ministerio?.nombre}</p>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant={curso.estado === 'activo' ? 'default' : 'secondary'}>
+        <div className="flex items-center gap-3">
+          <Badge 
+            variant={curso.estado === 'activo' ? 'default' : 'secondary'}
+            className={`rounded-full px-4 py-1 text-[10px] font-bold uppercase tracking-widest border-none ${
+              curso.estado === 'activo' 
+                ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' 
+                : 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+            }`}
+          >
             {curso.estado}
           </Badge>
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
+          <Button variant="outline" size="sm" className="rounded-xl border-white/20 bg-background/50 h-10">
+            <Settings className="h-4 w-4 mr-2 text-primary" />
             Configuración
           </Button>
         </div>
@@ -137,49 +155,57 @@ export function CursoDetallePage() {
 
       {/* Estadísticas Rápidas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="h-5 w-5 text-blue-600" />
+        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden group">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-[#4682b4]/10 text-[#4682b4]">
+                <BookOpen className="h-5 w-5" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">{totalModulos}</p>
-                <p className="text-xs text-muted-foreground">Módulos totales</p>
+                <p className="text-2xl font-black text-foreground">{totalModulos}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Módulos</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Eye className="h-5 w-5 text-green-600" />
+        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden group">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500">
+                <Eye className="h-5 w-5" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">{modulosPublicados}</p>
-                <p className="text-xs text-muted-foreground">Publicados</p>
+                <p className="text-2xl font-black text-foreground">{modulosPublicados}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Publicados</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-purple-600" />
+        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden group">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500">
+                <Users className="h-5 w-5" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">{miembrosActivos}</p>
-                <p className="text-xs text-muted-foreground">Servidores activos</p>
+                <p className="text-2xl font-black text-foreground">{miembrosActivos}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Servidores</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-orange-600" />
+        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden group">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500">
+                <TrendingUp className="h-5 w-5" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">{promedioProgreso}%</p>
-                <p className="text-xs text-muted-foreground">Progreso promedio</p>
+                <p className="text-2xl font-black text-foreground">{promedioProgreso}%</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Progreso</p>
               </div>
             </div>
           </CardContent>
@@ -187,27 +213,29 @@ export function CursoDetallePage() {
       </div>
 
       {/* Contenido Principal */}
-      <Tabs defaultValue="modulos" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="modulos">
-            <BookOpen className="h-4 w-4 mr-2" />
-            Módulos
-          </TabsTrigger>
-          <TabsTrigger value="progreso">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Progreso
-          </TabsTrigger>
-          <TabsTrigger value="servidores">
-            <Users className="h-4 w-4 mr-2" />
-            Servidores
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="modulos" className="space-y-6">
+        <div className="flex items-center justify-between overflow-x-auto pb-2 no-scrollbar">
+          <TabsList className="bg-muted/50 p-1.5 rounded-2xl border border-border/50 backdrop-blur-md inline-flex">
+            <TabsTrigger value="modulos" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-primary transition-all">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Módulos
+            </TabsTrigger>
+            <TabsTrigger value="progreso" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-primary transition-all">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Progreso
+            </TabsTrigger>
+            <TabsTrigger value="servidores" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-primary transition-all">
+              <Users className="h-4 w-4 mr-2" />
+              Servidores
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="modulos">
           <ModulosGestion
             idCurso={parseInt(idCurso!)}
             modulos={curso.modulos || []}
-            desbloqueoSecuencial={curso.desbloqueo_secuencial}
+            desbloqueoSecuencial={curso.orden_secuencial}
           />
         </TabsContent>
 
@@ -220,11 +248,6 @@ export function CursoDetallePage() {
         </TabsContent>
       </Tabs>
 
-      <CrearModuloDialog
-        open={showCrearModulo}
-        onOpenChange={setShowCrearModulo}
-        idCurso={parseInt(idCurso!)}
-      />
     </div>
   )
 }

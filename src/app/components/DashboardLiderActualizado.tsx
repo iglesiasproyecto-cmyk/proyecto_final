@@ -29,12 +29,12 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
       if (!internalUserId) return []
 
       const { data, error } = await supabase
-        .from('curso')
+        .from('aula_curso')
         .select(`
-          id_curso,
-          nombre,
+          id_aula_curso,
+          titulo,
           estado,
-          modulos:modulo(count)
+          modulos:aula_modulo(count)
         `)
         .eq('id_usuario_creador', internalUserId)
         .order('creado_en', { ascending: false })
@@ -56,9 +56,9 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
       if (!internalUserId) return null
 
       let query = supabase
-        .from('curso')
+        .from('aula_curso')
         .select(`
-          id_curso,
+          id_aula_curso,
           ministerio:ministerio(
             miembro_ministerio(count)
           )
@@ -66,7 +66,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
         .eq('id_usuario_creador', internalUserId)
 
       if (idCurso) {
-        query = query.eq('id_curso', idCurso)
+        query = query.eq('id_aula_curso', idCurso)
       }
 
       const { data, error } = await query
@@ -77,15 +77,15 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
       const cursosActivos = cursos?.filter(c => c.estado === 'activo').length || 0
 
       // Contar miembros totales en ministerios
-      const totalMiembros = cursos?.reduce((total, curso) => {
+      const totalMiembros = data?.reduce((total, curso) => {
         return total + (curso.ministerio?.miembro_ministerio?.[0]?.count || 0)
       }, 0) || 0
 
       // Obtener certificados emitidos
       const { data: certificados } = await supabase
-        .from('certificado')
-        .select('id_certificado')
-        .in('id_curso', cursos?.map(c => c.id_curso) || [])
+        .from('aula_certificado')
+        .select('id_aula_certificado')
+        .in('id_aula_curso', cursos?.map(c => c.id_aula_curso) || [])
 
       return {
         totalCursos,
@@ -112,54 +112,66 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
   return (
     <div className="space-y-6">
       {/* Estadísticas Generales */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden relative group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
+            <BookOpen className="h-12 w-12" />
+          </div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Cursos</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total de Cursos</CardTitle>
+            <BookOpen className="h-4 w-4 text-[#4682b4]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalCursos}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-black text-foreground">{stats.totalCursos}</div>
+            <p className="text-xs font-bold text-primary mt-1">
               {stats.cursosActivos} activos
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden relative group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
+            <Users className="h-12 w-12" />
+          </div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Miembros Totales</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Miembros Totales</CardTitle>
+            <Users className="h-4 w-4 text-[#4682b4]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalMiembros}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-black text-foreground">{stats.totalMiembros}</div>
+            <p className="text-xs font-bold text-primary mt-1">
               En tus ministerios
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden relative group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
+            <Award className="h-12 w-12" />
+          </div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Certificados</CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Certificados</CardTitle>
+            <Award className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.certificadosEmitidos}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-black text-foreground">{stats.certificadosEmitidos}</div>
+            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1">
               Emitidos totales
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden relative group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
+            <TrendingUp className="h-12 w-12" />
+          </div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Promedio Grupo</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Promedio Grupo</CardTitle>
+            <TrendingUp className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{promedioProgreso}%</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-black text-foreground">{promedioProgreso}%</div>
+            <p className="text-xs font-bold text-amber-600 dark:text-amber-400 mt-1">
               Progreso promedio
             </p>
           </CardContent>
@@ -208,7 +220,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
                     className="p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/10 cursor-pointer hover:bg-primary/10 transition-colors"
                     onClick={() => navigate(`/app/aula/curso/${curso.id_curso}`)}
                   >
-                    <p className="text-sm font-medium truncate">{curso.nombre}</p>
+                    <p className="text-sm font-medium truncate">{curso.titulo}</p>
                     <div className="flex items-center justify-between mt-1">
                       <Badge variant={curso.estado === 'activo' ? 'default' : 'secondary'} className="text-xs">
                         {curso.estado}
