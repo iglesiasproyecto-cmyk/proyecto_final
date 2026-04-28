@@ -13,6 +13,18 @@ import { MembersPage } from "./components/MembersPage";
 import { EventsPage } from "./components/EventsPage";
 import { TasksPage } from "./components/TasksPage";
 import { ChurchDetailPage } from "./components/ChurchDetailPage";
+import { AulaPage } from "./components/AulaPage";
+import { CursoDetallePage } from "./components/CursoDetallePage";
+import { ProgresoIndividualPage } from "./components/ProgresoIndividualPage";
+import { NotificationsPage } from "./components/NotificationsPage";
+import { ProfilePage } from "./components/ProfilePage";
+import { GeographyPage } from "./components/GeographyPage";
+import { SedesPage } from "./components/SedesPage";
+import { PastoresPage } from "./components/PastoresPage";
+import { UsuariosPage } from "./components/UsuariosPage";
+import { CatalogosPage } from "./components/CatalogosPage";
+import { SitemapPage } from "./components/SitemapPage";
+import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
 
 
 export const router = createBrowserRouter([
@@ -57,7 +69,10 @@ export const router = createBrowserRouter([
           { path: "pastores", Component: PastoresPage, ErrorBoundary: ErrorPage },
           { path: "usuarios", Component: UsuariosPage, ErrorBoundary: ErrorPage },
           { path: "catalogos", Component: CatalogosPage, ErrorBoundary: ErrorPage },
-          { path: "sitemap", Component: SitemapPage, ErrorBoundary: ErrorPage },
+           { path: "sitemap", Component: SitemapPage, ErrorBoundary: ErrorPage },
+           { path: "aula", Component: AulaPage, ErrorBoundary: ErrorPage },
+           { path: "aula/curso/:idCurso", Component: CursoDetallePage, ErrorBoundary: ErrorPage },
+           { path: "aula/curso/:idCurso/servidor/:idUsuario", Component: ProgresoIndividualPage, ErrorBoundary: ErrorPage },
         ],
       },
     ],

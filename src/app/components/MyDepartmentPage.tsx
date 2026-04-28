@@ -1,13 +1,19 @@
+import React from "react";
 import { useMinisterios, useMiembrosMinisterio } from "@/hooks/useMinisterios";
 import { useEventos } from "@/hooks/useEventos";
 import { useApp } from "../store/AppContext";
+import { useProgresoCurso } from "@/hooks/useProgreso";
+import { useCursos } from "@/hooks/useCursos";
+import { supabase } from "@/lib/supabaseClient";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { Progress } from "./ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { motion } from "motion/react";
 import {
   Users, Mail, CalendarDays, Crown, User,
-  Plus, Clock, FolderHeart, ChevronRight,
+  Plus, Clock, FolderHeart, ChevronRight, BookOpen, GraduationCap, Award,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 
@@ -36,6 +42,11 @@ export function MyDepartmentPage() {
   const min = ministerios[0] ?? null;
   const { data: minMembers = [] } = useMiembrosMinisterio(min?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos();
+
+  // Determinar si el usuario es líder del ministerio actual
+  const isLiderMinisterio = minMembers.some(mm =>
+    mm.idUsuario === usuarioActual?.idUsuario && mm.rolEnMinisterio === "lider"
+  );
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-48">
@@ -252,8 +263,196 @@ export function MyDepartmentPage() {
             </div>
           </Card>
 
+          {/* Sección Aula - Formación del Ministerio */}
+          <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-2xl p-0 overflow-hidden shadow-sm flex-1">
+            <div className="p-4 border-b border-border/40 bg-card/20 flex items-center justify-between">
+              <FieldLabel>Formación del Ministerio</FieldLabel>
+              <button className="text-[10px] text-primary font-bold hover:underline" onClick={() => navigate("/app/aula")}>
+                Ver todo
+              </button>
+            </div>
+            <div className="p-4">
+              {isLiderMinisterio ? (
+                <LiderAulaSection ministerio={min} />
+              ) : (
+                <ServidorAulaSection ministerio={min} />
+              )}
+            </div>
+          </Card>
 
         </motion.div>
+      </div>
+    </div>
+  );
+}
+
+// Componente para la sección de Aula del líder
+function LiderAulaSection({ ministerio }: { ministerio: any }) {
+  const navigate = useNavigate();
+  const { data: cursos } = useCursos(ministerio?.idMinisterio);
+
+  const cursosActivos = cursos?.filter(c => c.estado === 'activo') || [];
+  const totalInscritos = cursosActivos.length > 0 ? 'Calculando...' : '0'; // TODO: Calcular total de inscritos
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <GraduationCap className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium">Panel de Líder</span>
+        </div>
+        <Button size="sm" onClick={() => navigate("/app/aula")}>
+          <BookOpen className="w-3 h-3 mr-1" />
+          Gestionar Formación
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="text-center p-3 bg-primary/5 rounded-lg">
+          <BookOpen className="w-5 h-5 mx-auto mb-1 text-primary" />
+          <div className="text-lg font-bold">{cursosActivos.length}</div>
+          <div className="text-xs text-muted-foreground">Cursos activos</div>
+        </div>
+        <div className="text-center p-3 bg-green-500/5 rounded-lg">
+          <Users className="w-5 h-5 mx-auto mb-1 text-green-600" />
+          <div className="text-lg font-bold">{totalInscritos}</div>
+          <div className="text-xs text-muted-foreground">Inscritos</div>
+        </div>
+        <div className="text-center p-3 bg-amber-500/5 rounded-lg">
+          <Award className="w-5 h-5 mx-auto mb-1 text-amber-600" />
+          <div className="text-lg font-bold">0</div>
+          <div className="text-xs text-muted-foreground">Certificados</div>
+        </div>
+      </div>
+
+      {cursosActivos.length > 0 ? (
+        <div className="space-y-2">
+          {cursosActivos.slice(0, 2).map((curso: any) => (
+            <div key={curso.id_curso} className="flex items-center justify-between p-3 bg-accent/20 rounded-lg">
+              <div>
+                <p className="text-sm font-medium">{curso.nombre}</p>
+                <p className="text-xs text-muted-foreground">{curso.descripcion}</p>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                Activo
+              </Badge>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-6 text-muted-foreground">
+          <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-20" />
+          <p className="text-sm">No hay cursos activos</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => navigate("/app/aula")}
+          >
+            Crear primer curso
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Componente para la sección de Aula del servidor
+function ServidorAulaSection({ ministerio }: { ministerio: any }) {
+  const navigate = useNavigate();
+  const { usuarioActual } = useApp();
+  const [cursosInscritos, setCursosInscritos] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const loadCursosInscritos = async () => {
+      if (!usuarioActual?.idUsuario || !ministerio?.idMinisterio) return;
+
+      // Obtener cursos del ministerio donde el usuario está inscrito
+      const { data, error } = await supabase
+        .from('detalle_proceso_curso')
+        .select(`
+          estado,
+          proceso_asignado_curso:proceso_asignado_curso(
+            curso:curso(
+              id_curso,
+              nombre,
+              descripcion
+            )
+          )
+        `)
+        .eq('id_usuario', usuarioActual.idUsuario)
+        .eq('estado', 'inscrito')
+        .eq('proceso_asignado_curso.curso.id_ministerio', ministerio.idMinisterio);
+
+      if (!error && data) {
+        const cursos = data.map(item => ({
+          ...item.proceso_asignado_curso.curso,
+          estado_inscripcion: item.estado
+        }));
+        setCursosInscritos(cursos);
+      }
+    };
+
+    loadCursosInscritos();
+  }, [usuarioActual?.idUsuario, ministerio?.idMinisterio]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium">Mis Cursos</span>
+        </div>
+        <Button size="sm" variant="ghost" onClick={() => navigate("/app/aula")}>
+          Ver todos
+        </Button>
+      </div>
+
+      {cursosInscritos.length > 0 ? (
+        <div className="space-y-3">
+          {cursosInscritos.slice(0, 3).map((curso: any) => (
+            <CursoServidorCard key={curso.id_curso} curso={curso} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-6 text-muted-foreground">
+          <GraduationCap className="w-8 h-8 mx-auto mb-2 opacity-20" />
+          <p className="text-sm">No estás inscrito en cursos</p>
+          <p className="text-xs">Los cursos aparecerán aquí cuando tu líder los active</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Componente para mostrar un curso individual del servidor
+function CursoServidorCard({ curso }: { curso: any }) {
+  const { usuarioActual } = useApp();
+  const { data: progreso } = useProgresoCurso({
+    idUsuario: usuarioActual?.idUsuario,
+    idCurso: curso.id_curso
+  });
+
+  return (
+    <div className="p-3 bg-accent/20 rounded-lg space-y-2">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium">{curso.nombre}</h4>
+        <Badge variant="outline" className="text-xs">
+          {curso.estado_inscripcion}
+        </Badge>
+      </div>
+
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs">
+          <span>Progreso</span>
+          <span>{progreso?.porcentaje || 0}%</span>
+        </div>
+        <Progress value={progreso?.porcentaje || 0} className="h-1.5" />
+      </div>
+
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>{progreso?.actividadesCompletadas || 0} actividades</span>
+        <span>{progreso?.evaluacionesAprobadas || 0} evaluaciones</span>
       </div>
     </div>
   );
