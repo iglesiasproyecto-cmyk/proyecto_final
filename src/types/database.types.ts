@@ -50,6 +50,7 @@ export type Database = {
         Row: {
           creado_en: string
           descripcion: string | null
+          desbloqueo_secuencial: boolean
           duracion_horas: number | null
           estado: Database["public"]["Enums"]["estado_curso"]
           id_curso: number
@@ -61,6 +62,7 @@ export type Database = {
         Insert: {
           creado_en?: string
           descripcion?: string | null
+          desbloqueo_secuencial?: boolean
           duracion_horas?: number | null
           estado?: Database["public"]["Enums"]["estado_curso"]
           id_curso?: number
@@ -72,6 +74,7 @@ export type Database = {
         Update: {
           creado_en?: string
           descripcion?: string | null
+          desbloqueo_secuencial?: boolean
           duracion_horas?: number | null
           estado?: Database["public"]["Enums"]["estado_curso"]
           id_curso?: number
@@ -1164,6 +1167,317 @@ export type Database = {
         }
         Relationships: []
       }
+      actividad: {
+        Row: {
+          contenido: string | null
+          creado_en: string
+          estado: Database["public"]["Enums"]["estado_actividad"]
+          id_actividad: number
+          id_modulo: number
+          orden: number
+          tipo: Database["public"]["Enums"]["tipo_actividad"]
+          titulo: string
+          updated_at: string
+          url_video: string | null
+        }
+        Insert: {
+          contenido?: string | null
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_actividad"]
+          id_actividad?: number
+          id_modulo: number
+          orden?: number
+          tipo: Database["public"]["Enums"]["tipo_actividad"]
+          titulo: string
+          updated_at?: string
+          url_video?: string | null
+        }
+        Update: {
+          contenido?: string | null
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_actividad"]
+          id_actividad?: number
+          id_modulo?: number
+          orden?: number
+          tipo?: Database["public"]["Enums"]["tipo_actividad"]
+          titulo?: string
+          updated_at?: string
+          url_video?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "actividad_id_modulo_fkey"
+            columns: ["id_modulo"]
+            isOneToOne: false
+            referencedRelation: "modulo"
+            referencedColumns: ["id_modulo"]
+          },
+        ]
+      }
+      evaluacion_detalle: {
+        Row: {
+          creado_en: string
+          id_evaluacion_detalle: number
+          id_modulo: number
+          opciones: Json | null
+          pregunta: string
+          respuesta_correcta: string
+          tipo_pregunta: Database["public"]["Enums"]["tipo_pregunta"]
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          id_evaluacion_detalle?: number
+          id_modulo: number
+          opciones?: Json | null
+          pregunta: string
+          respuesta_correcta: string
+          tipo_pregunta: Database["public"]["Enums"]["tipo_pregunta"]
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          id_evaluacion_detalle?: number
+          id_modulo?: number
+          opciones?: Json | null
+          pregunta?: string
+          respuesta_correcta?: string
+          tipo_pregunta?: Database["public"]["Enums"]["tipo_pregunta"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluacion_detalle_id_modulo_fkey"
+            columns: ["id_modulo"]
+            isOneToOne: false
+            referencedRelation: "modulo"
+            referencedColumns: ["id_modulo"]
+          },
+        ]
+      }
+      progreso_actividad: {
+        Row: {
+          completada_en: string | null
+          creado_en: string
+          id_actividad: number
+          id_detalle_proceso_curso: number
+          id_progreso: number
+          id_usuario: number
+          updated_at: string
+          vista_en: string | null
+        }
+        Insert: {
+          completada_en?: string | null
+          creado_en?: string
+          id_actividad: number
+          id_detalle_proceso_curso: number
+          id_progreso?: number
+          id_usuario: number
+          updated_at?: string
+          vista_en?: string | null
+        }
+        Update: {
+          completada_en?: string | null
+          creado_en?: string
+          id_actividad?: number
+          id_detalle_proceso_curso?: number
+          id_progreso?: number
+          id_usuario?: number
+          updated_at?: string
+          vista_en?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progreso_actividad_id_actividad_fkey"
+            columns: ["id_actividad"]
+            isOneToOne: false
+            referencedRelation: "actividad"
+            referencedColumns: ["id_actividad"]
+          },
+          {
+            foreignKeyName: "progreso_actividad_id_detalle_proceso_curso_fkey"
+            columns: ["id_detalle_proceso_curso"]
+            isOneToOne: false
+            referencedRelation: "detalle_proceso_curso"
+            referencedColumns: ["id_detalle_proceso_curso"]
+          },
+          {
+            foreignKeyName: "progreso_actividad_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      intento_evaluacion: {
+        Row: {
+          calificacion_obtenida: number | null
+          creado_en: string
+          estado: Database["public"]["Enums"]["estado_evaluacion"]
+          id_detalle_proceso_curso: number
+          id_intento: number
+          id_modulo: number
+          id_usuario: number
+          respuestas: Json | null
+          updated_at: string
+        }
+        Insert: {
+          calificacion_obtenida?: number | null
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_evaluacion"]
+          id_detalle_proceso_curso: number
+          id_intento?: number
+          id_modulo: number
+          id_usuario: number
+          respuestas?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          calificacion_obtenida?: number | null
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_evaluacion"]
+          id_detalle_proceso_curso?: number
+          id_intento?: number
+          id_modulo?: number
+          id_usuario?: number
+          respuestas?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intento_evaluacion_id_detalle_proceso_curso_fkey"
+            columns: ["id_detalle_proceso_curso"]
+            isOneToOne: false
+            referencedRelation: "detalle_proceso_curso"
+            referencedColumns: ["id_detalle_proceso_curso"]
+          },
+          {
+            foreignKeyName: "intento_evaluacion_id_modulo_fkey"
+            columns: ["id_modulo"]
+            isOneToOne: false
+            referencedRelation: "modulo"
+            referencedColumns: ["id_modulo"]
+          },
+          {
+            foreignKeyName: "intento_evaluacion_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      comentario_lider: {
+        Row: {
+          comentario: string
+          creado_en: string
+          id_actividad: number | null
+          id_comentario: number
+          id_modulo: number | null
+          id_usuario_autor: number
+          id_usuario_destinatario: number
+          tipo: Database["public"]["Enums"]["tipo_comentario"]
+          updated_at: string
+        }
+        Insert: {
+          comentario: string
+          creado_en?: string
+          id_actividad?: number | null
+          id_comentario?: number
+          id_modulo?: number | null
+          id_usuario_autor: number
+          id_usuario_destinatario: number
+          tipo: Database["public"]["Enums"]["tipo_comentario"]
+          updated_at?: string
+        }
+        Update: {
+          comentario?: string
+          creado_en?: string
+          id_actividad?: number | null
+          id_comentario?: number
+          id_modulo?: number | null
+          id_usuario_autor?: number
+          id_usuario_destinatario?: number
+          tipo?: Database["public"]["Enums"]["tipo_comentario"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comentario_lider_id_actividad_fkey"
+            columns: ["id_actividad"]
+            isOneToOne: false
+            referencedRelation: "actividad"
+            referencedColumns: ["id_actividad"]
+          },
+          {
+            foreignKeyName: "comentario_lider_id_modulo_fkey"
+            columns: ["id_modulo"]
+            isOneToOne: false
+            referencedRelation: "modulo"
+            referencedColumns: ["id_modulo"]
+          },
+          {
+            foreignKeyName: "comentario_lider_id_usuario_autor_fkey"
+            columns: ["id_usuario_autor"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+          {
+            foreignKeyName: "comentario_lider_id_usuario_destinatario_fkey"
+            columns: ["id_usuario_destinatario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      certificado: {
+        Row: {
+          codigo_unico: string
+          creado_en: string
+          fecha_emision: string
+          id_certificado: number
+          id_curso: number
+          id_usuario: number
+          updated_at: string
+        }
+        Insert: {
+          codigo_unico?: string
+          creado_en?: string
+          fecha_emision?: string
+          id_certificado?: number
+          id_curso: number
+          id_usuario: number
+          updated_at?: string
+        }
+        Update: {
+          codigo_unico?: string
+          creado_en?: string
+          fecha_emision?: string
+          id_certificado?: number
+          id_curso?: number
+          id_usuario?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificado_id_curso_fkey"
+            columns: ["id_curso"]
+            isOneToOne: false
+            referencedRelation: "curso"
+            referencedColumns: ["id_curso"]
+          },
+          {
+            foreignKeyName: "certificado_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
     }
     Functions: {
       can_assign_role: { Args: { target_role_id: number }; Returns: boolean }
@@ -1339,6 +1653,10 @@ export type Database = {
       prioridad_tarea: "baja" | "media" | "alta" | "urgente"
       tipo_notificacion: "informacion" | "alerta" | "tarea" | "evento" | "curso"
       tipo_recurso: "archivo" | "enlace"
+      estado_actividad: "pendiente" | "vista" | "completada"
+      tipo_actividad: "lectura" | "video" | "recurso" | "evaluacion"
+      tipo_pregunta: "multiple_choice" | "verdadero_falso" | "respuesta_corta" | "ensayo"
+      tipo_comentario: "retroalimentacion" | "observacion"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1479,6 +1797,10 @@ export const Constants = {
       prioridad_tarea: ["baja", "media", "alta", "urgente"],
       tipo_notificacion: ["informacion", "alerta", "tarea", "evento", "curso"],
       tipo_recurso: ["archivo", "enlace"],
+      estado_actividad: ["pendiente", "vista", "completada"],
+      tipo_actividad: ["lectura", "video", "recurso", "evaluacion"],
+      tipo_pregunta: ["multiple_choice", "verdadero_falso", "respuesta_corta", "ensayo"],
+      tipo_comentario: ["retroalimentacion", "observacion"],
     },
   },
 } as const

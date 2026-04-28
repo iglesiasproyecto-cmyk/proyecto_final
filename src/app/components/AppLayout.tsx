@@ -8,7 +8,7 @@ import {
   Church, LayoutDashboard, Building2, Users, CalendarDays, ListTodo,
   Bell, User, LogOut, Menu, X, ChevronDown,
   Settings, FolderHeart, Globe, UserCheck, Settings2,
-  PanelLeftClose, PanelLeftOpen, Moon, Sun
+  PanelLeftClose, PanelLeftOpen, Moon, Sun, BookOpen
 } from "lucide-react";
 import { SEILogo } from "./SEILogo";
 
@@ -46,7 +46,9 @@ const pageTitles: Record<string, string> = {
   "/app/miembros": "Miembros",
   "/app/eventos": "Eventos",
   "/app/tareas": "Tareas",
-  "/app/aula": "Aula de Formacion",
+   "/app/aula": "Aula de Formacion",
+   "/app/aula/curso/:idCurso": "Detalle del Curso",
+   "/app/aula/curso/:idCurso/servidor/:idUsuario": "Progreso Individual",
   "/app/evaluaciones": "Evaluaciones",
   "/app/notificaciones": "Notificaciones",
   "/app/perfil": "Mi Perfil",
@@ -83,6 +85,7 @@ function getNavItemsForRole(role: string, iglesiaActual?: { id: number; nombre: 
         { label: "Dashboard", path: "/app", icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
         { label: "Mi Ministerio", path: "/app/mi-departamento", icon: <FolderHeart className="w-5 h-5" />, section: "Ministerio" },
         { label: "Miembros", path: "/app/miembros", icon: <Users className="w-5 h-5" />, section: "Ministerio" },
+        { label: "Aula de Formación", path: "/app/aula", icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
         { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: "/app/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
         { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
@@ -92,6 +95,7 @@ function getNavItemsForRole(role: string, iglesiaActual?: { id: number; nombre: 
       return [
         { label: "Dashboard", path: "/app", icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
         { label: "Mi Ministerio", path: "/app/mi-departamento", icon: <FolderHeart className="w-5 h-5" />, section: "Ministerio" },
+        { label: "Aula de Formación", path: "/app/aula", icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
         { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Mis Tareas", path: "/app/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
         { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },

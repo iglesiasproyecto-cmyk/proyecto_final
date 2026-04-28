@@ -7,7 +7,7 @@ import { useMinisterios, useMiembrosMinisterio } from "@/hooks/useMinisterios";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useTareas } from "@/hooks/useEventos";
 import { useCursos } from "@/hooks/useCursos";
-import { useEvaluaciones } from "@/hooks/useCursos";
+// import { useEvaluaciones } from "@/hooks/useEvaluaciones"; // TODO: Implementar cuando se complete el servicio
 import { useNotificaciones } from "@/hooks/useNotificaciones";
 import { usePaises, useDepartamentos, useCiudades } from "@/hooks/useGeografia";
 import { CARD_COLORS } from "@/app/constants/cardColors";
@@ -483,6 +483,7 @@ function LiderDashboard() {
   const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(ministerios[0]?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: tareas = [] } = useTareas();
+  const { data: cursos } = useCursos(ministerios[0]?.idMinisterio ?? 0);
 
   if (!usuarioActual) return null;
 
@@ -517,7 +518,7 @@ function LiderDashboard() {
         <StatCard index={0} icon={<Users className="w-5 h-5" />} value={minMembers.length} label="Miembros" onClick={() => navigate("/app/miembros")} />
         <StatCard index={1} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
         <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
-        <StatCard index={3} icon={<Activity className="w-5 h-5" />} value={minMembers.filter(m => m.estado === "activo").length} label="Miembros activos" />
+        <StatCard index={3} icon={<BookOpen className="w-5 h-5" />} value={cursos?.filter(c => c.estado === 'activo').length || 0} label="Cursos activos" onClick={() => navigate("/app/aula")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -550,9 +551,9 @@ function LiderDashboard() {
         </AnimatedCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AnimatedCard index={7} className="p-4">
-          <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Proximos Eventos" action={() => navigate("/app/eventos")} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <AnimatedCard index={7} className="p-4 lg:col-span-1">
+          <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Próximos Eventos" action={() => navigate("/app/eventos")} />
           <div className="grid grid-cols-1 gap-2">
             {upcomingEvents.map((ev) => (
               <div key={ev.idEvento} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-[#4682b4]/5 to-transparent border border-[#4682b4]/10 hover:border-[#4682b4]/20 transition-colors shadow-sm">
@@ -570,7 +571,38 @@ function LiderDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={8} className="p-4">
+        <AnimatedCard index={8} className="p-4 lg:col-span-1">
+          <SectionHeader icon={<BookOpen className="w-5 h-5" />} title="Formación" action={() => navigate("/app/aula")} />
+          <div className="space-y-3">
+            {cursos && cursos.length > 0 ? (
+              <div className="space-y-2">
+                {cursos.slice(0, 3).map((curso: any) => (
+
+                  <div key={curso.id_aula_curso} className="p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/10">
+
+                    <p className="text-sm font-medium truncate">{curso.titulo}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <Badge variant={curso.estado === 'activo' ? 'default' : 'secondary'} className="text-xs">
+                        {curso.estado}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {curso.modulos?.[0]?.count || 0} módulos
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl">
+                <BookOpen className="w-8 h-8 mx-auto mb-2 text-primary" />
+                <p className="text-sm font-medium">Cursos de formación</p>
+                <p className="text-xs text-muted-foreground mt-1">Gestiona la formación de tu ministerio</p>
+              </div>
+            )}
+          </div>
+        </AnimatedCard>
+
+        <AnimatedCard index={9} className="p-4 lg:col-span-1">
           <SectionHeader icon={<Users className="w-5 h-5" />} title="Equipo" action={() => navigate("/app/miembros")} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {minMembers.slice(0, 5).map((mm) => (
@@ -597,7 +629,8 @@ function ServidorDashboard() {
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: tareas = [] } = useTareas();
   const { data: cursos = [] } = useCursos(ministerios[0]?.idMinisterio);
-  const { data: evaluaciones = [] } = useEvaluaciones(usuarioActual?.idUsuario);
+  // const { data: evaluaciones = [] } = useEvaluaciones(usuarioActual?.idUsuario); // TODO: Implementar
+  const evaluaciones = []; // Temporary fix until useEvaluaciones is implemented
 
   if (!usuarioActual) return null;
 
@@ -699,10 +732,10 @@ function ServidorDashboard() {
           <SectionHeader icon={<BookOpen className="w-5 h-5" />} title="Aula de Formacion" action={() => navigate("/app/aula")} actionLabel="Ir al aula" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {cursos.slice(0, 3).map((c, idx) => (
-              <div key={c.idCurso} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm cursor-pointer transition-all hover:-translate-y-0.5" onClick={() => navigate("/app/aula")}>
+              <div key={c.id_aula_curso} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm cursor-pointer transition-all hover:-translate-y-0.5" onClick={() => navigate("/app/aula")}>
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white font-bold shadow-inner group-hover:scale-110 transition-transform">{idx + 1}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{c.nombre}</p>
+                  <p className="text-[13px] font-semibold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{c.titulo}</p>
                   <p className="text-[10px] font-medium text-muted-foreground truncate">{c.modulos?.length || 0} modulos</p>
                 </div>
               </div>

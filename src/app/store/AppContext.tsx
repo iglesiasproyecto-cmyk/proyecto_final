@@ -5,6 +5,7 @@ import type { Usuario } from '@/types/app.types'
 
 interface AppState {
   session: Session | null
+  user: any // Supabase user object
   usuarioActual: Usuario | null
   isAuthenticated: boolean
   authLoading: boolean
@@ -424,6 +425,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         session,
+        user: session?.user || null,
         usuarioActual,
         isAuthenticated: !!session || isMockMode,
         authLoading,
@@ -447,6 +449,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AppContext.Provider>
   )
+}
+
+export function useAuth() {
+  const ctx = useContext(AppContext)
+  if (!ctx) throw new Error('useAuth must be used within AppProvider')
+  return { user: ctx.user }
 }
 
 export function useApp() {
