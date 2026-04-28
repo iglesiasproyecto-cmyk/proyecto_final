@@ -212,18 +212,18 @@ export function UsuariosPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <Users className="w-6 h-6 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Directorio</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground">Gestión de Usuarios</h1>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-0.5">Directorio</p>
+            <h1 className="text-3xl font-light tracking-tight text-foreground leading-tight">Gestión de Usuarios</h1>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-1 border-t border-border/30">
+        <div className="flex flex-col sm:flex-row gap-3 border-t border-border/30 md:border-t-0 pt-3 md:pt-0">
           <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
             <Input placeholder="Buscar por nombre o correo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" />

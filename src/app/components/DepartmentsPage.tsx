@@ -279,7 +279,7 @@ export function DepartmentsPage() {
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Ministerios</h1>
-            <p className="text-muted-foreground text-xs sm:text-sm mt-1">Gestiona la estructura organizativa de la iglesia</p>
+            <p className="text-foreground font-bold text-xs sm:text-sm mt-1">Gestiona la estructura organizativa de la iglesia</p>
           </div>
         </div>
 

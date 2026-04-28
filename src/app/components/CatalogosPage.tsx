@@ -62,7 +62,7 @@ export function CatalogosPage() {
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Configuraciones</p>
             <h1 className="text-3xl md:text-4xl font-light tracking-tight text-foreground">Catálogos del Sistema</h1>
-            <p className="text-muted-foreground text-[13px] font-medium mt-1">Gestiona los catálogos y tablas de referencia de la plataforma</p>
+            <p className="text-muted-foreground text-[13px] font-bold mt-1">Gestiona los catálogos y tablas de referencia de la plataforma</p>
           </div>
         </div>
       </div>

@@ -311,7 +311,7 @@ export function EventsPage() {
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
               Eventos
             </h1>
-            <p className="text-muted-foreground text-xs sm:text-sm mt-1">Agenda y gestiona los eventos de la iglesia</p>
+            <p className="text-foreground font-bold text-xs sm:text-sm mt-1">Agenda y gestiona los eventos de la iglesia</p>
           </div>
         </div>
         {canManageEvents && (

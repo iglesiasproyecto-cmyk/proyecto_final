@@ -654,7 +654,7 @@ function ServidorDashboard() {
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Servidor &mdash; {min?.nombre}</p>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">{usuarioActual.nombres}</h1>
           </div>
         </div>
       </motion.div>

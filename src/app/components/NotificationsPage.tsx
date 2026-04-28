@@ -136,7 +136,7 @@ export function NotificationsPage() {
               <Inbox className="w-10 h-10 text-[#4682b4]/50" />
             </div>
             <h3 className="text-lg font-bold text-foreground/90 tracking-tight mb-2">Bandeja Vacía</h3>
-            <p className="text-[13px] font-medium text-muted-foreground">
+            <p className="text-[13px] font-bold text-muted-foreground">
               {activeTab === "no_leidas" ? "Has leído todas tus notificaciones" : "No tienes notificaciones en esta categoría"}
             </p>
           </div>

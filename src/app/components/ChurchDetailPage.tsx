@@ -148,10 +148,9 @@ export function ChurchDetailPage() {
                 </Badge>
                 {canEditIglesia && (
                   <Button
-                    variant="outline"
                     size="sm"
                     onClick={openEditDialog}
-                    className="h-7 px-3 text-xs border-[#4682b4]/30 text-[#4682b4] hover:bg-[#4682b4]/10"
+                    className="h-7 px-3 text-xs bg-[#4682b4] text-white hover:bg-[#4682b4]/90 shadow-md shadow-blue-900/20"
                   >
                     ✏️ Editar Iglesia
                   </Button>

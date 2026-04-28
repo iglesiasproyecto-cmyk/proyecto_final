@@ -1,4 +1,4 @@
-import logoImage from "../../assets/sei_logo_official.png";
+import logoImage from "../../assets/sei_logo_improved.png";
 
 interface SEILogoProps {
   className?: string;

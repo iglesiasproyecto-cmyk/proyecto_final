@@ -132,7 +132,7 @@ export function MembersPage() {
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
               Miembros
             </h1>
-            <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+            <p className="text-foreground font-normal text-xs sm:text-sm mt-1">
               Gestiona los miembros de los ministerios y sus roles
             </p>
           </div>

@@ -36,7 +36,7 @@ BEGIN
       ('super@test.dev',    'Super',    'Admin Demo',   '+57 300 000 0001'),
       ('admin@test.dev',    'Admin',    'Iglesia Demo', '+57 300 000 0002'),
       ('lider@test.dev',    'Lider',    'Demo',         '+57 300 000 0003'),
-      ('servidor@test.dev', 'Servidor', 'Demo',         '+57 300 000 0004')
+      ('servidor@test.dev', 'Servidor', 'Iglesia',      '+57 300 000 0004')
     ) t(correo, nombres, apellidos, telefono)
   LOOP
     SELECT id INTO v_id FROM auth.users WHERE email = rec.correo;
