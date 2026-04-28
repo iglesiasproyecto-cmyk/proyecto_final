@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { TipoEvento, Evento, Tarea, TareaAsignada } from '@/types/app.types'
+import type { TipoEvento, Evento, Tarea, TareaAsignada, TareaEvidencia } from '@/types/app.types'
 import type { Database } from '@/types/database.types'
 import { sendEmail } from './email.service'
 
@@ -7,6 +7,7 @@ type TipoEventoRow = Database['public']['Tables']['tipo_evento']['Row']
 type EventoRow = Database['public']['Tables']['evento']['Row']
 type TareaRow = Database['public']['Tables']['tarea']['Row']
 type TareaAsignadaRow = Database['public']['Tables']['tarea_asignada']['Row']
+type TareaEvidenciaRow = Database['public']['Tables']['tarea_evidencia']['Row']
 
 function mapTipoEvento(r: TipoEventoRow): TipoEvento {
   return {
@@ -45,6 +46,7 @@ function mapTarea(r: TareaRow): Tarea {
     prioridad: r.prioridad as Tarea['prioridad'],
     idEvento: r.id_evento,
     idUsuarioCreador: r.id_usuario_creador,
+    idMinisterio: r.id_ministerio ?? undefined,
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
   }
@@ -58,6 +60,18 @@ function mapTareaAsignada(r: TareaAsignadaRow): TareaAsignada {
     fechaAsignacion: r.fecha_asignacion,
     fechaCompletado: r.fecha_completado,
     observaciones: r.observaciones,
+    creadoEn: r.creado_en,
+    actualizadoEn: r.updated_at,
+  }
+}
+
+function mapTareaEvidencia(r: TareaEvidenciaRow): TareaEvidencia {
+  return {
+    idTareaEvidencia: r.id_tarea_evidencia,
+    idTareaAsignada: r.id_tarea_asignada,
+    idUsuario: r.id_usuario,
+    objectPath: r.object_path,
+    nombreArchivo: r.nombre_archivo,
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
   }
@@ -172,6 +186,8 @@ export async function createTarea(
     fechaLimite: string | null
     prioridad: Tarea['prioridad']
     idUsuarioCreador: number
+    idMinisterio: number
+    idEvento?: number | null
   }
 ): Promise<Tarea> {
   console.log('[createTarea] Calling RPC with:', data)
@@ -181,6 +197,8 @@ export async function createTarea(
     p_fecha_limite: data.fechaLimite,
     p_prioridad: data.prioridad,
     p_id_usuario_creador: data.idUsuarioCreador,
+    p_id_ministerio: data.idMinisterio,
+    p_id_evento: data.idEvento ?? null,
   })
   console.log('[createTarea] RPC result:', result, 'error:', error)
   if (error) throw error
@@ -372,11 +390,11 @@ export async function createTareaAsignada(data: {
 
 export async function updateTareaAsignada(
   id: number,
-  data: { estado?: string; comentario?: string | null }
+  data: { observaciones?: string | null; fechaCompletado?: string | null }
 ): Promise<void> {
   const patch: any = {}
-  if (data.estado !== undefined) patch.estado = data.estado
-  if (data.comentario !== undefined) patch.comentario = data.comentario
+  if (data.observaciones !== undefined) patch.observaciones = data.observaciones
+  if (data.fechaCompletado !== undefined) patch.fecha_completado = data.fechaCompletado
   const { error } = await supabase
     .from('tarea_asignada')
     .update(patch)
@@ -387,4 +405,64 @@ export async function updateTareaAsignada(
 export async function deleteTareaAsignada(id: number): Promise<void> {
   const { error } = await supabase.from('tarea_asignada').delete().eq('id_tarea_asignada', id)
   if (error) throw error
+}
+
+// â”€â”€ TareaEvidencia CRUD â”€â”€
+
+export interface TareaEvidenciaEnriquecida extends TareaEvidencia {
+  nombreCompleto?: string
+}
+
+export async function getTareaEvidencias(idTarea: number): Promise<TareaEvidenciaEnriquecida[]> {
+  const { data, error } = await supabase
+    .from('tarea_evidencia')
+    .select('*, usuario(nombres, apellidos), tarea_asignada(id_tarea)')
+    .eq('tarea_asignada.id_tarea', idTarea)
+    .order('creado_en', { ascending: false })
+  if (error) throw error
+  return (data as any[]).map((row) => ({
+    ...mapTareaEvidencia(row as any),
+    nombreCompleto: `${row.usuario?.nombres ?? ''} ${row.usuario?.apellidos ?? ''}`.trim(),
+  }))
+}
+
+export async function createTareaEvidencia(data: {
+  idTareaAsignada: number
+  idUsuario: number
+  file: File
+}): Promise<TareaEvidencia> {
+  const safeName = data.file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const objectPath = `tareas/${data.idTareaAsignada}/${data.idUsuario}/${Date.now()}_${safeName}`
+
+  const { data: row, error: insertError } = await supabase
+    .from('tarea_evidencia')
+    .insert({
+      id_tarea_asignada: data.idTareaAsignada,
+      id_usuario: data.idUsuario,
+      object_path: objectPath,
+      nombre_archivo: safeName,
+    })
+    .select()
+    .single()
+
+  if (insertError) throw insertError
+
+  const { error: uploadError } = await supabase.storage
+    .from('tarea-evidencias')
+    .upload(objectPath, data.file, { upsert: false })
+
+  if (uploadError) {
+    await supabase.from('tarea_evidencia').delete().eq('id_tarea_evidencia', row.id_tarea_evidencia)
+    throw uploadError
+  }
+
+  return mapTareaEvidencia(row)
+}
+
+export async function getTareaEvidenciaSignedUrl(objectPath: string, expiresInSeconds = 600): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from('tarea-evidencias')
+    .createSignedUrl(objectPath, expiresInSeconds)
+  if (error) throw error
+  return data.signedUrl
 }

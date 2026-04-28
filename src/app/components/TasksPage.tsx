@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
-import { useTareasEnriquecidas, useCreateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada } from "@/hooks/useEventos";
+import { useState, useMemo, useEffect } from "react";
+import { useTareasEnriquecidas, useCreateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia } from "@/hooks/useEventos";
 import { useUsuarios } from "@/hooks/useUsuarios";
+import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
+import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service";
 import { useApp } from "../store/AppContext";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -11,12 +13,13 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar,
-  ChevronRight, Inbox, Trash2, UserPlus, X,
+  ChevronRight, Inbox, Trash2, UserPlus, X, Paperclip,
 } from "lucide-react";
 
 const statusConfig = {
   pendiente:   { label: "Pendiente",   color: "bg-amber-500/10 text-amber-400 border-amber-500/20",   dot: "bg-amber-400",   icon: <AlertCircle className="w-3.5 h-3.5" /> },
   en_progreso: { label: "En Progreso", color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",      dot: "bg-[#4682b4]",    icon: <Clock className="w-3.5 h-3.5" /> },
+  en_revision: { label: "En Revision", color: "bg-violet-500/10 text-violet-400 border-violet-500/20",      dot: "bg-violet-400",    icon: <Clock className="w-3.5 h-3.5" /> },
   completada:  { label: "Completada",  color: "bg-primary/10 text-primary border-primary/20",         dot: "bg-primary",     icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
   cancelada:   { label: "Cancelada",   color: "bg-rose-500/10 text-rose-400 border-rose-500/20",      dot: "bg-rose-400",    icon: <AlertCircle className="w-3.5 h-3.5" /> },
 };
@@ -33,27 +36,35 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function TasksPage() {
-  const { usuarioActual, session } = useApp();
+  const { usuarioActual, rolActual } = useApp();
   const { data: tareas = [], isLoading } = useTareasEnriquecidas();
   const createTareaMutation = useCreateTarea();
   const updateEstadoMutation = useUpdateTareaEstado();
   const deleteTareaMutation = useDeleteTarea();
   const createAsignadaMutation = useCreateTareaAsignada();
   const deleteAsignadaMutation = useDeleteTareaAsignada();
+  const createEvidenciaMutation = useCreateTareaEvidencia();
   const { data: usuarios = [] } = useUsuarios();
+  const { data: ministerios = [] } = useMinisteriosEnriquecidos();
 
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState<number | null>(null);
   const [assignUserId, setAssignUserId] = useState(0);
   const [createForm, setCreateForm] = useState({
-    titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as "baja" | "media" | "alta" | "urgente",
+    titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as "baja" | "media" | "alta" | "urgente", idMinisterio: 0,
   });
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; titulo: string }>({ open: false, id: 0, titulo: "" });
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [evidenceUploading, setEvidenceUploading] = useState(false);
 
-  const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" });
+  const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: 0 });
+
+  useEffect(() => {
+    if (createForm.idMinisterio || ministerios.length !== 1) return;
+    setCreateForm(prev => ({ ...prev, idMinisterio: ministerios[0].idMinisterio }));
+  }, [createForm.idMinisterio, ministerios]);
 
   const handleDeleteTarea = (id: number, titulo: string) => {
     setDeleteConfirm({ open: true, id, titulo });
@@ -74,12 +85,16 @@ export function TasksPage() {
       toast.error("El título es obligatorio");
       return;
     }
+    if (!createForm.idMinisterio) {
+      toast.error("Selecciona un ministerio");
+      return;
+    }
     if (!usuarioActual) {
       toast.error("Debes iniciar sesión para crear tareas");
       return;
     }
     createTareaMutation.mutate(
-      { titulo: createForm.titulo.trim(), descripcion: createForm.descripcion.trim() || null, fechaLimite: createForm.fechaLimite || null, prioridad: createForm.prioridad, idUsuarioCreador: usuarioActual.idUsuario },
+      { titulo: createForm.titulo.trim(), descripcion: createForm.descripcion.trim() || null, fechaLimite: createForm.fechaLimite || null, prioridad: createForm.prioridad, idUsuarioCreador: usuarioActual.idUsuario, idMinisterio: createForm.idMinisterio },
       {
         onSuccess: (tareaCreada) => {
           toast.success(`Tarea "${tareaCreada.titulo}" creada exitosamente`);
@@ -100,6 +115,37 @@ export function TasksPage() {
             toast.error("Error al crear tarea: " + msg);
           }
         }
+      }
+    );
+  };
+
+  const handleOpenEvidence = async (objectPath: string) => {
+    try {
+      const url = await getTareaEvidenciaSignedUrl(objectPath);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err: any) {
+      console.error('[TasksPage] Error opening evidence:', err);
+      toast.error("No se pudo abrir la evidencia.");
+    }
+  };
+
+  const handleUploadEvidence = (file: File) => {
+    if (!usuarioActual || !myAssignment) {
+      toast.error("No tienes una asignacion valida para subir evidencia.");
+      return;
+    }
+    setEvidenceUploading(true);
+    createEvidenciaMutation.mutate(
+      { idTareaAsignada: myAssignment.idTareaAsignada, idUsuario: usuarioActual.idUsuario, file },
+      {
+        onSuccess: () => {
+          toast.success("Evidencia subida.");
+        },
+        onError: (error: any) => {
+          console.error('[TasksPage] Error uploading evidence:', error);
+          toast.error("Error al subir evidencia.");
+        },
+        onSettled: () => setEvidenceUploading(false),
       }
     );
   };
@@ -138,15 +184,32 @@ export function TasksPage() {
   );
 
   const task = selectedTask ? tareas.find(t => t.idTarea === selectedTask) : null;
-  const nextStatus = (current: string): "en_progreso" | "completada" | null => {
-    if (current === "pendiente") return "en_progreso";
-    if (current === "en_progreso") return "completada";
+  const isLider = rolActual === "lider";
+  const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin";
+  const canManageTasks = isLider || isAdmin;
+  const myAssignment = task?.asignados?.find(a => a.idUsuario === usuarioActual?.idUsuario) ?? null;
+  const canActAsServidor = rolActual === "servidor" && !!myAssignment;
+
+  const { data: evidencias = [] } = useTareaEvidencias(task?.idTarea);
+
+  const getActionForServer = (estado: string) => {
+    if (estado === "pendiente") return { label: "Iniciar", next: "en_progreso" as const };
+    if (estado === "en_progreso") return { label: "Enviar a revision", next: "en_revision" as const };
     return null;
   };
 
+  const getActionForLeader = (estado: string) => {
+    if (estado === "en_revision") {
+      return {
+        approve: { label: "Aprobar", next: "completada" as const },
+        rework: { label: "Reabrir", next: "en_progreso" as const },
+      };
+    }
+    return null;
+  };
 
   const tasksByStatus = (status: string) => filteredAndSortedTareas.filter(t => t.estado === status);
-  const COLS = ["pendiente", "en_progreso", "completada"] as const;
+  const COLS = ["pendiente", "en_progreso", "en_revision", "completada"] as const;
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
@@ -170,9 +233,11 @@ export function TasksPage() {
             <p className="text-muted-foreground text-xs sm:text-sm mt-1">Gestión de tareas operativas del ministerio</p>
           </div>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all">
-          <Plus className="w-4 h-4 mr-1.5" /> Nueva Tarea
-        </Button>
+        {canManageTasks && (
+          <Button onClick={() => setShowCreate(true)} className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all">
+            <Plus className="w-4 h-4 mr-1.5" /> Nueva Tarea
+          </Button>
+        )}
       </motion.div>
 
       {/* ── Stats row ── */}
@@ -180,7 +245,13 @@ export function TasksPage() {
         {COLS.map((s, idx) => {
           const cfg = statusConfig[s];
           const count = tasksByStatus(s).length;
-          const gradient = s === "pendiente" ? "from-amber-500 to-orange-600" : s === "en_progreso" ? "from-[#709dbd] to-[#4682b4]" : "from-emerald-500 to-teal-600";
+          const gradient = s === "pendiente"
+            ? "from-amber-500 to-orange-600"
+            : s === "en_progreso"
+              ? "from-[#709dbd] to-[#4682b4]"
+              : s === "en_revision"
+                ? "from-violet-500 to-purple-600"
+                : "from-emerald-500 to-teal-600";
           return (
             <AnimatedCard key={s} index={idx} className="p-4 group">
               <div className="flex justify-between items-start mb-3">
@@ -264,8 +335,8 @@ export function TasksPage() {
               <div className="space-y-3 bg-white/5 dark:bg-black/20 backdrop-blur-xl rounded-b-3xl border border-white/5 border-t-0 p-3 min-h-[400px]">
                 <AnimatePresence>
                   {statusTasks.map((t, tIdx) => {
-                    const next = nextStatus(t.estado);
                     const prio = prioridadConfig[t.prioridad] ?? prioridadConfig.media;
+                    const canServerAct = rolActual === "servidor" && !!t.asignados?.some(a => a.idUsuario === usuarioActual?.idUsuario);
                     return (
                       <AnimatedCard
                         key={t.idTarea}
@@ -309,21 +380,27 @@ export function TasksPage() {
                             </div>
 
                             <div className="flex items-center gap-1">
-                              <button
-                                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                                onClick={e => { e.stopPropagation(); handleDeleteTarea(t.idTarea, t.titulo); }}
-                                disabled={deleteTareaMutation.isPending}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                              {next && (
+                              {canManageTasks && (
                                 <button
-                                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
-                                  onClick={e => { e.stopPropagation(); updateEstadoMutation.mutate({ id: t.idTarea, estado: next }); }}
+                                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                  onClick={e => { e.stopPropagation(); handleDeleteTarea(t.idTarea, t.titulo); }}
+                                  disabled={deleteTareaMutation.isPending}
                                 >
-                                  <ChevronRight className="w-4 h-4" />
+                                  <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               )}
+                              {(() => {
+                                const action = canServerAct ? getActionForServer(t.estado) : null;
+                                if (!action) return null;
+                                return (
+                                  <button
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
+                                    onClick={e => { e.stopPropagation(); updateEstadoMutation.mutate({ id: t.idTarea, estado: action.next }); }}
+                                  >
+                                    <ChevronRight className="w-4 h-4" />
+                                  </button>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>
@@ -409,13 +486,15 @@ export function TasksPage() {
                             {(a.nombreCompleto || "?").charAt(0).toUpperCase()}
                           </div>
                           <span className="text-xs font-medium">{a.nombreCompleto}</span>
-                          <button
-                            className="text-muted-foreground/40 hover:text-rose-400 transition-colors ml-0.5"
-                            onClick={() => { if (confirm(`¿Remover a ${a.nombreCompleto}?`)) deleteAsignadaMutation.mutate(a.idTareaAsignada); }}
-                            disabled={deleteAsignadaMutation.isPending}
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                          {canManageTasks && (
+                            <button
+                              className="text-muted-foreground/40 hover:text-rose-400 transition-colors ml-0.5"
+                              onClick={() => { if (confirm(`¿Remover a ${a.nombreCompleto}?`)) deleteAsignadaMutation.mutate(a.idTareaAsignada); }}
+                              disabled={deleteAsignadaMutation.isPending}
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -423,51 +502,125 @@ export function TasksPage() {
                 )}
 
                 {/* Assign user */}
-                <div className="pt-2 border-t border-border/40">
-                  <FieldLabel><span className="flex items-center gap-1.5"><UserPlus className="w-3 h-3" /> Asignar usuario</span></FieldLabel>
-                  <div className="flex gap-2">
-                    <select
-                      className="flex-1 h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-                      value={assignUserId}
-                      onChange={e => setAssignUserId(Number(e.target.value))}
-                    >
-                      <option value={0}>Seleccionar usuario...</option>
-                      {usuarios
-                        .filter(u => u.activo && !(task?.asignados || []).some(a => a.idUsuario === u.idUsuario))
-                        .map(u => <option key={u.idUsuario} value={u.idUsuario}>{u.nombres} {u.apellidos}</option>)
-                      }
-                    </select>
-                    <Button
-                      className="h-10 rounded-xl px-4"
-                      disabled={!assignUserId || createAsignadaMutation.isPending || !task}
-                      onClick={() => {
-                        if (!task || !assignUserId) return;
-                        createAsignadaMutation.mutate({ idTarea: task.idTarea, idUsuario: assignUserId }, { onSuccess: () => setAssignUserId(0) });
-                      }}
-                    >
-                      {createAsignadaMutation.isPending ? "..." : <UserPlus className="w-4 h-4" />}
-                    </Button>
+                {canManageTasks && (
+                  <div className="pt-2 border-t border-border/40">
+                    <FieldLabel><span className="flex items-center gap-1.5"><UserPlus className="w-3 h-3" /> Asignar usuario</span></FieldLabel>
+                    <div className="flex gap-2">
+                      <select
+                        className="flex-1 h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                        value={assignUserId}
+                        onChange={e => setAssignUserId(Number(e.target.value))}
+                      >
+                        <option value={0}>Seleccionar usuario...</option>
+                        {usuarios
+                          .filter(u => u.activo && !(task?.asignados || []).some(a => a.idUsuario === u.idUsuario))
+                          .map(u => <option key={u.idUsuario} value={u.idUsuario}>{u.nombres} {u.apellidos}</option>)
+                        }
+                      </select>
+                      <Button
+                        className="h-10 rounded-xl px-4"
+                        disabled={!assignUserId || createAsignadaMutation.isPending || !task}
+                        onClick={() => {
+                          if (!task || !assignUserId) return;
+                          createAsignadaMutation.mutate({ idTarea: task.idTarea, idUsuario: assignUserId }, { onSuccess: () => setAssignUserId(0) });
+                        }}
+                      >
+                        {createAsignadaMutation.isPending ? "..." : <UserPlus className="w-4 h-4" />}
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Evidencias */}
+                {(evidencias.length > 0 || canActAsServidor) && (
+                  <div className="pt-2 border-t border-border/40">
+                    <FieldLabel><span className="flex items-center gap-1.5"><Paperclip className="w-3 h-3" /> Evidencias</span></FieldLabel>
+                    {evidencias.length > 0 && (
+                      <div className="space-y-2">
+                        {evidencias.map(ev => (
+                          <div key={ev.idTareaEvidencia} className="flex items-center justify-between gap-3 bg-background/40 border border-white/10 rounded-xl px-3 py-2">
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold truncate">{ev.nombreArchivo}</p>
+                              {ev.nombreCompleto && (
+                                <p className="text-[10px] text-muted-foreground truncate">{ev.nombreCompleto}</p>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              className="h-8 px-3 rounded-lg"
+                              onClick={() => handleOpenEvidence(ev.objectPath)}
+                            >
+                              Ver
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {canActAsServidor && (
+                      <div className="mt-3">
+                        <input
+                          type="file"
+                          className="w-full text-xs text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-[#4682b4]/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#4682b4] hover:file:bg-[#4682b4]/20"
+                          disabled={evidenceUploading}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleUploadEvidence(file);
+                            e.currentTarget.value = "";
+                          }}
+                        />
+                        {evidenceUploading && (
+                          <p className="text-[10px] text-muted-foreground mt-1">Subiendo evidencia...</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <DialogFooter className="border-t border-border/50 pt-4 gap-2">
-                <button
-                  className="mr-auto h-9 px-3 rounded-xl flex items-center gap-1.5 text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
-                  disabled={deleteTareaMutation.isPending}
-                  onClick={() => { handleDeleteTarea(task.idTarea, task.titulo); setSelectedTask(null); }}
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Eliminar
-                </button>
-                <Button variant="ghost" className="rounded-xl" onClick={() => setSelectedTask(null)}>Cerrar</Button>
-                {nextStatus(task.estado) && (
-                  <Button
-                    className="rounded-xl"
-                    onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: nextStatus(task.estado)! }); setSelectedTask(null); }}
+                {canManageTasks && (
+                  <button
+                    className="mr-auto h-9 px-3 rounded-xl flex items-center gap-1.5 text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
+                    disabled={deleteTareaMutation.isPending}
+                    onClick={() => { handleDeleteTarea(task.idTarea, task.titulo); setSelectedTask(null); }}
                   >
-                    → {statusConfig[nextStatus(task.estado)!].label}
-                  </Button>
+                    <Trash2 className="w-3.5 h-3.5" /> Eliminar
+                  </button>
                 )}
+                <Button variant="ghost" className="rounded-xl" onClick={() => setSelectedTask(null)}>Cerrar</Button>
+                {(() => {
+                  const serverAction = canActAsServidor ? getActionForServer(task.estado) : null;
+                  if (!serverAction) return null;
+                  return (
+                    <Button
+                      className="rounded-xl"
+                      onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: serverAction.next }); setSelectedTask(null); }}
+                    >
+                      {serverAction.label}
+                    </Button>
+                  );
+                })()}
+                {(() => {
+                  const leaderAction = canManageTasks ? getActionForLeader(task.estado) : null;
+                  if (!leaderAction) return null;
+                  return (
+                    <>
+                      <Button
+                        variant="ghost"
+                        className="rounded-xl"
+                        onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.rework.next }); setSelectedTask(null); }}
+                      >
+                        {leaderAction.rework.label}
+                      </Button>
+                      <Button
+                        className="rounded-xl"
+                        onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.approve.next }); setSelectedTask(null); }}
+                      >
+                        {leaderAction.approve.label}
+                      </Button>
+                    </>
+                  );
+                })()}
               </DialogFooter>
             </>
           )}
@@ -488,6 +641,19 @@ export function TasksPage() {
             <div>
               <FieldLabel>Título</FieldLabel>
               <Input value={createForm.titulo} onChange={e => setCreateForm(p => ({ ...p, titulo: e.target.value }))} placeholder="Ej. Preparar la reunión de líderes" className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+            </div>
+            <div>
+              <FieldLabel>Ministerio</FieldLabel>
+              <select
+                value={createForm.idMinisterio}
+                onChange={e => setCreateForm(p => ({ ...p, idMinisterio: Number(e.target.value) }))}
+                className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              >
+                <option value={0}>Seleccionar ministerio...</option>
+                {ministerios.map(m => (
+                  <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>
+                ))}
+              </select>
             </div>
             <div>
               <FieldLabel>Descripción <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span></FieldLabel>
