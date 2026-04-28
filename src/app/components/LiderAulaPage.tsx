@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/app/store/AppContext'
+import { getInternalUserId } from '@/lib/userHelpers'
+import { useMinisteriosIdsDeUsuario } from '@/hooks/useMinisterios'
 import { Button } from '@/app/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
@@ -12,6 +14,19 @@ import { DashboardLider } from './DashboardLiderActualizado'
 export function LiderAulaPage() {
   const { user } = useAuth()
   const [showCrearCurso, setShowCrearCurso] = useState(false)
+  const [internalUserId, setInternalUserId] = useState<number | null>(null)
+
+  useEffect(() => {
+    const getUserId = async () => {
+      if (user?.id) {
+        const id = await getInternalUserId(user.id)
+        setInternalUserId(id)
+      }
+    }
+    getUserId()
+  }, [user?.id])
+
+  const { data: ministeriosIds = [] } = useMinisteriosIdsDeUsuario(internalUserId || undefined)
 
   if (!user) return null
 
@@ -24,10 +39,12 @@ export function LiderAulaPage() {
             Gestiona cursos y sigue el progreso de tus servidores
           </p>
         </div>
-        <Button onClick={() => setShowCrearCurso(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Crear Curso
-        </Button>
+        {ministeriosIds.length > 0 && (
+          <Button onClick={() => setShowCrearCurso(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Crear Curso
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="dashboard" className="space-y-4">

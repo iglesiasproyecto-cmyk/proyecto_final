@@ -1,5 +1,6 @@
 import { useAuth } from '@/app/store/AppContext'
 import { supabase } from '@/lib/supabaseClient'
+import { getInternalUserId } from '@/lib/userHelpers'
 import { useQuery } from '@tanstack/react-query'
 import { useProgresoCurso } from '@/hooks/useProgreso'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
@@ -15,30 +16,34 @@ export function CursosServidorList() {
     queryFn: async () => {
       if (!user?.id) return []
 
-      // Obtener cursos a través de las inscripciones activas
+      // Obtener el id_usuario interno
+      const internalUserId = await getInternalUserId(user.id)
+      if (!internalUserId) return []
+
+      // Obtener cursos a través de las inscripciones activas en aula_inscripcion
       const { data, error } = await supabase
-        .from('detalle_proceso_curso')
+        .from('aula_inscripcion')
         .select(`
-          estado,
-          fecha_inscripcion,
-          proceso_asignado_curso:proceso_asignado_curso(
-            curso:curso(
-              id_curso,
-              nombre,
-              descripcion,
-              ministerio:ministerio(nombre)
-            )
+          activo,
+          inscrito_en,
+          aula_curso:aula_curso(
+            id_aula_curso,
+            titulo,
+            descripcion,
+            ministerio:ministerio(nombre)
           )
         `)
-        .eq('id_usuario', user.id)
-        .eq('estado', 'inscrito')
-        .eq('proceso_asignado_curso.estado', 'en_curso')
+        .eq('id_usuario', internalUserId)
+        .eq('activo', true)
 
       if (error) throw error
       return data?.map(item => ({
-        ...item.proceso_asignado_curso.curso,
-        estado_inscripcion: item.estado,
-        fecha_inscripcion: item.fecha_inscripcion,
+        id_curso: item.aula_curso?.id_aula_curso,
+        nombre: item.aula_curso?.titulo,
+        descripcion: item.aula_curso?.descripcion,
+        ministerio: item.aula_curso?.ministerio,
+        estado_inscripcion: item.activo ? 'inscrito' : 'inactivo',
+        fecha_inscripcion: item.inscrito_en,
       })) || []
     },
     enabled: !!user?.id,

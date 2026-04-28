@@ -44,19 +44,10 @@ export function AulaPage() {
         const isLiderMinisterio = ministerios.some(ministerio => ministerio.rol_en_ministerio === 'lider')
         console.log('AulaPage - Is lider ministerio:', isLiderMinisterio)
 
-        // También verificar la tabla usuario_rol como backup
-        const { data: rolData, error: rolError } = await supabase
-          .from('usuario_rol')
-          .select(`rol:rol(nombre)`)
-          .eq('id_usuario', internalUserId)
-          .eq('rol.nombre', 'Líder de Ministerio')
-          .is('fecha_fin', null)
 
-        const isLiderRol = (rolData && rolData.length > 0) || false
-        console.log('AulaPage - Is lider rol:', isLiderRol)
 
-        // Es líder si tiene cualquiera de las dos condiciones
-        const finalIsLider = isLiderMinisterio || isLiderRol
+        // Es líder si es líder en al menos un ministerio
+        const finalIsLider = isLiderMinisterio
         console.log('AulaPage - Final is lider:', finalIsLider)
 
         setIsLider(finalIsLider)

@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/app/store/AppContext'
-import { useMinisterios } from '@/hooks/useMinisterios'
+import { useMinisterios, useMinisteriosIdsDeUsuario } from '@/hooks/useMinisterios'
 import { Button } from '@/app/components/ui/button'
 import {
   Dialog,
@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/app/components/ui/checkbox'
 import { useForm } from 'react-hook-form'
 import { supabase } from '@/lib/supabaseClient'
+import { getInternalUserId } from '@/lib/userHelpers'
 import { toast } from 'sonner'
 
 interface CrearCursoDialogProps {
@@ -44,6 +45,27 @@ export function CrearCursoDialog({ open, onOpenChange }: CrearCursoDialogProps) 
   const { user } = useAuth()
   const { ministerios } = useMinisterios()
   const [loading, setLoading] = useState(false)
+  const [internalUserId, setInternalUserId] = useState<number | null>(null)
+  const [ministeriosFiltrados, setMinisteriosFiltrados] = useState<any[]>([])
+
+  useEffect(() => {
+    const getUserId = async () => {
+      if (user?.id) {
+        const id = await getInternalUserId(user.id)
+        setInternalUserId(id)
+      }
+    }
+    getUserId()
+  }, [user?.id])
+
+  const { data: ministeriosIds = [] } = useMinisteriosIdsDeUsuario(internalUserId || undefined)
+
+  useEffect(() => {
+    if (ministerios && ministeriosIds) {
+      const filtrados = ministerios.filter(m => ministeriosIds.includes(m.id_ministerio))
+      setMinisteriosFiltrados(filtrados)
+    }
+  }, [ministerios, ministeriosIds])
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -57,10 +79,10 @@ export function CrearCursoDialog({ open, onOpenChange }: CrearCursoDialogProps) 
 
   // Actualizar el valor por defecto del ministerio cuando se carguen
   React.useEffect(() => {
-    if (ministerios && ministerios.length > 0 && !form.getValues('id_ministerio')) {
-      form.setValue('id_ministerio', ministerios[0].id_ministerio)
+    if (ministeriosFiltrados && ministeriosFiltrados.length > 0 && !form.getValues('id_ministerio')) {
+      form.setValue('id_ministerio', ministeriosFiltrados[0].id_ministerio)
     }
-  }, [ministerios, form])
+  }, [ministeriosFiltrados, form])
 
   const onSubmit = async (data: FormData) => {
     if (!user?.id) return
@@ -149,7 +171,7 @@ export function CrearCursoDialog({ open, onOpenChange }: CrearCursoDialogProps) 
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {ministerios?.map((ministerio) => (
+                      {ministeriosFiltrados?.map((ministerio) => (
                         <SelectItem key={ministerio.id_ministerio} value={ministerio.id_ministerio.toString()}>
                           {ministerio.nombre}
                         </SelectItem>
