@@ -191,7 +191,7 @@ export interface Tarea {
   titulo: string
   descripcion: string | null
   fechaLimite: string | null
-  estado: 'pendiente' | 'en_progreso' | 'completada' | 'cancelada'
+  estado: 'pendiente' | 'en_progreso' | 'en_revision' | 'completada' | 'cancelada'
   prioridad: 'baja' | 'media' | 'alta' | 'urgente'
   idEvento: number | null
   idUsuarioCreador: number
@@ -208,6 +208,17 @@ export interface TareaAsignada {
   fechaAsignacion: string
   fechaCompletado: string | null
   observaciones: string | null
+  creadoEn: string
+  actualizadoEn: string
+  nombreCompleto?: string
+}
+
+export interface TareaEvidencia {
+  idTareaEvidencia: number
+  idTareaAsignada: number
+  idUsuario: number
+  objectPath: string
+  nombreArchivo: string
   creadoEn: string
   actualizadoEn: string
   nombreCompleto?: string

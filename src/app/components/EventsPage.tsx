@@ -99,7 +99,7 @@ function EventDialogFields({ form, setForm, tiposEvento }: { form: any; setForm:
 }
 
 export function EventsPage() {
-  const { iglesiaActual } = useApp();
+  const { iglesiaActual, rolActual } = useApp();
   const { data: eventos = [], isLoading } = useEventosEnriquecidos(iglesiaActual?.id);
   const { data: tiposEvento = [] } = useTiposEvento();
   const createEventoMutation = useCreateEvento();
@@ -112,6 +112,8 @@ export function EventsPage() {
 
   const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "" });
   const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "", estado: "programado" as string });
+
+  const canManageEvents = rolActual === "lider" || rolActual === "admin_iglesia" || rolActual === "super_admin";
 
   const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "" });
 
@@ -212,31 +214,35 @@ export function EventsPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-start justify-between gap-2 mb-2">
                       <h4 className="text-lg font-bold tracking-tight leading-snug group-hover:text-[#4682b4] transition-colors truncate pr-1 uppercase italic">{evento.nombre}</h4>
                       {/* Action buttons — appear on hover */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                        <button
-                          className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
-                          onClick={() => setSelectedEvent(evento)}
-                          title="Ver detalle"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
-                          onClick={() => openEditDialog(evento)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                          disabled={deleteEventoMutation.isPending}
-                          onClick={() => handleDeleteEvento(evento.idEvento, evento.nombre)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                          <button
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
+                            onClick={() => setSelectedEvent(evento)}
+                            title="Ver detalle"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {canManageEvents && (
+                            <>
+                              <button
+                                className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
+                                onClick={() => openEditDialog(evento)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                disabled={deleteEventoMutation.isPending}
+                                onClick={() => handleDeleteEvento(evento.idEvento, evento.nombre)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
                     </div>
 
                     {evento.descripcion && (
@@ -308,13 +314,15 @@ export function EventsPage() {
             <p className="text-muted-foreground text-xs sm:text-sm mt-1">Agenda y gestiona los eventos de la iglesia</p>
           </div>
         </div>
-        <Button
-          onClick={() => setShowCreate(true)}
-          disabled={!iglesiaActual}
-          className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all"
-        >
-          <Plus className="w-4 h-4 mr-1.5" /> Nuevo Evento
-        </Button>
+        {canManageEvents && (
+          <Button
+            onClick={() => setShowCreate(true)}
+            disabled={!iglesiaActual}
+            className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all"
+          >
+            <Plus className="w-4 h-4 mr-1.5" /> Nuevo Evento
+          </Button>
+        )}
       </motion.div>
 
       {/* ── Stats row ── */}

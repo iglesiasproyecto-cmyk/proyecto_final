@@ -843,6 +843,7 @@ export type Database = {
           estado: Database["public"]["Enums"]["estado_tarea"]
           fecha_limite: string | null
           id_evento: number | null
+          id_ministerio: number | null
           id_tarea: number
           id_usuario_creador: number
           prioridad: Database["public"]["Enums"]["prioridad_tarea"]
@@ -855,6 +856,7 @@ export type Database = {
           estado?: Database["public"]["Enums"]["estado_tarea"]
           fecha_limite?: string | null
           id_evento?: number | null
+          id_ministerio?: number | null
           id_tarea?: number
           id_usuario_creador: number
           prioridad?: Database["public"]["Enums"]["prioridad_tarea"]
@@ -867,6 +869,7 @@ export type Database = {
           estado?: Database["public"]["Enums"]["estado_tarea"]
           fecha_limite?: string | null
           id_evento?: number | null
+          id_ministerio?: number | null
           id_tarea?: number
           id_usuario_creador?: number
           prioridad?: Database["public"]["Enums"]["prioridad_tarea"]
@@ -880,6 +883,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "evento"
             referencedColumns: ["id_evento"]
+          },
+          {
+            foreignKeyName: "tarea_id_ministerio_fkey"
+            columns: ["id_ministerio"]
+            isOneToOne: false
+            referencedRelation: "ministerio"
+            referencedColumns: ["id_ministerio"]
           },
           {
             foreignKeyName: "tarea_id_usuario_creador_fkey"
@@ -931,6 +941,51 @@ export type Database = {
           },
           {
             foreignKeyName: "tarea_asignada_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      tarea_evidencia: {
+        Row: {
+          creado_en: string
+          id_tarea_asignada: number
+          id_tarea_evidencia: number
+          id_usuario: number
+          nombre_archivo: string
+          object_path: string
+          updated_at: string
+        }
+        Insert: {
+          creado_en?: string
+          id_tarea_asignada: number
+          id_tarea_evidencia?: number
+          id_usuario: number
+          nombre_archivo: string
+          object_path: string
+          updated_at?: string
+        }
+        Update: {
+          creado_en?: string
+          id_tarea_asignada?: number
+          id_tarea_evidencia?: number
+          id_usuario?: number
+          nombre_archivo?: string
+          object_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarea_evidencia_id_tarea_asignada_fkey"
+            columns: ["id_tarea_asignada"]
+            isOneToOne: false
+            referencedRelation: "tarea_asignada"
+            referencedColumns: ["id_tarea_asignada"]
+          },
+          {
+            foreignKeyName: "tarea_evidencia_id_usuario_fkey"
             columns: ["id_usuario"]
             isOneToOne: false
             referencedRelation: "usuario"
@@ -1622,6 +1677,8 @@ export type Database = {
           p_fecha_limite?: string | null
           p_prioridad?: string
           p_id_usuario_creador?: number | null
+          p_id_ministerio?: number | null
+          p_id_evento?: number | null
         }
         Returns: Database['public']['Tables']['tarea']['Row']
       }
@@ -1649,7 +1706,7 @@ export type Database = {
       estado_modulo: "borrador" | "publicado" | "archivado"
       estado_proceso: "programado" | "en_curso" | "finalizado" | "cancelado"
       estado_sede: "activa" | "inactiva" | "en_construccion"
-      estado_tarea: "pendiente" | "en_progreso" | "completada" | "cancelada"
+      estado_tarea: "pendiente" | "en_progreso" | "en_revision" | "completada" | "cancelada"
       prioridad_tarea: "baja" | "media" | "alta" | "urgente"
       tipo_notificacion: "informacion" | "alerta" | "tarea" | "evento" | "curso"
       tipo_recurso: "archivo" | "enlace"
@@ -1793,7 +1850,7 @@ export const Constants = {
       estado_modulo: ["borrador", "publicado", "archivado"],
       estado_proceso: ["programado", "en_curso", "finalizado", "cancelado"],
       estado_sede: ["activa", "inactiva", "en_construccion"],
-      estado_tarea: ["pendiente", "en_progreso", "completada", "cancelada"],
+      estado_tarea: ["pendiente", "en_progreso", "en_revision", "completada", "cancelada"],
       prioridad_tarea: ["baja", "media", "alta", "urgente"],
       tipo_notificacion: ["informacion", "alerta", "tarea", "evento", "curso"],
       tipo_recurso: ["archivo", "enlace"],

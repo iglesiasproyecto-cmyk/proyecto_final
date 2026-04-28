@@ -6,6 +6,7 @@ import {
   createEvento, createTarea, updateTareaEstado,
   updateEvento, deleteEvento, updateTarea, deleteTarea,
   createTareaAsignada, updateTareaAsignada, deleteTareaAsignada,
+  getTareaEvidencias, createTareaEvidencia,
 } from '@/services/eventos.service'
 import type { Tarea } from '@/types/app.types'
 
@@ -114,6 +115,15 @@ export function useTareasEnriquecidas(idEvento?: number) {
   })
 }
 
+export function useTareaEvidencias(idTarea?: number) {
+  return useQuery({
+    queryKey: ['tarea-evidencias', idTarea],
+    queryFn: () => getTareaEvidencias(idTarea as number),
+    enabled: !!idTarea,
+    staleTime: 60 * 1000,
+  })
+}
+
 // â”€â”€ Evento update/delete mutations â”€â”€
 
 export function useUpdateEvento() {
@@ -195,6 +205,17 @@ export function useDeleteTareaAsignada() {
     mutationFn: (id: number) => deleteTareaAsignada(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
+      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
+    },
+  })
+}
+
+export function useCreateTareaEvidencia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createTareaEvidencia,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tarea-evidencias'] })
       qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
     },
   })
