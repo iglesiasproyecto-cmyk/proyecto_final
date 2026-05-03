@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getTiposEvento, getEventos, getTareas, getTareasAsignadas,
   getEventosEnriquecidos, getTareasEnriquecidas,
@@ -7,6 +7,7 @@ import {
   updateEvento, deleteEvento, updateTarea, deleteTarea,
   createTareaAsignada, updateTareaAsignada, deleteTareaAsignada,
   getTareaEvidencias, createTareaEvidencia,
+  getEventosPorMinisterio,
 } from '@/services/eventos.service'
 import type { Tarea } from '@/types/app.types'
 
@@ -218,5 +219,14 @@ export function useCreateTareaEvidencia() {
       qc.invalidateQueries({ queryKey: ['tarea-evidencias'] })
       qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
     },
+  })
+}
+
+export function useEventosPorMinisterio(idMinisterio: number) {
+  return useQuery({
+    queryKey: ['eventos-ministerio', idMinisterio],
+    queryFn: () => getEventosPorMinisterio(idMinisterio),
+    enabled: idMinisterio > 0,
+    staleTime: 5 * 60 * 1000,
   })
 }

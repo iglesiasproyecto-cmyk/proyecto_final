@@ -5,92 +5,94 @@ import { supabase } from '@/lib/supabaseClient'
 export function useAccesoModulos(vars: {
   idUsuario: number | null | undefined
   idCurso: number | null | undefined
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabaseClient'
+
+// Hook para obtener el estado de acceso a módulos
+export function useAccesoModulos(vars: {
+  idUsuario: number | null | undefined
+  idCurso: number | null | undefined
 }) {
   return useQuery({
     queryKey: ['acceso-modulos', vars.idUsuario, vars.idCurso],
     queryFn: async () => {
       if (!vars.idUsuario || !vars.idCurso) return []
 
-      // Obtener configuración del curso
       const { data: curso, error: cursoError } = await supabase
-        .from('curso')
-        .select('desbloqueo_secuencial')
-        .eq('id_curso', vars.idCurso)
+        .from('aula_curso')
+        .select('orden_secuencial')
+        .eq('id_aula_curso', vars.idCurso)
         .single()
 
       if (cursoError) throw cursoError
 
-      // Obtener módulos ordenados
+      const { data: inscripcion } = await supabase
+        .from('aula_inscripcion')
+        .select('id_aula_inscripcion')
+        .eq('id_usuario', vars.idUsuario)
+        .eq('id_aula_curso', vars.idCurso)
+        .eq('activo', true)
+        .maybeSingle()
+
+      if (!inscripcion) return []
+
       const { data: modulos, error: modulosError } = await supabase
-        .from('modulo')
-        .select(`
-          id_modulo,
-          titulo,
-          orden,
-          estado,
-          actividad:actividad(count),
-          evaluacion_detalle:evaluacion_detalle(count)
-        `)
-        .eq('id_curso', vars.idCurso)
-        .eq('estado', 'publicado')
+        .from('aula_modulo')
+        .select('id_aula_modulo, titulo, orden, publicado')
+        .eq('id_aula_curso', vars.idCurso)
+        .eq('publicado', true)
         .order('orden', { ascending: true })
 
       if (modulosError) throw modulosError
+      if (!modulos || modulos.length === 0) return []
 
-      // Obtener proceso asignado
-      const { data: procesoAsignado } = await supabase
-        .from('detalle_proceso_curso')
-        .select('id_detalle_proceso_curso')
-        .eq('id_usuario', vars.idUsuario)
-        .eq('estado', 'inscrito')
-        .eq('proceso_asignado_curso.curso.id_curso', vars.idCurso)
-        .single()
+      const progresoCache = new Map<number, { completado: boolean; totalElementos: number }>()
 
-      if (!procesoAsignado) return []
+      const obtenerProgreso = async (idModulo: number) => {
+        if (progresoCache.has(idModulo)) return progresoCache.get(idModulo)!
 
-      const accesoModulos = await Promise.all(
-        modulos.map(async (modulo, index) => {
-          let estadoAcceso: 'bloqueado' | 'disponible' | 'completado' = 'bloqueado'
+        const progreso = await obtenerProgresoModulo(vars.idUsuario!, idModulo)
+        progresoCache.set(idModulo, progreso)
+        return progreso
+      }
 
-          if (!curso.desbloqueo_secuencial) {
-            // Si no es secuencial, todos están disponibles
-            estadoAcceso = 'disponible'
-          } else {
-            // Si es secuencial, verificar módulos anteriores
-            if (index === 0) {
-              // Primer módulo siempre disponible
-              estadoAcceso = 'disponible'
-            } else {
-              // Verificar si el módulo anterior está completado
-              const moduloAnterior = modulos[index - 1]
-              const completado = await verificarModuloCompletado(
-                procesoAsignado.id_detalle_proceso_curso,
-                moduloAnterior.id_modulo
-              )
-              estadoAcceso = completado ? 'disponible' : 'bloqueado'
-            }
-          }
+      const accesoModulos = [] as Array<{
+        idModulo: number
+        titulo: string
+        orden: number
+        estadoAcceso: 'bloqueado' | 'disponible' | 'completado'
+        totalElementos: number
+        completado: boolean
+      }>
 
-          // Verificar si este módulo está completado
-          const completado = await verificarModuloCompletado(
-            procesoAsignado.id_detalle_proceso_curso,
-            modulo.id_modulo
-          )
+      for (let index = 0; index < modulos.length; index += 1) {
+        const modulo = modulos[index]
+        let estadoAcceso: 'bloqueado' | 'disponible' | 'completado' = 'bloqueado'
 
-          if (completado) {
-            estadoAcceso = 'completado'
-          }
+        if (!curso.orden_secuencial) {
+          estadoAcceso = 'disponible'
+        } else if (index === 0) {
+          estadoAcceso = 'disponible'
+        } else {
+          const moduloAnterior = modulos[index - 1]
+          const progresoAnterior = await obtenerProgreso(moduloAnterior.id_aula_modulo)
+          estadoAcceso = progresoAnterior.completado ? 'disponible' : 'bloqueado'
+        }
 
-          return {
-            idModulo: modulo.id_modulo,
-            titulo: modulo.titulo,
-            orden: modulo.orden,
-            estadoAcceso,
-            totalElementos: (modulo.actividad?.[0]?.count || 0) + (modulo.evaluacion_detalle?.[0]?.count || 0),
-            completado
-          }
+        const progresoActual = await obtenerProgreso(modulo.id_aula_modulo)
+        if (progresoActual.completado) {
+          estadoAcceso = 'completado'
+        }
+
+        accesoModulos.push({
+          idModulo: modulo.id_aula_modulo,
+          titulo: modulo.titulo,
+          orden: modulo.orden,
+          estadoAcceso,
+          totalElementos: progresoActual.totalElementos,
+          completado: progresoActual.completado
         })
-      )
+      }
 
       return accesoModulos
     },
@@ -99,41 +101,47 @@ export function useAccesoModulos(vars: {
   })
 }
 
-// Función auxiliar para verificar si un módulo está completado
-async function verificarModuloCompletado(idDetalleProcesoCurso: number, idModulo: number): Promise<boolean> {
-  // Contar actividades del módulo
+async function obtenerProgresoModulo(idUsuario: number, idModulo: number) {
   const { data: actividades } = await supabase
-    .from('actividad')
-    .select('id_actividad')
-    .eq('id_modulo', idModulo)
+    .from('aula_actividad')
+    .select('id_aula_actividad')
+    .eq('id_aula_modulo', idModulo)
 
-  // Contar evaluaciones del módulo
   const { data: evaluaciones } = await supabase
-    .from('evaluacion_detalle')
-    .select('id_evaluacion_detalle')
-    .eq('id_modulo', idModulo)
+    .from('aula_evaluacion')
+    .select('id_aula_evaluacion')
+    .eq('id_aula_modulo', idModulo)
 
-  const totalElementos = (actividades?.length || 0) + (evaluaciones?.length || 0)
+  const actividadIds = actividades?.map(a => a.id_aula_actividad) || []
+  const evaluacionIds = evaluaciones?.map(e => e.id_aula_evaluacion) || []
+  const totalElementos = actividadIds.length + evaluacionIds.length
 
-  if (totalElementos === 0) return false
+  if (totalElementos === 0) {
+    return { completado: false, totalElementos }
+  }
 
-  // Contar actividades completadas
   const { data: actividadesCompletadas } = await supabase
-    .from('progreso_actividad')
-    .select('id_progreso')
-    .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
-    .in('id_actividad', actividades?.map(a => a.id_actividad) || [])
-    .not('completada_en', 'is', null)
+    .from('aula_progreso_actividad')
+    .select('id_aula_actividad')
+    .eq('id_usuario', idUsuario)
+    .in('id_aula_actividad', actividadIds)
+    .eq('completada', true)
 
-  // Contar evaluaciones aprobadas
   const { data: evaluacionesAprobadas } = await supabase
-    .from('intento_evaluacion')
-    .select('id_intento')
-    .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
-    .eq('id_modulo', idModulo)
-    .eq('estado', 'aprobado')
+    .from('aula_intento_evaluacion')
+    .select('id_aula_evaluacion')
+    .eq('id_usuario', idUsuario)
+    .in('id_aula_evaluacion', evaluacionIds)
+    .eq('aprobado', true)
 
-  const elementosCompletados = (actividadesCompletadas?.length || 0) + (evaluacionesAprobadas?.length || 0)
+  const evaluacionesUnicas = new Set(
+    evaluacionesAprobadas?.map(e => e.id_aula_evaluacion)
+  )
 
-  return elementosCompletados === totalElementos
+  const elementosCompletados = (actividadesCompletadas?.length || 0) + evaluacionesUnicas.size
+
+  return {
+    completado: elementosCompletados >= totalElementos,
+    totalElementos
+  }
 }

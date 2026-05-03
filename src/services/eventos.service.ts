@@ -466,3 +466,18 @@ export async function getTareaEvidenciaSignedUrl(objectPath: string, expiresInSe
   if (error) throw error
   return data.signedUrl
 }
+
+// ── Eventos por Ministerio (para vincular tareas) ──
+
+export async function getEventosPorMinisterio(idMinisterio: number): Promise<Evento[]> {
+  const { data, error } = await supabase
+    .from('evento')
+    .select('*')
+    .eq('id_ministerio', idMinisterio)
+    .neq('estado', 'cancelado')
+    .neq('estado', 'finalizado')
+    .order('fecha_inicio', { ascending: false })
+  if (error) throw error
+  return data.map(mapEvento)
+}
+
