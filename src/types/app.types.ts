@@ -127,6 +127,7 @@ export interface Usuario {
   correo: string
   contrasenaHash: string
   telefono: string | null
+  fechaNacimiento: string | null
   activo: boolean
   ultimoAcceso: string | null
   authUserId: string | null

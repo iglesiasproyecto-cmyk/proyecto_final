@@ -16,6 +16,8 @@ interface AppState {
   rolActual: string
   sidebarOpen: boolean
   notificacionesCount: number
+  decrementNotificacionesCount: () => void
+  resetNotificacionesCount: () => void
   darkMode: boolean
   toggleSidebar: () => void
   toggleDarkMode: () => void
@@ -292,6 +294,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             correo: data.correo,
             contrasenaHash: data.contrasena_hash,
             telefono: data.telefono,
+            fechaNacimiento: data.fecha_nacimiento,
             activo: data.activo,
             ultimoAcceso: data.ultimo_acceso,
             authUserId: data.auth_user_id ?? null,
@@ -407,6 +410,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         correo: 'mock@ejemplo.com',
         contrasenaHash: '',
         telefono: '12345678',
+        fechaNacimiento: null,
         activo: true,
         ultimoAcceso: new Date().toISOString(),
         authUserId: 'mock-id',
@@ -436,6 +440,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         rolActual,
         sidebarOpen,
         notificacionesCount,
+        decrementNotificacionesCount: () => setNotificacionesCount((p) => Math.max(0, p - 1)),
+        resetNotificacionesCount: () => setNotificacionesCount(0),
         darkMode,
         toggleSidebar: () => setSidebarOpen((p) => !p),
         toggleDarkMode: () => setDarkMode((p) => !p),

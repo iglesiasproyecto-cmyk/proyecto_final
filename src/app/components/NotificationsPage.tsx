@@ -5,8 +5,9 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { motion, AnimatePresence } from "motion/react";
-import { CalendarDays, ListTodo, Info, AlertTriangle, BookOpen, CheckCheck, Check, Inbox } from "lucide-react";
+import { CalendarDays, ListTodo, Info, AlertTriangle, BookOpen, CheckCheck, Check, Inbox, X } from "lucide-react";
 
 import { Bell } from "lucide-react";
 
@@ -22,6 +23,7 @@ export function NotificationsPage() {
   const { usuarioActual } = useApp();
   const { data: notificaciones = [], isLoading } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
   const [activeTab, setActiveTab] = useState("todas");
+  const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
   const markReadMutation = useMarkNotificacionRead();
   const markAllReadMutation = useMarkAllNotificacionesRead();
@@ -97,7 +99,10 @@ export function NotificationsPage() {
                   className={`group flex items-start gap-4 p-5 rounded-3xl backdrop-blur-2xl border transition-all duration-300 cursor-pointer hover:-translate-y-1 ${
                     !n.leida ? "bg-[#4682b4]/5 border-[#4682b4]/20 shadow-lg shadow-blue-900/5" : "bg-card/40 border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl"
                   }`}
-                  onClick={() => !n.leida && markReadMutation.mutate(n.idNotificacion)}
+                  onClick={() => {
+                    setSelectedNotification(n);
+                    if (!n.leida) markReadMutation.mutate(n.idNotificacion);
+                  }}
                 >
                   <div className={`w-12 h-12 rounded-2xl ${cfg.bg} flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform ${cfg.color}`}>
                     {cfg.icon}
@@ -106,7 +111,7 @@ export function NotificationsPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className={`text-[15px] tracking-tight ${!n.leida ? "font-bold text-foreground" : "font-semibold text-foreground/80 group-hover:text-[#4682b4] transition-colors"}`}>{n.titulo}</p>
-                        <p className={`text-[13px] mt-1 line-clamp-2 leading-relaxed ${!n.leida ? "font-medium text-foreground/90" : "text-muted-foreground"}`}>{n.mensaje}</p>
+                        <p className={`text-[13px] mt-1 leading-relaxed ${!n.leida ? "font-medium text-foreground/90" : "text-muted-foreground"}`}>{n.mensaje}</p>
                       </div>
                       {!n.leida && (
                         <div className="w-3 h-3 rounded-full bg-[#4682b4] shadow-[0_0_10px_rgba(70,130,180,0.5)] animate-pulse" />
@@ -142,6 +147,55 @@ export function NotificationsPage() {
           </div>
         </motion.div>
       )}
+
+      {/* Modal de detalle de notificación */}
+      <Dialog open={!!selectedNotification} onOpenChange={() => setSelectedNotification(null)}>
+        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogHeader>
+            <div className="flex items-start gap-3 mb-4">
+              {selectedNotification && (
+                <>
+                  <div className={`w-12 h-12 rounded-2xl ${typeConfig[selectedNotification.tipo]?.bg} flex items-center justify-center shrink-0 ${typeConfig[selectedNotification.tipo]?.color}`}>
+                    {typeConfig[selectedNotification.tipo]?.icon}
+                  </div>
+                  <div className="flex-1">
+                    <DialogTitle className="text-lg font-bold">{selectedNotification.titulo}</DialogTitle>
+                    <p className="text-xs text-muted-foreground mt-1">{formatDate(selectedNotification.creadoEn)}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </DialogHeader>
+          
+          {selectedNotification && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm leading-relaxed text-foreground/90 bg-background/40 rounded-xl p-4 border border-white/5">
+                  {selectedNotification.mensaje}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-3 pt-3 border-t border-white/10">
+                <Badge variant="outline" className={`${typeConfig[selectedNotification.tipo]?.bg} ${typeConfig[selectedNotification.tipo]?.color} border-0 text-[10px] uppercase tracking-widest font-bold px-3 py-1.5`}>
+                  {typeConfig[selectedNotification.tipo]?.label}
+                </Badge>
+                {selectedNotification.leida && (
+                  <span className="text-xs font-semibold text-[#4682b4] flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Leída
+                  </span>
+                )}
+              </div>
+
+              <Button 
+                onClick={() => setSelectedNotification(null)}
+                className="w-full rounded-xl h-10 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white font-semibold"
+              >
+                Cerrar
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

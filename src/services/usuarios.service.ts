@@ -24,6 +24,7 @@ function mapUsuario(r: UsuarioRow): Usuario {
     correo: r.correo,
     contrasenaHash: r.contrasena_hash,
     telefono: r.telefono,
+    fechaNacimiento: r.fecha_nacimiento,
     activo: r.activo,
     ultimoAcceso: r.ultimo_acceso,
     authUserId: r.auth_user_id,
@@ -126,12 +127,14 @@ export async function updateUsuario(
     nombres?: string
     apellidos?: string
     telefono?: string | null
+    fechaNacimiento?: string | null
   }
 ): Promise<Usuario> {
   const patch: Record<string, unknown> = {}
   if (data.nombres !== undefined) patch.nombres = data.nombres
   if (data.apellidos !== undefined) patch.apellidos = data.apellidos
   if (data.telefono !== undefined) patch.telefono = data.telefono
+  if (data.fechaNacimiento !== undefined) patch.fecha_nacimiento = data.fechaNacimiento
   const { data: result, error } = await supabase
     .from('usuario')
     .update(patch)

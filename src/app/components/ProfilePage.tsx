@@ -9,7 +9,7 @@ import { Input } from "./ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
+import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, CheckCircle2, Loader2, AlertTriangle, Calendar } from "lucide-react";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -33,6 +33,7 @@ export function ProfilePage() {
   const [nombres, setNombres] = useState(usuarioActual?.nombres ?? "");
   const [apellidos, setApellidos] = useState(usuarioActual?.apellidos ?? "");
   const [telefono, setTelefono] = useState(usuarioActual?.telefono ?? "");
+  const [fechaNacimiento, setFechaNacimiento] = useState(usuarioActual?.fechaNacimiento ?? "");
 
   // Password form state
   const [showPassword, setShowPassword] = useState(false);
@@ -48,7 +49,7 @@ export function ProfilePage() {
 
   const handleSaveProfile = () => {
     updateUsuarioMutation.mutate(
-      { id: usuarioActual.idUsuario, data: { nombres, apellidos, telefono: telefono || null } },
+      { id: usuarioActual.idUsuario, data: { nombres, apellidos, telefono: telefono || null, fechaNacimiento: fechaNacimiento || null } },
       {
         onSuccess: () => toast.success("Perfil actualizado correctamente"),
         onError: (err) => toast.error(`Error al guardar: ${err.message}`),
@@ -185,6 +186,16 @@ export function ProfilePage() {
                       <Phone className="w-4 h-4" /> Móvil de Contacto
                     </label>
                     <Input value={telefono} onChange={(e) => setTelefono(e.target.value)} className="bg-white/5 border-white/10 h-14 rounded-2xl text-[14px] px-5 focus-visible:ring-[#4682b4]/30 font-bold" placeholder="+502 5555-0000" />
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="text-[12px] font-black uppercase tracking-[0.2em] text-[#4682b4] px-1 flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-lg bg-[#4682b4]/10 flex items-center justify-center flex-shrink-0 border border-[#4682b4]/20">
+                        <Calendar className="w-6 h-6 text-[#4682b4]" />
+                      </div>
+                      <span>Fecha de Nacimiento</span>
+                    </label>
+                    <Input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)} className="bg-gradient-to-r from-white/10 to-white/5 border-2 border-white/20 hover:border-white/30 h-14 rounded-2xl text-[15px] px-5 focus-visible:ring-[#4682b4]/40 focus-visible:ring-2 focus-visible:border-[#4682b4] font-bold transition-all duration-300" />
                   </div>
 
                   <div className="pt-8 border-t border-white/10">
