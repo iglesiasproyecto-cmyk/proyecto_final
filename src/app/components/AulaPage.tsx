@@ -1,65 +1,12 @@
-import { useState, useEffect } from 'react'
 import { useAuth } from '@/app/store/AppContext'
 import { LiderAulaPage } from './LiderAulaPage'
 import { ServidorAulaPage } from './ServidorAulaPage'
-import { getInternalUserId, getUserMinisterios } from '@/lib/userHelpers'
 import { Alert, AlertDescription } from '@/app/components/ui/alert'
-import { Loader2, GraduationCap, Sparkles } from 'lucide-react'
+import { GraduationCap, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 
 export function AulaPage() {
-  const { user } = useAuth()
-  const [isLider, setIsLider] = useState<boolean | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const checkRole = async () => {
-      if (!user?.id) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        const internalUserId = await getInternalUserId(user.id)
-        if (!internalUserId) {
-          setIsLider(false)
-          setLoading(false)
-          return
-        }
-
-        const ministerios = await getUserMinisterios(internalUserId)
-        const isLiderMinisterio = ministerios.some(ministerio => ministerio.rol_en_ministerio === 'Líder de Ministerio')
-        setIsLider(isLiderMinisterio)
-      } catch (error) {
-        console.error('Error checking role:', error)
-        setIsLider(false)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    checkRole()
-  }, [user?.id])
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <motion.div
-          animate={{ 
-            scale: [1, 1.1, 1],
-            rotate: [0, 5, -5, 0]
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <GraduationCap className="h-12 w-12 text-primary" />
-        </motion.div>
-        <div className="flex items-center gap-2 text-muted-foreground font-medium animate-pulse">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Preparando tu aula...
-        </div>
-      </div>
-    )
-  }
+  const { user, rolActual } = useAuth()
 
   if (!user) {
     return (
@@ -112,13 +59,13 @@ export function AulaPage() {
         <div className="relative">
           <AnimatePresence mode="wait">
             <motion.div
-              key={isLider ? 'lider' : 'servidor'}
-              initial={{ opacity: 0, x: isLider ? 20 : -20 }}
+              key={rolActual === "lider" ? 'lider' : 'servidor'}
+              initial={{ opacity: 0, x: rolActual === "lider" ? 20 : -20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: isLider ? -20 : 20 }}
+              exit={{ opacity: 0, x: rolActual === "lider" ? -20 : 20 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
-              {isLider ? <LiderAulaPage /> : <ServidorAulaPage />}
+              {rolActual === "lider" ? <LiderAulaPage /> : <ServidorAulaPage />}
             </motion.div>
           </AnimatePresence>
         </div>

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
 import type { Usuario } from '@/types/app.types'
+import { checkUserSynchronization } from '@/lib/userHelpers'
 
 interface AppState {
   session: Session | null
@@ -225,6 +226,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   })
   const lastHandledTokenRef = useRef<string | null>(null)
 
+  // Development check for user synchronization issues
+  useEffect(() => {
+    if (!import.meta.env.PROD) {
+      checkUserSynchronization().then(result => {
+        if (result.authUsersWithoutUsuario.length > 0 || result.usuariosWithoutAuth.length > 0) {
+          console.error('[DEV] 🚨 USER SYNCHRONIZATION ISSUES DETECTED:')
+          if (result.authUsersWithoutUsuario.length > 0) {
+            console.error(`  - ${result.authUsersWithoutUsuario.length} auth users without usuario records:`, result.authUsersWithoutUsuario.slice(0, 5))
+          }
+          if (result.usuariosWithoutAuth.length > 0) {
+            console.error(`  - ${result.usuariosWithoutAuth.length} usuario records without auth users:`, result.usuariosWithoutAuth.slice(0, 5))
+          }
+          console.error('  This can cause login failures and data inconsistencies!')
+        } else {
+          console.log('[DEV] ✅ User synchronization check passed')
+        }
+      }).catch(err => {
+        console.warn('[DEV] Could not check user synchronization:', err.message)
+      })
+    }
+  }, [])
+
   useEffect(() => {
     localStorage.setItem('sei-mock-mode', String(isMockMode))
   }, [isMockMode])
@@ -281,7 +304,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
 
           if (!data) {
-            console.warn('[AUTH] ❌ No usuario found in public.usuario table')
+            console.error('[AUTH] ❌ CRITICAL: Auth user exists but no corresponding usuario record found')
+            console.error('[AUTH] This indicates a desynchronization between auth.users and usuario table')
+            console.error('[AUTH] authUserId:', authUserId, 'email:', session.user.email)
+            console.error('[AUTH] User will be logged out for data consistency')
+
+            // Force logout to prevent inconsistent state
+            await supabase.auth.signOut()
+            setUsuarioActual(null)
+            setSession(null)
             resolveLoading()
             return
           }

@@ -41,11 +41,16 @@ export function CursoDetallePage() {
     }
   }, [user?.id])
 
-  // Obtener información detallada del curso
+  // OPTIMIZATION: Use comprehensive aula loading to prevent N+1 queries
+  // TODO: Replace with useAulaCursoCompleto hook when RPC is available
   const { data: curso } = useQuery({
     queryKey: ['curso-detalle-lider', idCurso],
     queryFn: async () => {
       if (!idCurso) return null
+
+      // NOTE: This is a partial load. For full optimization, use:
+      // return getAulaCursoCompleto(parseInt(idCurso))
+      // which loads modules, activities, evaluations, questions, options, etc. in one query
 
       const { data, error } = await supabase
         .from('aula_curso')

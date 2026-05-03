@@ -86,8 +86,11 @@ export async function getTiposEvento(): Promise<TipoEvento[]> {
 export async function getEventos(idIglesia?: number): Promise<Evento[]> {
   let q = supabase.from('evento').select('*').order('fecha_inicio', { ascending: false })
   if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
-  const { data, error } = await q; if (error) { console.error('[getTareasEnriquecidas ERROR]', error); throw error }
-  if (error) throw error
+  const { data, error } = await q;
+  if (error) {
+    console.error('[getEventos ERROR]', error);
+    throw error;
+  }
   return data.map(mapEvento)
 }
 
@@ -236,8 +239,11 @@ export async function getEventosEnriquecidos(idIglesia?: number): Promise<Evento
     .select('*, tipo_evento(nombre), tarea(count)')
     .order('fecha_inicio', { ascending: false })
   if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
-  const { data, error } = await q; if (error) { console.error('[getTareasEnriquecidas ERROR]', error); throw error }
-  if (error) throw error
+  const { data, error } = await q;
+  if (error) {
+    console.error('[getEventosEnriquecidos ERROR]', error);
+    throw error;
+  }
   return (data as any[]).map(r => ({
     ...mapEvento(r),
     tipoEventoNombre: r.tipo_evento?.nombre ?? '',
@@ -355,10 +361,18 @@ export async function createTareaAsignada(data: {
   idTarea: number
   idUsuario: number
 }): Promise<void> {
-  const { error } = await supabase
+  const { data: result, error } = await supabase
     .from('tarea_asignada')
-    .insert({ id_tarea: data.idTarea, id_usuario: data.idUsuario })
-  if (error) throw error
+    .upsert({ id_tarea: data.idTarea, id_usuario: data.idUsuario }, {
+      onConflict: 'id_tarea,id_usuario'
+    })
+
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('Esta tarea ya está asignada a este usuario')
+    }
+    throw error
+  }
 
   // Notificar por correo
   try {
@@ -416,7 +430,7 @@ export interface TareaEvidenciaEnriquecida extends TareaEvidencia {
 export async function getTareaEvidencias(idTarea: number): Promise<TareaEvidenciaEnriquecida[]> {
   const { data, error } = await supabase
     .from('tarea_evidencia')
-    .select('*, usuario(nombres, apellidos), tarea_asignada(id_tarea)')
+    .select('*, usuario(nombres, apellidos), tarea_asignada!inner(id_tarea)')
     .eq('tarea_asignada.id_tarea', idTarea)
     .order('creado_en', { ascending: false })
   if (error) throw error

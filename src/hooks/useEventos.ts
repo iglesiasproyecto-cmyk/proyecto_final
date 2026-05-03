@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getAulaCursoCompleto } from '@/services/aula.service'
 import {
   getTiposEvento, getEventos, getTareas, getTareasAsignadas,
   getEventosEnriquecidos, getTareasEnriquecidas,
@@ -68,7 +69,7 @@ export function useCreateEvento() {
     mutationFn: createEvento,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['eventos'] })
-      qc.refetchQueries({ queryKey: ['eventos-enriquecidos'], type: 'all' })
+      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
     },
   })
 }
@@ -92,18 +93,19 @@ export function useUpdateTareaEstado() {
     mutationFn: ({ id, estado }: { id: number; estado: Tarea['estado'] }) =>
       updateTareaEstado(id, estado),
     onSuccess: () => {
-      qc.refetchQueries({ queryKey: ['tareas'], type: 'all' })
-      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
     },
   })
 }
 
-// â”€â”€ Enriched query hooks â”€â”€
+// ── Enriched query hooks ──
 
 export function useEventosEnriquecidos(idIglesia?: number) {
   return useQuery({
     queryKey: ['eventos-enriquecidos', idIglesia],
     queryFn: () => getEventosEnriquecidos(idIglesia),
+    enabled: idIglesia !== undefined,
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -112,6 +114,7 @@ export function useTareasEnriquecidas(idEvento?: number) {
   return useQuery({
     queryKey: ['tareas-enriquecidas', idEvento],
     queryFn: () => getTareasEnriquecidas(idEvento),
+    enabled: !!idEvento,
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -125,7 +128,7 @@ export function useTareaEvidencias(idTarea?: number) {
   })
 }
 
-// â”€â”€ Evento update/delete mutations â”€â”€
+// ── Evento update/delete mutations ──
 
 export function useUpdateEvento() {
   const qc = useQueryClient()
@@ -134,7 +137,7 @@ export function useUpdateEvento() {
       updateEvento(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['eventos'] })
-      qc.refetchQueries({ queryKey: ['eventos-enriquecidos'], type: 'all' })
+      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
     },
   })
 }
@@ -145,12 +148,12 @@ export function useDeleteEvento() {
     mutationFn: (id: number) => deleteEvento(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['eventos'] })
-      qc.refetchQueries({ queryKey: ['eventos-enriquecidos'], type: 'all' })
+      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
     },
   })
 }
 
-// â”€â”€ Tarea update/delete mutations â”€â”€
+// ── Tarea update/delete mutations ──
 
 export function useUpdateTarea() {
   const qc = useQueryClient()
@@ -158,8 +161,8 @@ export function useUpdateTarea() {
     mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateTarea>[1] }) =>
       updateTarea(id, data),
     onSuccess: () => {
-      qc.refetchQueries({ queryKey: ['tareas'], type: 'all' })
-      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
     },
   })
 }
@@ -169,14 +172,89 @@ export function useDeleteTarea() {
   return useMutation({
     mutationFn: (id: number) => deleteTarea(id),
     onSuccess: () => {
-      qc.refetchQueries({ queryKey: ['tareas'], type: 'all' })
-      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
-      qc.refetchQueries({ queryKey: ['eventos-enriquecidos'], type: 'all' })
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      qc.invalidateQueries({ queryKey: ['eventos-enriquecidos'] })
     },
   })
 }
 
-// â”€â”€ TareaAsignada mutations â”€â”€
+// ── Aula Actividad mutations ──
+// Note: updated_at is automatically handled by database triggers
+
+export function useCompletarActividad() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ idUsuario, idActividad, completada }: {
+      idUsuario: number
+      idActividad: number
+      completada: boolean
+    }) => {
+      const { data, error } = await supabase
+        .from('aula_progreso_actividad')
+        .upsert({
+          id_usuario: idUsuario,
+          id_aula_actividad: idActividad,
+          completada,
+          completada_en: completada ? new Date().toISOString() : null,
+        }, {
+          onConflict: 'id_usuario,id_aula_actividad'
+        })
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['acceso-modulos'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+    },
+  })
+}
+
+// ── Aula Certificado mutations ──
+
+export function useEmitirCertificado() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ idUsuario, idCurso }: { idUsuario: number; idCurso: number }) => {
+      const { data, error } = await supabase
+        .from('aula_certificado')
+        .upsert({
+          id_usuario: idUsuario,
+          id_aula_curso: idCurso,
+          emitido_en: new Date().toISOString()
+        }, {
+          onConflict: 'id_usuario,id_aula_curso'
+        })
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('El usuario ya tiene un certificado para este curso')
+        }
+        throw error
+      }
+
+      return data
+    },
+    onSuccess: (_, { idUsuario, idCurso }) => {
+      qc.invalidateQueries({ queryKey: ['certificados-usuario', idUsuario] })
+      qc.invalidateQueries({ queryKey: ['tiene-certificado', idUsuario, idCurso] })
+    },
+  })
+}
+
+// ── Aula optimized loading ──
+
+export function useAulaCursoCompleto(idCurso: number | undefined) {
+  return useQuery({
+    queryKey: ['aula-curso-completo', idCurso],
+    queryFn: () => getAulaCursoCompleto(idCurso!),
+    enabled: !!idCurso,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+
+// ── TareaAsignada mutations ──
 
 export function useCreateTareaAsignada() {
   const qc = useQueryClient()
@@ -184,7 +262,7 @@ export function useCreateTareaAsignada() {
     mutationFn: (data: Parameters<typeof createTareaAsignada>[0]) => createTareaAsignada(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
-      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
     },
   })
 }
@@ -196,6 +274,7 @@ export function useUpdateTareaAsignada() {
       updateTareaAsignada(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
     },
   })
 }
@@ -205,8 +284,8 @@ export function useDeleteTareaAsignada() {
   return useMutation({
     mutationFn: (id: number) => deleteTareaAsignada(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
-      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
     },
   })
 }
@@ -217,7 +296,7 @@ export function useCreateTareaEvidencia() {
     mutationFn: createTareaEvidencia,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tarea-evidencias'] })
-      qc.refetchQueries({ queryKey: ['tareas-enriquecidas'], type: 'all' })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
     },
   })
 }
@@ -226,7 +305,7 @@ export function useEventosPorMinisterio(idMinisterio: number) {
   return useQuery({
     queryKey: ['eventos-ministerio', idMinisterio],
     queryFn: () => getEventosPorMinisterio(idMinisterio),
-    enabled: idMinisterio > 0,
+    enabled: typeof idMinisterio === 'number' && idMinisterio > 0,
     staleTime: 5 * 60 * 1000,
   })
 }

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useEventosEnriquecidos, useDeleteEvento, useTiposEvento, useCreateEvento, useUpdateEvento } from "@/hooks/useEventos";
+import { useSedesEnriquecidas } from "@/hooks/useIglesias";
+import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
 import type { EventoEnriquecido } from "@/services/eventos.service";
 import { useApp } from "@/app/store/AppContext";
 import { AnimatedCard } from "./ui/AnimatedCard";
@@ -12,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion, AnimatePresence } from "motion/react";
 import {
   CalendarDays, Plus, MapPin, Clock, Globe, Users, Pencil, Trash2, Eye,
-  CheckCircle2, XCircle, PlayCircle, BookMarked,
+  CheckCircle2, XCircle, PlayCircle, BookMarked, Church,
 } from "lucide-react";
 
 const estadoConfig: Record<string, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
@@ -52,7 +54,7 @@ function GlassSelect({ value, onChange, children }: { value: number; onChange: (
   );
 }
 
-function EventDialogFields({ form, setForm, tiposEvento }: { form: any; setForm: (f: any) => void; tiposEvento: any[] }) {
+function EventDialogFields({ form, setForm, tiposEvento, sedes = [], ministerios = [] }: { form: any; setForm: (f: any) => void; tiposEvento: any[]; sedes?: any[]; ministerios?: any[] }) {
   return (
     <div className="space-y-4 py-2">
       <div>
@@ -65,6 +67,22 @@ function EventDialogFields({ form, setForm, tiposEvento }: { form: any; setForm:
           <option value={0}>Seleccionar tipo...</option>
           {tiposEvento.map(te => <option key={te.idTipoEvento} value={te.idTipoEvento}>{te.nombre}</option>)}
         </GlassSelect>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <FieldLabel>Sede <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span></FieldLabel>
+          <GlassSelect value={form.idSede} onChange={v => setForm((p: any) => ({ ...p, idSede: v }))}>
+            <option value={0}>Seleccionar sede...</option>
+            {sedes.map(s => <option key={s.idSede} value={s.idSede}>{s.nombre}</option>)}
+          </GlassSelect>
+        </div>
+        <div>
+          <FieldLabel>Ministerio <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span></FieldLabel>
+          <GlassSelect value={form.idMinisterio} onChange={v => setForm((p: any) => ({ ...p, idMinisterio: v }))}>
+            <option value={0}>Seleccionar ministerio...</option>
+            {ministerios.map(m => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
+          </GlassSelect>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -102,6 +120,8 @@ export function EventsPage() {
   const { iglesiaActual, rolActual } = useApp();
   const { data: eventos = [], isLoading } = useEventosEnriquecidos(iglesiaActual?.id);
   const { data: tiposEvento = [] } = useTiposEvento();
+  const { data: sedes = [] } = useSedesEnriquecidas(iglesiaActual?.id);
+  const { data: ministerios = [] } = useMinisteriosEnriquecidos();
   const createEventoMutation = useCreateEvento();
   const deleteEventoMutation = useDeleteEvento();
   const updateEventoMutation = useUpdateEvento();
@@ -110,12 +130,12 @@ export function EventsPage() {
   const [editEvento, setEditEvento] = useState<EventoEnriquecido | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventoEnriquecido | null>(null);
 
-  const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "" });
-  const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "", estado: "programado" as string });
+  const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
+  const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "", estado: "programado" as string, idSede: 0, idMinisterio: 0 });
 
   const canManageEvents = rolActual === "lider" || rolActual === "admin_iglesia" || rolActual === "super_admin";
 
-  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "" });
+  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
 
   const openEditDialog = (ev: EventoEnriquecido) => {
     setEditEvento(ev);
@@ -125,13 +145,15 @@ export function EventsPage() {
       fechaInicio: ev.fechaInicio?.replace(" ", "T").slice(0, 16) ?? "",
       fechaFin: ev.fechaFin?.replace(" ", "T").slice(0, 16) ?? "",
       estado: ev.estado,
+      idSede: ev.idSede ?? 0,
+      idMinisterio: ev.idMinisterio ?? 0,
     });
   };
 
   const handleCreateEvento = () => {
-    if (!createForm.nombre.trim() || !createForm.idTipoEvento || !createForm.fechaInicio || !createForm.fechaFin) return;
+    if (!createForm.nombre.trim() || !createForm.idTipoEvento || !createForm.fechaInicio || !createForm.fechaFin || !iglesiaActual?.id) return;
     createEventoMutation.mutate(
-      { nombre: createForm.nombre.trim(), descripcion: createForm.descripcion.trim() || null, idTipoEvento: createForm.idTipoEvento, fechaInicio: createForm.fechaInicio, fechaFin: createForm.fechaFin, idIglesia: iglesiaActual?.id ?? 0, idSede: null, idMinisterio: null },
+      { nombre: createForm.nombre.trim(), descripcion: createForm.descripcion.trim() || null, idTipoEvento: createForm.idTipoEvento, fechaInicio: createForm.fechaInicio, fechaFin: createForm.fechaFin, idIglesia: iglesiaActual.id, idSede: createForm.idSede || null, idMinisterio: createForm.idMinisterio || null },
       { onSuccess: () => { setShowCreate(false); resetCreateForm(); } }
     );
   };
@@ -139,7 +161,7 @@ export function EventsPage() {
   const handleUpdateEvento = () => {
     if (!editEvento || !editForm.nombre.trim()) return;
     updateEventoMutation.mutate(
-      { id: editEvento.idEvento, data: { nombre: editForm.nombre.trim(), descripcion: editForm.descripcion.trim() || null, idTipoEvento: editForm.idTipoEvento, fechaInicio: editForm.fechaInicio, fechaFin: editForm.fechaFin || null, estado: editForm.estado } },
+      { id: editEvento.idEvento, data: { nombre: editForm.nombre.trim(), descripcion: editForm.descripcion.trim() || null, idTipoEvento: editForm.idTipoEvento, fechaInicio: editForm.fechaInicio, fechaFin: editForm.fechaFin || null, estado: editForm.estado, idSede: editForm.idSede || null, idMinisterio: editForm.idMinisterio || null } },
       { onSuccess: () => setEditEvento(null) }
     );
   };
@@ -148,6 +170,18 @@ export function EventsPage() {
     if (!confirm(`¿Eliminar evento "${nombre}"?`)) return;
     deleteEventoMutation.mutate(id);
   }
+
+  if (!iglesiaActual) return (
+    <div className="flex items-center justify-center h-48">
+      <div className="flex flex-col items-center gap-3 text-muted-foreground">
+        <div className="w-16 h-16 rounded-2xl bg-accent/40 flex items-center justify-center">
+          <Church className="w-7 h-7 opacity-40" />
+        </div>
+        <p className="font-semibold text-sm">Selecciona una iglesia</p>
+        <p className="text-xs text-center max-w-xs">Para ver los eventos, primero debes seleccionar la iglesia con la que deseas trabajar desde el menú superior.</p>
+      </div>
+    </div>
+  );
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-48">
@@ -380,7 +414,7 @@ export function EventsPage() {
             </DialogTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Completa los datos para programar un nuevo evento.</p>
           </DialogHeader>
-          <EventDialogFields form={createForm} setForm={setCreateForm} tiposEvento={tiposEvento} />
+          <EventDialogFields form={createForm} setForm={setCreateForm} tiposEvento={tiposEvento} sedes={sedes} ministerios={ministerios} />
           <DialogFooter className="border-t border-border/50 pt-4 mt-2">
             <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
             <Button className="rounded-xl" onClick={handleCreateEvento} disabled={createEventoMutation.isPending}>
@@ -399,7 +433,7 @@ export function EventsPage() {
             </DialogTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Modifica los datos del evento seleccionado.</p>
           </DialogHeader>
-          <EventDialogFields form={editForm} setForm={setEditForm} tiposEvento={tiposEvento} />
+          <EventDialogFields form={editForm} setForm={setEditForm} tiposEvento={tiposEvento} sedes={sedes} ministerios={ministerios} />
           <DialogFooter className="border-t border-border/50 pt-4 mt-2">
             <Button variant="ghost" className="rounded-xl" onClick={() => setEditEvento(null)}>Cancelar</Button>
             <Button className="rounded-xl" onClick={handleUpdateEvento} disabled={updateEventoMutation.isPending}>

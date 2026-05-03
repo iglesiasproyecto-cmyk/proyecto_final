@@ -151,17 +151,25 @@ export async function assignRol(data: {
   idIglesia: number
   idSede?: number | null
 }): Promise<void> {
-  const { error } = await supabase
+  const { data: result, error } = await supabase
     .from('usuario_rol')
-    .insert({
+    .upsert({
       id_usuario: data.idUsuario,
       id_rol: data.idRol,
       id_iglesia: data.idIglesia,
       id_sede: data.idSede ?? null,
       fecha_inicio: new Date().toISOString().split('T')[0],
       fecha_fin: null,
+    }, {
+      onConflict: 'id_usuario,id_rol,id_iglesia,id_sede'
     })
-  if (error) throw error
+
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('Este usuario ya tiene asignado este rol en la misma iglesia y sede')
+    }
+    throw error
+  }
 }
 
 export async function removeRol(idUsuarioRol: number): Promise<void> {
