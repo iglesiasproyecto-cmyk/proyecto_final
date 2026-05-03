@@ -9,7 +9,17 @@ export async function getNotificaciones(idUsuario: number) {
     .order('creado_en', { ascending: false })
 
   if (error) throw error
-  return data
+  
+  return data?.map(n => ({
+    idNotificacion: n.id_notificacion,
+    idUsuario: n.id_usuario,
+    titulo: n.titulo,
+    mensaje: n.mensaje,
+    tipo: n.tipo,
+    leida: n.leida,
+    creadoEn: n.creado_en,
+    fechaLectura: n.fecha_lectura,
+  })) || []
 }
 
 export async function markNotificacionRead(idNotificacion: number) {

@@ -59,6 +59,9 @@ export function TasksPage() {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [evidenceUploading, setEvidenceUploading] = useState(false);
 
+  const task = selectedTask ? tareas.find(t => t.idTarea === selectedTask) : null;
+  const { data: evidencias = [] } = useTareaEvidencias(task?.idTarea);
+
   const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: 0 });
 
   useEffect(() => {
@@ -183,14 +186,11 @@ export function TasksPage() {
     </div>
   );
 
-  const task = selectedTask ? tareas.find(t => t.idTarea === selectedTask) : null;
   const isLider = rolActual === "lider";
   const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin";
   const canManageTasks = isLider || isAdmin;
   const myAssignment = task?.asignados?.find(a => a.idUsuario === usuarioActual?.idUsuario) ?? null;
   const canActAsServidor = rolActual === "servidor" && !!myAssignment;
-
-  const { data: evidencias = [] } = useTareaEvidencias(task?.idTarea);
 
   const getActionForServer = (estado: string) => {
     if (estado === "pendiente") return { label: "Iniciar", next: "en_progreso" as const };
@@ -230,7 +230,7 @@ export function TasksPage() {
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
               Tareas
             </h1>
-            <p className="text-foreground font-bold text-xs sm:text-sm mt-1">Gestión de tareas operativas del ministerio</p>
+            <p className="text-foreground text-xs sm:text-sm mt-1">Gestión de tareas operativas del ministerio</p>
           </div>
         </div>
         {canManageTasks && (

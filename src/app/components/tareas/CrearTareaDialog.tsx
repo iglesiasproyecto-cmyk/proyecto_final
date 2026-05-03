@@ -44,8 +44,8 @@ export function CrearTareaDialog({ open, onOpenChange, idUsuarioCreador, onCreat
   })
   const [asignadosIds, setAsignadosIds] = useState<number[]>([])
 
-  const { data: servidores = [] } = useServidoresMinisterio(form.idMinisterio)
-  const { data: eventos = [] } = useEventosPorMinisterio(form.idMinisterio)
+  const { data: servidores = [] } = useServidoresMinisterio(form.idMinisterio || undefined)
+  const { data: eventos = [] } = useEventosPorMinisterio(form.idMinisterio || undefined)
 
   useEffect(() => {
     if (form.idMinisterio || ministerios.length !== 1) return
