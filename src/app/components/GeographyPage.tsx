@@ -5,9 +5,11 @@ import {
   useCreateDepartamento, useUpdateDepartamento, useDeleteDepartamento,
   useCreateCiudad, useUpdateCiudad, useDeleteCiudad,
 } from "@/hooks/useGeografia";
+import { useDepartamentosEnhanced, useCiudadesEnhanced } from "@/hooks/useGeografiaEnhanced";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -28,6 +30,11 @@ export function GeographyPage() {
   const [dialog, setDialog] = useState<{ type: "pais" | "dep" | "ciudad"; mode: "add" | "edit"; id?: number; parentId?: number } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: number; name: string } | null>(null);
   const [formNombre, setFormNombre] = useState("");
+  const [formDepartamentoId, setFormDepartamentoId] = useState<number>(0);
+
+  const { data: departamentosEnhanced = [] } = useDepartamentosEnhanced();
+  const departamentoSeleccionado = departamentosEnhanced.find(d => d.idDepartamentoGeo === formDepartamentoId);
+  const { data: ciudadesEnhanced = [] } = useCiudadesEnhanced(formDepartamentoId || undefined, departamentoSeleccionado?.nombre);
 
   const createPaisMutation = useCreatePais();
   const updatePaisMutation = useUpdatePais();
@@ -55,8 +62,16 @@ export function GeographyPage() {
     if (mode === "edit") {
       if (type === "pais") setFormNombre(paises.find(p => p.idPais === id)?.nombre || "");
       if (type === "dep") setFormNombre(departamentosGeo.find(d => d.idDepartamentoGeo === id)?.nombre || "");
-      if (type === "ciudad") setFormNombre(ciudades.find(c => c.idCiudad === id)?.nombre || "");
-    } else setFormNombre("");
+      if (type === "ciudad") {
+        const ciudad = ciudades.find(c => c.idCiudad === id);
+        setFormNombre(ciudad?.nombre || "");
+        setFormDepartamentoId(ciudad?.idDepartamentoGeo || 0);
+      }
+    } else {
+      setFormNombre("");
+      if (type === "ciudad" && parentId) setFormDepartamentoId(parentId);
+      else setFormDepartamentoId(0);
+    }
     setDialog({ type, mode, id, parentId });
   };
 
@@ -263,19 +278,36 @@ export function GeographyPage() {
                {dialog?.mode === "edit" ? <Pencil className="w-5 h-5 text-[#4682b4]" /> : <Plus className="w-5 h-5 text-[#4682b4]" />} {dialogTitle}
              </DialogTitle></DialogHeader>
           </div>
-          <div className="px-6 py-5">
-            <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nombre <span className="text-destructive">*</span></label>
-            <Input 
-              value={formNombre} 
-              onChange={e => setFormNombre(e.target.value)} 
-              placeholder={`Ej. ${dialog?.type === 'pais' ? 'Colombia' : dialog?.type === 'dep' ? 'Antioquia' : 'Medellín'}`} 
-              className="bg-input-background focus-visible:ring-[#4682b4]/30 h-11" 
-              onKeyDown={e => e.key === "Enter" && handleSubmit()} 
-            />
+          <div className="px-6 py-5 space-y-4">
+            {dialog?.type === "ciudad" && (
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Departamento <span className="text-destructive">*</span></label>
+                <Select value={formDepartamentoId ? String(formDepartamentoId) : ""} onValueChange={v => setFormDepartamentoId(Number(v))}>
+                  <SelectTrigger className="bg-input-background focus-visible:ring-[#4682b4]/30 h-11">
+                    <SelectValue placeholder="Seleccionar departamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departamentosEnhanced.map(d => (
+                      <SelectItem key={d.idDepartamentoGeo} value={String(d.idDepartamentoGeo)}>{d.nombre}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nombre <span className="text-destructive">*</span></label>
+              <Input 
+                value={formNombre} 
+                onChange={e => setFormNombre(e.target.value)} 
+                placeholder={`Ej. ${dialog?.type === 'pais' ? 'Colombia' : dialog?.type === 'dep' ? 'Antioquia' : 'Medellín'}`} 
+                className="bg-input-background focus-visible:ring-[#4682b4]/30 h-11" 
+                onKeyDown={e => e.key === "Enter" && handleSubmit()} 
+              />
+            </div>
           </div>
           <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
-             <Button variant="ghost" onClick={() => setDialog(null)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
-             <Button onClick={handleSubmit} disabled={!formNombre.trim() || isMutating} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-lg shadow-blue-900/20">Guardar</Button>
+             <Button variant="ghost" onClick={() => { setDialog(null); setFormDepartamentoId(0); }} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
+             <Button onClick={handleSubmit} disabled={!formNombre.trim() || (dialog?.type === "ciudad" && !formDepartamentoId) || isMutating} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-lg shadow-blue-900/20">Guardar</Button>
           </div>
         </DialogContent>
       </Dialog>

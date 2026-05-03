@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSedesEnriquecidas, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado, useDeleteSede, useSedePastores, usePastoresEnriquecidos, usePastoresPorSede, useCreateSedePastor, useCreatePastor } from "@/hooks/useIglesias";
 import { useApp } from "@/app/store/AppContext";
-import { useCiudades } from "@/hooks/useGeografia";
+import { useDepartamentosEnhanced, useCiudadesEnhanced } from "@/hooks/useGeografiaEnhanced";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -21,7 +21,7 @@ export function SedesPage() {
   const [dialogPastor, setDialogPastor] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const [selectedSede, setSelectedSede] = useState<number | null>(null);
-  const [form, setForm] = useState({ nombre: "", direccion: "", idCiudad: 0, idIglesia: 0, estado: "activa" as "activa" | "inactiva" | "en_construccion" });
+  const [form, setForm] = useState({ nombre: "", direccion: "", idCiudad: 0, idDepartamento: 0, idIglesia: 0, estado: "activa" as "activa" | "inactiva" | "en_construccion" });
   const [pastorForm, setPastorForm] = useState({
     idSede: 0,
     idPastor: 0,
@@ -38,7 +38,9 @@ export function SedesPage() {
     : iglesiaActual?.id;
   const { data: sedes = [], isLoading } = useSedesEnriquecidas(queryIglesiaId);
   const { data: iglesias = [] } = useIglesias();
-  const { data: ciudades = [] } = useCiudades();
+  const { data: departamentos = [] } = useDepartamentosEnhanced();
+  const departamentoSeleccionado = departamentos.find(d => d.idDepartamentoGeo === form.idDepartamento);
+  const { data: ciudades = [] } = useCiudadesEnhanced(form.idDepartamento || undefined, departamentoSeleccionado?.nombre);
   const { data: sedePastores = [] } = useSedePastores();
   const { data: pastores = [] } = usePastoresEnriquecidos();
 
@@ -60,14 +62,14 @@ export function SedesPage() {
 
   const openAdd = () => {
     const defaultIglesiaId = iglesiaActual?.id ?? (iglesias.length === 1 ? iglesias[0].idIglesia : 0);
-    setForm({ nombre: "", direccion: "", idCiudad: 0, idIglesia: defaultIglesiaId, estado: "activa" });
+    setForm({ nombre: "", direccion: "", idCiudad: 0, idDepartamento: 0, idIglesia: defaultIglesiaId, estado: "activa" });
     setEditing(null);
     setDialog(true);
   };
   
   const openEdit = (id: number) => {
     const s = sedes.find(x => x.idSede === id); if (!s) return;
-    setForm({ nombre: s.nombre, direccion: s.direccion || "", idCiudad: s.idCiudad || 0, idIglesia: s.idIglesia, estado: s.estado });
+    setForm({ nombre: s.nombre, direccion: s.direccion || "", idCiudad: s.idCiudad || 0, idDepartamento: s.idDepartamentoGeo || 0, idIglesia: s.idIglesia, estado: s.estado });
     setEditing(id); setDialog(true);
   };
 
@@ -502,9 +504,16 @@ export function SedesPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Ciudad <span className="text-destructive">*</span></label>
-                <Select value={form.idCiudad ? String(form.idCiudad) : ""} onValueChange={v => setForm(f => ({ ...f, idCiudad: Number(v) }))}>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Departamento <span className="text-destructive">*</span></label>
+                <Select value={form.idDepartamento ? String(form.idDepartamento) : ""} onValueChange={v => setForm(f => ({ ...f, idDepartamento: Number(v), idCiudad: 0 }))}>
                   <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>{departamentos.map(d => <SelectItem key={d.idDepartamentoGeo} value={String(d.idDepartamentoGeo)}>{d.nombre}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Ciudad <span className="text-destructive">*</span></label>
+                <Select value={form.idCiudad ? String(form.idCiudad) : ""} onValueChange={v => setForm(f => ({ ...f, idCiudad: Number(v) }))} disabled={!form.idDepartamento}>
+                  <SelectTrigger className={`bg-input-background focus:ring-[#4682b4]/30 ${!form.idDepartamento ? "opacity-50 cursor-not-allowed" : ""}`}><SelectValue placeholder={form.idDepartamento ? "Seleccionar" : "Elige departamento"} /></SelectTrigger>
                   <SelectContent>
                     {ciudades.map(c => (
                       <SelectItem key={c.idCiudad} value={String(c.idCiudad)}>{c.nombre}</SelectItem>

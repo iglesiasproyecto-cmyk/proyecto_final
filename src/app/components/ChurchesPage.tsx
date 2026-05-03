@@ -7,8 +7,8 @@ import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { useCiudades } from "@/hooks/useGeografia";
 import { motion } from "motion/react";
+import { useDepartamentosEnhanced, useCiudadesEnhanced } from "@/hooks/useGeografiaEnhanced";
 import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar, Eye } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useApp } from "../store/AppContext";
@@ -24,6 +24,7 @@ interface IglesiaFormData {
   nombre: string;
   fechaFundacion: string;
   idCiudad: number;
+  idDepartamento: number;
 }
 
 // Componente Glass para las tarjetas de iglesias al estilo Dashboard
@@ -55,14 +56,16 @@ export function ChurchesPage() {
   const [filter, setFilter] = useState<"all" | "activa" | "inactiva">("all");
   const [showCreate, setShowCreate] = useState(false);
   const [editingIglesia, setEditingIglesia] = useState<IglesiaEnriquecida | null>(null);
-  const [form, setForm] = useState<IglesiaFormData>({ nombre: "", fechaFundacion: "", idCiudad: 0 });
+  const [form, setForm] = useState<IglesiaFormData>({ nombre: "", fechaFundacion: "", idCiudad: 0, idDepartamento: 0 });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof IglesiaFormData, string>>>({});
   
   const createIglesiaMutation = useCreateIglesia();
   const updateIglesiaMutation = useUpdateIglesia();
   const toggleEstadoMutation = useToggleIglesiaEstado();
   const deleteIglesiaMutation = useDeleteIglesia();
-  const { data: ciudades = [] } = useCiudades();
+  const { data: departamentos = [] } = useDepartamentosEnhanced();
+  const departamentoSeleccionado = departamentos.find(d => d.idDepartamentoGeo === form.idDepartamento);
+  const { data: ciudades = [] } = useCiudadesEnhanced(form.idDepartamento || undefined, departamentoSeleccionado?.nombre);
 
   if (isLoading) return (
     <div className="max-w-7xl mx-auto flex items-center justify-center p-12">
@@ -125,13 +128,30 @@ export function ChurchesPage() {
         <Input type="date" value={form.fechaFundacion} onChange={(e) => updateField("fechaFundacion", e.target.value)} className="bg-input-background focus-visible:ring-primary/20" />
       </div>
       <div>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">Departamento <span className="text-destructive">*</span></label>
+        <Select
+          value={form.idDepartamento ? String(form.idDepartamento) : ""}
+          onValueChange={v => setForm(prev => ({ ...prev, idDepartamento: Number(v), idCiudad: 0 }))}
+        >
+          <SelectTrigger className={`bg-input-background transition-all ${formErrors.idDepartamento ? "border-destructive ring-destructive/20" : "focus-visible:ring-primary/20"}`}>
+            <SelectValue placeholder="Seleccionar departamento" />
+          </SelectTrigger>
+          <SelectContent>
+            {departamentos.map(d => (
+              <SelectItem key={d.idDepartamentoGeo} value={String(d.idDepartamentoGeo)}>{d.nombre}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
         <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">Ciudad <span className="text-destructive">*</span></label>
         <Select
           value={form.idCiudad ? String(form.idCiudad) : ""}
           onValueChange={v => setForm(prev => ({ ...prev, idCiudad: Number(v) }))}
+          disabled={!form.idDepartamento}
         >
-          <SelectTrigger className={`bg-input-background transition-all ${formErrors.idCiudad ? "border-destructive ring-destructive/20" : "focus-visible:ring-primary/20"}`}>
-            <SelectValue placeholder="Seleccionar ciudad" />
+          <SelectTrigger className={`bg-input-background transition-all ${!form.idDepartamento ? "opacity-50 cursor-not-allowed" : ""} ${formErrors.idCiudad ? "border-destructive ring-destructive/20" : "focus-visible:ring-primary/20"}`}>
+            <SelectValue placeholder={form.idDepartamento ? "Seleccionar ciudad" : "Selecciona un departamento primero"} />
           </SelectTrigger>
           <SelectContent>
             {ciudades.map(c => (
@@ -157,7 +177,7 @@ export function ChurchesPage() {
           </div>
         </div>
         {rolActual === "super_admin" && (
-          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
+          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", idCiudad: 0, idDepartamento: 0 }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
             <Plus className="w-4 h-4 mr-2" /> Nueva Iglesia
           </Button>
         )}
@@ -244,7 +264,7 @@ export function ChurchesPage() {
                 <>
                   <Button variant="secondary" size="sm" className="flex-1 rounded-xl bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 transition-colors" onClick={() => {
                     setFormErrors({});
-                    setForm({ nombre: ig.nombre, fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "", idCiudad: ig.idCiudad || 0 });
+                    setForm({ nombre: ig.nombre, fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "", idCiudad: ig.idCiudad || 0, idDepartamento: ig.idDepartamentoGeo || 0 });
                     setEditingIglesia(ig);
                   }}>
                     <Pencil className="w-3.5 h-3.5 mr-1.5" /> Editar

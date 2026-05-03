@@ -185,16 +185,14 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* HEADER */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
-
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
             <UserCheck className="w-6 h-6 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Gestión de Pastores</h1>
+            <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest pl-1">Estructura</p>
+            <h1 className="text-3xl font-light tracking-tight leading-tight">Gestión de Pastores</h1>
           </div>
         </div>
       </motion.div>
@@ -238,11 +236,11 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
                 <GlassCard key={p.idPastor} index={i}>
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/10 text-[#4682b4] dark:text-[#709dbd] border-[#4682b4]/10 flex items-center justify-center font-bold">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/10 text-[#4682b4] dark:text-[#709dbd] border-[#4682b4]/10 flex items-center justify-center font-semibold">
                         {p.nombres[0]}{p.apellidos[0]}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-foreground truncate">{p.nombres} {p.apellidos}</p>
+                        <p className="font-medium text-foreground truncate">{p.nombres} {p.apellidos}</p>
                         <div className="flex flex-col gap-0.5 mt-1">
                           <p className="flex items-center gap-1.5 text-xs font-medium text-primary/70"><Mail className="w-3 h-3" /> <span className="truncate">{p.correo}</span></p>
                           {p.telefono && <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Phone className="w-3 h-3" /> {p.telefono}</p>}
@@ -254,7 +252,7 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
                   <div className="flex-1 space-y-4">
                     {p.iglesiasActivas.length > 0 && (
                       <div className="p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-primary/60 mb-2">Miembro en:</p>
+                        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-2">Miembro en:</p>
                         <div className="flex flex-wrap gap-1.5">
                           {p.iglesiasActivas.map((nombre, i) => (
                             <Badge key={i} variant="secondary" className="bg-white/60 dark:bg-black/20 text-xs font-medium border-0 tracking-wide text-muted-foreground">
@@ -266,7 +264,7 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
                     )}
                     
                     <div className="p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#4682b4]/60 dark:text-[#709dbd]/60 mb-2">Asignaciones de Liderazgo:</p>
+                      <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-2">Asignaciones de Liderazgo:</p>
                       <div className="flex flex-wrap gap-1.5">
                         {asignaciones.map(a => (
                           <Badge key={a.idIglesiaPastor} variant={a.esPrincipal ? "default" : "outline"} className={`text-[11px] font-semibold border ${a.esPrincipal ? "bg-[#4682b4] hover:bg-[#4682b4]/90 border-[#4682b4] shadow-sm" : "bg-card border-[#4682b4]/30 text-[#4682b4] dark:border-[#4682b4]/20 dark:text-[#709dbd]"}`}>
