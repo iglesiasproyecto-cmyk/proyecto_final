@@ -122,8 +122,8 @@ export function EventsPage() {
     setEditForm({
       nombre: ev.nombre, descripcion: ev.descripcion ?? "",
       idTipoEvento: ev.idTipoEvento,
-      fechaInicio: ev.fechaInicio?.slice(0, 16) ?? "",
-      fechaFin: ev.fechaFin?.slice(0, 16) ?? "",
+      fechaInicio: ev.fechaInicio?.replace(" ", "T").slice(0, 16) ?? "",
+      fechaFin: ev.fechaFin?.replace(" ", "T").slice(0, 16) ?? "",
       estado: ev.estado,
     });
   };

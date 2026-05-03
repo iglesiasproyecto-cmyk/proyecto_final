@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useAuth } from '@/app/store/AppContext'
-import { useMinisterios, useMinisteriosIdsDeUsuario } from '@/hooks/useMinisterios'
+import { getUserMinisterios } from '@/lib/userHelpers'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/app/components/ui/button'
 import {
   Dialog,
@@ -24,13 +25,14 @@ import { Textarea } from '@/app/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
 import { Checkbox } from '@/app/components/ui/checkbox'
 import { useForm } from 'react-hook-form'
+import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { getInternalUserId } from '@/lib/userHelpers'
 import { toast } from 'sonner'
 
 interface CrearCursoDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  internalUserId: number | null
 }
 
 interface FormData {
@@ -41,31 +43,21 @@ interface FormData {
   duracion_horas?: number
 }
 
-export function CrearCursoDialog({ open, onOpenChange }: CrearCursoDialogProps) {
+export function CrearCursoDialog({ open, onOpenChange, internalUserId }: CrearCursoDialogProps) {
   const { user } = useAuth()
-  const { ministerios } = useMinisterios()
   const [loading, setLoading] = useState(false)
-  const [internalUserId, setInternalUserId] = useState<number | null>(null)
-  const [ministeriosFiltrados, setMinisteriosFiltrados] = useState<any[]>([])
 
-  useEffect(() => {
-    const getUserId = async () => {
-      if (user?.id) {
-        const id = await getInternalUserId(user.id)
-        setInternalUserId(id)
-      }
-    }
-    getUserId()
-  }, [user?.id])
+  const { data: miembriaMinisterios = [] } = useQuery({
+    queryKey: ['ministerios-lider', internalUserId],
+    queryFn: () => getUserMinisterios(internalUserId!),
+    enabled: !!internalUserId,
+    staleTime: 5 * 60 * 1000,
+  })
 
-  const { data: ministeriosIds = [] } = useMinisteriosIdsDeUsuario(internalUserId || undefined)
-
-  useEffect(() => {
-    if (ministerios && ministeriosIds) {
-      const filtrados = ministerios.filter(m => ministeriosIds.includes(m.id_ministerio))
-      setMinisteriosFiltrados(filtrados)
-    }
-  }, [ministerios, ministeriosIds])
+  const ministeriosFiltrados = miembriaMinisterios
+    .filter(m => m.rol_en_ministerio === 'Líder de Ministerio')
+    .map(m => (m.ministerio as any))
+    .filter(Boolean)
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -77,15 +69,14 @@ export function CrearCursoDialog({ open, onOpenChange }: CrearCursoDialogProps) 
     },
   })
 
-  // Actualizar el valor por defecto del ministerio cuando se carguen
-  React.useEffect(() => {
-    if (ministeriosFiltrados && ministeriosFiltrados.length > 0 && !form.getValues('id_ministerio')) {
+  useEffect(() => {
+    if (ministeriosFiltrados.length > 0 && !form.getValues('id_ministerio')) {
       form.setValue('id_ministerio', ministeriosFiltrados[0].id_ministerio)
     }
-  }, [ministeriosFiltrados, form])
+  }, [ministeriosFiltrados.length])
 
   const onSubmit = async (data: FormData) => {
-    if (!user?.id) return
+    if (!user?.id || !internalUserId) return
 
     setLoading(true)
     try {
@@ -95,7 +86,7 @@ export function CrearCursoDialog({ open, onOpenChange }: CrearCursoDialogProps) 
           titulo: data.nombre,
           descripcion: data.descripcion,
           id_ministerio: data.id_ministerio,
-          id_usuario_creador: user.id,
+          id_usuario_creador: internalUserId,
           estado: 'borrador',
           orden_secuencial: data.desbloqueo_secuencial,
         })
@@ -164,20 +155,28 @@ export function CrearCursoDialog({ open, onOpenChange }: CrearCursoDialogProps) 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Ministerio</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un ministerio" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {ministeriosFiltrados?.map((ministerio) => (
-                        <SelectItem key={ministerio.id_ministerio} value={ministerio.id_ministerio.toString()}>
-                          {ministerio.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {ministeriosFiltrados.length <= 1 ? (
+                    <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted text-sm text-muted-foreground">
+                      {ministeriosFiltrados.length === 1
+                        ? ministeriosFiltrados[0].nombre
+                        : 'Cargando ministerio...'}
+                    </div>
+                  ) : (
+                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un ministerio" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ministeriosFiltrados.map((ministerio) => (
+                          <SelectItem key={ministerio.id_ministerio} value={ministerio.id_ministerio.toString()}>
+                            {ministerio.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -229,7 +228,7 @@ export function CrearCursoDialog({ open, onOpenChange }: CrearCursoDialogProps) 
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || ministeriosFiltrados.length === 0}>
                 {loading ? 'Creando...' : 'Crear Curso'}
               </Button>
             </DialogFooter>

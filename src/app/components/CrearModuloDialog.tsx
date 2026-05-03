@@ -53,9 +53,9 @@ export function CrearModuloDialog({ open, onOpenChange, idCurso }: CrearModuloDi
     try {
       // Obtener el orden del último módulo
       const { data: ultimoModulo } = await supabase
-        .from('modulo')
+        .from('aula_modulo')
         .select('orden')
-        .eq('id_curso', idCurso)
+        .eq('id_aula_curso', idCurso)
         .order('orden', { ascending: false })
         .limit(1)
         .single()
@@ -63,14 +63,13 @@ export function CrearModuloDialog({ open, onOpenChange, idCurso }: CrearModuloDi
       const nuevoOrden = (ultimoModulo?.orden || 0) + 1
 
       const { error } = await supabase
-        .from('modulo')
+        .from('aula_modulo')
         .insert({
           titulo: data.titulo,
           descripcion: data.descripcion,
-          contenido_md: data.contenido_md,
-          id_curso: idCurso,
+          id_aula_curso: idCurso,
           orden: nuevoOrden,
-          estado: 'borrador',
+          publicado: false,
         })
 
       if (error) throw error
