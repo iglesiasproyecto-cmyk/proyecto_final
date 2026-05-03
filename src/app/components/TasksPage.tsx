@@ -3,6 +3,7 @@ import { useTareasEnriquecidas, useCreateTarea, useUpdateTareaEstado, useDeleteT
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
 import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service";
+import { filterAndSortTareas } from "@/lib/taskUtils";
 import { useApp } from "../store/AppContext";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -153,29 +154,10 @@ export function TasksPage() {
     );
   };
 
-  const filteredAndSortedTareas = useMemo(() => {
-    let result = [...tareas];
-    
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(t => 
-        t.titulo.toLowerCase().includes(q) || 
-        (t.descripcion && t.descripcion.toLowerCase().includes(q))
-      );
-    }
-    
-    if (dateFilter) {
-      result = result.filter(t => t.fechaLimite === dateFilter);
-    }
-    
-    result.sort((a, b) => {
-      const dateA = new Date(a.creadoEn).getTime();
-      const dateB = new Date(b.creadoEn).getTime();
-      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
-    });
-
-    return result;
-  }, [tareas, searchQuery, dateFilter, sortOrder]);
+  const filteredAndSortedTareas = useMemo(() =>
+    filterAndSortTareas(tareas, { searchQuery, dateFilter, sortOrder }),
+    [tareas, searchQuery, dateFilter, sortOrder]
+  );
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-48">
@@ -307,7 +289,7 @@ export function TasksPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="flex lg:grid lg:grid-cols-3 gap-6 overflow-x-auto pb-6 lg:pb-0 snap-x lg:snap-none -mx-4 px-4 lg:mx-0 lg:px-0 hide-scrollbar"
+        className="flex lg:grid lg:grid-cols-4 gap-6 overflow-x-auto pb-6 lg:pb-0 snap-x lg:snap-none -mx-4 px-4 lg:mx-0 lg:px-0 hide-scrollbar"
       >
         <style dangerouslySetInnerHTML={{ __html: `
           .hide-scrollbar::-webkit-scrollbar { display: none; }

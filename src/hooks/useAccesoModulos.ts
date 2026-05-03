@@ -5,13 +5,6 @@ import { supabase } from '@/lib/supabaseClient'
 export function useAccesoModulos(vars: {
   idUsuario: number | null | undefined
   idCurso: number | null | undefined
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabaseClient'
-
-// Hook para obtener el estado de acceso a módulos
-export function useAccesoModulos(vars: {
-  idUsuario: number | null | undefined
-  idCurso: number | null | undefined
 }) {
   return useQuery({
     queryKey: ['acceso-modulos', vars.idUsuario, vars.idCurso],

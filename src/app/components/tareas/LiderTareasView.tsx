@@ -5,6 +5,7 @@ import {
 } from "@/hooks/useEventos"
 import { useServidoresMinisterio } from "@/hooks/useMinisterios"
 import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service"
+import { filterAndSortTareas } from "@/lib/taskUtils"
 import { useApp } from "@/app/store/AppContext"
 import { AnimatedCard } from "@/app/components/ui/AnimatedCard"
 import { Button } from "@/app/components/ui/button"
@@ -63,19 +64,10 @@ export function LiderTareasView() {
   const { data: evidencias = [] } = useTareaEvidencias(selectedTaskId ?? undefined)
   const { data: servidoresTarea = [] } = useServidoresMinisterio(task?.idMinisterio ?? 0)
 
-  const filteredTareas = useMemo(() => {
-    let r = [...tareas]
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      r = r.filter(t => t.titulo.toLowerCase().includes(q) || (t.descripcion ?? "").toLowerCase().includes(q))
-    }
-    if (dateFilter) r = r.filter(t => t.fechaLimite === dateFilter)
-    r.sort((a, b) => {
-      const diff = new Date(a.creadoEn).getTime() - new Date(b.creadoEn).getTime()
-      return sortOrder === "newest" ? -diff : diff
-    })
-    return r
-  }, [tareas, searchQuery, dateFilter, sortOrder])
+  const filteredTareas = useMemo(() =>
+    filterAndSortTareas(tareas, { searchQuery, dateFilter, sortOrder }),
+    [tareas, searchQuery, dateFilter, sortOrder]
+  )
 
   const tasksByStatus = (s: string) => filteredTareas.filter(t => t.estado === s)
   const enRevisionCount = tasksByStatus("en_revision").length

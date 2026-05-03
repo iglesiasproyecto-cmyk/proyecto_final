@@ -4,26 +4,29 @@ import { toast } from 'sonner'
 
 // Función auxiliar para emitir certificado automáticamente
 async function emitirCertificadoAutomatico(idUsuario: number, idCurso: number) {
-  // Verificar si ya tiene certificado
-  const { data: certificadoExistente } = await supabase
+  // Usar upsert para prevenir duplicados (requiere constraint UNIQUE en BD)
+  const { data, error } = await supabase
     .from('aula_certificado')
-    .select('id_aula_certificado')
-    .eq('id_usuario', idUsuario)
-    .eq('id_aula_curso', idCurso)
-    .single()
-
-  if (certificadoExistente) return // Ya tiene certificado
-
-  // Crear certificado (codigo_verificacion se genera automáticamente)
-  const { error } = await supabase
-    .from('aula_certificado')
-    .insert({
+    .upsert({
       id_usuario: idUsuario,
       id_aula_curso: idCurso,
       emitido_en: new Date().toISOString()
+    }, {
+      onConflict: 'id_usuario,id_aula_curso'
     })
 
-  if (!error) {
+  if (error) {
+    // Si hay error de duplicado, es porque ya existe (esperado)
+    if (error.code === '23505') {
+      console.log('Certificado ya existe para usuario-curso:', { idUsuario, idCurso })
+      return
+    }
+    console.error('Error creando certificado:', error)
+    return
+  }
+
+  // Solo mostrar toast si se creó un nuevo certificado
+  if (data && Array.isArray(data) && data.length > 0) {
     toast.success('¡Felicitaciones! Has completado el curso y recibido tu certificado.')
   }
 }
