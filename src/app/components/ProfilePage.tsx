@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useApp } from "../store/AppContext";
 import { useUpdateUsuario } from "@/hooks/useUsuarios";
+import { useCertificadosUsuario } from "@/hooks/useCertificados";
+import { useMiAvanceCurso } from "@/hooks/useAvance";
 import { supabase } from "@/lib/supabaseClient";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -9,7 +11,7 @@ import { Input } from "./ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, CheckCircle2, Loader2, AlertTriangle, Calendar } from "lucide-react";
+import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, CheckCircle2, Loader2, AlertTriangle, Calendar, Star, Award, TrendingUp } from "lucide-react";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -28,6 +30,8 @@ const roleGradients: Record<string, string> = {
 export function ProfilePage() {
   const { usuarioActual, logout, rolActual, iglesiaActual, setIglesiaActual, iglesiasDelUsuario } = useApp();
   const updateUsuarioMutation = useUpdateUsuario();
+  const { data: certificados = [] } = useCertificadosUsuario(usuarioActual?.idUsuario);
+  const { data: avanceCursos = [] } = useMiAvanceCurso(usuarioActual?.idUsuario);
 
   // Profile form state
   const [nombres, setNombres] = useState(usuarioActual?.nombres ?? "");
@@ -135,6 +139,9 @@ export function ProfilePage() {
               <TabsTrigger value="iglesias" className="w-full justify-start rounded-2xl px-6 py-4 text-[12px] font-black tracking-widest uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-900/20 transition-all duration-300">
                 <Building2 className="w-4 h-4 mr-3" /> Mi Iglesia
               </TabsTrigger>
+              <TabsTrigger value="logros" className="w-full justify-start rounded-2xl px-6 py-4 text-[12px] font-black tracking-widest uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-900/20 transition-all duration-300">
+                <Star className="w-4 h-4 mr-3" /> Logros
+              </TabsTrigger>
               <div className="pt-4 mt-2 border-t border-white/5 px-2">
                 <Button variant="ghost" className="w-full justify-start h-14 rounded-2xl px-4 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 font-black text-[12px] uppercase tracking-widest transition-all" onClick={() => logout()}>
                   <EyeOff className="w-4 h-4 mr-3" /> Finalizar Sesión
@@ -188,14 +195,11 @@ export function ProfilePage() {
                     <Input value={telefono} onChange={(e) => setTelefono(e.target.value)} className="bg-white/5 border-white/10 h-14 rounded-2xl text-[14px] px-5 focus-visible:ring-[#4682b4]/30 font-bold" placeholder="+502 5555-0000" />
                   </div>
 
-                  <div className="space-y-4">
-                    <label className="text-[12px] font-black uppercase tracking-[0.2em] text-[#4682b4] px-1 flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-[#4682b4]/10 flex items-center justify-center flex-shrink-0 border border-[#4682b4]/20">
-                        <Calendar className="w-6 h-6 text-[#4682b4]" />
-                      </div>
-                      <span>Fecha de Nacimiento</span>
+                  <div className="space-y-3">
+                    <label className="text-[11px] font-black uppercase tracking-[0.2em] text-[#4682b4] px-1 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" /> Fecha de Nacimiento
                     </label>
-                    <Input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)} className="bg-gradient-to-r from-white/10 to-white/5 border-2 border-white/20 hover:border-white/30 h-14 rounded-2xl text-[15px] px-5 focus-visible:ring-[#4682b4]/40 focus-visible:ring-2 focus-visible:border-[#4682b4] font-bold transition-all duration-300" />
+                    <Input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)} className="bg-white/5 border-white/10 h-14 rounded-2xl text-[14px] px-5 focus-visible:ring-[#4682b4]/30 font-bold" />
                   </div>
 
                   <div className="pt-8 border-t border-white/10">
@@ -326,6 +330,133 @@ export function ProfilePage() {
                     </p>
                   </div>
                 </div>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="logros" className="mt-0">
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                {/* Certificados */}
+                <div className="p-10 rounded-[40px] bg-card/40 backdrop-blur-3xl border border-white/20 dark:border-white/10 shadow-2xl space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#4682b4]/5 rounded-full blur-[80px] pointer-events-none" />
+                  
+                  <div className="flex items-center gap-4 mb-2 pb-6 border-b border-white/10">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center shadow-lg text-white"><Award className="w-6 h-6" /></div>
+                    <div>
+                      <h3 className="text-xl font-black tracking-tight text-foreground/90 uppercase italic">Certificados Obtenidos</h3>
+                      <p className="text-[11px] font-bold text-muted-foreground tracking-widest uppercase">Logros y reconocimientos</p>
+                    </div>
+                  </div>
+
+                  {certificados && certificados.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {certificados.map((cert: any) => (
+                        <div key={cert.id_aula_certificado} className="p-6 rounded-3xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 hover:border-yellow-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-yellow-500/20">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center flex-shrink-0 shadow-lg">
+                              <Star className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-black text-[14px] uppercase tracking-tight text-foreground line-clamp-2">{cert.curso?.titulo || 'Curso sin nombre'}</h4>
+                              <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {new Date(cert.emitido_en).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Award className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-muted-foreground">No hay certificados aún. Completa un curso al 100% para obtener tu certificado.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cursos en Progreso */}
+                <div className="p-10 rounded-[40px] bg-card/40 backdrop-blur-3xl border border-white/20 dark:border-white/10 shadow-2xl space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#4682b4]/5 rounded-full blur-[80px] pointer-events-none" />
+                  
+                  <div className="flex items-center gap-4 mb-2 pb-6 border-b border-white/10">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg text-white"><TrendingUp className="w-6 h-6" /></div>
+                    <div>
+                      <h3 className="text-xl font-black tracking-tight text-foreground/90 uppercase italic">Progreso en Cursos</h3>
+                      <p className="text-[11px] font-bold text-muted-foreground tracking-widest uppercase">Avance de aprendizaje actual</p>
+                    </div>
+                  </div>
+
+                  {avanceCursos && avanceCursos.length > 0 ? (
+                    <div className="space-y-4">
+                      {avanceCursos.map((avance: any) => {
+                        const porcentajeModulos = avance.modulosPublicados > 0 
+                          ? Math.round((avance.modulosCompletados / avance.modulosPublicados) * 100)
+                          : 0;
+                        const completado = porcentajeModulos === 100;
+
+                        return (
+                          <div key={avance.idDetalleProcesoCurso} className="group p-6 rounded-3xl bg-gradient-to-r from-white/5 to-white/[0.02] border border-white/10 hover:border-[#4682b4]/40 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/10">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-3 flex-1">
+                                {completado && <Star className="w-5 h-5 text-yellow-400 animate-pulse" />}
+                                <span className="font-black text-[14px] uppercase tracking-tight text-foreground">Módulo {avance.modulosCompletados}/{avance.modulosPublicados}</span>
+                              </div>
+                              <Badge className={`${completado ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white' : 'bg-[#4682b4]/20 text-[#4682b4]'} font-black`}>
+                                {porcentajeModulos}%
+                              </Badge>
+                            </div>
+                            
+                            <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden border border-white/5">
+                              <motion.div 
+                                className={`h-full rounded-full transition-all duration-1000 ${completado ? 'bg-gradient-to-r from-yellow-400 to-orange-400' : 'bg-gradient-to-r from-[#709dbd] to-[#4682b4]'}`}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${porcentajeModulos}%` }}
+                              />
+                            </div>
+
+                            {completado && (
+                              <div className="mt-4 p-3 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 flex items-center gap-2">
+                                <Star className="w-4 h-4 text-yellow-500" />
+                                <span className="text-[11px] font-black uppercase tracking-widest text-yellow-600">¡Curso Completado!</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <TrendingUp className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-muted-foreground">No estás inscrito en cursos aún.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Resumen Estadístico */}
+                {(certificados.length > 0 || avanceCursos.length > 0) && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-6 rounded-3xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20">
+                      <p className="text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-2">Certificados</p>
+                      <p className="text-3xl font-black text-blue-600">{certificados.length}</p>
+                    </div>
+                    <div className="p-6 rounded-3xl bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20">
+                      <p className="text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-2">Cursos Activos</p>
+                      <p className="text-3xl font-black text-purple-600">{avanceCursos.length}</p>
+                    </div>
+                    <div className="p-6 rounded-3xl bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20">
+                      <p className="text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-2">Promedio Progreso</p>
+                      <p className="text-3xl font-black text-green-600">
+                        {avanceCursos.length > 0 
+                          ? Math.round(
+                              avanceCursos.reduce((sum: number, c: any) => sum + (c.modulosPublicados > 0 ? (c.modulosCompletados / c.modulosPublicados) * 100 : 0), 0) / 
+                              avanceCursos.length
+                            )
+                          : 0
+                        }%
+                      </p>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </TabsContent>
           </div>
