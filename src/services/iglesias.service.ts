@@ -291,11 +291,16 @@ export async function getSedes(idIglesia?: number): Promise<Sede[]> {
 // ── Iglesia mutations ──
 
 export async function createIglesia(
-  data: { nombre: string; fechaFundacion: string | null; idCiudad: number; estado: Iglesia['estado'] }
+  data: { nombre: string; fechaFundacion: string | null; idCiudad: number | null; estado: Iglesia['estado'] }
 ): Promise<void> {
   const { error } = await supabase
     .from('iglesia')
-    .insert([{ nombre: data.nombre, fecha_fundacion: data.fechaFundacion, id_ciudad: data.idCiudad, estado: data.estado }])
+    .insert([{
+      nombre: data.nombre,
+      fecha_fundacion: data.fechaFundacion || null,
+      id_ciudad: data.idCiudad,
+      estado: data.estado
+    }])
   if (error) throw error
 }
 
@@ -307,7 +312,9 @@ export async function updateIglesia(
     .from('iglesia')
     .update({
       ...(data.nombre !== undefined && { nombre: data.nombre }),
-      ...(data.fechaFundacion !== undefined && { fecha_fundacion: data.fechaFundacion }),
+      ...(data.fechaFundacion !== undefined && {
+        fecha_fundacion: data.fechaFundacion || null
+      }),
     })
     .eq('id_iglesia', id)
     .select()

@@ -11,9 +11,9 @@ export function useEvaluacionDetalleModulo(idModulo: number | null | undefined) 
       if (!idModulo) return []
 
       const { data, error } = await supabase
-        .from('evaluacion_detalle')
+        .from('aula_evaluacion')
         .select('*')
-        .eq('id_modulo', idModulo)
+        .eq('id_aula_modulo', idModulo)
         .order('creado_en', { ascending: true })
 
       if (error) throw error
@@ -36,10 +36,9 @@ export function useIntentosEvaluacion(vars: {
       if (!vars.idModulo || !vars.idDetalleProcesoCurso || !vars.idUsuario) return []
 
       const { data, error } = await supabase
-        .from('intento_evaluacion')
+        .from('aula_intento_evaluacion')
         .select('*')
-        .eq('id_modulo', vars.idModulo)
-        .eq('id_detalle_proceso_curso', vars.idDetalleProcesoCurso)
+        .eq('id_aula_modulo', vars.idModulo)
         .eq('id_usuario', vars.idUsuario)
         .order('creado_en', { ascending: false })
 
@@ -55,9 +54,9 @@ export function useIntentosEvaluacion(vars: {
 export function useCrearIntentoEvaluacion() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (intento: Tables<'intento_evaluacion'>['Insert']) => {
+    mutationFn: async (intento: Tables<'aula_intento_evaluacion'>['Insert']) => {
       const { data, error } = await supabase
-        .from('intento_evaluacion')
+        .from('aula_intento_evaluacion')
         .insert(intento)
         .select()
         .single()
@@ -66,8 +65,7 @@ export function useCrearIntentoEvaluacion() {
       return data
     },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['intentos-evaluacion', vars.id_modulo, vars.id_detalle_proceso_curso, vars.id_usuario] })
-      qc.invalidateQueries({ queryKey: ['avance-detalle', vars.id_detalle_proceso_curso] })
+      qc.invalidateQueries({ queryKey: ['intentos-evaluacion', vars.id_aula_modulo, vars.id_usuario] })
     },
   })
 }
@@ -78,21 +76,19 @@ export function useActualizarIntentoEvaluacion() {
   return useMutation({
     mutationFn: async (vars: {
       idIntento: number
-      intento: Tables<'intento_evaluacion'>['Update']
+      intento: Tables<'aula_intento_evaluacion'>['Update']
     }) => {
       const { data, error } = await supabase
-        .from('intento_evaluacion')
+        .from('aula_intento_evaluacion')
         .update(vars.intento)
-        .eq('id_intento', vars.idIntento)
+        .eq('id', vars.idIntento)
         .select()
         .single()
 
       if (error) throw error
 
-      // Verificar si el módulo está completo después de aprobar la evaluación
-      if (vars.intento.estado === 'aprobado') {
-        await verificarYMarcarModuloCompleto(vars.intento.id_detalle_proceso_curso!, vars.intento.id_usuario!)
-      }
+      // TODO: Implementar lógica de completado de módulo con aula_inscripcion
+      // La lógica anterior usaba detalle_proceso_curso que ya no existe
 
       return data
     },
@@ -108,9 +104,8 @@ export function useActualizarIntentoEvaluacion() {
 async function verificarYMarcarModuloCompleto(idDetalleProcesoCurso: number, idUsuario: number) {
   // Obtener el módulo de la evaluación
   const { data: intento } = await supabase
-    .from('intento_evaluacion')
-    .select('id_modulo')
-    .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
+    .from('aula_intento_evaluacion')
+    .select('id_aula_modulo')
     .eq('id_usuario', idUsuario)
     .single()
 
@@ -120,70 +115,52 @@ async function verificarYMarcarModuloCompleto(idDetalleProcesoCurso: number, idU
 
   // Contar elementos totales del módulo
   const { data: actividades } = await supabase
-    .from('actividad')
-    .select('id_actividad')
-    .eq('id_modulo', idModulo)
+    .from('aula_actividad')
+    .select('id')
+    .eq('id_aula_modulo', idModulo)
 
   const { data: evaluaciones } = await supabase
-    .from('evaluacion_detalle')
-    .select('id_evaluacion_detalle')
-    .eq('id_modulo', idModulo)
+    .from('aula_evaluacion')
+    .select('id')
+    .eq('id_aula_modulo', idModulo)
 
   const totalElementos = (actividades?.length || 0) + (evaluaciones?.length || 0)
 
   // Contar elementos completados
   const { data: actividadesCompletadas } = await supabase
-    .from('progreso_actividad')
-    .select('id_progreso')
-    .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
-    .in('id_actividad', actividades?.map(a => a.id_actividad) || [])
+    .from('aula_progreso_actividad')
+    .select('id')
+    .eq('id_usuario', idUsuario)
+    .in('id_aula_actividad', actividades?.map(a => a.id) || [])
     .not('completada_en', 'is', null)
 
   const { data: evaluacionesAprobadas } = await supabase
-    .from('intento_evaluacion')
-    .select('id_intento')
-    .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
-    .eq('id_modulo', idModulo)
+    .from('aula_intento_evaluacion')
+    .select('id')
+    .eq('id_usuario', idUsuario)
+    .eq('id_aula_modulo', idModulo)
     .eq('estado', 'aprobado')
 
   const elementosCompletados = (actividadesCompletadas?.length || 0) + (evaluacionesAprobadas?.length || 0)
 
-  // Si está completo, marcar el módulo
-  if (elementosCompletados === totalElementos && totalElementos > 0) {
-    const { data: moduloExistente } = await supabase
-      .from('avance_modulo')
-      .select('id_avance')
-      .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
-      .eq('id_modulo', idModulo)
-      .single()
-
-    if (!moduloExistente) {
-      await supabase
-        .from('avance_modulo')
-        .insert({
-          id_detalle_proceso_curso: idDetalleProcesoCurso,
-          id_modulo: idModulo,
-          id_usuario: idUsuario,
-          completado_en: new Date().toISOString()
-        })
-    }
-  }
+  // TODO: Implementar lógica de completado de módulo en el nuevo esquema
+  // La tabla 'avance_modulo' ya no existe en el esquema nuevo
 }
 
 // Hook para crear pregunta de evaluación
 export function useCrearPreguntaEvaluacion() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (pregunta: Tables<'evaluacion_detalle'>['Insert']) => {
+    mutationFn: async (pregunta: Tables<'aula_evaluacion'>['Insert']) => {
       // Obtener información del módulo y curso para las notificaciones
       const { data: modulo } = await supabase
-        .from('modulo')
-        .select('id_curso, titulo')
-        .eq('id_modulo', pregunta.id_modulo)
+        .from('aula_modulo')
+        .select('id_aula_curso, titulo')
+        .eq('id_aula_modulo', pregunta.id_aula_modulo)
         .single()
 
       const { data, error } = await supabase
-        .from('evaluacion_detalle')
+        .from('aula_evaluacion')
         .insert(pregunta)
         .select()
         .single()
@@ -193,17 +170,17 @@ export function useCrearPreguntaEvaluacion() {
       // Enviar notificación de nueva evaluación (solo una vez por módulo)
       if (modulo) {
         const { data: curso } = await supabase
-          .from('curso')
+          .from('aula_curso')
           .select('estado')
-          .eq('id_curso', modulo.id_curso)
+          .eq('id_aula_curso', modulo.id_aula_curso)
           .single()
 
         if (curso?.estado === 'activo') {
           // Verificar si ya existe alguna evaluación en este módulo
           const { data: evaluacionesExistentes } = await supabase
-            .from('evaluacion_detalle')
-            .select('id_evaluacion_detalle')
-            .eq('id_modulo', pregunta.id_modulo)
+            .from('aula_evaluacion')
+            .select('id')
+            .eq('id_aula_modulo', pregunta.id_aula_modulo)
 
           // Solo enviar notificación si es la primera pregunta de evaluación
           if (!evaluacionesExistentes || evaluacionesExistentes.length === 0) {
@@ -230,20 +207,20 @@ export function useActualizarPreguntaEvaluacion() {
   return useMutation({
     mutationFn: async (vars: {
       idPregunta: number
-      pregunta: Tables<'evaluacion_detalle'>['Update']
+      pregunta: Tables<'aula_evaluacion'>['Update']
     }) => {
       const { data, error } = await supabase
-        .from('evaluacion_detalle')
+        .from('aula_evaluacion')
         .update(vars.pregunta)
-        .eq('id_evaluacion_detalle', vars.idPregunta)
+        .eq('id', vars.idPregunta)
         .select()
         .single()
 
       if (error) throw error
       return data
     },
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['evaluacion-detalle-modulo'] })
+    onSuccess: () => {
+      // TODO: Invalidar queries relacionadas con progreso en aula_inscripcion
     },
   })
 }
@@ -254,9 +231,9 @@ export function useEliminarPreguntaEvaluacion() {
   return useMutation({
     mutationFn: async (idPregunta: number) => {
       const { error } = await supabase
-        .from('evaluacion_detalle')
+        .from('aula_evaluacion')
         .delete()
-        .eq('id_evaluacion_detalle', idPregunta)
+        .eq('id', idPregunta)
 
       if (error) throw error
     },

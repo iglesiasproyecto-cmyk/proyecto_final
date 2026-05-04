@@ -1,5 +1,6 @@
 import { useAuth } from '@/app/store/AppContext'
 import { supabase } from '@/lib/supabaseClient'
+import { getInternalUserId } from '@/lib/userHelpers'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'
@@ -10,16 +11,23 @@ import { toast } from 'sonner'
 export function NotificacionesAula() {
   const { user } = useAuth()
   const qc = useQueryClient()
+  const [internalUserId, setInternalUserId] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (user?.id) {
+      getInternalUserId(user.id).then(setInternalUserId)
+    }
+  }, [user?.id])
 
   const { data: notificaciones, isLoading } = useQuery({
-    queryKey: ['notificaciones-aula', user?.id],
+    queryKey: ['notificaciones-aula', internalUserId],
     queryFn: async () => {
-      if (!user?.id) return []
+      if (!internalUserId) return []
 
       const { data, error } = await supabase
         .from('notificacion')
         .select('*')
-        .eq('id_usuario', user.id)
+        .eq('id_usuario', internalUserId)
         .eq('tipo', 'curso')
         .order('creado_en', { ascending: false })
         .limit(10)
@@ -27,7 +35,7 @@ export function NotificacionesAula() {
       if (error) throw error
       return data
     },
-    enabled: !!user?.id,
+    enabled: !!internalUserId,
   })
 
   const marcarComoLeida = useMutation({
@@ -55,7 +63,7 @@ export function NotificacionesAula() {
           leida: true,
           fecha_lectura: new Date().toISOString()
         })
-        .eq('id_usuario', user!.id)
+        .eq('id_usuario', internalUserId!)
         .eq('tipo', 'curso')
         .eq('leida', false)
 
