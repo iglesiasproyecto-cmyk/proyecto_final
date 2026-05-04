@@ -44,12 +44,12 @@ export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInter
       if (!user?.id) return
 
       const { data } = await supabase
-        .from('detalle_proceso_curso')
-        .select('id_detalle_proceso_curso')
+        .from('aula_progreso_actividad')
+        .select('id')
         .eq('id_usuario', user.id)
         .single()
 
-      setDetalleProcesoCurso(data?.id_detalle_proceso_curso || null)
+      setDetalleProcesoCurso(data?.id || null)
     }
 
     getDetalleProceso()

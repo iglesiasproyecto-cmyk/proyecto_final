@@ -66,12 +66,12 @@ export async function crearNotificacionNuevoContenido(
   try {
     // Obtener todos los usuarios inscritos en el curso
     const { data: usuariosInscritos, error } = await supabase
-      .from('detalle_proceso_curso')
+      .from('aula_inscripcion')
       .select(`
         id_usuario,
         usuario:usuario(correo, nombres, apellidos)
       `)
-      .eq('estado', 'inscrito')
+      .eq('activo', true)
       .eq('proceso_asignado_curso.curso.id_curso', idCurso)
 
     if (error) throw error

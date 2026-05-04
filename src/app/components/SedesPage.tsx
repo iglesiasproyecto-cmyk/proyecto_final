@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSedesEnriquecidas, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado, useDeleteSede, useSedePastores, usePastoresEnriquecidos, usePastoresPorSede, useCreateSedePastor, useCreatePastor } from "@/hooks/useIglesias";
 import { useApp } from "@/app/store/AppContext";
-import { useDepartamentosEnhanced, useCiudadesEnhanced } from "@/hooks/useGeografiaEnhanced";
+import { usePaisesEnhanced, useDepartamentosEnhanced, useCiudadesEnhanced } from "@/hooks/useGeografiaEnhanced";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -21,7 +21,7 @@ export function SedesPage() {
   const [dialogPastor, setDialogPastor] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const [selectedSede, setSelectedSede] = useState<number | null>(null);
-  const [form, setForm] = useState({ nombre: "", direccion: "", idCiudad: 0, idDepartamento: 0, idIglesia: 0, estado: "activa" as "activa" | "inactiva" | "en_construccion" });
+  const [form, setForm] = useState({ nombre: "", direccion: "", idCiudad: 0, idDepartamento: 0, idPais: 0, idIglesia: 0, estado: "activa" as "activa" | "inactiva" | "en_construccion" });
   const [pastorForm, setPastorForm] = useState({
     idSede: 0,
     idPastor: 0,
@@ -38,7 +38,8 @@ export function SedesPage() {
     : iglesiaActual?.id;
   const { data: sedes = [], isLoading } = useSedesEnriquecidas(queryIglesiaId);
   const { data: iglesias = [] } = useIglesias();
-  const { data: departamentos = [] } = useDepartamentosEnhanced();
+  const { data: paises = [] } = usePaisesEnhanced();
+  const { data: departamentos = [] } = useDepartamentosEnhanced(form.idPais || undefined);
   const departamentoSeleccionado = departamentos.find(d => d.idDepartamentoGeo === form.idDepartamento);
   const { data: ciudades = [] } = useCiudadesEnhanced(form.idDepartamento || undefined, departamentoSeleccionado?.nombre);
   const { data: sedePastores = [] } = useSedePastores();
@@ -62,20 +63,20 @@ export function SedesPage() {
 
   const openAdd = () => {
     const defaultIglesiaId = iglesiaActual?.id ?? (iglesias.length === 1 ? iglesias[0].idIglesia : 0);
-    setForm({ nombre: "", direccion: "", idCiudad: 0, idDepartamento: 0, idIglesia: defaultIglesiaId, estado: "activa" });
+    setForm({ nombre: "", direccion: "", idCiudad: 0, idDepartamento: 0, idPais: 0, idIglesia: defaultIglesiaId, estado: "activa" });
     setEditing(null);
     setDialog(true);
   };
   
   const openEdit = (id: number) => {
     const s = sedes.find(x => x.idSede === id); if (!s) return;
-    setForm({ nombre: s.nombre, direccion: s.direccion || "", idCiudad: s.idCiudad || 0, idDepartamento: s.idDepartamentoGeo || 0, idIglesia: s.idIglesia, estado: s.estado });
+    setForm({ nombre: s.nombre, direccion: s.direccion || "", idCiudad: s.idCiudad || 0, idDepartamento: s.idDepartamentoGeo || 0, idPais: s.idPais || 0, idIglesia: s.idIglesia, estado: s.estado });
     setEditing(id); setDialog(true);
   };
 
   const handleSubmit = () => {
-    if (!form.nombre.trim() || !form.idCiudad || !form.idIglesia) {
-      toast.error("Completa nombre, iglesia y ciudad para guardar la sede");
+    if (!form.nombre.trim() || !form.idCiudad || !form.idIglesia || !form.idPais || !form.idDepartamento) {
+      toast.error("Completa nombre, iglesia, país, departamento y ciudad para guardar la sede");
       return;
     }
     if (editing) updateSedeMutation.mutate(
@@ -504,9 +505,16 @@ export function SedesPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Departamento <span className="text-destructive">*</span></label>
-                <Select value={form.idDepartamento ? String(form.idDepartamento) : ""} onValueChange={v => setForm(f => ({ ...f, idDepartamento: Number(v), idCiudad: 0 }))}>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">País <span className="text-destructive">*</span></label>
+                <Select value={form.idPais ? String(form.idPais) : ""} onValueChange={v => setForm(f => ({ ...f, idPais: Number(v), idDepartamento: 0, idCiudad: 0 }))}>
                   <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>{paises.map(p => <SelectItem key={p.idPais} value={String(p.idPais)}>{p.nombre}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Departamento <span className="text-destructive">*</span></label>
+                <Select value={form.idDepartamento ? String(form.idDepartamento) : ""} onValueChange={v => setForm(f => ({ ...f, idDepartamento: Number(v), idCiudad: 0 }))} disabled={!form.idPais}>
+                  <SelectTrigger className={`bg-input-background focus:ring-[#4682b4]/30 ${!form.idPais ? "opacity-50 cursor-not-allowed" : ""}`}><SelectValue placeholder={form.idPais ? "Seleccionar" : "Elige país"} /></SelectTrigger>
                   <SelectContent>{departamentos.map(d => <SelectItem key={d.idDepartamentoGeo} value={String(d.idDepartamentoGeo)}>{d.nombre}</SelectItem>)}</SelectContent>
                 </Select>
               </div>

@@ -150,25 +150,39 @@ export async function assignRol(data: {
   idRol: number
   idIglesia: number
   idSede?: number | null
-}): Promise<void> {
-  const { data: result, error } = await supabase
-    .from('usuario_rol')
-    .upsert({
-      id_usuario: data.idUsuario,
-      id_rol: data.idRol,
-      id_iglesia: data.idIglesia,
-      id_sede: data.idSede ?? null,
-      fecha_inicio: new Date().toISOString().split('T')[0],
-      fecha_fin: null,
-    }, {
-      onConflict: 'id_usuario,id_rol,id_iglesia,id_sede'
-    })
+}): Promise<{ success: boolean; message: string; id_usuario_rol?: number }> {
+  // Usar RPC SECURITY DEFINER para asignar roles con validaciones de permisos
+  const { data: result, error } = await supabase.rpc('asignar_rol_usuario', {
+    p_id_usuario: data.idUsuario,
+    p_id_rol: data.idRol,
+    p_id_iglesia: data.idIglesia,
+    p_id_sede: data.idSede ?? null,
+  })
 
   if (error) {
-    if (error.code === '23505') {
-      throw new Error('Este usuario ya tiene asignado este rol en la misma iglesia y sede')
+    console.error('Error assigning role via RPC:', error)
+    throw new Error(error.message || 'Error al asignar el rol')
+  }
+
+  // La RPC retorna JSONB con estructura { success, message, id_usuario_rol }
+  if (result && typeof result === 'object' && 'success' in result) {
+    const rpcResult = result as {
+      success: boolean
+      message: string
+      id_usuario_rol?: number
     }
-    throw error
+
+    if (!rpcResult.success) {
+      throw new Error(rpcResult.message)
+    }
+
+    return rpcResult
+  }
+
+  // Fallback por si la RPC no retorna el formato esperado
+  return {
+    success: true,
+    message: 'Rol asignado correctamente',
   }
 }
 
@@ -190,60 +204,26 @@ export async function inviteUser(data: {
   try {
     console.log('[inviteUser] Starting invitation process for:', data.correo)
 
-    // Paso 1: Verificar permisos usando función RPC
-    const { data: permissionCheck, error: permError } = await supabase.rpc('invite_user_rpc', {
-      p_correo: data.correo,
-      p_nombres: data.nombres,
-      p_apellidos: data.apellidos,
-      p_id_iglesia: data.idIglesia,
-      p_id_rol: data.idRol,
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
+
+    if (!token) {
+      throw new Error('No hay sesión activa')
+    }
+
+    const { data: result, error } = await supabase.functions.invoke('invite-user', {
+      body: data,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
 
-    if (permError) {
-      console.error('[inviteUser] Permission check error:', permError)
-      throw new Error('Error al verificar permisos')
-    }
+    if (error) throw error
+    if (!result?.success) throw new Error(result?.message ?? 'No se pudo invitar usuario')
 
-    // Si la función indica que necesita invitación desde frontend
-    if (permissionCheck?.needsFrontendInvite) {
-      console.log('[inviteUser] User does not exist, sending invitation from frontend')
+    console.log('[inviteUser] Invitation result:', result)
 
-      // Enviar invitación usando Supabase Auth desde el cliente
-      const { data: inviteData, error: inviteError } = await supabase.auth.signInWithOtp({
-        email: data.correo,
-        options: {
-          data: {
-            nombres: data.nombres,
-            apellidos: data.apellidos,
-          },
-        }
-      })
-
-      if (inviteError) {
-        console.error('[inviteUser] Invitation error:', inviteError)
-        throw new Error('Error al enviar invitación: ' + inviteError.message)
-      }
-
-      console.log('[inviteUser] Invitation sent via OTP')
-
-      // Nota: En un sistema real, aquí usarías inviteUserByEmail con permisos de admin
-      // Pero para desarrollo, usamos signInWithOtp que envía un código
-      return {
-        success: true,
-        message: 'Invitación enviada correctamente. El usuario recibirá un código de verificación.',
-      }
-    }
-
-    // Si la función RPC manejó todo (usuario ya existía)
-    if (permissionCheck?.success) {
-      return {
-        success: true,
-        message: permissionCheck.message || 'Usuario procesado correctamente.',
-      }
-    }
-
-    // Si hay error de permisos
-    throw new Error(permissionCheck?.message || 'Error de permisos')
+    return result
 
   } catch (error) {
     console.error('[inviteUser] Error:', error)

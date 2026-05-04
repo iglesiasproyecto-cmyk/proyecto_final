@@ -10,10 +10,10 @@ export function useCertificadosUsuario(idUsuario: number | null | undefined) {
       if (!idUsuario) return []
 
       const { data, error } = await supabase
-        .from('certificado')
+        .from('aula_certificado')
         .select(`
           *,
-          curso:curso(nombre, descripcion)
+          aula_curso:aula_curso(titulo, descripcion)
         `)
         .eq('id_usuario', idUsuario)
         .order('fecha_emision', { ascending: false })
@@ -37,10 +37,10 @@ export function useTieneCertificado(vars: {
       if (!vars.idUsuario || !vars.idCurso) return false
 
       const { data, error } = await supabase
-        .from('certificado')
-        .select('id_certificado')
+        .from('aula_certificado')
+        .select('id')
         .eq('id_usuario', vars.idUsuario)
-        .eq('id_curso', vars.idCurso)
+        .eq('id_aula_curso', vars.idCurso)
         .single()
 
       if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows returned
@@ -55,9 +55,9 @@ export function useTieneCertificado(vars: {
 export function useCrearCertificado() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (certificado: Tables<'certificado'>['Insert']) => {
+    mutationFn: async (certificado: Tables<'aula_certificado'>['Insert']) => {
       const { data, error } = await supabase
-        .from('certificado')
+        .from('aula_certificado')
         .insert(certificado)
         .select()
         .single()
@@ -80,12 +80,12 @@ export function useCertificadosCurso(idCurso: number | null | undefined) {
       if (!idCurso) return []
 
       const { data, error } = await supabase
-        .from('certificado')
+        .from('aula_certificado')
         .select(`
           *,
           usuario:usuario(nombres, apellidos, correo)
         `)
-        .eq('id_curso', idCurso)
+        .eq('id_aula_curso', idCurso)
         .order('fecha_emision', { ascending: false })
 
       if (error) throw error
