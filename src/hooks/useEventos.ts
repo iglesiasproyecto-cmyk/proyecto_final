@@ -3,8 +3,8 @@ import { getAulaCursoCompleto } from '@/services/aula.service'
 import {
   getTiposEvento, getEventos, getTareas, getTareasAsignadas,
   getEventosEnriquecidos, getTareasEnriquecidas,
-  createTipoEvento, updateTipoEvento, deleteTipoEvento,
-  createEvento, createTarea, updateTareaEstado,
+  createTipoEvento, createEvento,
+  createTarea, updateTareaEstado,
   updateEvento, deleteEvento, updateTarea, deleteTarea,
   createTareaAsignada, updateTareaAsignada, deleteTareaAsignada,
   getTareaEvidencias, createTareaEvidencia,
@@ -41,7 +41,7 @@ export function useCreateTipoEvento() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ nombre, descripcion }: { nombre: string; descripcion: string | null }) =>
-      createTipoEvento(nombre, descripcion),
+      createTipoEvento({ nombre, descripcion }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tipos-evento'] }),
   })
 }

@@ -235,7 +235,6 @@ Deno.serve(async (req) => {
               nombres: fallbackNombres,
               apellidos: fallbackApellidos,
               correo: normalizedEmail,
-              contrasena_hash: '',
               activo: true,
             })
             .select('id_usuario')

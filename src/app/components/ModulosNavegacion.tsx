@@ -56,7 +56,7 @@ export function ModulosNavegacion({ idCurso }: ModulosNavegacionProps) {
 
   const getEstadoColor = (estadoAcceso: string) => {
     switch (estadoAcceso) {
-      case 'completado': return 'border-green-200 bg-green-50'
+      case 'completado': return 'border-green-200 bg-green-50 cursor-pointer hover:bg-green-100'
       case 'disponible': return 'border-blue-200 bg-blue-50 cursor-pointer hover:bg-blue-100'
       case 'bloqueado':  return 'border-gray-200 bg-gray-50 opacity-60'
       default: return ''
@@ -72,7 +72,7 @@ export function ModulosNavegacion({ idCurso }: ModulosNavegacionProps) {
           <div key={modulo.idModulo}>
             <Card
               className={`transition-all ${getEstadoColor(modulo.estadoAcceso)} ${
-                modulo.estadoAcceso === 'disponible' ? 'hover:shadow-md' : ''
+                modulo.estadoAcceso === 'disponible' || modulo.estadoAcceso === 'completado' ? 'hover:shadow-md' : ''
               }`}
             >
               <CardHeader className="pb-3">
@@ -91,7 +91,7 @@ export function ModulosNavegacion({ idCurso }: ModulosNavegacionProps) {
                 </div>
               </CardHeader>
 
-              {modulo.estadoAcceso === 'disponible' && (
+              {(modulo.estadoAcceso === 'disponible' || modulo.estadoAcceso === 'completado') && (
                 <CardContent className="pt-0">
                   <Button
                     variant="outline"

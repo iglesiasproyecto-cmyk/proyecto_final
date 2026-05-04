@@ -1,6 +1,8 @@
 import { useAuth } from '@/app/store/AppContext'
 import { supabase } from '@/lib/supabaseClient'
+import { getInternalUserId } from '@/lib/userHelpers'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
@@ -10,24 +12,36 @@ import { toast } from 'sonner'
 export function NotificacionesAula() {
   const { user } = useAuth()
   const qc = useQueryClient()
+  const [internalUserId, setInternalUserId] = useState<number | null>(null)
+
+  // Get internal user ID
+  useEffect(() => {
+    const getUserId = async () => {
+      if (user?.id) {
+        const id = await getInternalUserId(user.id)
+        setInternalUserId(id)
+      }
+    }
+    getUserId()
+  }, [user?.id])
 
   const { data: notificaciones, isLoading } = useQuery({
-    queryKey: ['notificaciones-aula', user?.id],
+    queryKey: ['notificaciones-aula', internalUserId],
     queryFn: async () => {
-      if (!user?.id) return []
+      if (!internalUserId) return []
 
       const { data, error } = await supabase
         .from('notificacion')
         .select('*')
-        .eq('id_usuario', user.id)
-        .eq('tipo', 'curso')
+        .eq('id_usuario', internalUserId)
+        .or('tipo.eq.curso,tipo.eq.tarea,tipo.eq.evento') // Include aula-related notification types
         .order('creado_en', { ascending: false })
         .limit(10)
 
       if (error) throw error
       return data
     },
-    enabled: !!user?.id,
+    enabled: !!internalUserId,
   })
 
   const marcarComoLeida = useMutation({
@@ -49,14 +63,16 @@ export function NotificacionesAula() {
 
   const marcarTodasComoLeidas = useMutation({
     mutationFn: async () => {
+      if (!internalUserId) throw new Error('Usuario no identificado')
+
       const { error } = await supabase
         .from('notificacion')
         .update({
           leida: true,
           fecha_lectura: new Date().toISOString()
         })
-        .eq('id_usuario', user!.id)
-        .eq('tipo', 'curso')
+        .eq('id_usuario', internalUserId)
+        .or('tipo.eq.curso,tipo.eq.tarea,tipo.eq.evento')
         .eq('leida', false)
 
       if (error) throw error
@@ -64,7 +80,8 @@ export function NotificacionesAula() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notificaciones-aula'] })
       toast.success('Todas las notificaciones marcadas como leídas')
-    }
+    },
+    enabled: !!internalUserId,
   })
 
   const notificacionesNoLeidas = notificaciones?.filter(n => !n.leida) || []
