@@ -125,7 +125,6 @@ export interface Usuario {
   nombres: string
   apellidos: string
   correo: string
-  contrasenaHash: string
   telefono: string | null
   fechaNacimiento: string | null
   activo: boolean

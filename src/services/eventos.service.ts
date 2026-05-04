@@ -77,12 +77,17 @@ function mapTareaEvidencia(r: TareaEvidenciaRow): TareaEvidencia {
   }
 }
 
+// NOTE: tipo_evento table doesn't have 'activo' column - access controlled by RLS policies
 export async function getTiposEvento(): Promise<TipoEvento[]> {
-  const { data, error } = await supabase.from('tipo_evento').select('*').order('nombre')
+  const { data, error } = await supabase
+    .from('tipo_evento')
+    .select('*')
+    .order('nombre', { ascending: true })
   if (error) throw error
   return data.map(mapTipoEvento)
 }
 
+// NOTE: evento table uses 'estado' column, not 'activo' - access controlled by RLS policies
 export async function getEventos(idIglesia?: number): Promise<Evento[]> {
   let q = supabase.from('evento').select('*').order('fecha_inicio', { ascending: false })
   if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
@@ -115,39 +120,26 @@ export async function getTareasAsignadas(idUsuario: number): Promise<TareaAsigna
 // â”€â”€ TipoEvento mutations â”€â”€
 
 export async function createTipoEvento(
-  nombre: string,
-  descripcion: string | null
+  data: {
+    nombre: string
+    descripcion: string | null
+  }
 ): Promise<TipoEvento> {
   const { data: result, error } = await supabase
     .from('tipo_evento')
-    .insert([{ nombre, descripcion }])
+    .insert([{
+      nombre: data.nombre,
+      descripcion: data.descripcion,
+    }])
     .select()
     .single()
-  if (error) throw error
+
+  if (error) {
+    console.error('[AUDIT] Failed to create tipo_evento - audit logging may be affected:', error)
+    throw new Error(`Error creando tipo de evento: ${error.message}`)
+  }
   return mapTipoEvento(result)
 }
-
-export async function updateTipoEvento(
-  id: number,
-  nombre: string,
-  descripcion: string | null
-): Promise<TipoEvento> {
-  const { data: result, error } = await supabase
-    .from('tipo_evento')
-    .update({ nombre, descripcion })
-    .eq('id_tipo_evento', id)
-    .select()
-    .single()
-  if (error) throw error
-  return mapTipoEvento(result)
-}
-
-export async function deleteTipoEvento(id: number): Promise<void> {
-  const { error } = await supabase.from('tipo_evento').delete().eq('id_tipo_evento', id)
-  if (error) throw error
-}
-
-// â”€â”€ Evento mutations â”€â”€
 
 export async function createEvento(
   data: {
@@ -176,7 +168,11 @@ export async function createEvento(
     }])
     .select()
     .single()
-  if (error) throw error
+
+  if (error) {
+    console.error('[AUDIT] Failed to create evento - audit logging may be affected:', error)
+    throw new Error(`Error creando evento: ${error.message}`)
+  }
   return mapEvento(result)
 }
 
@@ -315,8 +311,12 @@ export async function updateEvento(
   return mapEvento(result)
 }
 
+// NOTE: evento table doesn't have 'activo' field - using hard delete
 export async function deleteEvento(id: number): Promise<void> {
-  const { error } = await supabase.from('evento').delete().eq('id_evento', id)
+  const { error } = await supabase
+    .from('evento')
+    .delete()
+    .eq('id_evento', id)
   if (error) throw error
 }
 
@@ -357,6 +357,7 @@ export async function deleteTarea(id: number): Promise<void> {
 
 // â”€â”€ TareaAsignada CRUD â”€â”€
 
+// NOTE: Requires unique constraint on (id_tarea, id_usuario) in tarea_asignada table
 export async function createTareaAsignada(data: {
   idTarea: number
   idUsuario: number
@@ -416,8 +417,12 @@ export async function updateTareaAsignada(
   if (error) throw error
 }
 
+// NOTE: tarea_asignada table doesn't have 'activo' field - using hard delete
 export async function deleteTareaAsignada(id: number): Promise<void> {
-  const { error } = await supabase.from('tarea_asignada').delete().eq('id_tarea_asignada', id)
+  const { error } = await supabase
+    .from('tarea_asignada')
+    .delete()
+    .eq('id_tarea_asignada', id)
   if (error) throw error
 }
 

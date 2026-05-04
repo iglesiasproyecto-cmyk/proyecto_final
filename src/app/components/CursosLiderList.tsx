@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { useAuth } from '@/app/store/AppContext'
 import { getInternalUserId } from '@/lib/userHelpers'
 import { supabase } from '@/lib/supabaseClient'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 export function CursosLiderList() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [showCrearModulo, setShowCrearModulo] = useState(false)
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(null)
 
@@ -54,6 +55,9 @@ export function CursosLiderList() {
 
       if (error) throw error
 
+      // Invalidate the courses list cache to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['cursos-lider', user?.id] })
+
       toast.success(`Curso ${nuevoEstado === 'activo' ? 'publicado' : 'despublicado'}`)
     } catch (error) {
       console.error('Error updating course:', error)
@@ -71,6 +75,9 @@ export function CursosLiderList() {
         .eq('id_aula_curso', idCurso)
 
       if (error) throw error
+
+      // Invalidate the courses list cache to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['cursos-lider', user?.id] })
 
       toast.success('Curso eliminado')
     } catch (error) {

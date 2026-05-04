@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import { useAuth } from '@/app/store/AppContext'
 import { supabase } from '@/lib/supabaseClient'
 import { getInternalUserId } from '@/lib/userHelpers'
@@ -12,29 +13,34 @@ import { useNavigate } from 'react-router'
 
 export function CursosServidorList() {
   const { user } = useAuth()
+  const [internalUserId, setInternalUserId] = useState<number | null>(null)
 
   const { data: cursos, isLoading } = useQuery({
     queryKey: ['cursos-servidor', user?.id],
     queryFn: async () => {
       if (!user?.id) return []
 
-      const internalUserId = await getInternalUserId(user.id)
-      if (!internalUserId) return []
+      const userId = await getInternalUserId(user.id)
+      if (!userId) return []
+
+      setInternalUserId(userId)
 
       const { data, error } = await supabase
         .from('aula_inscripcion')
         .select(`
           activo,
           inscrito_en,
-          aula_curso:aula_curso(
+          aula_curso:aula_curso!inner(
             id_aula_curso,
             titulo,
             descripcion,
             ministerio:ministerio(nombre)
           )
         `)
-        .eq('id_usuario', internalUserId)
+        .eq('id_usuario', userId)
         .eq('activo', true)
+        .eq('aula_curso.estado', 'activo')
+        .is('aula_curso.deleted_at', null)
 
       if (error) throw error
       return data?.map(item => ({
@@ -80,13 +86,13 @@ export function CursosServidorList() {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {cursos.map((curso, index) => (
-        <CursoCard key={curso.id_curso} curso={curso} userId={user?.id} index={index} />
+        <CursoCard key={curso.id_curso} curso={curso} userId={internalUserId} index={index} />
       ))}
     </div>
   )
 }
 
-function CursoCard({ curso, userId, index }: { curso: any, userId?: string, index: number }) {
+function CursoCard({ curso, userId, index }: { curso: any, userId?: number, index: number }) {
   const navigate = useNavigate()
   const { data: progreso } = useProgresoCurso({
     idUsuario: userId,

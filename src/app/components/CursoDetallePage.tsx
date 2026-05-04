@@ -34,16 +34,23 @@ export function CursoDetallePage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
+  const [internalUserLoading, setInternalUserLoading] = useState(true)
 
   useEffect(() => {
     if (user?.id) {
-      getInternalUserId(user.id).then(setInternalUserId)
+      setInternalUserLoading(true)
+      getInternalUserId(user.id)
+        .then(setInternalUserId)
+        .finally(() => setInternalUserLoading(false))
+    } else {
+      setInternalUserId(null)
+      setInternalUserLoading(false)
     }
   }, [user?.id])
 
   // OPTIMIZATION: Use comprehensive aula loading to prevent N+1 queries
   // TODO: Replace with useAulaCursoCompleto hook when RPC is available
-  const { data: curso } = useQuery({
+  const { data: curso, isLoading } = useQuery({
     queryKey: ['curso-detalle-lider', idCurso],
     queryFn: async () => {
       if (!idCurso) return null
@@ -81,6 +88,19 @@ export function CursoDetallePage() {
   // Verificar si el usuario es líder de este curso
   const isLider = internalUserId !== null && curso?.id_usuario_creador === internalUserId
 
+  // Show loading state while data is being fetched
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <h3 className="text-lg font-semibold mb-2">Cargando curso...</h3>
+          <p className="text-muted-foreground">Por favor espera un momento</p>
+        </div>
+      </div>
+    )
+  }
+
   // Calcular estadísticas
   const modulosPublicados = curso?.modulos?.filter(m => m.publicado).length || 0
   const totalModulos = curso?.modulos?.length || 0
@@ -100,6 +120,19 @@ export function CursoDetallePage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver al Aula
           </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Wait for internal user ID to load before checking permissions
+  if (internalUserLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <h3 className="text-lg font-semibold mb-2">Verificando permisos...</h3>
+          <p className="text-muted-foreground">Por favor espera un momento</p>
         </div>
       </div>
     )

@@ -22,7 +22,6 @@ function mapUsuario(r: UsuarioRow): Usuario {
     nombres: r.nombres,
     apellidos: r.apellidos,
     correo: r.correo,
-    contrasenaHash: r.contrasena_hash,
     telefono: r.telefono,
     fechaNacimiento: r.fecha_nacimiento,
     activo: r.activo,
@@ -166,9 +165,11 @@ export async function assignRol(data: {
 
   if (error) {
     if (error.code === '23505') {
+      console.warn('[AUDIT] Duplicate role assignment blocked:', { idUsuario: data.idUsuario, idRol: data.idRol })
       throw new Error('Este usuario ya tiene asignado este rol en la misma iglesia y sede')
     }
-    throw error
+    console.error('[AUDIT] Failed to assign role - audit logging may be affected:', error)
+    throw new Error(`Error asignando rol: ${error.message}`)
   }
 }
 

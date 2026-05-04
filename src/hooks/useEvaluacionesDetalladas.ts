@@ -11,9 +11,9 @@ export function useEvaluacionDetalleModulo(idModulo: number | null | undefined) 
       if (!idModulo) return []
 
       const { data, error } = await supabase
-        .from('evaluacion_detalle')
+        .from('aula_evaluacion')
         .select('*')
-        .eq('id_modulo', idModulo)
+        .eq('id_aula_modulo', idModulo)
         .order('creado_en', { ascending: true })
 
       if (error) throw error
@@ -36,9 +36,8 @@ export function useIntentosEvaluacion(vars: {
       if (!vars.idModulo || !vars.idDetalleProcesoCurso || !vars.idUsuario) return []
 
       const { data, error } = await supabase
-        .from('intento_evaluacion')
+        .from('aula_intento_evaluacion')
         .select('*')
-        .eq('id_modulo', vars.idModulo)
         .eq('id_detalle_proceso_curso', vars.idDetalleProcesoCurso)
         .eq('id_usuario', vars.idUsuario)
         .order('creado_en', { ascending: false })
@@ -55,9 +54,9 @@ export function useIntentosEvaluacion(vars: {
 export function useCrearIntentoEvaluacion() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (intento: Tables<'intento_evaluacion'>['Insert']) => {
+    mutationFn: async (intento: any) => {
       const { data, error } = await supabase
-        .from('intento_evaluacion')
+        .from('aula_intento_evaluacion')
         .insert(intento)
         .select()
         .single()
@@ -66,7 +65,7 @@ export function useCrearIntentoEvaluacion() {
       return data
     },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['intentos-evaluacion', vars.id_modulo, vars.id_detalle_proceso_curso, vars.id_usuario] })
+      qc.invalidateQueries({ queryKey: ['intentos-evaluacion', vars.id_detalle_proceso_curso, vars.id_usuario] })
       qc.invalidateQueries({ queryKey: ['avance-detalle', vars.id_detalle_proceso_curso] })
     },
   })
@@ -78,12 +77,12 @@ export function useActualizarIntentoEvaluacion() {
   return useMutation({
     mutationFn: async (vars: {
       idIntento: number
-      intento: Tables<'intento_evaluacion'>['Update']
+      intento: any
     }) => {
       const { data, error } = await supabase
-        .from('intento_evaluacion')
+        .from('aula_intento_evaluacion')
         .update(vars.intento)
-        .eq('id_intento', vars.idIntento)
+        .eq('id_aula_intento_evaluacion', vars.idIntento)
         .select()
         .single()
 
@@ -108,65 +107,59 @@ export function useActualizarIntentoEvaluacion() {
 async function verificarYMarcarModuloCompleto(idDetalleProcesoCurso: number, idUsuario: number) {
   // Obtener el módulo de la evaluación
   const { data: intento } = await supabase
-    .from('intento_evaluacion')
-    .select('id_modulo')
+    .from('aula_intento_evaluacion')
+    .select('id_aula_evaluacion')
     .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
     .eq('id_usuario', idUsuario)
     .single()
 
-  if (!intento?.id_modulo) return
+  if (!intento?.id_aula_evaluacion) return
 
-  const idModulo = intento.id_modulo
+  // Get the module from the evaluation
+  const { data: evaluacion } = await supabase
+    .from('aula_evaluacion')
+    .select('id_aula_modulo')
+    .eq('id_aula_evaluacion', intento.id_aula_evaluacion)
+    .single()
+
+  if (!evaluacion?.id_aula_modulo) return
+
+  const idModulo = evaluacion.id_aula_modulo
 
   // Contar elementos totales del módulo
   const { data: actividades } = await supabase
-    .from('actividad')
-    .select('id_actividad')
-    .eq('id_modulo', idModulo)
+    .from('aula_actividad')
+    .select('id_aula_actividad')
+    .eq('id_aula_modulo', idModulo)
 
   const { data: evaluaciones } = await supabase
-    .from('evaluacion_detalle')
-    .select('id_evaluacion_detalle')
-    .eq('id_modulo', idModulo)
+    .from('aula_evaluacion')
+    .select('id_aula_evaluacion')
+    .eq('id_aula_modulo', idModulo)
 
   const totalElementos = (actividades?.length || 0) + (evaluaciones?.length || 0)
 
   // Contar elementos completados
   const { data: actividadesCompletadas } = await supabase
-    .from('progreso_actividad')
-    .select('id_progreso')
+    .from('aula_progreso_actividad')
+    .select('id_aula_progreso_actividad')
     .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
-    .in('id_actividad', actividades?.map(a => a.id_actividad) || [])
+    .in('id_aula_actividad', actividades?.map(a => a.id_aula_actividad) || [])
     .not('completada_en', 'is', null)
 
   const { data: evaluacionesAprobadas } = await supabase
-    .from('intento_evaluacion')
-    .select('id_intento')
+    .from('aula_intento_evaluacion')
+    .select('id_aula_intento_evaluacion')
     .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
-    .eq('id_modulo', idModulo)
     .eq('estado', 'aprobado')
 
   const elementosCompletados = (actividadesCompletadas?.length || 0) + (evaluacionesAprobadas?.length || 0)
 
   // Si está completo, marcar el módulo
   if (elementosCompletados === totalElementos && totalElementos > 0) {
-    const { data: moduloExistente } = await supabase
-      .from('avance_modulo')
-      .select('id_avance')
-      .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
-      .eq('id_modulo', idModulo)
-      .single()
-
-    if (!moduloExistente) {
-      await supabase
-        .from('avance_modulo')
-        .insert({
-          id_detalle_proceso_curso: idDetalleProcesoCurso,
-          id_modulo: idModulo,
-          id_usuario: idUsuario,
-          completado_en: new Date().toISOString()
-        })
-    }
+    // Note: aula system calculates module completion dynamically from activity/evaluation progress
+    // No separate module completion table exists
+    console.log(`Módulo ${idModulo} completado por usuario ${idUsuario}`)
   }
 }
 
@@ -174,16 +167,16 @@ async function verificarYMarcarModuloCompleto(idDetalleProcesoCurso: number, idU
 export function useCrearPreguntaEvaluacion() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (pregunta: Tables<'evaluacion_detalle'>['Insert']) => {
+    mutationFn: async (pregunta: any) => {
       // Obtener información del módulo y curso para las notificaciones
       const { data: modulo } = await supabase
-        .from('modulo')
-        .select('id_curso, titulo')
-        .eq('id_modulo', pregunta.id_modulo)
+        .from('aula_modulo')
+        .select('id_aula_curso, titulo')
+        .eq('id_aula_modulo', pregunta.id_aula_modulo)
         .single()
 
       const { data, error } = await supabase
-        .from('evaluacion_detalle')
+        .from('aula_pregunta')
         .insert(pregunta)
         .select()
         .single()
@@ -208,7 +201,7 @@ export function useCrearPreguntaEvaluacion() {
           // Solo enviar notificación si es la primera pregunta de evaluación
           if (!evaluacionesExistentes || evaluacionesExistentes.length === 0) {
             await crearNotificacionNuevoContenido(
-              modulo.id_curso,
+              modulo.id_aula_curso,
               'evaluacion',
               `Evaluación del módulo ${modulo.titulo}`
             )
@@ -219,7 +212,7 @@ export function useCrearPreguntaEvaluacion() {
       return data
     },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['evaluacion-detalle-modulo', vars.id_modulo] })
+      qc.invalidateQueries({ queryKey: ['evaluacion-detalle-modulo', vars.id_aula_modulo] })
     },
   })
 }
@@ -230,12 +223,12 @@ export function useActualizarPreguntaEvaluacion() {
   return useMutation({
     mutationFn: async (vars: {
       idPregunta: number
-      pregunta: Tables<'evaluacion_detalle'>['Update']
+      pregunta: any
     }) => {
       const { data, error } = await supabase
-        .from('evaluacion_detalle')
+        .from('aula_pregunta')
         .update(vars.pregunta)
-        .eq('id_evaluacion_detalle', vars.idPregunta)
+        .eq('id_aula_pregunta', vars.idPregunta)
         .select()
         .single()
 
@@ -254,9 +247,9 @@ export function useEliminarPreguntaEvaluacion() {
   return useMutation({
     mutationFn: async (idPregunta: number) => {
       const { error } = await supabase
-        .from('evaluacion_detalle')
+        .from('aula_pregunta')
         .delete()
-        .eq('id_evaluacion_detalle', idPregunta)
+        .eq('id_aula_pregunta', idPregunta)
 
       if (error) throw error
     },

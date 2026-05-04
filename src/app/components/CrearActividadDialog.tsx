@@ -33,7 +33,7 @@ interface CrearActividadDialogProps {
 
 interface FormData {
   titulo: string
-  tipo: 'lectura' | 'video' | 'recurso' | 'evaluacion'
+  tipo: 'lectura' | 'video' | 'recurso' | 'otro'
   contenido?: string
   url_video?: string
   orden?: number
@@ -57,9 +57,9 @@ export function CrearActividadDialog({ open, onOpenChange, idModulo }: CrearActi
   React.useEffect(() => {
     const getNextOrder = async () => {
       const { data: actividades } = await supabase
-        .from('actividad')
+        .from('aula_actividad')
         .select('orden')
-        .eq('id_modulo', idModulo)
+        .eq('id_aula_modulo', idModulo)
         .order('orden', { ascending: false })
         .limit(1)
 
@@ -81,7 +81,7 @@ export function CrearActividadDialog({ open, onOpenChange, idModulo }: CrearActi
         contenido: data.contenido,
         url_video: data.url_video,
         orden: data.orden,
-        id_modulo: idModulo,
+        id_aula_modulo: idModulo,
         estado: 'pendiente',
       })
 
@@ -140,7 +140,7 @@ export function CrearActividadDialog({ open, onOpenChange, idModulo }: CrearActi
                       <SelectItem value="lectura">Lectura</SelectItem>
                       <SelectItem value="video">Video</SelectItem>
                       <SelectItem value="recurso">Recurso</SelectItem>
-                      <SelectItem value="evaluacion">Evaluación</SelectItem>
+                      <SelectItem value="otro">Otro</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -263,13 +263,13 @@ export async function getSedesEnriquecidas(idIglesia?: number): Promise<SedeEnri
 }
 
 export async function getIglesias(): Promise<Iglesia[]> {
-  const { data, error } = await supabase.from('iglesia').select('*').order('nombre')
+  const { data, error } = await supabase.from('iglesia').select('*').eq('activo', true).order('nombre')
   if (error) throw error
   return data.map(mapIglesia)
 }
 
 export async function getPastores(): Promise<Pastor[]> {
-  const { data, error } = await supabase.from('pastor').select('*').order('apellidos')
+  const { data, error } = await supabase.from('pastor').select('*').eq('activo', true).order('apellidos')
   if (error) throw error
   return data.map(mapPastor)
 }
@@ -281,7 +281,7 @@ export async function getIglesiaPastores(): Promise<IglesiaPastor[]> {
 }
 
 export async function getSedes(idIglesia?: number): Promise<Sede[]> {
-  let q = supabase.from('sede').select('*').order('nombre')
+  let q = supabase.from('sede').select('*').eq('activo', true).order('nombre')
   if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
   const { data, error } = await q
   if (error) throw error
@@ -447,17 +447,26 @@ export async function closeSedePastor(id: number): Promise<void> {
 }
 
 export async function deleteIglesia(id: number): Promise<void> {
-  const { error } = await supabase.from('iglesia').delete().eq('id_iglesia', id)
+  const { error } = await supabase
+    .from('iglesia')
+    .update({ activo: false })
+    .eq('id_iglesia', id)
   if (error) throw error
 }
 
 export async function deleteSede(id: number): Promise<void> {
-  const { error } = await supabase.from('sede').delete().eq('id_sede', id)
+  const { error } = await supabase
+    .from('sede')
+    .update({ activo: false })
+    .eq('id_sede', id)
   if (error) throw error
 }
 
 export async function deletePastor(id: number): Promise<void> {
-  const { error } = await supabase.from('pastor').delete().eq('id_pastor', id)
+  const { error } = await supabase
+    .from('pastor')
+    .update({ activo: false })
+    .eq('id_pastor', id)
   if (error) throw error
 }
 
