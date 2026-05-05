@@ -139,9 +139,11 @@ export function ProfilePage() {
               <TabsTrigger value="iglesias" className="w-full justify-start rounded-2xl px-6 py-4 text-[12px] font-black tracking-widest uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-900/20 transition-all duration-300">
                 <Building2 className="w-4 h-4 mr-3" /> Mi Iglesia
               </TabsTrigger>
-              <TabsTrigger value="logros" className="w-full justify-start rounded-2xl px-6 py-4 text-[12px] font-black tracking-widest uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-900/20 transition-all duration-300">
-                <Star className="w-4 h-4 mr-3" /> Logros
-              </TabsTrigger>
+              {rol === 'servidor' && (
+                <TabsTrigger value="logros" className="w-full justify-start rounded-2xl px-6 py-4 text-[12px] font-black tracking-widest uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-900/20 transition-all duration-300">
+                  <Star className="w-4 h-4 mr-3" /> Logros
+                </TabsTrigger>
+              )}
               <div className="pt-4 mt-2 border-t border-white/5 px-2">
                 <Button variant="ghost" className="w-full justify-start h-14 rounded-2xl px-4 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 font-black text-[12px] uppercase tracking-widest transition-all" onClick={() => logout()}>
                   <EyeOff className="w-4 h-4 mr-3" /> Finalizar Sesión
@@ -334,7 +336,17 @@ export function ProfilePage() {
             </TabsContent>
 
             <TabsContent value="logros" className="mt-0">
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+              {rol !== 'servidor' ? (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                  <div className="p-10 rounded-[40px] bg-card/40 backdrop-blur-3xl border border-white/20 dark:border-white/10 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center text-center">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#4682b4]/5 rounded-full blur-[80px] pointer-events-none" />
+                    <AlertTriangle className="w-16 h-16 text-amber-500 mb-4" />
+                    <h2 className="text-2xl font-black uppercase tracking-tight mb-2">Acceso Restringido</h2>
+                    <p className="text-muted-foreground max-w-md">Esta sección solo está disponible para servidores asignados por el líder del ministerio.</p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                 {/* Certificados */}
                 <div className="p-10 rounded-[40px] bg-card/40 backdrop-blur-3xl border border-white/20 dark:border-white/10 shadow-2xl space-y-6 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-[#4682b4]/5 rounded-full blur-[80px] pointer-events-none" />
@@ -458,6 +470,7 @@ export function ProfilePage() {
                   </div>
                 )}
               </motion.div>
+              )}
             </TabsContent>
           </div>
         </div>
