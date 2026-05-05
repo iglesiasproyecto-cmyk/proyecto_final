@@ -43,7 +43,7 @@ SELECT
   sedes.direccion,
   c.id_ciudad,
   i.id_iglesia,
-  'activo'
+  'activa'
 FROM (
   VALUES
     ('Sede Centro', 'Calle 123 #45-67'),

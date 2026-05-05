@@ -47,15 +47,15 @@ export interface MiembroMinisterioEnriquecido extends MiembroMinisterio {
 export async function getMinisteriosEnriquecidos(idSede?: number): Promise<MinisterioEnriquecido[]> {
   let q = supabase
     .from('ministerio')
-    .select('*, miembro_ministerio(count), sede(nombre)')
-    .eq('activo', true)
+    .select('*, sede(nombre)')
+    .is('deleted_at', null)
     .order('nombre')
   if (idSede !== undefined) q = q.eq('id_sede', idSede)
   const { data, error } = await q
   if (error) throw error
   return (data as any[]).map(r => ({
     ...mapMinisterio(r),
-    cantidadMiembros: Array.isArray(r.miembro_ministerio) ? r.miembro_ministerio[0]?.count ?? 0 : 0,
+    cantidadMiembros: 0, // Temporarily disabled to isolate RLS issues
     sedeNombre: r.sede?.nombre ?? '',
   }))
 }
@@ -192,7 +192,7 @@ export async function createMiembroMinisterio(
 export async function deleteMinisterio(id: number): Promise<void> {
   const { error } = await supabase
     .from('ministerio')
-    .update({ activo: false })
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id_ministerio', id)
   if (error) throw error
 }
@@ -200,7 +200,7 @@ export async function deleteMinisterio(id: number): Promise<void> {
 export async function deleteMiembroMinisterio(id: number): Promise<void> {
   const { error } = await supabase
     .from('miembro_ministerio')
-    .update({ activo: false })
+    .update({ fecha_salida: new Date().toISOString().split('T')[0] })
     .eq('id_miembro_ministerio', id)
   if (error) throw error
 }

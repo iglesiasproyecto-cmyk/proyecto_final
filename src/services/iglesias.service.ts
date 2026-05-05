@@ -16,6 +16,10 @@ function mapIglesia(r: IglesiaRow): Iglesia {
     fechaFundacion: r.fecha_fundacion,
     estado: r.estado as Iglesia['estado'],
     idCiudad: r.id_ciudad,
+    direccion: r.direccion,
+    telefono: r.telefono,
+    descripcion: r.descripcion,
+    sitioWeb: r.sitio_web,
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
   }
@@ -29,6 +33,9 @@ function mapPastor(r: PastorRow): Pastor {
     correo: r.correo,
     telefono: r.telefono,
     idUsuario: r.id_usuario,
+    direccion: r.direccion,
+    fechaNacimiento: r.fecha_nacimiento,
+    biografia: r.biografia,
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
   }
@@ -89,6 +96,10 @@ export interface PastorEnriquecido extends Pastor {
 export interface SedeEnriquecida extends Sede {
   cantidadMinisterios: number
   ciudadNombre: string
+  idDepartamentoGeo: number | null
+  idPais: number | null
+  departamentoGeoNombre: string
+  paisNombre: string
 }
 
 export interface IglesiaDetalle extends IglesiaEnriquecida {
@@ -250,26 +261,59 @@ export async function getPastoresEnriquecidos(): Promise<PastorEnriquecido[]> {
 export async function getSedesEnriquecidas(idIglesia?: number): Promise<SedeEnriquecida[]> {
   let q = supabase
     .from('sede')
-    .select('*, ministerio(count), ciudad(nombre)')
+    .select(`
+      *,
+      ministerio(count),
+      ciudad(
+        nombre,
+        id_departamento,
+        departamento(
+          nombre,
+          id_pais,
+          pais(nombre)
+        )
+      )
+    `)
+    .is('deleted_at', null)
     .order('nombre')
-  if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
+
+  if (idIglesia !== undefined) {
+    q = q.eq('id_iglesia', idIglesia)
+  }
+
   const { data, error } = await q
-  if (error) throw error
+
+  if (error) {
+    console.error('Error cargando sedes enriquecidas:', error)
+    throw error
+  }
+
+  console.log('SEDES CARGADAS:', data)
+
   return (data as any[]).map(r => ({
     ...mapSede(r),
     cantidadMinisterios: Array.isArray(r.ministerio) ? r.ministerio[0]?.count ?? 0 : 0,
     ciudadNombre: r.ciudad?.nombre ?? '',
+    idDepartamentoGeo: r.ciudad?.id_departamento ?? null,
+    idPais: r.ciudad?.departamento?.id_pais ?? null,
+    departamentoGeoNombre: r.ciudad?.departamento?.nombre ?? '',
+    paisNombre: r.ciudad?.departamento?.pais?.nombre ?? '',
   }))
 }
 
 export async function getIglesias(): Promise<Iglesia[]> {
-  const { data, error } = await supabase.from('iglesia').select('*').eq('activo', true).order('nombre')
+  const { data, error } = await supabase
+    .from('iglesia')
+    .select('*')
+    .eq('estado', 'activa')
+    .is('deleted_at', null)
+    .order('nombre')
   if (error) throw error
   return data.map(mapIglesia)
 }
 
 export async function getPastores(): Promise<Pastor[]> {
-  const { data, error } = await supabase.from('pastor').select('*').eq('activo', true).order('apellidos')
+  const { data, error } = await supabase.from('pastor').select('*').order('apellidos')
   if (error) throw error
   return data.map(mapPastor)
 }
@@ -281,7 +325,11 @@ export async function getIglesiaPastores(): Promise<IglesiaPastor[]> {
 }
 
 export async function getSedes(idIglesia?: number): Promise<Sede[]> {
-  let q = supabase.from('sede').select('*').eq('activo', true).order('nombre')
+  let q = supabase
+    .from('sede')
+    .select('*')
+    .is('deleted_at', null)
+    .order('nombre')
   if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
   const { data, error } = await q
   if (error) throw error
@@ -291,7 +339,7 @@ export async function getSedes(idIglesia?: number): Promise<Sede[]> {
 // ── Iglesia mutations ──
 
 export async function createIglesia(
-  data: { nombre: string; fechaFundacion: string | null; idCiudad: number | null; estado: Iglesia['estado'] }
+  data: { nombre: string; fechaFundacion: string | null; idCiudad: number | null; estado: Iglesia['estado']; direccion?: string | null; telefono?: string | null; descripcion?: string | null; sitioWeb?: string | null }
 ): Promise<void> {
   const { error } = await supabase
     .from('iglesia')
@@ -299,14 +347,18 @@ export async function createIglesia(
       nombre: data.nombre,
       fecha_fundacion: data.fechaFundacion || null,
       id_ciudad: data.idCiudad,
-      estado: data.estado
+      estado: data.estado,
+      direccion: data.direccion || null,
+      telefono: data.telefono || null,
+      descripcion: data.descripcion || null,
+      sitio_web: data.sitioWeb || null
     }])
   if (error) throw error
 }
 
 export async function updateIglesia(
   id: number,
-  data: { nombre?: string; fechaFundacion?: string | null }
+  data: { nombre?: string; fechaFundacion?: string | null; direccion?: string | null; telefono?: string | null; descripcion?: string | null; sitioWeb?: string | null }
 ): Promise<Iglesia> {
   const { data: result, error } = await supabase
     .from('iglesia')
@@ -315,6 +367,10 @@ export async function updateIglesia(
       ...(data.fechaFundacion !== undefined && {
         fecha_fundacion: data.fechaFundacion || null
       }),
+      ...(data.direccion !== undefined && { direccion: data.direccion }),
+      ...(data.telefono !== undefined && { telefono: data.telefono }),
+      ...(data.descripcion !== undefined && { descripcion: data.descripcion }),
+      ...(data.sitioWeb !== undefined && { sitio_web: data.sitioWeb }),
     })
     .eq('id_iglesia', id)
     .select()
@@ -378,11 +434,11 @@ export async function toggleSedeEstado(id: number): Promise<void> {
 // ── Pastor mutations ──
 
 export async function createPastor(
-  data: { nombres: string; apellidos: string; correo: string; telefono: string | null; idUsuario: number | null }
+  data: { nombres: string; apellidos: string; correo: string; telefono: string | null; idUsuario: number | null; direccion?: string | null; fechaNacimiento?: string | null; biografia?: string | null }
 ): Promise<Pastor> {
   const { data: result, error } = await supabase
     .from('pastor')
-    .insert([{ nombres: data.nombres, apellidos: data.apellidos, correo: data.correo, telefono: data.telefono, id_usuario: data.idUsuario }])
+    .insert([{ nombres: data.nombres, apellidos: data.apellidos, correo: data.correo, telefono: data.telefono, id_usuario: data.idUsuario, direccion: data.direccion || null, fecha_nacimiento: data.fechaNacimiento || null, biografia: data.biografia || null }])
     .select()
     .single()
   if (error) throw error
@@ -391,7 +447,7 @@ export async function createPastor(
 
 export async function updatePastor(
   id: number,
-  data: { nombres?: string; apellidos?: string; correo?: string; telefono?: string | null; idUsuario?: number | null }
+  data: { nombres?: string; apellidos?: string; correo?: string; telefono?: string | null; idUsuario?: number | null; direccion?: string | null; fechaNacimiento?: string | null; biografia?: string | null }
 ): Promise<Pastor> {
   const { data: result, error } = await supabase
     .from('pastor')
@@ -401,6 +457,9 @@ export async function updatePastor(
       ...(data.correo !== undefined && { correo: data.correo }),
       ...(data.telefono !== undefined && { telefono: data.telefono }),
       ...(data.idUsuario !== undefined && { id_usuario: data.idUsuario }),
+      ...(data.direccion !== undefined && { direccion: data.direccion }),
+      ...(data.fechaNacimiento !== undefined && { fecha_nacimiento: data.fechaNacimiento }),
+      ...(data.biografia !== undefined && { biografia: data.biografia }),
     })
     .eq('id_pastor', id)
     .select()
@@ -464,7 +523,7 @@ export async function deleteIglesia(id: number): Promise<void> {
 export async function deleteSede(id: number): Promise<void> {
   const { error } = await supabase
     .from('sede')
-    .update({ activo: false })
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id_sede', id)
   if (error) throw error
 }

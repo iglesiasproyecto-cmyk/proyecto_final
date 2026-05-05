@@ -17,10 +17,11 @@ import { toast } from "sonner";
 
 export function UsuariosPage() {
   const qc = useQueryClient();
-  const { iglesiaActual, rolActual } = useApp();
+  const { iglesiaActual, rolActual, iglesiasDelUsuario } = useApp();
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
-  const { data: iglesias = [] } = useIglesias();
+  const { data: allIglesias = [] } = useIglesias();
+  const iglesias = canManageUsers && !isSuperAdmin ? iglesiasDelUsuario : allIglesias;
   const [search, setSearch] = useState("");
   const [filterEstado, setFilterEstado] = useState("all");
   const [filterRol, setFilterRol] = useState("all");
@@ -41,6 +42,8 @@ export function UsuariosPage() {
   const deleteUsuarioMutation = useDeleteUsuarioAsSuperAdmin();
 
   const isSuperAdmin = rolActual === "super_admin";
+  const isAdminIglesia = rolActual === "admin_iglesia";
+  const canManageUsers = isSuperAdmin || isAdminIglesia;
 
   // Invite form state
   const [inviteForm, setInviteForm] = useState({
@@ -311,12 +314,12 @@ export function UsuariosPage() {
                     <Button variant="ghost" size="sm" title="Editar usuario" onClick={() => openEditDialog(u.idUsuario)}>
                       <Pencil className="w-3.5 h-3.5 text-amber-600" />
                     </Button>
-                    {isSuperAdmin && (
+                    {canManageUsers && (
                       <Button variant="ghost" size="sm" title="Asignar rol" onClick={() => { setShowAssignRol(u.idUsuario); resetAssignForm(); }}>
                         <ShieldPlus className="w-3.5 h-3.5 text-[#4682b4] dark:text-[#709dbd]" />
                       </Button>
                     )}
-                    {isSuperAdmin && (
+                    {canManageUsers && (
                       <Button variant="ghost" size="sm" title="Eliminar usuario" onClick={() => openDeleteDialog(u.idUsuario)}>
                         <Trash2 className="w-3.5 h-3.5 text-red-600" />
                       </Button>
@@ -454,7 +457,7 @@ export function UsuariosPage() {
                     .filter(r => {
                       // Super Admin puede asignar cualquier rol
                       if (isSuperAdmin) return true;
-                      // Otros roles no pueden asignar Super Admin
+                      // Admin Iglesia no puede asignar Super Admin
                       return r.nombre !== 'Super Administrador';
                     })
                     .map(r => (
@@ -520,7 +523,7 @@ export function UsuariosPage() {
                           .filter(r => {
                             // Super Admin puede asignar cualquier rol
                             if (isSuperAdmin) return true;
-                            // Otros roles no pueden asignar Super Admin
+                            // Admin Iglesia no puede asignar Super Admin
                             return r.nombre !== 'Super Administrador';
                           })
                           .map(r => (

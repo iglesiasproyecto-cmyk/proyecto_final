@@ -54,9 +54,12 @@ export async function getRoles(): Promise<Rol[]> {
 }
 
 export async function getUsuarios(): Promise<Usuario[]> {
-  const { data, error } = await supabase.rpc('get_all_usuarios_enriquecidos')
+  const { data, error } = await supabase
+    .from('usuario')
+    .select('*')
+    .order('apellidos')
   if (error) throw error
-  return ((data as any[]) || []).map(mapUsuario)
+  return data.map(mapUsuario)
 }
 
 export async function getUsuarioRoles(idUsuario: number): Promise<UsuarioRol[]> {
@@ -95,25 +98,44 @@ export interface UsuarioEnriquecido extends Usuario {
 }
 
 export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
-  const { data, error } = await supabase.rpc('get_all_usuarios_enriquecidos')
+  const { data, error } = await supabase
+    .from('usuario')
+    .select(`
+      *,
+      usuario_rol!inner(
+        id_usuario_rol,
+        id_rol,
+        id_iglesia,
+        fecha_fin,
+        rol:rol(nombre),
+        iglesia:iglesia(nombre)
+      ),
+      miembro_ministerio(
+        ministerio:ministerio(nombre),
+        rol_en_ministerio,
+        fecha_salida
+      )
+    `)
+    .order('apellidos')
+
   if (error) throw error
 
-  return ((data as any[]) || []).map(r => ({
+  return (data as any[]).map(r => ({
     ...mapUsuario(r),
-    roleNames: ((r.roles as any[]) || [])
+    roleNames: (r.usuario_rol || [])
       .filter((ur: any) => ur.fecha_fin === null)
       .map((ur: any) => ({
         idUsuarioRol: ur.id_usuario_rol,
         idRol: ur.id_rol,
         idIglesia: ur.id_iglesia,
-        rolNombre: ur.rol_nombre ?? '',
-        iglesiaNombre: ur.iglesia_nombre ?? '',
+        rolNombre: ur.rol?.nombre ?? '',
+        iglesiaNombre: ur.iglesia?.nombre ?? '',
         fechaFin: ur.fecha_fin,
       })),
-    minNames: ((r.ministerios as any[]) || [])
+    minNames: (r.miembro_ministerio || [])
       .filter((mm: any) => mm.fecha_salida === null)
       .map((mm: any) => ({
-        nombre: mm.ministerio_nombre ?? '',
+        nombre: mm.ministerio?.nombre ?? '',
         rol: mm.rol_en_ministerio ?? '',
       })),
   }))
@@ -151,38 +173,37 @@ export async function assignRol(data: {
   idIglesia: number
   idSede?: number | null
 }): Promise<{ success: boolean; message: string; id_usuario_rol?: number }> {
-  // Usar RPC SECURITY DEFINER para asignar roles con validaciones de permisos
-  const { data: result, error } = await supabase.rpc('asignar_rol_usuario', {
-    p_id_usuario: data.idUsuario,
-    p_id_rol: data.idRol,
-    p_id_iglesia: data.idIglesia,
-    p_id_sede: data.idSede ?? null,
-  })
+  try {
+    // Insert directly into usuario_rol table
+    const { data: result, error } = await supabase
+      .from('usuario_rol')
+      .insert({
+        id_usuario: data.idUsuario,
+        id_rol: data.idRol,
+        id_iglesia: data.idIglesia,
+        id_sede: data.idSede ?? null,
+        fecha_inicio: new Date().toISOString().split('T')[0],
+        fecha_fin: null
+      })
+      .select()
+      .single()
 
-  if (error) {
-    console.error('Error assigning role via RPC:', error)
-    throw new Error(error.message || 'Error al asignar el rol')
-  }
-
-  // La RPC retorna JSONB con estructura { success, message, id_usuario_rol }
-  if (result && typeof result === 'object' && 'success' in result) {
-    const rpcResult = result as {
-      success: boolean
-      message: string
-      id_usuario_rol?: number
+    if (error) {
+      console.error('Error assigning role:', error)
+      throw new Error(error.message || 'Error al asignar el rol')
     }
 
-    if (!rpcResult.success) {
-      throw new Error(rpcResult.message)
+    return {
+      success: true,
+      message: 'Rol asignado correctamente',
+      id_usuario_rol: result.id_usuario_rol
     }
-
-    return rpcResult
-  }
-
-  // Fallback por si la RPC no retorna el formato esperado
-  return {
-    success: true,
-    message: 'Rol asignado correctamente',
+  } catch (error) {
+    console.error('Error in assignRol:', error)
+    if (error instanceof Error) {
+      throw new Error(error.message)
+    }
+    throw new Error('Error desconocido al asignar rol')
   }
 }
 

@@ -29,6 +29,10 @@ export interface Iglesia {
   fechaFundacion: string | null
   estado: 'activa' | 'inactiva' | 'fusionada' | 'cerrada'
   idCiudad: number
+  direccion: string | null
+  telefono: string | null
+  descripcion: string | null
+  sitioWeb: string | null
   creadoEn: string
   actualizadoEn: string
   ciudadNombre?: string
@@ -43,6 +47,9 @@ export interface Pastor {
   correo: string
   telefono: string | null
   idUsuario: number | null
+  direccion: string | null
+  fechaNacimiento: string | null
+  biografia: string | null
   creadoEn: string
   actualizadoEn: string
 }
