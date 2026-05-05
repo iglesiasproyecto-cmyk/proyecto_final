@@ -1,80 +1,80 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  getEnrollmentCandidates,
-  enrollUsers,
+  getInscripcionesCurso,
+  inscribirUsuariosCurso,
   retirarInscripcion,
   reactivarInscripcion,
-  getCompanerosCiclo,
-  getMisInscripciones,
+  getCandidatosInscripcionCurso,
 } from '@/services/inscripciones.service'
 
-export function useEnrollmentCandidates(idCiclo: number | null, overrideMinisterio: boolean) {
+export function useInscripcionesCurso(idAulaCurso?: number) {
   return useQuery({
-    queryKey: ['enrollment-candidates', idCiclo, overrideMinisterio],
-    queryFn: () => getEnrollmentCandidates(idCiclo as number, overrideMinisterio),
-    enabled: !!idCiclo,
-    staleTime: 60 * 1000,
+    queryKey: ['aula-inscripciones', idAulaCurso],
+    queryFn: () => getInscripcionesCurso(idAulaCurso!),
+    enabled: !!idAulaCurso,
   })
 }
 
-export function useEnrollUsers() {
+export function useCandidatosInscripcionCurso(idAulaCurso?: number) {
+  return useQuery({
+    queryKey: ['aula-candidatos-inscripcion', idAulaCurso],
+    queryFn: () => getCandidatosInscripcionCurso(idAulaCurso!),
+    enabled: !!idAulaCurso,
+  })
+}
+
+export function useInscribirUsuariosCurso() {
   const qc = useQueryClient()
+
   return useMutation({
-    mutationFn: (vars: { idCiclo: number; userIds: number[]; overrideMinisterio: boolean }) =>
-      enrollUsers(vars.idCiclo, vars.userIds, vars.overrideMinisterio),
-    onSuccess: async (_data, vars) => {
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ['detalles-proceso', vars.idCiclo] }),
-        qc.invalidateQueries({ queryKey: ['enrollment-candidates', vars.idCiclo] }),
-        qc.invalidateQueries({ queryKey: ['mis-inscripciones'] }),
-        qc.invalidateQueries({ queryKey: ['companeros-ciclo', vars.idCiclo] }),
-      ])
+    mutationFn: ({
+      idAulaCurso,
+      userIds,
+    }: {
+      idAulaCurso: number
+      userIds: number[]
+    }) => inscribirUsuariosCurso(idAulaCurso, userIds),
+
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({
+        queryKey: ['aula-inscripciones', variables.idAulaCurso],
+      })
+
+      qc.invalidateQueries({
+        queryKey: ['aula-candidatos-inscripcion', variables.idAulaCurso],
+      })
+
+      qc.invalidateQueries({
+        queryKey: ['aula-cursos'],
+      })
+
+      qc.invalidateQueries({
+        queryKey: ['cursos-servidor'],
+      })
     },
   })
 }
 
 export function useRetirarInscripcion() {
   const qc = useQueryClient()
+
   return useMutation({
-    mutationFn: (idDetalle: number) => retirarInscripcion(idDetalle),
-    onSuccess: async () => {
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ['detalles-proceso'] }),
-        qc.invalidateQueries({ queryKey: ['mis-inscripciones'] }),
-        qc.invalidateQueries({ queryKey: ['companeros-ciclo'] }),
-      ])
+    mutationFn: retirarInscripcion,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['aula-inscripciones'] })
+      qc.invalidateQueries({ queryKey: ['cursos-servidor'] })
     },
   })
 }
 
 export function useReactivarInscripcion() {
   const qc = useQueryClient()
+
   return useMutation({
-    mutationFn: (idDetalle: number) => reactivarInscripcion(idDetalle),
-    onSuccess: async () => {
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ['detalles-proceso'] }),
-        qc.invalidateQueries({ queryKey: ['mis-inscripciones'] }),
-        qc.invalidateQueries({ queryKey: ['companeros-ciclo'] }),
-      ])
+    mutationFn: reactivarInscripcion,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['aula-inscripciones'] })
+      qc.invalidateQueries({ queryKey: ['cursos-servidor'] })
     },
-  })
-}
-
-export function useCompanerosCiclo(idCiclo: number | null) {
-  return useQuery({
-    queryKey: ['companeros-ciclo', idCiclo],
-    queryFn: () => getCompanerosCiclo(idCiclo as number),
-    enabled: !!idCiclo,
-    staleTime: 2 * 60 * 1000,
-  })
-}
-
-export function useMisInscripciones(idUsuario: number | null | undefined) {
-  return useQuery({
-    queryKey: ['mis-inscripciones', idUsuario],
-    queryFn: () => getMisInscripciones(idUsuario as number),
-    enabled: !!idUsuario,
-    staleTime: 2 * 60 * 1000,
   })
 }

@@ -1,3 +1,5 @@
+import { supabase } from '@/lib/supabaseClient'
+
 // Optimized function to load complete aula course data in a single query
 // This prevents N+1 query problems by loading the entire course tree:
 // Course -> Modules -> Activities + Evaluations -> Questions -> Options
@@ -30,7 +32,7 @@ export async function getAulaCursoCompleto(idCurso: number) {
             id_usuario,
             aprobado,
             puntaje_obtenido,
-            fecha_intento
+            iniciado_en
           )
         ),
         archivos:aula_modulo_archivo(*),

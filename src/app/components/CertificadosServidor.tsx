@@ -19,7 +19,7 @@ function CertificadoPDF({ certificado, usuario }: CertificadoPDFProps) {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Certificado - ${certificado.curso.nombre}</title>
+          <title>Certificado - ${certificado.curso?.titulo || certificado.curso?.nombre}</title>
           <style>
             body {
               font-family: 'Times New Roman', serif;
@@ -76,12 +76,12 @@ function CertificadoPDF({ certificado, usuario }: CertificadoPDFProps) {
 
           <div>ha completado satisfactoriamente el curso:</div>
 
-          <div class="curso">${certificado.curso.nombre}</div>
+          <div class="curso">${certificado.curso?.titulo || certificado.curso?.nombre}</div>
 
-          <div class="codigo">Código único: ${certificado.codigo_unico}</div>
+          <div class="codigo">Código de verificación: ${certificado.codigo_verificacion}</div>
 
           <div class="fecha">
-            Fecha de emisión: ${new Date(certificado.fecha_emision).toLocaleDateString('es-ES', {
+            Fecha de emisión: ${new Date(certificado.emitido_en).toLocaleDateString('es-ES', {
               year: 'numeric',
               month: 'long',
               day: 'numeric'
@@ -118,15 +118,15 @@ function CertificadoPDF({ certificado, usuario }: CertificadoPDFProps) {
         <p className="mb-4">ha completado satisfactoriamente el curso:</p>
 
         <div className="text-xl font-semibold italic mb-6 text-blue-700">
-          {certificado.curso.nombre}
+          {certificado.curso?.titulo || certificado.curso?.nombre}
         </div>
 
         <div className="text-sm text-gray-600 mb-4">
-          Código único: {certificado.codigo_unico}
+          Código de verificación: {certificado.codigo_verificacion}
         </div>
 
         <div className="text-lg mb-8">
-          Fecha de emisión: {new Date(certificado.fecha_emision).toLocaleDateString('es-ES', {
+          Fecha de emisión: {new Date(certificado.emitido_en).toLocaleDateString('es-ES', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -171,13 +171,13 @@ export function CertificadosServidor() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {certificados.map((certificado) => (
-        <Card key={certificado.id_certificado}>
+        <Card key={certificado.id_aula_certificado}>
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="text-lg flex items-center">
                   <Award className="h-5 w-5 mr-2 text-yellow-500" />
-                  {certificado.curso?.nombre}
+                  {certificado.curso?.titulo || certificado.curso?.nombre}
                 </CardTitle>
                 <CardDescription>Certificado de Finalización</CardDescription>
               </div>
@@ -193,11 +193,11 @@ export function CertificadosServidor() {
 
             <div className="flex items-center text-sm text-muted-foreground mb-4">
               <Calendar className="h-4 w-4 mr-1" />
-              Emitido el {new Date(certificado.fecha_emision).toLocaleDateString()}
+              Emitido el {new Date(certificado.emitido_en).toLocaleDateString()}
             </div>
 
             <div className="text-sm text-muted-foreground mb-4">
-              Código único: {certificado.codigo_unico}
+              Código de verificación: {certificado.codigo_verificacion}
             </div>
 
             <Dialog>

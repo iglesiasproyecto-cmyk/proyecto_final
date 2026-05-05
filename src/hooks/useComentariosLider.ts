@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabaseClient'
 import type { Tables } from '@/types/database.types'
 
-// Hook para obtener comentarios de un usuario en un curso
+// Hook para obtener retroalimentación de un usuario en un curso
 export function useComentariosUsuario(vars: {
   idUsuario: number | null | undefined
   idCurso: number | null | undefined
@@ -12,16 +12,28 @@ export function useComentariosUsuario(vars: {
     queryFn: async () => {
       if (!vars.idUsuario || !vars.idCurso) return []
 
+      // First get all activities for this course
+      const { data: actividades, error: actividadesError } = await supabase
+        .from('aula_actividad')
+        .select('id_aula_actividad')
+        .eq('id_aula_modulo', vars.idCurso) // Assuming idCurso refers to modulo for now
+
+      if (actividadesError) throw actividadesError
+
+      if (!actividades || actividades.length === 0) return []
+
+      const actividadIds = actividades.map(a => a.id_aula_actividad)
+
       const { data, error } = await supabase
-        .from('comentario_lider')
+        .from('aula_retroalimentacion')
         .select(`
           *,
-          usuario_autor:usuario!id_usuario_autor(nombres, apellidos),
-          actividad:actividad(titulo),
-          modulo:modulo(titulo)
+          usuario_lider:usuario!id_usuario_lider(nombres, apellidos),
+          actividad:aula_actividad(titulo),
+          modulo:aula_modulo(titulo)
         `)
-        .eq('id_usuario_destinatario', vars.idUsuario)
-        .in('tipo', ['retroalimentacion'])
+        .eq('id_usuario_servidor', vars.idUsuario)
+        .in('id_aula_actividad', actividadIds)
         .order('creado_en', { ascending: false })
 
       if (error) throw error
@@ -32,7 +44,7 @@ export function useComentariosUsuario(vars: {
   })
 }
 
-// Hook para obtener comentarios de una actividad específica
+// Hook para obtener retroalimentación de una actividad específica
 export function useComentariosActividad(idActividad: number | null | undefined) {
   return useQuery({
     queryKey: ['comentarios-actividad', idActividad],
@@ -40,12 +52,12 @@ export function useComentariosActividad(idActividad: number | null | undefined) 
       if (!idActividad) return []
 
       const { data, error } = await supabase
-        .from('comentario_lider')
+        .from('aula_retroalimentacion')
         .select(`
           *,
-          usuario_autor:usuario!id_usuario_autor(nombres, apellidos)
+          usuario_lider:usuario!id_usuario_lider(nombres, apellidos)
         `)
-        .eq('id_actividad', idActividad)
+        .eq('id_aula_actividad', idActividad)
         .order('creado_en', { ascending: false })
 
       if (error) throw error
@@ -56,14 +68,24 @@ export function useComentariosActividad(idActividad: number | null | undefined) 
   })
 }
 
-// Hook para crear comentario del líder
+// Hook para crear retroalimentación del líder
 export function useCrearComentarioLider() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (comentario: Tables<'comentario_lider'>['Insert']) => {
+    mutationFn: async (retroalimentacion: {
+      comentario: string
+      id_aula_actividad: number
+      id_usuario_lider: number
+      id_usuario_servidor: number
+    }) => {
       const { data, error } = await supabase
-        .from('comentario_lider')
-        .insert(comentario)
+        .from('aula_retroalimentacion')
+        .insert({
+          comentario: retroalimentacion.comentario,
+          id_aula_actividad: retroalimentacion.id_aula_actividad,
+          id_usuario_lider: retroalimentacion.id_usuario_lider,
+          id_usuario_servidor: retroalimentacion.id_usuario_servidor
+        })
         .select()
         .single()
 
@@ -71,8 +93,8 @@ export function useCrearComentarioLider() {
       return data
     },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['comentarios-usuario', vars.id_usuario_destinatario] })
-      qc.invalidateQueries({ queryKey: ['comentarios-actividad', vars.id_actividad] })
+      qc.invalidateQueries({ queryKey: ['comentarios-usuario', vars.id_usuario_servidor] })
+      qc.invalidateQueries({ queryKey: ['comentarios-actividad', vars.id_aula_actividad] })
     },
   })
 }
@@ -102,15 +124,15 @@ export function useActualizarComentarioLider() {
   })
 }
 
-// Hook para eliminar comentario del líder
+// Hook para eliminar retroalimentación del líder
 export function useEliminarComentarioLider() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (idComentario: number) => {
+    mutationFn: async (idRetroalimentacion: number) => {
       const { error } = await supabase
-        .from('comentario_lider')
+        .from('aula_retroalimentacion')
         .delete()
-        .eq('id_comentario', idComentario)
+        .eq('id_aula_retroalimentacion', idRetroalimentacion)
 
       if (error) throw error
     },

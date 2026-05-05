@@ -21,19 +21,23 @@ import {
   BarChart3,
   TrendingUp,
   UserCheck,
-  AlertCircle
+  AlertCircle,
+  UserPlus
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabaseClient'
 import { useCursos } from '@/hooks/useCursos'
 import { useProgresoGrupoCurso } from '@/hooks/useProgreso'
 import { ModulosGestion } from './ModulosGestion'
+import { AgregarPersonasCursoDialog } from '@/app/components/aula/AgregarPersonasCursoDialog'
+import { ModulosNavegacion } from './ModulosNavegacion'
 
 export function CursoDetallePage() {
   const { idCurso } = useParams<{ idCurso: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
+  const [showAgregarPersonas, setShowAgregarPersonas] = useState(false)
 
   useEffect(() => {
     if (user?.id) {
@@ -78,32 +82,77 @@ export function CursoDetallePage() {
   // Obtener progreso del grupo
   const { data: progresoGrupo } = useProgresoGrupoCurso(idCurso ? parseInt(idCurso) : undefined)
 
-  // Verificar si el usuario es líder de este curso
-  const isLider = internalUserId !== null && curso?.id_usuario_creador === internalUserId
+   // Verificar si el usuario es líder de este curso
+   const isLider = internalUserId !== null && curso?.id_usuario_creador === internalUserId
+   
+    // Verificar si el usuario es un servidor inscrito en este curso
+    const [isServidorInscrito, setIsServidorInscrito] = useState(false)
+    const [checkingAccess, setCheckingAccess] = useState(true)
+   
+    useEffect(() => {
+      if (internalUserId !== null && idCurso) {
+        setCheckingAccess(true)
+        const checkInscrito = async () => {
+          try {
+             const { data, error } = await supabase
+               .from('aula_inscripcion')
+               .select('id_aula_inscripcion')
+               .eq('id_usuario', internalUserId)
+               .eq('id_aula_curso', Number(idCurso))
+               .eq('activo', true)
+               .maybeSingle()
 
-  // Calcular estadísticas
-  const modulosPublicados = curso?.modulos?.filter(m => m.publicado).length || 0
-  const totalModulos = curso?.modulos?.length || 0
-  const miembrosActivos = progresoGrupo?.filter(p => p.porcentaje > 0).length || 0
-  const miembrosAtrasados = progresoGrupo?.filter(p => p.porcentaje < 25).length || 0
-  const promedioProgreso = progresoGrupo && progresoGrupo.length > 0
-    ? Math.round(progresoGrupo.reduce((sum, p) => sum + p.porcentaje, 0) / progresoGrupo.length)
-    : 0
+             if (error) {
+               console.error('Error checking enrollment:', error)
+               setIsServidorInscrito(false)
+               return
+             }
 
-  if (!curso) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">Curso no encontrado</h3>
-          <Button onClick={() => navigate('/app/aula')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver al Aula
-          </Button>
+            setIsServidorInscrito(!!data)
+          } catch (err) {
+            console.error('Error checking enrollment:', err)
+            setIsServidorInscrito(false)
+          } finally {
+            setCheckingAccess(false)
+          }
+        }
+
+        checkInscrito()
+      } else {
+        setCheckingAccess(false)
+      }
+    }, [internalUserId, idCurso])
+   
+    // Permitir acceso si es líder O si es servidor inscrito
+    const puedeAcceder = isLider || isServidorInscrito
+
+    if (checkingAccess) {
+      return (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <h3 className="text-lg font-semibold mb-2">Verificando permisos...</h3>
+            <p className="text-muted-foreground">Comprobando acceso al curso</p>
+          </div>
         </div>
-      </div>
-    )
-  }
+      )
+    }
+
+    if (!puedeAcceder) {
+     return (
+       <div className="flex items-center justify-center min-h-[400px]">
+         <div className="text-center">
+           <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+           <h3 className="text-lg font-semibold mb-2">Acceso denegado</h3>
+           <p className="text-muted-foreground mb-4">No tienes permisos para ver este curso.</p>
+           <Button onClick={() => navigate('/app/aula')}>
+             <ArrowLeft className="h-4 w-4 mr-2" />
+             Volver al Aula
+           </Button>
+         </div>
+       </div>
+     )
+   }
 
   if (!isLider) {
     return (
@@ -120,6 +169,49 @@ export function CursoDetallePage() {
       </div>
     )
   }
+
+  // Calcular estadísticas del curso
+  const modulos = curso?.modulos ?? curso?.aula_modulo ?? []
+  const totalModulos = modulos.length
+  const modulosPublicados = modulos.filter(
+    (modulo: any) => modulo.publicado === true
+  ).length
+  const totalActividades = modulos.reduce(
+    (total: number, modulo: any) =>
+      total + (modulo.actividades?.length ?? modulo.aula_actividad?.length ?? 0),
+    0
+  )
+  const totalEvaluaciones = modulos.reduce(
+    (total: number, modulo: any) =>
+      total + (modulo.evaluaciones?.length ?? modulo.aula_evaluacion?.length ?? 0),
+    0
+  )
+
+  const inscripciones = curso?.inscripciones ?? curso?.aula_inscripcion ?? []
+  const miembrosActivos = inscripciones.filter(
+    (inscripcion: any) => inscripcion.activo === true
+  ).length
+
+  const progresoInscripciones = inscripciones
+    .filter((inscripcion: any) => inscripcion.activo === true)
+    .map((inscripcion: any) =>
+      Number(
+        inscripcion.progreso ??
+          inscripcion.porcentaje_progreso ??
+          inscripcion.avance ??
+          0
+      )
+    )
+
+  const promedioProgreso =
+    progresoInscripciones.length > 0
+      ? Math.round(
+          progresoInscripciones.reduce(
+            (total: number, progreso: number) => total + progreso,
+            0
+          ) / progresoInscripciones.length
+        )
+      : 0
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -151,6 +243,16 @@ export function CursoDetallePage() {
           >
             {curso.estado}
           </Badge>
+          {isLider && (
+            <Button
+              onClick={() => setShowAgregarPersonas(true)}
+              size="sm"
+              className="rounded-xl border-white/20 bg-background/50 h-10"
+            >
+              <UserPlus className="h-4 w-4 mr-2 text-primary" />
+              Agregar personas
+            </Button>
+          )}
           <Button variant="outline" size="sm" className="rounded-xl border-white/20 bg-background/50 h-10">
             <Settings className="h-4 w-4 mr-2 text-primary" />
             Configuración
@@ -237,11 +339,15 @@ export function CursoDetallePage() {
         </div>
 
         <TabsContent value="modulos">
-          <ModulosGestion
-            idCurso={parseInt(idCurso!)}
-            modulos={curso.modulos || []}
-            desbloqueoSecuencial={curso.orden_secuencial}
-          />
+          {isLider ? (
+            <ModulosGestion
+              idCurso={parseInt(idCurso!)}
+              modulos={curso.modulos || []}
+              desbloqueoSecuencial={curso.orden_secuencial}
+            />
+          ) : (
+            <ModulosNavegacion idCurso={parseInt(idCurso!)} />
+          )}
         </TabsContent>
 
         <TabsContent value="progreso">
@@ -316,10 +422,18 @@ function ProgresoCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
                     {servidor.porcentaje}%
                   </Badge>
                 </div>
-              ))}
+            ))}
           </div>
         </CardContent>
       </Card>
+
+      {isLider && idCurso && (
+        <AgregarPersonasCursoDialog
+          open={showAgregarPersonas}
+          onOpenChange={setShowAgregarPersonas}
+          idAulaCurso={Number(idCurso)}
+        />
+      )}
     </div>
   )
 }

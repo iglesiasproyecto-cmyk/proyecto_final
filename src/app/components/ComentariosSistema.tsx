@@ -32,7 +32,7 @@ export function ComentariosActividad({
   nombreServidor,
   readonly = false
 }: ComentariosActividadProps) {
-  const { user } = useAuth()
+  const { user, usuarioActual } = useAuth()
   const [nuevoComentario, setNuevoComentario] = useState('')
   const [enviando, setEnviando] = useState(false)
 
@@ -41,16 +41,15 @@ export function ComentariosActividad({
   const eliminarComentario = useEliminarComentarioLider()
 
   const handleEnviarComentario = async () => {
-    if (!nuevoComentario.trim() || !user?.id) return
+    if (!nuevoComentario.trim() || !usuarioActual?.idUsuario) return
 
     setEnviando(true)
     try {
       await crearComentario.mutateAsync({
         comentario: nuevoComentario.trim(),
-        id_actividad: idActividad,
-        id_usuario_autor: user.id,
-        id_usuario_destinatario: idUsuarioServidor,
-        tipo: 'retroalimentacion'
+        id_aula_actividad: idActividad,
+        id_usuario_lider: usuarioActual.idUsuario,
+        id_usuario_servidor: idUsuarioServidor
       })
 
       setNuevoComentario('')
@@ -86,7 +85,7 @@ export function ComentariosActividad({
     )
   }
 
-  const comentariosFiltrados = comentarios?.filter(c => c.id_usuario_destinatario === idUsuarioServidor) || []
+  const comentariosFiltrados = comentarios?.filter(c => c.id_usuario_servidor === idUsuarioServidor) || []
 
   return (
     <Card>
@@ -104,21 +103,21 @@ export function ComentariosActividad({
         {comentariosFiltrados.length > 0 ? (
           <div className="space-y-3">
             {comentariosFiltrados.map((comentario: any) => (
-              <div key={comentario.id_comentario} className="border rounded-lg p-3 bg-muted/20">
+              <div key={comentario.id_aula_retroalimentacion} className="border rounded-lg p-3 bg-muted/20">
                 <div className="flex items-start space-x-3">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="text-xs">
-                      {comentario.usuario_autor?.nombres?.charAt(0) || '?'}
-                      {comentario.usuario_autor?.apellidos?.charAt(0) || ''}
+                      {comentario.usuario_lider?.nombres?.charAt(0) || '?'}
+                      {comentario.usuario_lider?.apellidos?.charAt(0) || ''}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
                       <span className="text-sm font-medium">
-                        {comentario.usuario_autor?.nombres} {comentario.usuario_autor?.apellidos}
+                        {comentario.usuario_lider?.nombres} {comentario.usuario_lider?.apellidos}
                       </span>
                       <Badge variant="outline" className="text-xs">
-                        {comentario.tipo === 'retroalimentacion' ? 'Retroalimentación' : 'Observación'}
+                        Retroalimentación
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">
@@ -129,7 +128,7 @@ export function ComentariosActividad({
                         <Calendar className="h-3 w-3" />
                         <span>{new Date(comentario.creado_en).toLocaleDateString()}</span>
                       </div>
-                      {!readonly && comentario.id_usuario_autor === user?.id && (
+                      {!readonly && comentario.id_usuario_lider === usuarioActual?.idUsuario && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -145,7 +144,7 @@ export function ComentariosActividad({
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleEliminarComentario(comentario.id_comentario)}>
+                              <AlertDialogAction onClick={() => handleEliminarComentario(comentario.id_aula_retroalimentacion)}>
                                 Eliminar
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -211,26 +210,25 @@ export function ComentariosServidor() {
   const { user } = useAuth()
 
   const { data: comentarios, isLoading } = React.useQuery({
-    queryKey: ['comentarios-servidor', user?.id],
+    queryKey: ['comentarios-servidor', usuarioActual?.idUsuario],
     queryFn: async () => {
-      if (!user?.id) return []
+      if (!usuarioActual?.idUsuario) return []
 
       const { data, error } = await supabase
-        .from('comentario_lider')
+        .from('aula_retroalimentacion')
         .select(`
           *,
-          usuario_autor:usuario!id_usuario_autor(nombres, apellidos),
-          actividad:actividad(titulo),
-          modulo:modulo(titulo)
+          usuario_lider:usuario!id_usuario_lider(nombres, apellidos),
+          actividad:aula_actividad(titulo),
+          modulo:aula_modulo(titulo)
         `)
-        .eq('id_usuario_destinatario', user.id)
-        .eq('tipo', 'retroalimentacion')
+        .eq('id_usuario_servidor', usuarioActual.idUsuario)
         .order('creado_en', { ascending: false })
 
       if (error) throw error
       return data
     },
-    enabled: !!user?.id,
+    enabled: !!usuarioActual?.idUsuario,
   })
 
   if (isLoading) {
@@ -267,18 +265,18 @@ export function ComentariosServidor() {
         ) : (
           <div className="space-y-4">
             {comentarios.map((comentario: any) => (
-              <div key={comentario.id_comentario} className="border rounded-lg p-4">
+              <div key={comentario.id_aula_retroalimentacion} className="border rounded-lg p-4">
                 <div className="flex items-start space-x-3">
                   <Avatar className="h-10 w-10">
                     <AvatarFallback>
-                      {comentario.usuario_autor?.nombres?.charAt(0) || '?'}
-                      {comentario.usuario_autor?.apellidos?.charAt(0) || ''}
+                      {comentario.usuario_lider?.nombres?.charAt(0) || '?'}
+                      {comentario.usuario_lider?.apellidos?.charAt(0) || ''}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <span className="font-medium">
-                        {comentario.usuario_autor?.nombres} {comentario.usuario_autor?.apellidos}
+                        {comentario.usuario_lider?.nombres} {comentario.usuario_lider?.apellidos}
                       </span>
                       <Badge variant="outline" className="text-xs">
                         Líder
