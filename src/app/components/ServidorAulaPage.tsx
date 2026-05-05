@@ -7,12 +7,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/app/components/ui/ta
 import { Badge } from '@/app/components/ui/badge'
 import { Progress } from '@/app/components/ui/progress'
 import { BookOpen, Award, Clock, Bell, MessageSquare, Loader2, GraduationCap, Sparkles, TrendingUp, Star, Calendar } from 'lucide-react'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { CursosServidorList } from './CursosServidorList'
 import { CertificadosServidor } from './CertificadosServidor'
 import { ComentariosServidor } from './ComentariosSistema'
 import { NotificacionesAula } from './NotificacionesAula'
-import { motion, AnimatePresence } from 'motion/react'
 
 export function ServidorAulaPage() {
   const { user } = useAuth()
