@@ -13,10 +13,10 @@ export function useCertificadosUsuario(idUsuario: number | null | undefined) {
         .from('aula_certificado')
         .select(`
           *,
-          aula_curso:aula_curso(titulo, descripcion)
+          curso:aula_curso(titulo, descripcion)
         `)
         .eq('id_usuario', idUsuario)
-        .order('fecha_emision', { ascending: false })
+        .order('emitido_en', { ascending: false })
 
       if (error) throw error
       return data
@@ -38,7 +38,7 @@ export function useTieneCertificado(vars: {
 
       const { data, error } = await supabase
         .from('aula_certificado')
-        .select('id')
+        .select('id_aula_certificado')
         .eq('id_usuario', vars.idUsuario)
         .eq('id_aula_curso', vars.idCurso)
         .single()
@@ -55,10 +55,12 @@ export function useTieneCertificado(vars: {
 export function useCrearCertificado() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (certificado: Tables<'aula_certificado'>['Insert']) => {
+    mutationFn: async (certificado: any) => {
       const { data, error } = await supabase
         .from('aula_certificado')
-        .insert(certificado)
+        .upsert(certificado, {
+          onConflict: 'id_usuario,id_aula_curso'
+        })
         .select()
         .single()
 
@@ -67,7 +69,7 @@ export function useCrearCertificado() {
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['certificados-usuario', vars.id_usuario] })
-      qc.invalidateQueries({ queryKey: ['tiene-certificado', vars.id_usuario, vars.id_curso] })
+      qc.invalidateQueries({ queryKey: ['tiene-certificado', vars.id_usuario, vars.id_aula_curso] })
     },
   })
 }
@@ -86,7 +88,7 @@ export function useCertificadosCurso(idCurso: number | null | undefined) {
           usuario:usuario(nombres, apellidos, correo)
         `)
         .eq('id_aula_curso', idCurso)
-        .order('fecha_emision', { ascending: false })
+        .order('emitido_en', { ascending: false })
 
       if (error) throw error
       return data

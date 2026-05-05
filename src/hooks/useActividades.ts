@@ -11,9 +11,9 @@ export function useActividadesModulo(idModulo: number | null | undefined) {
       if (!idModulo) return []
 
       const { data, error } = await supabase
-        .from('actividad')
+        .from('aula_actividad')
         .select('*')
-        .eq('id_modulo', idModulo)
+        .eq('id_aula_modulo', idModulo)
         .order('orden', { ascending: true })
 
       if (error) throw error
@@ -32,10 +32,10 @@ export function useProgresoActividades(idDetalleProcesoCurso: number | null | un
       if (!idDetalleProcesoCurso) return []
 
       const { data, error } = await supabase
-        .from('progreso_actividad')
+        .from('aula_progreso_actividad')
         .select(`
           *,
-          actividad:actividad(*)
+          actividad:aula_actividad(*)
         `)
         .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
 
@@ -57,12 +57,12 @@ export function useMarcarActividadVista() {
       idUsuario: number
     }) => {
       const { data, error } = await supabase
-        .from('progreso_actividad')
+        .from('aula_progreso_actividad')
         .upsert({
-          id_actividad: vars.idActividad,
+          id_aula_actividad: vars.idActividad,
           id_detalle_proceso_curso: vars.idDetalleProcesoCurso,
           id_usuario: vars.idUsuario,
-          vista_en: new Date().toISOString(),
+          completada_en: new Date().toISOString(), // Note: aula system uses completada_en for completion
         })
         .select()
         .single()
@@ -87,9 +87,9 @@ export function useMarcarActividadCompletada() {
       idUsuario: number
     }) => {
       const { data, error } = await supabase
-        .from('progreso_actividad')
+        .from('aula_progreso_actividad')
         .upsert({
-          id_actividad: vars.idActividad,
+          id_aula_actividad: vars.idActividad,
           id_detalle_proceso_curso: vars.idDetalleProcesoCurso,
           id_usuario: vars.idUsuario,
           completada_en: new Date().toISOString(),
@@ -98,16 +98,11 @@ export function useMarcarActividadCompletada() {
         .single()
 
       if (error) throw error
-
-      // Verificar si el módulo está completo y marcarlo automáticamente
-      await verificarYMarcarModuloCompleto(vars.idDetalleProcesoCurso, vars.idUsuario)
-
       return data
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['progreso-actividades', vars.idDetalleProcesoCurso] })
       qc.invalidateQueries({ queryKey: ['avance-detalle', vars.idDetalleProcesoCurso] })
-      qc.invalidateQueries({ queryKey: ['progreso-curso'] })
     },
   })
 }
@@ -116,70 +111,55 @@ export function useMarcarActividadCompletada() {
 async function verificarYMarcarModuloCompleto(idDetalleProcesoCurso: number, idUsuario: number) {
   // Obtener el módulo de la actividad
   const { data: actividad } = await supabase
-    .from('progreso_actividad')
+    .from('aula_progreso_actividad')
     .select(`
-      actividad:actividad(
-        id_modulo,
-        modulo:modulo(id_modulo)
+      actividad:aula_actividad(
+        id_aula_modulo,
+        modulo:aula_modulo(id_aula_modulo)
       )
     `)
     .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
     .eq('id_usuario', idUsuario)
     .single()
 
-  if (!actividad?.actividad?.id_modulo) return
+  if (!actividad?.actividad?.id_aula_modulo) return
 
-  const idModulo = actividad.actividad.id_modulo
+  const idModulo = actividad.actividad.id_aula_modulo
 
   // Contar elementos totales del módulo
   const { data: actividades } = await supabase
-    .from('actividad')
-    .select('id_actividad')
-    .eq('id_modulo', idModulo)
+    .from('aula_actividad')
+    .select('id_aula_actividad')
+    .eq('id_aula_modulo', idModulo)
 
   const { data: evaluaciones } = await supabase
-    .from('evaluacion_detalle')
-    .select('id_evaluacion_detalle')
-    .eq('id_modulo', idModulo)
+    .from('aula_evaluacion')
+    .select('id_aula_evaluacion')
+    .eq('id_aula_modulo', idModulo)
 
   const totalElementos = (actividades?.length || 0) + (evaluaciones?.length || 0)
 
   // Contar elementos completados
   const { data: actividadesCompletadas } = await supabase
-    .from('progreso_actividad')
-    .select('id_progreso')
+    .from('aula_progreso_actividad')
+    .select('id_aula_progreso_actividad')
     .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
-    .in('id_actividad', actividades?.map(a => a.id_actividad) || [])
+    .in('id_aula_actividad', actividades?.map(a => a.id_aula_actividad) || [])
     .not('completada_en', 'is', null)
 
   const { data: evaluacionesAprobadas } = await supabase
-    .from('intento_evaluacion')
-    .select('id_intento')
+    .from('aula_intento_evaluacion')
+    .select('id_aula_intento_evaluacion')
     .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
-    .eq('id_modulo', idModulo)
     .eq('estado', 'aprobado')
 
   const elementosCompletados = (actividadesCompletadas?.length || 0) + (evaluacionesAprobadas?.length || 0)
 
   // Si está completo, marcar el módulo
   if (elementosCompletados === totalElementos && totalElementos > 0) {
-    const { data: moduloExistente } = await supabase
-      .from('avance_modulo')
-      .select('id_avance')
-      .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
-      .eq('id_modulo', idModulo)
-      .single()
-
-    if (!moduloExistente) {
-      await supabase
-        .from('avance_modulo')
-        .insert({
-          id_detalle_proceso_curso: idDetalleProcesoCurso,
-          id_modulo: idModulo,
-          id_usuario: idUsuario,
-          completado_en: new Date().toISOString()
-        })
-    }
+    // Note: aula system doesn't have a separate module completion table
+    // Module completion is calculated dynamically from activity/evaluation progress
+    console.log(`Módulo ${idModulo} completado por usuario ${idUsuario}`)
   }
 }
 
@@ -187,17 +167,20 @@ async function verificarYMarcarModuloCompleto(idDetalleProcesoCurso: number, idU
 export function useCrearActividad() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (actividad: Tables<'actividad'>['Insert']) => {
+    mutationFn: async (actividad: any) => {
       // Obtener información del curso para las notificaciones
       const { data: modulo } = await supabase
-        .from('modulo')
-        .select('id_curso, titulo')
-        .eq('id_modulo', actividad.id_modulo!)
+        .from('aula_modulo')
+        .select('id_aula_curso, titulo')
+        .eq('id_aula_modulo', actividad.id_aula_modulo!)
         .single()
 
       const { data, error } = await supabase
-        .from('actividad')
-        .insert(actividad)
+        .from('aula_actividad')
+        .insert({
+          ...actividad,
+          id_aula_modulo: actividad.id_aula_modulo
+        })
         .select()
         .single()
 
@@ -206,14 +189,14 @@ export function useCrearActividad() {
       // Enviar notificaciones si la actividad se crea en un módulo de un curso activo
       if (modulo && actividad.estado === 'pendiente') {
         const { data: curso } = await supabase
-          .from('curso')
+          .from('aula_curso')
           .select('estado')
-          .eq('id_curso', modulo.id_curso)
+          .eq('id_aula_curso', modulo.id_aula_curso)
           .single()
 
         if (curso?.estado === 'activo') {
           await crearNotificacionNuevoContenido(
-            modulo.id_curso,
+            modulo.id_aula_curso,
             'actividad',
             actividad.titulo
           )
@@ -234,12 +217,12 @@ export function useActualizarActividad() {
   return useMutation({
     mutationFn: async (vars: {
       idActividad: number
-      actividad: Tables<'actividad'>['Update']
+      actividad: any
     }) => {
       const { data, error } = await supabase
-        .from('actividad')
+        .from('aula_actividad')
         .update(vars.actividad)
-        .eq('id_actividad', vars.idActividad)
+        .eq('id_aula_actividad', vars.idActividad)
         .select()
         .single()
 
@@ -247,7 +230,7 @@ export function useActualizarActividad() {
       return data
     },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['actividades-modulo', vars.actividad.id_modulo] })
+      qc.invalidateQueries({ queryKey: ['actividades-modulo', vars.actividad.id_aula_modulo] })
     },
   })
 }
@@ -258,9 +241,9 @@ export function useEliminarActividad() {
   return useMutation({
     mutationFn: async (idActividad: number) => {
       const { error } = await supabase
-        .from('actividad')
+        .from('aula_actividad')
         .delete()
-        .eq('id_actividad', idActividad)
+        .eq('id_aula_actividad', idActividad)
 
       if (error) throw error
     },
