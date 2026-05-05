@@ -11,10 +11,10 @@ export function useEvaluacionDetalleModulo(idModulo: number | null | undefined) 
       if (!idModulo) return []
 
       const { data, error } = await supabase
-        .from('aula_evaluacion')
+        .from('evaluacion_detalle')
         .select('*')
         .eq('id_aula_modulo', idModulo)
-        .order('creado_en', { ascending: true })
+        .order('orden', { ascending: true })
 
       if (error) throw error
       return data
@@ -27,25 +27,38 @@ export function useEvaluacionDetalleModulo(idModulo: number | null | undefined) 
 // Hook para obtener intentos de evaluación de un usuario
 export function useIntentosEvaluacion(vars: {
   idModulo: number | null | undefined
-  idDetalleProcesoCurso: number | null | undefined
   idUsuario: number | null | undefined
 }) {
   return useQuery({
-    queryKey: ['intentos-evaluacion', vars.idModulo, vars.idDetalleProcesoCurso, vars.idUsuario],
+    queryKey: ['intentos-evaluacion', vars.idModulo, vars.idUsuario],
     queryFn: async () => {
-      if (!vars.idModulo || !vars.idDetalleProcesoCurso || !vars.idUsuario) return []
+      if (!vars.idModulo || !vars.idUsuario) return []
+
+      // Get evaluaciones for the module
+      const { data: evaluaciones } = await supabase
+        .from('aula_evaluacion')
+        .select('id_aula_evaluacion')
+        .eq('id_aula_modulo', vars.idModulo)
+
+      if (!evaluaciones || evaluaciones.length === 0) return []
+
+      const evaluacionIds = evaluaciones.map(e => e.id_aula_evaluacion)
 
       const { data, error } = await supabase
         .from('aula_intento_evaluacion')
         .select('*')
-        .eq('id_detalle_proceso_curso', vars.idDetalleProcesoCurso)
+        .in('id_aula_evaluacion', evaluacionIds)
         .eq('id_usuario', vars.idUsuario)
-        .order('creado_en', { ascending: false })
+        .order('iniciado_en', { ascending: false })
 
       if (error) throw error
-      return data
+      return data?.map(intento => ({
+        ...intento,
+        estado: intento.aprobado ? 'aprobado' : 'reprobado',
+        calificacion_obtenida: intento.puntaje_obtenido
+      }))
     },
-    enabled: !!vars.idModulo && !!vars.idDetalleProcesoCurso && !!vars.idUsuario,
+    enabled: !!vars.idModulo && !!vars.idUsuario,
     staleTime: 30 * 1000,
   })
 }
@@ -65,8 +78,7 @@ export function useCrearIntentoEvaluacion() {
       return data
     },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['intentos-evaluacion', vars.id_detalle_proceso_curso, vars.id_usuario] })
-      qc.invalidateQueries({ queryKey: ['avance-detalle', vars.id_detalle_proceso_curso] })
+      qc.invalidateQueries({ queryKey: ['intentos-evaluacion', null, vars.id_usuario] })
     },
   })
 }
@@ -88,17 +100,10 @@ export function useActualizarIntentoEvaluacion() {
 
       if (error) throw error
 
-      // Verificar si el módulo está completo después de aprobar la evaluación
-      if (vars.intento.estado === 'aprobado') {
-        await verificarYMarcarModuloCompleto(vars.intento.id_detalle_proceso_curso!, vars.intento.id_usuario!)
-      }
-
       return data
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['intentos-evaluacion'] })
-      qc.invalidateQueries({ queryKey: ['avance-detalle', vars.intento.id_detalle_proceso_curso] })
-      qc.invalidateQueries({ queryKey: ['progreso-curso'] })
     },
   })
 }
@@ -186,9 +191,9 @@ export function useCrearPreguntaEvaluacion() {
       // Enviar notificación de nueva evaluación (solo una vez por módulo)
       if (modulo) {
         const { data: curso } = await supabase
-          .from('curso')
+          .from('aula_curso')
           .select('estado')
-          .eq('id_curso', modulo.id_curso)
+          .eq('id_aula_curso', modulo.id_aula_curso)
           .single()
 
         if (curso?.estado === 'activo') {
@@ -196,7 +201,7 @@ export function useCrearPreguntaEvaluacion() {
           const { data: evaluacionesExistentes } = await supabase
             .from('evaluacion_detalle')
             .select('id_evaluacion_detalle')
-            .eq('id_modulo', pregunta.id_modulo)
+            .eq('id_aula_modulo', pregunta.id_aula_modulo)
 
           // Solo enviar notificación si es la primera pregunta de evaluación
           if (!evaluacionesExistentes || evaluacionesExistentes.length === 0) {

@@ -36,13 +36,13 @@ function mapCiudad(r: CiudadRow): Ciudad {
 }
 
 export async function getPaises(): Promise<Pais[]> {
-  const { data, error } = await supabase.from('pais').select('*').eq('activo', true).order('nombre')
+  const { data, error } = await supabase.from('pais').select('*').order('nombre')
   if (error) throw error
   return data.map(mapPais)
 }
 
 export async function getDepartamentos(idPais?: number): Promise<DepartamentoGeo[]> {
-  let q = supabase.from('departamento').select('*').eq('activo', true).order('nombre')
+  let q = supabase.from('departamento').select('*').order('nombre')
   if (idPais !== undefined) q = q.eq('id_pais', idPais)
   const { data, error } = await q
   if (error) throw error
@@ -50,7 +50,7 @@ export async function getDepartamentos(idPais?: number): Promise<DepartamentoGeo
 }
 
 export async function getCiudades(idDepartamento?: number): Promise<Ciudad[]> {
-  let q = supabase.from('ciudad').select('*').eq('activo', true).order('nombre')
+  let q = supabase.from('ciudad').select('*').order('nombre')
   if (idDepartamento !== undefined) q = q.eq('id_departamento', idDepartamento)
   const { data, error } = await q
   if (error) throw error

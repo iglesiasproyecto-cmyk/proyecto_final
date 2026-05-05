@@ -154,22 +154,6 @@ export function CursoDetallePage() {
      )
    }
 
-  if (!isLider) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">Acceso denegado</h3>
-          <p className="text-muted-foreground mb-4">No tienes permisos para ver este curso.</p>
-          <Button onClick={() => navigate('/app/aula')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver al Aula
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
   // Calcular estadísticas del curso
   const modulos = curso?.modulos ?? curso?.aula_modulo ?? []
   const totalModulos = modulos.length
@@ -359,6 +343,13 @@ export function CursoDetallePage() {
         </TabsContent>
       </Tabs>
 
+      {isLider && idCurso && (
+        <AgregarPersonasCursoDialog
+          open={showAgregarPersonas}
+          onOpenChange={setShowAgregarPersonas}
+          idAulaCurso={Number(idCurso)}
+        />
+      )}
     </div>
   )
 }
@@ -426,14 +417,6 @@ function ProgresoCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
           </div>
         </CardContent>
       </Card>
-
-      {isLider && idCurso && (
-        <AgregarPersonasCursoDialog
-          open={showAgregarPersonas}
-          onOpenChange={setShowAgregarPersonas}
-          idAulaCurso={Number(idCurso)}
-        />
-      )}
     </div>
   )
 }

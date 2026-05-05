@@ -23,6 +23,10 @@ const estadoLabels: Record<string, string> = {
 interface IglesiaFormData {
   nombre: string;
   fechaFundacion: string;
+  direccion: string;
+  telefono: string;
+  descripcion: string;
+  sitioWeb: string;
 }
 
 // Componente Glass para las tarjetas de iglesias al estilo Dashboard
@@ -54,7 +58,7 @@ export function ChurchesPage() {
   const [filter, setFilter] = useState<"all" | "activa" | "inactiva">("all");
   const [showCreate, setShowCreate] = useState(false);
   const [editingIglesia, setEditingIglesia] = useState<IglesiaEnriquecida | null>(null);
-  const [form, setForm] = useState<IglesiaFormData>({ nombre: "", fechaFundacion: "" });
+  const [form, setForm] = useState<IglesiaFormData>({ nombre: "", fechaFundacion: "", direccion: "", telefono: "", descripcion: "", sitioWeb: "" });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof IglesiaFormData, string>>>({});
   
   const createIglesiaMutation = useCreateIglesia();
@@ -88,7 +92,7 @@ export function ChurchesPage() {
   const handleSaveEdit = () => {
     if (!editingIglesia || !validateForm()) return;
     updateIglesiaMutation.mutate(
-      { id: editingIglesia.idIglesia, data: { nombre: form.nombre.trim(), fechaFundacion: form.fechaFundacion || null } },
+      { id: editingIglesia.idIglesia, data: { nombre: form.nombre.trim(), fechaFundacion: form.fechaFundacion || null, direccion: form.direccion.trim() || null, telefono: form.telefono.trim() || null, descripcion: form.descripcion.trim() || null, sitioWeb: form.sitioWeb.trim() || null } },
       { onSuccess: () => setEditingIglesia(null) }
     );
   };
@@ -96,7 +100,7 @@ export function ChurchesPage() {
   const handleCreate = () => {
     if (!validateForm()) return;
     createIglesiaMutation.mutate(
-      { nombre: form.nombre.trim(), fechaFundacion: form.fechaFundacion || null, estado: "activa" },
+      { nombre: form.nombre.trim(), fechaFundacion: form.fechaFundacion || null, estado: "activa", direccion: form.direccion.trim() || null, telefono: form.telefono.trim() || null, descripcion: form.descripcion.trim() || null, sitioWeb: form.sitioWeb.trim() || null },
       { onSuccess: () => setShowCreate(false) }
     );
   };
@@ -123,6 +127,22 @@ export function ChurchesPage() {
         <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">Fecha de Fundación</label>
         <Input type="date" value={form.fechaFundacion} onChange={(e) => updateField("fechaFundacion", e.target.value)} className="bg-input-background focus-visible:ring-primary/20" />
       </div>
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">Dirección</label>
+        <Input value={form.direccion} onChange={(e) => updateField("direccion", e.target.value)} placeholder="Dirección de la iglesia" className="bg-input-background focus-visible:ring-primary/20" />
+      </div>
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">Teléfono</label>
+        <Input value={form.telefono} onChange={(e) => updateField("telefono", e.target.value)} placeholder="Número de teléfono" className="bg-input-background focus-visible:ring-primary/20" />
+      </div>
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">Descripción</label>
+        <Input value={form.descripcion} onChange={(e) => updateField("descripcion", e.target.value)} placeholder="Descripción de la iglesia" className="bg-input-background focus-visible:ring-primary/20" />
+      </div>
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">Sitio Web</label>
+        <Input value={form.sitioWeb} onChange={(e) => updateField("sitioWeb", e.target.value)} placeholder="https://ejemplo.com" className="bg-input-background focus-visible:ring-primary/20" />
+      </div>
     </div>
   );
 
@@ -139,7 +159,7 @@ export function ChurchesPage() {
           </div>
         </div>
         {rolActual === "super_admin" && (
-          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "" }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
+          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", direccion: "", telefono: "", descripcion: "", sitioWeb: "" }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
             <Plus className="w-4 h-4 mr-2" /> Nueva Iglesia
           </Button>
         )}
@@ -224,11 +244,11 @@ export function ChurchesPage() {
               </Button>
               {rolActual === "super_admin" && (
                 <>
-                  <Button variant="secondary" size="sm" className="flex-1 rounded-xl bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 transition-colors" onClick={() => {
-                    setFormErrors({});
-                    setForm({ nombre: ig.nombre, fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "" });
-                    setEditingIglesia(ig);
-                  }}>
+                   <Button variant="secondary" size="sm" className="flex-1 rounded-xl bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 transition-colors" onClick={() => {
+                     setFormErrors({});
+                     setForm({ nombre: ig.nombre, fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "", direccion: ig.direccion || "", telefono: ig.telefono || "", descripcion: ig.descripcion || "", sitioWeb: ig.sitioWeb || "" });
+                     setEditingIglesia(ig);
+                   }}>
                     <Pencil className="w-3.5 h-3.5 mr-1.5" /> Editar
                   </Button>
                   <Button

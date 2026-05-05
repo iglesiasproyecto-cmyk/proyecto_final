@@ -353,7 +353,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           })
           const iglesias = Array.from(iglesiasMap.entries()).map(([id, nombre]) => ({ id, nombre }))
           setIglesiasDelUsuario(iglesias)
-          if (iglesias.length === 1) setIglesiaActual(iglesias[0])
+          if (iglesias.length >= 1) setIglesiaActual(iglesias[0])
           else setIglesiaActual(null)
 
           // Build sedes

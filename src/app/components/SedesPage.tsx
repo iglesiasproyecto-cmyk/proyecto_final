@@ -641,7 +641,7 @@ export function SedesPage() {
 
           <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setDialog(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
-            <Button onClick={handleSubmit} disabled={!form.nombre.trim() || !form.idCiudad || !form.idIglesia} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
+            <Button onClick={handleSubmit} disabled={!form.nombre.trim() || !form.idCiudad || !form.idIglesia || !form.idPais || !form.idDepartamento} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -46,57 +46,345 @@ export type Database = {
           },
         ]
       }
-      curso: {
+      aula_curso: {
         Row: {
-          creado_en: string
-          descripcion: string | null
-          desbloqueo_secuencial: boolean
-          duracion_horas: number | null
-          estado: Database["public"]["Enums"]["estado_curso"]
-          id_curso: number
+          id_aula_curso: number
           id_ministerio: number
           id_usuario_creador: number
-          nombre: string
+          titulo: string
+          descripcion: string | null
+          imagen_url: string | null
+          estado: string
+          orden_secuencial: boolean
+          creado_en: string
           updated_at: string
+          deleted_at: string | null
         }
         Insert: {
-          creado_en?: string
-          descripcion?: string | null
-          desbloqueo_secuencial?: boolean
-          duracion_horas?: number | null
-          estado?: Database["public"]["Enums"]["estado_curso"]
-          id_curso?: number
+          id_aula_curso?: number
           id_ministerio: number
           id_usuario_creador: number
-          nombre: string
+          titulo: string
+          descripcion?: string | null
+          imagen_url?: string | null
+          estado?: string
+          orden_secuencial?: boolean
+          creado_en?: string
           updated_at?: string
+          deleted_at?: string | null
         }
         Update: {
-          creado_en?: string
-          descripcion?: string | null
-          desbloqueo_secuencial?: boolean
-          duracion_horas?: number | null
-          estado?: Database["public"]["Enums"]["estado_curso"]
-          id_curso?: number
+          id_aula_curso?: number
           id_ministerio?: number
           id_usuario_creador?: number
-          nombre?: string
+          titulo?: string
+          descripcion?: string | null
+          imagen_url?: string | null
+          estado?: string
+          orden_secuencial?: boolean
+          creado_en?: string
           updated_at?: string
+          deleted_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "curso_id_ministerio_fkey"
+            foreignKeyName: "aula_curso_id_ministerio_fkey"
             columns: ["id_ministerio"]
             isOneToOne: false
             referencedRelation: "ministerio"
             referencedColumns: ["id_ministerio"]
           },
           {
-            foreignKeyName: "curso_id_usuario_creador_fkey"
+            foreignKeyName: "aula_curso_id_usuario_creador_fkey"
             columns: ["id_usuario_creador"]
             isOneToOne: false
             referencedRelation: "usuario"
             referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      aula_modulo: {
+        Row: {
+          id_aula_modulo: number
+          id_aula_curso: number
+          titulo: string
+          descripcion: string | null
+          orden: number
+          publicado: boolean
+          creado_en: string
+          updated_at: string
+          contenido_md: string | null
+          deleted_at: string | null
+        }
+        Insert: {
+          id_aula_modulo?: number
+          id_aula_curso: number
+          titulo: string
+          descripcion?: string | null
+          orden?: number
+          publicado?: boolean
+          creado_en?: string
+          updated_at?: string
+          contenido_md?: string | null
+          deleted_at?: string | null
+        }
+        Update: {
+          id_aula_modulo?: number
+          id_aula_curso?: number
+          titulo?: string
+          descripcion?: string | null
+          orden?: number
+          publicado?: boolean
+          creado_en?: string
+          updated_at?: string
+          contenido_md?: string | null
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aula_modulo_id_aula_curso_fkey"
+            columns: ["id_aula_curso"]
+            isOneToOne: false
+            referencedRelation: "aula_curso"
+            referencedColumns: ["id_aula_curso"]
+          },
+        ]
+      }
+      aula_actividad: {
+        Row: {
+          id_aula_actividad: number
+          id_aula_modulo: number
+          titulo: string
+          tipo: string
+          contenido: string | null
+          url_recurso: string | null
+          orden: number
+          creado_en: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id_aula_actividad?: number
+          id_aula_modulo: number
+          titulo: string
+          tipo?: string
+          contenido?: string | null
+          url_recurso?: string | null
+          orden?: number
+          creado_en?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id_aula_actividad?: number
+          id_aula_modulo?: number
+          titulo?: string
+          tipo?: string
+          contenido?: string | null
+          url_recurso?: string | null
+          orden?: number
+          creado_en?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aula_actividad_id_aula_modulo_fkey"
+            columns: ["id_aula_modulo"]
+            isOneToOne: false
+            referencedRelation: "aula_modulo"
+            referencedColumns: ["id_aula_modulo"]
+          },
+        ]
+      }
+      aula_evaluacion: {
+        Row: {
+          id_aula_evaluacion: number
+          id_aula_modulo: number
+          titulo: string
+          descripcion: string | null
+          puntaje_minimo: number
+          reintentos_permitidos: boolean
+          max_intentos: number | null
+          orden: number
+          creado_en: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id_aula_evaluacion?: number
+          id_aula_modulo: number
+          titulo: string
+          descripcion?: string | null
+          puntaje_minimo?: number
+          reintentos_permitidos?: boolean
+          max_intentos?: number | null
+          orden?: number
+          creado_en?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id_aula_evaluacion?: number
+          id_aula_modulo?: number
+          titulo?: string
+          descripcion?: string | null
+          puntaje_minimo?: number
+          reintentos_permitidos?: boolean
+          max_intentos?: number | null
+          orden?: number
+          creado_en?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aula_evaluacion_id_aula_modulo_fkey"
+            columns: ["id_aula_modulo"]
+            isOneToOne: false
+            referencedRelation: "aula_modulo"
+            referencedColumns: ["id_aula_modulo"]
+          },
+        ]
+      }
+      aula_inscripcion: {
+        Row: {
+          id_aula_inscripcion: number
+          id_aula_curso: number
+          id_usuario: number
+          activo: boolean
+          inscrito_en: string
+          updated_at: string
+        }
+        Insert: {
+          id_aula_inscripcion?: number
+          id_aula_curso: number
+          id_usuario: number
+          activo?: boolean
+          inscrito_en?: string
+          updated_at?: string
+        }
+        Update: {
+          id_aula_inscripcion?: number
+          id_aula_curso?: number
+          id_usuario?: number
+          activo?: boolean
+          inscrito_en?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aula_inscripcion_id_aula_curso_fkey"
+            columns: ["id_aula_curso"]
+            isOneToOne: false
+            referencedRelation: "aula_curso"
+            referencedColumns: ["id_aula_curso"]
+          },
+          {
+            foreignKeyName: "aula_inscripcion_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      aula_intento_evaluacion: {
+        Row: {
+          id_aula_intento_evaluacion: number
+          id_usuario: number
+          id_aula_evaluacion: number
+          puntaje_obtenido: number
+          aprobado: boolean
+          numero_intento: number
+          iniciado_en: string
+          finalizado_en: string | null
+          creado_en: string
+          fecha_intento: string | null
+        }
+        Insert: {
+          id_aula_intento_evaluacion?: number
+          id_usuario: number
+          id_aula_evaluacion: number
+          puntaje_obtenido?: number
+          aprobado?: boolean
+          numero_intento?: number
+          iniciado_en?: string
+          finalizado_en?: string | null
+          creado_en?: string
+          fecha_intento?: string | null
+        }
+        Update: {
+          id_aula_intento_evaluacion?: number
+          id_usuario?: number
+          id_aula_evaluacion?: number
+          puntaje_obtenido?: number
+          aprobado?: boolean
+          numero_intento?: number
+          iniciado_en?: string
+          finalizado_en?: string | null
+          creado_en?: string
+          fecha_intento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aula_intento_evaluacion_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+          {
+            foreignKeyName: "aula_intento_evaluacion_id_aula_evaluacion_fkey"
+            columns: ["id_aula_evaluacion"]
+            isOneToOne: false
+            referencedRelation: "aula_evaluacion"
+            referencedColumns: ["id_aula_evaluacion"]
+          },
+        ]
+      }
+      aula_progreso_actividad: {
+        Row: {
+          id_aula_progreso_actividad: number
+          id_usuario: number
+          id_aula_actividad: number
+          completada: boolean
+          completada_en: string | null
+          creado_en: string
+          updated_at: string
+        }
+        Insert: {
+          id_aula_progreso_actividad?: number
+          id_usuario: number
+          id_aula_actividad: number
+          completada?: boolean
+          completada_en?: string | null
+          creado_en?: string
+          updated_at?: string
+        }
+        Update: {
+          id_aula_progreso_actividad?: number
+          id_usuario?: number
+          id_aula_actividad?: number
+          completada?: boolean
+          completada_en?: string | null
+          creado_en?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aula_progreso_actividad_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+          {
+            foreignKeyName: "aula_progreso_actividad_id_aula_actividad_fkey"
+            columns: ["id_aula_actividad"]
+            isOneToOne: false
+            referencedRelation: "aula_actividad"
+            referencedColumns: ["id_aula_actividad"]
           },
         ]
       }
@@ -129,102 +417,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "pais"
             referencedColumns: ["id_pais"]
-          },
-        ]
-      }
-      detalle_proceso_curso: {
-        Row: {
-          creado_en: string
-          estado: Database["public"]["Enums"]["estado_detalle"]
-          fecha_inscripcion: string
-          id_detalle_proceso_curso: number
-          id_proceso_asignado_curso: number
-          id_usuario: number
-          updated_at: string
-        }
-        Insert: {
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_detalle"]
-          fecha_inscripcion?: string
-          id_detalle_proceso_curso?: number
-          id_proceso_asignado_curso: number
-          id_usuario: number
-          updated_at?: string
-        }
-        Update: {
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_detalle"]
-          fecha_inscripcion?: string
-          id_detalle_proceso_curso?: number
-          id_proceso_asignado_curso?: number
-          id_usuario?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "detalle_proceso_curso_id_proceso_asignado_curso_fkey"
-            columns: ["id_proceso_asignado_curso"]
-            isOneToOne: false
-            referencedRelation: "proceso_asignado_curso"
-            referencedColumns: ["id_proceso_asignado_curso"]
-          },
-          {
-            foreignKeyName: "detalle_proceso_curso_id_usuario_fkey"
-            columns: ["id_usuario"]
-            isOneToOne: false
-            referencedRelation: "usuario"
-            referencedColumns: ["id_usuario"]
-          },
-        ]
-      }
-      evaluacion: {
-        Row: {
-          calificacion: number | null
-          creado_en: string
-          estado: Database["public"]["Enums"]["estado_evaluacion"]
-          fecha_evaluacion: string | null
-          id_evaluacion: number
-          id_modulo: number
-          id_usuario: number
-          observaciones: string | null
-          updated_at: string
-        }
-        Insert: {
-          calificacion?: number | null
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_evaluacion"]
-          fecha_evaluacion?: string | null
-          id_evaluacion?: number
-          id_modulo: number
-          id_usuario: number
-          observaciones?: string | null
-          updated_at?: string
-        }
-        Update: {
-          calificacion?: number | null
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_evaluacion"]
-          fecha_evaluacion?: string | null
-          id_evaluacion?: number
-          id_modulo?: number
-          id_usuario?: number
-          observaciones?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "evaluacion_id_modulo_fkey"
-            columns: ["id_modulo"]
-            isOneToOne: false
-            referencedRelation: "modulo"
-            referencedColumns: ["id_modulo"]
-          },
-          {
-            foreignKeyName: "evaluacion_id_usuario_fkey"
-            columns: ["id_usuario"]
-            isOneToOne: false
-            referencedRelation: "usuario"
-            referencedColumns: ["id_usuario"]
           },
         ]
       }
@@ -477,14 +669,14 @@ export type Database = {
           },
         ]
       }
-      modulo: {
+      aula_modulo: {
         Row: {
           contenido_md: string | null
           creado_en: string
           descripcion: string | null
           estado: Database["public"]["Enums"]["estado_modulo"]
-          id_curso: number
-          id_modulo: number
+          id_aula_curso: number
+          id_aula_modulo: number
           orden: number
           titulo: string
           updated_at: string
@@ -494,8 +686,8 @@ export type Database = {
           creado_en?: string
           descripcion?: string | null
           estado?: Database["public"]["Enums"]["estado_modulo"]
-          id_curso: number
-          id_modulo?: number
+          id_aula_curso: number
+          id_aula_modulo?: number
           orden?: number
           titulo: string
           updated_at?: string
@@ -505,19 +697,19 @@ export type Database = {
           creado_en?: string
           descripcion?: string | null
           estado?: Database["public"]["Enums"]["estado_modulo"]
-          id_curso?: number
-          id_modulo?: number
+          id_aula_curso?: number
+          id_aula_modulo?: number
           orden?: number
           titulo?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "modulo_id_curso_fkey"
-            columns: ["id_curso"]
+            foreignKeyName: "aula_modulo_id_aula_curso_fkey"
+            columns: ["id_aula_curso"]
             isOneToOne: false
-            referencedRelation: "curso"
-            referencedColumns: ["id_curso"]
+            referencedRelation: "aula_curso"
+            referencedColumns: ["id_aula_curso"]
           },
         ]
       }
@@ -624,92 +816,6 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "usuario"
             referencedColumns: ["id_usuario"]
-          },
-        ]
-      }
-      proceso_asignado_curso: {
-        Row: {
-          creado_en: string
-          estado: Database["public"]["Enums"]["estado_proceso"]
-          fecha_fin: string
-          fecha_inicio: string
-          id_curso: number
-          id_iglesia: number
-          id_proceso_asignado_curso: number
-          updated_at: string
-        }
-        Insert: {
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_proceso"]
-          fecha_fin: string
-          fecha_inicio: string
-          id_curso: number
-          id_iglesia: number
-          id_proceso_asignado_curso?: number
-          updated_at?: string
-        }
-        Update: {
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_proceso"]
-          fecha_fin?: string
-          fecha_inicio?: string
-          id_curso?: number
-          id_iglesia?: number
-          id_proceso_asignado_curso?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "proceso_asignado_curso_id_curso_fkey"
-            columns: ["id_curso"]
-            isOneToOne: false
-            referencedRelation: "curso"
-            referencedColumns: ["id_curso"]
-          },
-          {
-            foreignKeyName: "proceso_asignado_curso_id_iglesia_fkey"
-            columns: ["id_iglesia"]
-            isOneToOne: false
-            referencedRelation: "iglesia"
-            referencedColumns: ["id_iglesia"]
-          },
-        ]
-      }
-      recurso: {
-        Row: {
-          creado_en: string
-          id_modulo: number
-          id_recurso: number
-          nombre: string
-          tipo: Database["public"]["Enums"]["tipo_recurso"]
-          updated_at: string
-          url: string
-        }
-        Insert: {
-          creado_en?: string
-          id_modulo: number
-          id_recurso?: number
-          nombre: string
-          tipo?: Database["public"]["Enums"]["tipo_recurso"]
-          updated_at?: string
-          url: string
-        }
-        Update: {
-          creado_en?: string
-          id_modulo?: number
-          id_recurso?: number
-          nombre?: string
-          tipo?: Database["public"]["Enums"]["tipo_recurso"]
-          updated_at?: string
-          url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recurso_id_modulo_fkey"
-            columns: ["id_modulo"]
-            isOneToOne: false
-            referencedRelation: "modulo"
-            referencedColumns: ["id_modulo"]
           },
         ]
       }
@@ -1124,58 +1230,58 @@ export type Database = {
           },
         ]
       }
-      avance_modulo: {
+      aula_avance_modulo: {
         Row: {
           completado_en: string
           creado_en: string
-          id_avance: number
+          id_aula_avance_modulo: number
           id_detalle_proceso_curso: number
-          id_modulo: number
+          id_aula_modulo: number
           id_usuario: number
           updated_at: string
         }
         Insert: {
           completado_en?: string
           creado_en?: string
-          id_avance?: number
+          id_aula_avance_modulo?: number
           id_detalle_proceso_curso: number
-          id_modulo: number
+          id_aula_modulo: number
           id_usuario: number
           updated_at?: string
         }
         Update: {
           completado_en?: string
           creado_en?: string
-          id_avance?: number
+          id_aula_avance_modulo?: number
           id_detalle_proceso_curso?: number
-          id_modulo?: number
+          id_aula_modulo?: number
           id_usuario?: number
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "avance_modulo_id_detalle_proceso_curso_fkey"
+            foreignKeyName: "aula_avance_modulo_id_detalle_proceso_curso_fkey"
             columns: ["id_detalle_proceso_curso"]
             isOneToOne: false
             referencedRelation: "detalle_proceso_curso"
             referencedColumns: ["id_detalle_proceso_curso"]
           },
           {
-            foreignKeyName: "avance_modulo_id_detalle_proceso_curso_fkey"
+            foreignKeyName: "aula_avance_modulo_id_detalle_proceso_curso_fkey"
             columns: ["id_detalle_proceso_curso"]
             isOneToOne: false
             referencedRelation: "v_companeros_ciclo"
             referencedColumns: ["id_detalle_proceso_curso"]
           },
           {
-            foreignKeyName: "avance_modulo_id_modulo_fkey"
-            columns: ["id_modulo"]
+            foreignKeyName: "aula_avance_modulo_id_aula_modulo_fkey"
+            columns: ["id_aula_modulo"]
             isOneToOne: false
-            referencedRelation: "modulo"
-            referencedColumns: ["id_modulo"]
+            referencedRelation: "aula_modulo"
+            referencedColumns: ["id_aula_modulo"]
           },
           {
-            foreignKeyName: "avance_modulo_id_usuario_fkey"
+            foreignKeyName: "aula_avance_modulo_id_usuario_fkey"
             columns: ["id_usuario"]
             isOneToOne: false
             referencedRelation: "usuario"
@@ -1185,251 +1291,236 @@ export type Database = {
       }
     }
     Views: {
-      v_companeros_ciclo: {
-        Row: {
-          apellidos: string | null
-          estado: Database["public"]["Enums"]["estado_detalle"] | null
-          id_detalle_proceso_curso: number | null
-          id_proceso_asignado_curso: number | null
-          id_usuario: number | null
-          nombres: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "detalle_proceso_curso_id_proceso_asignado_curso_fkey"
-            columns: ["id_proceso_asignado_curso"]
-            isOneToOne: false
-            referencedRelation: "proceso_asignado_curso"
-            referencedColumns: ["id_proceso_asignado_curso"]
-          },
-          {
-            foreignKeyName: "detalle_proceso_curso_id_usuario_fkey"
-            columns: ["id_usuario"]
-            isOneToOne: false
-            referencedRelation: "usuario"
-            referencedColumns: ["id_usuario"]
-          },
-        ]
-      }
-      v_avance_curso_detalle: {
-        Row: {
-          id_curso: number | null
-          id_detalle_proceso_curso: number | null
-          id_proceso_asignado_curso: number | null
-          id_usuario: number | null
-          modulos_completados: number | null
-          modulos_publicados: number | null
-        }
-        Relationships: []
-      }
-      actividad: {
-        Row: {
-          contenido: string | null
-          creado_en: string
-          estado: Database["public"]["Enums"]["estado_actividad"]
-          id_actividad: number
-          id_modulo: number
-          orden: number
-          tipo: Database["public"]["Enums"]["tipo_actividad"]
-          titulo: string
-          updated_at: string
-          url_video: string | null
-        }
-        Insert: {
-          contenido?: string | null
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_actividad"]
-          id_actividad?: number
-          id_modulo: number
-          orden?: number
-          tipo: Database["public"]["Enums"]["tipo_actividad"]
-          titulo: string
-          updated_at?: string
-          url_video?: string | null
-        }
-        Update: {
-          contenido?: string | null
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_actividad"]
-          id_actividad?: number
-          id_modulo?: number
-          orden?: number
-          tipo?: Database["public"]["Enums"]["tipo_actividad"]
-          titulo?: string
-          updated_at?: string
-          url_video?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "actividad_id_modulo_fkey"
-            columns: ["id_modulo"]
-            isOneToOne: false
-            referencedRelation: "modulo"
-            referencedColumns: ["id_modulo"]
-          },
-        ]
-      }
       evaluacion_detalle: {
         Row: {
-          creado_en: string
           id_evaluacion_detalle: number
-          id_modulo: number
-          opciones: Json | null
+          id_aula_evaluacion: number
           pregunta: string
-          respuesta_correcta: string
-          tipo_pregunta: Database["public"]["Enums"]["tipo_pregunta"]
+          tipo: string
+          puntaje: number
+          orden: number
+          creado_en: string
           updated_at: string
-        }
-        Insert: {
-          creado_en?: string
-          id_evaluacion_detalle?: number
-          id_modulo: number
-          opciones?: Json | null
-          pregunta: string
-          respuesta_correcta: string
-          tipo_pregunta: Database["public"]["Enums"]["tipo_pregunta"]
-          updated_at?: string
-        }
-        Update: {
-          creado_en?: string
-          id_evaluacion_detalle?: number
-          id_modulo?: number
-          opciones?: Json | null
-          pregunta?: string
-          respuesta_correcta?: string
-          tipo_pregunta?: Database["public"]["Enums"]["tipo_pregunta"]
-          updated_at?: string
+          opciones: Json | null
+          respuesta_correcta: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "evaluacion_detalle_id_modulo_fkey"
-            columns: ["id_modulo"]
+            foreignKeyName: "aula_pregunta_id_aula_evaluacion_fkey"
+            columns: ["id_aula_evaluacion"]
             isOneToOne: false
-            referencedRelation: "modulo"
-            referencedColumns: ["id_modulo"]
+            referencedRelation: "aula_evaluacion"
+            referencedColumns: ["id_aula_evaluacion"]
           },
         ]
       }
       progreso_actividad: {
         Row: {
+          id_aula_progreso_actividad: number
+          id_usuario: number
+          id_aula_actividad: number
+          completada: boolean
           completada_en: string | null
           creado_en: string
-          id_actividad: number
-          id_detalle_proceso_curso: number
-          id_progreso: number
-          id_usuario: number
           updated_at: string
           vista_en: string | null
         }
-        Insert: {
-          completada_en?: string | null
-          creado_en?: string
-          id_actividad: number
-          id_detalle_proceso_curso: number
-          id_progreso?: number
-          id_usuario: number
-          updated_at?: string
-          vista_en?: string | null
-        }
-        Update: {
-          completada_en?: string | null
-          creado_en?: string
-          id_actividad?: number
-          id_detalle_proceso_curso?: number
-          id_progreso?: number
-          id_usuario?: number
-          updated_at?: string
-          vista_en?: string | null
-        }
         Relationships: [
           {
-            foreignKeyName: "progreso_actividad_id_actividad_fkey"
-            columns: ["id_actividad"]
-            isOneToOne: false
-            referencedRelation: "actividad"
-            referencedColumns: ["id_actividad"]
-          },
-          {
-            foreignKeyName: "progreso_actividad_id_detalle_proceso_curso_fkey"
-            columns: ["id_detalle_proceso_curso"]
-            isOneToOne: false
-            referencedRelation: "detalle_proceso_curso"
-            referencedColumns: ["id_detalle_proceso_curso"]
-          },
-          {
-            foreignKeyName: "progreso_actividad_id_usuario_fkey"
+            foreignKeyName: "aula_progreso_actividad_id_usuario_fkey"
             columns: ["id_usuario"]
             isOneToOne: false
             referencedRelation: "usuario"
             referencedColumns: ["id_usuario"]
+          },
+          {
+            foreignKeyName: "aula_progreso_actividad_id_aula_actividad_fkey"
+            columns: ["id_aula_actividad"]
+            isOneToOne: false
+            referencedRelation: "aula_actividad"
+            referencedColumns: ["id_aula_actividad"]
           },
         ]
       }
-      intento_evaluacion: {
+      actividad: {
         Row: {
-          calificacion_obtenida: number | null
+          id_aula_actividad: number
+          id_aula_modulo: number
+          titulo: string
+          tipo: string
+          contenido: string | null
+          url_recurso: string | null
+          orden: number
           creado_en: string
-          estado: Database["public"]["Enums"]["estado_evaluacion"]
-          id_detalle_proceso_curso: number
-          id_intento: number
-          id_modulo: number
-          id_usuario: number
-          respuestas: Json | null
           updated_at: string
-        }
-        Insert: {
-          calificacion_obtenida?: number | null
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_evaluacion"]
-          id_detalle_proceso_curso: number
-          id_intento?: number
-          id_modulo: number
-          id_usuario: number
-          respuestas?: Json | null
-          updated_at?: string
-        }
-        Update: {
-          calificacion_obtenida?: number | null
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_evaluacion"]
-          id_detalle_proceso_curso?: number
-          id_intento?: number
-          id_modulo?: number
-          id_usuario?: number
-          respuestas?: Json | null
-          updated_at?: string
+          estado: string
         }
         Relationships: [
           {
-            foreignKeyName: "intento_evaluacion_id_detalle_proceso_curso_fkey"
-            columns: ["id_detalle_proceso_curso"]
+            foreignKeyName: "aula_actividad_id_aula_modulo_fkey"
+            columns: ["id_aula_modulo"]
             isOneToOne: false
-            referencedRelation: "detalle_proceso_curso"
-            referencedColumns: ["id_detalle_proceso_curso"]
+            referencedRelation: "aula_modulo"
+            referencedColumns: ["id_aula_modulo"]
           },
+        ]
+      }
+      certificado: {
+        Row: {
+          id_certificado: number
+          id_usuario: number
+          id_aula_curso: number
+          codigo_verificacion: string
+          fecha_emision: string
+          creado_en: string
+          updated_at: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "intento_evaluacion_id_modulo_fkey"
-            columns: ["id_modulo"]
-            isOneToOne: false
-            referencedRelation: "modulo"
-            referencedColumns: ["id_modulo"]
-          },
-          {
-            foreignKeyName: "intento_evaluacion_id_usuario_fkey"
+            foreignKeyName: "aula_certificado_id_usuario_fkey"
             columns: ["id_usuario"]
             isOneToOne: false
             referencedRelation: "usuario"
             referencedColumns: ["id_usuario"]
+          },
+          {
+            foreignKeyName: "aula_certificado_id_aula_curso_fkey"
+            columns: ["id_aula_curso"]
+            isOneToOne: false
+            referencedRelation: "aula_curso"
+            referencedColumns: ["id_aula_curso"]
           },
         ]
       }
       comentario_lider: {
         Row: {
+          id_comentario: number
+          id_usuario_autor: number
+          id_usuario_destinatario: number
+          id_aula_actividad: number | null
+          id_aula_evaluacion: number | null
           comentario: string
           creado_en: string
-          id_actividad: number | null
-          id_comentario: number
-          id_modulo: number | null
+          updated_at: string
+          tipo: Database["public"]["Enums"]["tipo_comentario_lider"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aula_retroalimentacion_id_usuario_lider_fkey"
+            columns: ["id_usuario_autor"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+          {
+            foreignKeyName: "aula_retroalimentacion_id_usuario_servidor_fkey"
+            columns: ["id_usuario_destinatario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+          {
+            foreignKeyName: "aula_retroalimentacion_actividad_fkey"
+            columns: ["id_aula_actividad"]
+            isOneToOne: false
+            referencedRelation: "aula_actividad"
+            referencedColumns: ["id_aula_actividad"]
+          },
+          {
+            foreignKeyName: "aula_retroalimentacion_evaluacion_fkey"
+            columns: ["id_aula_evaluacion"]
+            isOneToOne: false
+            referencedRelation: "aula_evaluacion"
+            referencedColumns: ["id_aula_evaluacion"]
+          },
+        ]
+      }
+      intento_evaluacion: {
+        Row: {
+          id_aula_intento_evaluacion: number
+          id_usuario: number
+          id_aula_evaluacion: number
+          puntaje_obtenido: number
+          aprobado: boolean
+          numero_intento: number
+          iniciado_en: string
+          finalizado_en: string | null
+          creado_en: string
+          fecha_intento: string | null
+          titulo_evaluacion: string
+          titulo_modulo: string
+          titulo_curso: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aula_intento_evaluacion_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+          {
+            foreignKeyName: "aula_intento_evaluacion_id_aula_evaluacion_fkey"
+            columns: ["id_aula_evaluacion"]
+            isOneToOne: false
+            referencedRelation: "aula_evaluacion"
+            referencedColumns: ["id_aula_evaluacion"]
+          },
+        ]
+      }
+        Insert: {
+          calificacion_obtenida?: number | null
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_evaluacion"]
+          id_detalle_proceso_curso: number
+          id_aula_intento_evaluacion?: number
+          id_aula_modulo: number
+          id_usuario: number
+          respuestas?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          calificacion_obtenida?: number | null
+          creado_en?: string
+          estado?: Database["public"]["Enums"]["estado_evaluacion"]
+          id_detalle_proceso_curso?: number
+          id_aula_intento_evaluacion?: number
+          id_aula_modulo?: number
+          id_usuario?: number
+          respuestas?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aula_intento_evaluacion_id_detalle_proceso_curso_fkey"
+            columns: ["id_detalle_proceso_curso"]
+            isOneToOne: false
+            referencedRelation: "detalle_proceso_curso"
+            referencedColumns: ["id_detalle_proceso_curso"]
+          },
+          {
+            foreignKeyName: "aula_intento_evaluacion_id_aula_modulo_fkey"
+            columns: ["id_aula_modulo"]
+            isOneToOne: false
+            referencedRelation: "aula_modulo"
+            referencedColumns: ["id_aula_modulo"]
+          },
+          {
+            foreignKeyName: "aula_intento_evaluacion_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      aula_comentario_lider: {
+        Row: {
+          comentario: string
+          creado_en: string
+          id_aula_actividad: number | null
+          id_aula_comentario_lider: number
+          id_aula_modulo: number | null
           id_usuario_autor: number
           id_usuario_destinatario: number
           tipo: Database["public"]["Enums"]["tipo_comentario"]
@@ -1438,9 +1529,9 @@ export type Database = {
         Insert: {
           comentario: string
           creado_en?: string
-          id_actividad?: number | null
-          id_comentario?: number
-          id_modulo?: number | null
+          id_aula_actividad?: number | null
+          id_aula_comentario_lider?: number
+          id_aula_modulo?: number | null
           id_usuario_autor: number
           id_usuario_destinatario: number
           tipo: Database["public"]["Enums"]["tipo_comentario"]
@@ -1449,9 +1540,9 @@ export type Database = {
         Update: {
           comentario?: string
           creado_en?: string
-          id_actividad?: number | null
-          id_comentario?: number
-          id_modulo?: number | null
+          id_aula_actividad?: number | null
+          id_aula_comentario_lider?: number
+          id_aula_modulo?: number | null
           id_usuario_autor?: number
           id_usuario_destinatario?: number
           tipo?: Database["public"]["Enums"]["tipo_comentario"]
@@ -1459,28 +1550,28 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "comentario_lider_id_actividad_fkey"
-            columns: ["id_actividad"]
+            foreignKeyName: "aula_comentario_lider_id_aula_actividad_fkey"
+            columns: ["id_aula_actividad"]
             isOneToOne: false
-            referencedRelation: "actividad"
-            referencedColumns: ["id_actividad"]
+            referencedRelation: "aula_actividad"
+            referencedColumns: ["id_aula_actividad"]
           },
           {
-            foreignKeyName: "comentario_lider_id_modulo_fkey"
-            columns: ["id_modulo"]
+            foreignKeyName: "aula_comentario_lider_id_aula_modulo_fkey"
+            columns: ["id_aula_modulo"]
             isOneToOne: false
-            referencedRelation: "modulo"
-            referencedColumns: ["id_modulo"]
+            referencedRelation: "aula_modulo"
+            referencedColumns: ["id_aula_modulo"]
           },
           {
-            foreignKeyName: "comentario_lider_id_usuario_autor_fkey"
+            foreignKeyName: "aula_comentario_lider_id_usuario_autor_fkey"
             columns: ["id_usuario_autor"]
             isOneToOne: false
             referencedRelation: "usuario"
             referencedColumns: ["id_usuario"]
           },
           {
-            foreignKeyName: "comentario_lider_id_usuario_destinatario_fkey"
+            foreignKeyName: "aula_comentario_lider_id_usuario_destinatario_fkey"
             columns: ["id_usuario_destinatario"]
             isOneToOne: false
             referencedRelation: "usuario"
@@ -1488,13 +1579,13 @@ export type Database = {
           },
         ]
       }
-      certificado: {
+      aula_certificado: {
         Row: {
           codigo_unico: string
           creado_en: string
           fecha_emision: string
-          id_certificado: number
-          id_curso: number
+          id_aula_certificado: number
+          id_aula_curso: number
           id_usuario: number
           updated_at: string
         }
@@ -1502,8 +1593,8 @@ export type Database = {
           codigo_unico?: string
           creado_en?: string
           fecha_emision?: string
-          id_certificado?: number
-          id_curso: number
+          id_aula_certificado?: number
+          id_aula_curso: number
           id_usuario: number
           updated_at?: string
         }
@@ -1511,21 +1602,21 @@ export type Database = {
           codigo_unico?: string
           creado_en?: string
           fecha_emision?: string
-          id_certificado?: number
-          id_curso?: number
+          id_aula_certificado?: number
+          id_aula_curso?: number
           id_usuario?: number
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "certificado_id_curso_fkey"
-            columns: ["id_curso"]
+            foreignKeyName: "aula_certificado_id_aula_curso_fkey"
+            columns: ["id_aula_curso"]
             isOneToOne: false
-            referencedRelation: "curso"
-            referencedColumns: ["id_curso"]
+            referencedRelation: "aula_curso"
+            referencedColumns: ["id_aula_curso"]
           },
           {
-            foreignKeyName: "certificado_id_usuario_fkey"
+            foreignKeyName: "aula_certificado_id_usuario_fkey"
             columns: ["id_usuario"]
             isOneToOne: false
             referencedRelation: "usuario"
@@ -1534,7 +1625,7 @@ export type Database = {
         ]
       }
     }
-    Functions: {
+    Enums: {
       can_assign_role: { Args: { target_role_id: number }; Returns: boolean }
       can_enroll_in_ciclo: {
         Args: { target_ciclo_id: number }
@@ -1714,6 +1805,7 @@ export type Database = {
       tipo_actividad: "lectura" | "video" | "recurso" | "evaluacion"
       tipo_pregunta: "multiple_choice" | "verdadero_falso" | "respuesta_corta" | "ensayo"
       tipo_comentario: "retroalimentacion" | "observacion"
+      tipo_comentario_lider: "actividad" | "evaluacion"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1838,27 +1930,5 @@ export type CompositeTypes<
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
-export const Constants = {
-  public: {
-    Enums: {
-      estado_curso: ["borrador", "activo", "inactivo", "archivado"],
-      estado_detalle: ["inscrito", "en_progreso", "completado", "retirado"],
-      estado_evaluacion: ["pendiente", "aprobado", "reprobado", "en_revision"],
-      estado_evento: ["programado", "en_curso", "finalizado", "cancelado"],
-      estado_iglesia: ["activa", "inactiva", "fusionada", "cerrada"],
-      estado_ministerio: ["activo", "inactivo", "suspendido"],
-      estado_modulo: ["borrador", "publicado", "archivado"],
-      estado_proceso: ["programado", "en_curso", "finalizado", "cancelado"],
-      estado_sede: ["activa", "inactiva", "en_construccion"],
-      estado_tarea: ["pendiente", "en_progreso", "en_revision", "completada", "cancelada"],
-      prioridad_tarea: ["baja", "media", "alta", "urgente"],
-      tipo_notificacion: ["informacion", "alerta", "tarea", "evento", "curso"],
-      tipo_recurso: ["archivo", "enlace"],
-      estado_actividad: ["pendiente", "vista", "completada"],
-      tipo_actividad: ["lectura", "video", "recurso", "evaluacion"],
-      tipo_pregunta: ["multiple_choice", "verdadero_falso", "respuesta_corta", "ensayo"],
-      tipo_comentario: ["retroalimentacion", "observacion"],
-    },
-  },
-} as const
+
 

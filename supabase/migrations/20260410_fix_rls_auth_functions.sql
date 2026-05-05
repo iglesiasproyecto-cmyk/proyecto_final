@@ -28,7 +28,9 @@ RETURNS TABLE (
   fecha_fin date,
   rol_nombre text,
   iglesia_id bigint,
-  iglesia_nombre text
+  iglesia_nombre text,
+  sede_id bigint,
+  sede_nombre text
 )
 LANGUAGE sql
 SECURITY DEFINER
@@ -46,10 +48,19 @@ AS $$
     CASE
       WHEN r.nombre = 'Super Administrador' THEN NULL
       ELSE i.nombre
-    END AS iglesia_nombre
+    END AS iglesia_nombre,
+    CASE
+      WHEN r.nombre = 'Super Administrador' THEN NULL
+      ELSE s.id_sede
+    END AS sede_id,
+    CASE
+      WHEN r.nombre = 'Super Administrador' THEN NULL
+      ELSE s.nombre
+    END AS sede_nombre
   FROM public.usuario_rol ur
   JOIN public.rol r ON r.id_rol = ur.id_rol
   LEFT JOIN public.iglesia i ON i.id_iglesia = ur.id_iglesia
+  LEFT JOIN public.sede s ON s.id_sede = ur.id_sede
   WHERE ur.id_usuario = (
     SELECT id_usuario FROM public.usuario WHERE auth_user_id = auth.uid() LIMIT 1
   )

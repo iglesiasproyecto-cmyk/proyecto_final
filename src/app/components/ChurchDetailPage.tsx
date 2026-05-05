@@ -44,7 +44,6 @@ export function ChurchDetailPage() {
   const [editForm, setEditForm] = useState({
     descripcion: "",
     telefono: "",
-    email: "",
     sitio_web: "",
     direccion: ""
   });
@@ -69,8 +68,7 @@ export function ChurchDetailPage() {
     setEditForm({
       descripcion: iglesia.descripcion || "",
       telefono: iglesia.telefono || "",
-      email: iglesia.email || "",
-      sitio_web: iglesia.sitio_web || "",
+      sitio_web: iglesia.sitioWeb || "",
       direccion: iglesia.direccion || ""
     });
     setEditDialog(true);
@@ -159,13 +157,28 @@ export function ChurchDetailPage() {
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-primary/70" />
-                Ubicación no disponible
+                {iglesia.ciudadNombre || iglesia.direccion || "Ubicación no disponible"}
               </span>
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-primary/70" />
-                Fundación no disponible
+                {iglesia.fechaFundacion ? new Date(iglesia.fechaFundacion).toLocaleDateString("es", { month: "short", year: "numeric" }) : "Fundación no disponible"}
               </span>
+              {iglesia.telefono && (
+                <span className="flex items-center gap-1.5">
+                  <Phone className="w-4 h-4 text-primary/70" />
+                  {iglesia.telefono}
+                </span>
+              )}
+              {iglesia.sitioWeb && (
+                <span className="flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-primary/70" />
+                  <a href={iglesia.sitioWeb} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{iglesia.sitioWeb}</a>
+                </span>
+              )}
             </div>
+            {iglesia.descripcion && (
+              <p className="text-sm text-muted-foreground mt-2">{iglesia.descripcion}</p>
+            )}
           </div>
         </div>
       </motion.div>
@@ -421,30 +434,16 @@ export function ChurchDetailPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">
-                    Teléfono
-                  </label>
-                  <Input
-                    value={editForm.telefono}
-                    onChange={e => setEditForm(f => ({ ...f, telefono: e.target.value }))}
-                    placeholder="+57 300 123 4567"
-                    className="bg-input-background focus-visible:ring-[#4682b4]/30"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">
-                    Email
-                  </label>
-                  <Input
-                    type="email"
-                    value={editForm.email}
-                    onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
-                    placeholder="contacto@iglesia.com"
-                    className="bg-input-background focus-visible:ring-[#4682b4]/30"
-                  />
-                </div>
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">
+                  Teléfono
+                </label>
+                <Input
+                  value={editForm.telefono}
+                  onChange={e => setEditForm(f => ({ ...f, telefono: e.target.value }))}
+                  placeholder="+57 300 123 4567"
+                  className="bg-input-background focus-visible:ring-[#4682b4]/30"
+                />
               </div>
 
               <div>

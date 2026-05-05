@@ -57,24 +57,24 @@ export function ProgresoIndividualPage() {
     queryKey: ['curso-info', idCurso],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('curso')
+        .from('aula_curso')
         .select(`
-          id_curso,
-          nombre,
+          id_aula_curso,
+          titulo,
           descripcion,
-          modulos:modulo(
-            id_modulo,
+          modulos:aula_modulo(
+            id_aula_modulo,
             titulo,
             orden,
-            estado,
+            publicado,
             descripcion
           )
         `)
-        .eq('id_curso', parseInt(idCurso!))
+        .eq('id_aula_curso', parseInt(idCurso!))
         .single()
 
       if (error) throw error
-      return data
+      return { ...data, id_curso: data.id_aula_curso, nombre: data.titulo, modulos: data.modulos?.map(m => ({ ...m, id_modulo: m.id_aula_modulo, estado: m.publicado ? 'publicado' : 'borrador' })) }
     },
     enabled: !!idCurso,
   })
@@ -87,49 +87,70 @@ export function ProgresoIndividualPage() {
 
       // Obtener proceso asignado
       const { data: proceso } = await supabase
-        .from('detalle_proceso_curso')
-        .select('id_detalle_proceso_curso, fecha_inscripcion')
+        .from('aula_inscripcion')
+        .select('id_aula_inscripcion, inscrito_en')
         .eq('id_usuario', parseInt(idUsuario))
-        .eq('proceso_asignado_curso.curso.id_curso', parseInt(idCurso))
+        .eq('id_aula_curso', parseInt(idCurso))
         .single()
 
       if (!proceso) return null
 
-      // Obtener avances por módulo
+      // Obtener avances por módulo (calculado de actividades completadas)
       const { data: avancesModulos } = await supabase
-        .from('avance_modulo')
-        .select('id_modulo, completado_en')
-        .eq('id_detalle_proceso_curso', proceso.id_detalle_proceso_curso)
+        .from('aula_modulo')
+        .select(`
+          id_aula_modulo,
+          aula_actividad(count)
+        `)
+        .eq('aula_modulo.id_aula_curso', parseInt(idCurso))
+        .eq('aula_actividad.completada_en', null, false) // only completed activities
+
+      const avancesModulosMapped = avancesModulos?.map(am => ({
+        id_modulo: am.id_aula_modulo,
+        completado_en: new Date().toISOString() // placeholder
+      })) || []
 
       // Obtener progreso de actividades
       const { data: progresoActividades } = await supabase
-        .from('progreso_actividad')
+        .from('aula_progreso_actividad')
         .select(`
-          id_actividad,
-          vista_en,
+          id_aula_actividad,
           completada_en,
-          actividad:actividad(titulo, tipo)
+          aula_actividad(titulo, tipo)
         `)
-        .eq('id_detalle_proceso_curso', proceso.id_detalle_proceso_curso)
+        .eq('id_usuario', parseInt(idUsuario))
+        .in('aula_actividad.aula_modulo.id_aula_curso', [parseInt(idCurso)])
 
       // Obtener intentos de evaluaciones
       const { data: intentosEvaluaciones } = await supabase
-        .from('intento_evaluacion')
+        .from('aula_intento_evaluacion')
         .select(`
-          id_modulo,
-          estado,
-          calificacion_obtenida,
-          creado_en,
-          modulo:modulo(titulo)
+          id_aula_modulo,
+          aprobado,
+          puntaje_obtenido,
+          iniciado_en,
+          aula_modulo(titulo)
         `)
-        .eq('id_detalle_proceso_curso', proceso.id_detalle_proceso_curso)
-        .order('creado_en', { ascending: false })
+        .eq('id_usuario', parseInt(idUsuario))
+        .in('aula_modulo.aula_curso.id_aula_curso', [parseInt(idCurso)])
+        .order('iniciado_en', { ascending: false })
 
       return {
-        procesoAsignado: proceso,
-        avancesModulos: avancesModulos || [],
-        progresoActividades: progresoActividades || [],
-        intentosEvaluaciones: intentosEvaluaciones || [],
+        procesoAsignado: { id_detalle_proceso_curso: proceso.id_aula_inscripcion, fecha_inscripcion: proceso.inscrito_en },
+        avancesModulos: [], // TODO: calculate from completed activities
+        progresoActividades: progresoActividades?.map(pa => ({
+          id_actividad: pa.id_aula_actividad,
+          vista_en: pa.completada_en,
+          completada_en: pa.completada_en,
+          actividad: pa.aula_actividad
+        })) || [],
+        intentosEvaluaciones: intentosEvaluaciones?.map(ie => ({
+          id_modulo: ie.id_aula_modulo,
+          estado: ie.aprobado ? 'aprobado' : 'reprobado',
+          calificacion_obtenida: ie.puntaje_obtenido,
+          creado_en: ie.iniciado_en,
+          modulo: ie.aula_modulo
+        })) || [],
       }
     },
     enabled: !!idUsuario && !!idCurso,
@@ -296,9 +317,9 @@ export function ProgresoIndividualPage() {
                       {actividad.actividad?.tipo === 'video' && <Video className="h-5 w-5 text-red-600" />}
                       {actividad.actividad?.tipo === 'recurso' && <Link className="h-5 w-5 text-green-600" />}
                       <div>
-                        <h3 className="font-medium">{actividad.actividad?.titulo}</h3>
+                        <h3 className="font-medium">{actividad.titulo}</h3>
                         <p className="text-sm text-muted-foreground capitalize">
-                          {actividad.actividad?.tipo}
+                          {actividad.tipo}
                         </p>
                       </div>
                     </div>

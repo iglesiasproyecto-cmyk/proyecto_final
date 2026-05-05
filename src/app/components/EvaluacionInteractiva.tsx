@@ -22,10 +22,55 @@ interface EvaluacionInteractivaProps {
 
 export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInteractivaProps) {
   const { usuarioActual } = useAuth()
+
+  // Get the course id from the module
+  const { data: moduloInfo } = useQuery({
+    queryKey: ['modulo-curso', idModulo],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('aula_modulo')
+        .select('id_aula_curso')
+        .eq('id_aula_modulo', idModulo)
+        .single()
+      if (error) throw error
+      return data
+    },
+    enabled: !!idModulo
+  })
+
+  // Get inscription for the course
+  const { data: inscripcion } = useQuery({
+    queryKey: ['inscripcion-curso', moduloInfo?.id_aula_curso, usuarioActual?.idUsuario],
+    queryFn: async () => {
+      if (!moduloInfo?.id_aula_curso || !usuarioActual?.idUsuario) return null
+      const { data, error } = await supabase
+        .from('aula_inscripcion')
+        .select('id_aula_inscripcion')
+        .eq('id_aula_curso', moduloInfo.id_aula_curso)
+        .eq('id_usuario', usuarioActual.idUsuario)
+        .single()
+      if (error) throw error
+      return data
+    },
+    enabled: !!moduloInfo?.id_aula_curso && !!usuarioActual?.idUsuario
+  })
+
   const { data: preguntas } = useEvaluacionDetalleModulo(idModulo)
+  const { data: evaluacion } = useQuery({
+    queryKey: ['evaluacion-modulo', idModulo],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('aula_evaluacion')
+        .select('id_aula_evaluacion')
+        .eq('id_aula_modulo', idModulo)
+        .single()
+      if (error) throw error
+      return data
+    },
+    enabled: !!idModulo
+  })
   const { data: intentos } = useIntentosEvaluacion({
     idModulo,
-    idDetalleProcesoCurso: detalleProcesoCurso,
     idUsuario: usuarioActual?.idUsuario
   })
 
@@ -36,24 +81,12 @@ export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInter
   const [calificacion, setCalificacion] = useState<number | null>(null)
   const [enviando, setEnviando] = useState(false)
 
-  // Obtener el detalle proceso curso
-  const [detalleProcesoCurso, setDetalleProcesoCurso] = useState<number | null>(null)
+  // Obtener la inscripción
+  const [idInscripcion, setIdInscripcion] = useState<number | null>(null)
 
   useEffect(() => {
-    const getDetalleProceso = async () => {
-      if (!usuarioActual?.idUsuario) return
-
-      const { data } = await supabase
-        .from('detalle_proceso_curso')
-        .select('id_detalle_proceso_curso')
-        .eq('id_usuario', usuarioActual.idUsuario)
-        .single()
-
-      setDetalleProcesoCurso(data?.id_detalle_proceso_curso || null)
-    }
-
-    getDetalleProceso()
-  }, [usuarioActual?.idUsuario])
+    setIdInscripcion(inscripcion?.id_aula_inscripcion || null)
+  }, [inscripcion])
 
   const ultimoIntento = intentos?.[0] // El más reciente
 
@@ -79,7 +112,7 @@ export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInter
   }
 
   const enviarEvaluacion = async () => {
-    if (!detalleProcesoCurso || !preguntas) return
+    if (!idInscripcion || !preguntas) return
 
     setEnviando(true)
     try {
@@ -87,11 +120,10 @@ export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInter
       const aprobado = calificacionObtenida >= 70 // TODO: Hacer configurable
 
       await crearIntento.mutateAsync({
-        id_detalle_proceso_curso: detalleProcesoCurso,
-        id_modulo: idModulo,
+        id_aula_evaluacion: evaluacion!.id_aula_evaluacion,
         id_usuario: usuarioActual!.idUsuario,
-        calificacion_obtenida: calificacionObtenida,
-        estado: aprobado ? 'aprobado' : 'reprobado',
+        puntaje_obtenido: calificacionObtenida,
+        aprobado: aprobado,
         respuestas: respuestas
       })
 
