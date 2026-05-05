@@ -1,6 +1,27 @@
 import { useQuery } from '@tanstack/react-query'
-import { getDepartamentos as getDeptoFromDB, getCiudades as getCiudadesFromDB } from '@/services/geografia.service'
-import type { DepartamentoGeo, Ciudad } from '@/types/app.types'
+import { getPaises, getDepartamentos as getDeptoFromDB, getCiudades as getCiudadesFromDB } from '@/services/geografia.service'
+import type { Pais, DepartamentoGeo, Ciudad } from '@/types/app.types'
+
+/**
+ * Hook que trae países SOLO desde la geografía agregada
+ * Solo muestra los países que existen en el módulo de geografía
+ */
+export function usePaisesEnhanced() {
+  return useQuery({
+    queryKey: ['paises-enhanced'],
+    queryFn: async () => {
+      try {
+        // Traer solo datos de la base de datos
+        const data = await getPaises()
+        return data || []
+      } catch (error) {
+        console.warn('Error fetching paises from DB:', error)
+        return []
+      }
+    },
+    staleTime: 30 * 60 * 1000,
+  })
+}
 
 /**
  * Hook que trae departamentos SOLO desde la geografía agregada
