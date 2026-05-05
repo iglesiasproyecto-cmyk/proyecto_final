@@ -48,7 +48,7 @@ export async function getMinisteriosEnriquecidos(idSede?: number): Promise<Minis
   let q = supabase
     .from('ministerio')
     .select('*, miembro_ministerio(count), sede(nombre)')
-    .eq('estado', 'activo')
+    .eq('activo', true)
     .order('nombre')
   if (idSede !== undefined) q = q.eq('id_sede', idSede)
   const { data, error } = await q
@@ -78,11 +78,7 @@ export async function getMiembrosMinisterioEnriquecidos(idMinisterio?: number): 
 }
 
 export async function getMinisterios(idSede?: number): Promise<Ministerio[]> {
-  let q = supabase
-    .from('ministerio')
-    .select('*')
-    .eq('estado', 'activo')
-    .order('nombre')
+  let q = supabase.from('ministerio').select('*').order('nombre')
   if (idSede !== undefined) q = q.eq('id_sede', idSede)
   const { data, error } = await q
   if (error) throw error
@@ -194,12 +190,18 @@ export async function createMiembroMinisterio(
 }
 
 export async function deleteMinisterio(id: number): Promise<void> {
-  const { error } = await supabase.from('ministerio').delete().eq('id_ministerio', id)
+  const { error } = await supabase
+    .from('ministerio')
+    .update({ activo: false })
+    .eq('id_ministerio', id)
   if (error) throw error
 }
 
 export async function deleteMiembroMinisterio(id: number): Promise<void> {
-  const { error } = await supabase.from('miembro_ministerio').delete().eq('id_miembro_ministerio', id)
+  const { error } = await supabase
+    .from('miembro_ministerio')
+    .update({ activo: false })
+    .eq('id_miembro_ministerio', id)
   if (error) throw error
 }
 

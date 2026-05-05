@@ -95,6 +95,13 @@ export function useAccesoModulos(vars: {
 }
 
 async function obtenerProgresoModulo(idUsuario: number, idModulo: number) {
+  // Obtener información del módulo para verificar contenido
+  const { data: modulo } = await supabase
+    .from('aula_modulo')
+    .select('contenido_md, descripcion')
+    .eq('id_aula_modulo', idModulo)
+    .single()
+
   const { data: actividades } = await supabase
     .from('aula_actividad')
     .select('id_aula_actividad')
@@ -109,8 +116,17 @@ async function obtenerProgresoModulo(idUsuario: number, idModulo: number) {
   const evaluacionIds = evaluaciones?.map(e => e.id_aula_evaluacion) || []
   const totalElementos = actividadIds.length + evaluacionIds.length
 
-  if (totalElementos === 0) {
-    return { completado: false, totalElementos }
+  // Si el módulo tiene contenido (contenido_md o descripcion), es completable
+  const tieneContenido = modulo && (modulo.contenido_md || modulo.descripcion)
+
+  // Si no hay actividades ni evaluaciones, pero sí hay contenido, el módulo se completa automáticamente
+  if (totalElementos === 0 && tieneContenido) {
+    return { completado: true, totalElementos: 1 }
+  }
+
+  // Si no hay elementos para completar en absoluto, no está completado
+  if (totalElementos === 0 && !tieneContenido) {
+    return { completado: false, totalElementos: 0 }
   }
 
   const { data: actividadesCompletadas } = await supabase
