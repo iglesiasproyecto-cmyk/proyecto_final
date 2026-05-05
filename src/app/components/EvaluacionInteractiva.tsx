@@ -21,12 +21,12 @@ interface EvaluacionInteractivaProps {
 }
 
 export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInteractivaProps) {
-  const { user } = useAuth()
+  const { usuarioActual } = useAuth()
   const { data: preguntas } = useEvaluacionDetalleModulo(idModulo)
   const { data: intentos } = useIntentosEvaluacion({
     idModulo,
-    idDetalleProcesoCurso: null, // TODO: Obtener el id correcto
-    idUsuario: user?.id
+    idDetalleProcesoCurso: detalleProcesoCurso,
+    idUsuario: usuarioActual?.idUsuario
   })
 
   const crearIntento = useCrearIntentoEvaluacion()
@@ -41,19 +41,19 @@ export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInter
 
   useEffect(() => {
     const getDetalleProceso = async () => {
-      if (!user?.id) return
+      if (!usuarioActual?.idUsuario) return
 
       const { data } = await supabase
         .from('detalle_proceso_curso')
         .select('id_detalle_proceso_curso')
-        .eq('id_usuario', user.id)
+        .eq('id_usuario', usuarioActual.idUsuario)
         .single()
 
       setDetalleProcesoCurso(data?.id_detalle_proceso_curso || null)
     }
 
     getDetalleProceso()
-  }, [user?.id])
+  }, [usuarioActual?.idUsuario])
 
   const ultimoIntento = intentos?.[0] // El más reciente
 
@@ -89,7 +89,7 @@ export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInter
       await crearIntento.mutateAsync({
         id_detalle_proceso_curso: detalleProcesoCurso,
         id_modulo: idModulo,
-        id_usuario: user!.id,
+        id_usuario: usuarioActual!.idUsuario,
         calificacion_obtenida: calificacionObtenida,
         estado: aprobado ? 'aprobado' : 'reprobado',
         respuestas: respuestas

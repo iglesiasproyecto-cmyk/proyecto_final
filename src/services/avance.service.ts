@@ -1,3 +1,6 @@
+// TODO: Este archivo usa tablas del esquema viejo (avance_modulo, detalle_proceso_curso)
+// que no existen en el nuevo esquema de aula. Necesita una revisión completa
+// para usar aula_progreso_actividad y aula_inscripcion en su lugar.
 import { supabase } from '@/lib/supabaseClient'
 
 export interface AvanceModuloRow {

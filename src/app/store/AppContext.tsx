@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
 import type { Usuario } from '@/types/app.types'
-import { checkUserSynchronization } from '@/lib/userHelpers'
+
 
 interface AppState {
   session: Session | null
@@ -226,7 +226,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   })
   const lastHandledTokenRef = useRef<string | null>(null)
 
-  // Development check for user synchronization issues
+  // Development check for user synchronization issues - DISABLED
+  // This was causing 403 errors when trying to use Admin API from frontend with anon key
+  // Uncomment if you need to debug user synchronization issues
+  /*
   useEffect(() => {
     if (!import.meta.env.PROD) {
       checkUserSynchronization().then(result => {
@@ -238,15 +241,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           if (result.usuariosWithoutAuth.length > 0) {
             console.error(`  - ${result.usuariosWithoutAuth.length} usuario records without auth users:`, result.usuariosWithoutAuth.slice(0, 5))
           }
-          console.error('  This can cause login failures and data inconsistencies!')
-        } else {
-          console.log('[DEV] ✅ User synchronization check passed')
         }
-      }).catch(err => {
-        console.warn('[DEV] Could not check user synchronization:', err.message)
       })
     }
   }, [])
+  */
 
   useEffect(() => {
     localStorage.setItem('sei-mock-mode', String(isMockMode))

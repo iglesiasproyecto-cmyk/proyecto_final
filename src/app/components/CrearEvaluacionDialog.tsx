@@ -26,7 +26,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { supabase } from '@/lib/supabaseClient'
 import { toast } from 'sonner'
-import { useCrearPreguntaEvaluacion } from '@/hooks/useEvaluacionesDetalladas'
+
 
 interface CrearEvaluacionDialogProps {
   open: boolean
@@ -36,7 +36,7 @@ interface CrearEvaluacionDialogProps {
 
 interface PreguntaForm {
   pregunta: string
-  tipo: 'multiple_choice' | 'verdadero_falso' | 'respuesta_corta' | 'ensayo'
+  tipo: 'multiple_choice' | 'verdadero_falso' | 'respuesta_corta'
   respuesta_correcta: string
   opciones?: string[]
   puntaje_minimo?: number
@@ -52,7 +52,6 @@ interface FormData {
 
 export function CrearEvaluacionDialog({ open, onOpenChange, idModulo }: CrearEvaluacionDialogProps) {
   const [loading, setLoading] = useState(false)
-  const crearPregunta = useCrearPreguntaEvaluacion()
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -72,15 +71,62 @@ export function CrearEvaluacionDialog({ open, onOpenChange, idModulo }: CrearEva
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
-      // Crear cada pregunta de la evaluación
-      for (const pregunta of data.preguntas) {
-        await crearPregunta.mutateAsync({
-          pregunta: pregunta.pregunta,
-          tipo_pregunta: pregunta.tipo,
-          respuesta_correcta: pregunta.respuesta_correcta,
-          opciones: pregunta.opciones,
-          id_modulo: idModulo,
+      // 1. Crear la evaluación padre en aula_evaluacion
+      const { data: evaluacion, error: evaluacionError } = await supabase
+        .from('aula_evaluacion')
+        .insert({
+          id_aula_modulo: idModulo,
+          titulo: data.titulo,
+          descripcion: data.descripcion || null,
+          puntaje_minimo: data.puntaje_minimo_aprobacion,
+          reintentos_permitidos: data.intentos_permitidos > 1,
+          max_intentos: data.intentos_permitidos,
         })
+        .select()
+        .single()
+
+      if (evaluacionError) throw evaluacionError
+
+      // 2. Crear cada pregunta asociada a la evaluación
+      for (let i = 0; i < data.preguntas.length; i++) {
+        const pregunta = data.preguntas[i]
+
+        // Mapear tipos de pregunta al formato de la BD
+        const tipoMapeado = pregunta.tipo === 'multiple_choice' ? 'opcion_multiple' :
+                           pregunta.tipo === 'verdadero_falso' ? 'verdadero_falso' :
+                           pregunta.tipo === 'respuesta_corta' ? 'respuesta_corta' :
+                           'respuesta_corta' // fallback
+
+        // Crear la pregunta
+        const { data: preguntaCreada, error: preguntaError } = await supabase
+          .from('aula_pregunta')
+          .insert({
+            id_aula_evaluacion: evaluacion.id_aula_evaluacion,
+            enunciado: pregunta.pregunta,
+            tipo: tipoMapeado,
+            orden: i + 1,
+            puntaje: pregunta.puntaje_minimo || 1,
+          })
+          .select()
+          .single()
+
+        if (preguntaError) throw preguntaError
+
+        // Para opciones múltiples, crear las opciones
+        if (pregunta.tipo === 'multiple_choice' && pregunta.opciones) {
+          const opciones = pregunta.opciones.map((opcion, idx) => ({
+            id_aula_pregunta: preguntaCreada.id_aula_pregunta,
+            texto: opcion,
+            es_correcta: String.fromCharCode(65 + idx) === pregunta.respuesta_correcta.toUpperCase(),
+            orden: idx + 1
+          }))
+
+          const { error: opcionesError } = await supabase
+            .from('aula_opcion')
+            .insert(opciones)
+
+          if (opcionesError) throw opcionesError
+        }
       }
 
       toast.success('Evaluación creada exitosamente')
@@ -213,7 +259,6 @@ export function CrearEvaluacionDialog({ open, onOpenChange, idModulo }: CrearEva
                               <SelectItem value="multiple_choice">Opción Múltiple</SelectItem>
                               <SelectItem value="verdadero_falso">Verdadero/Falso</SelectItem>
                               <SelectItem value="respuesta_corta">Respuesta Corta</SelectItem>
-                              <SelectItem value="ensayo">Ensayo</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
