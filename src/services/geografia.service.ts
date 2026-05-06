@@ -36,13 +36,13 @@ function mapCiudad(r: CiudadRow): Ciudad {
 }
 
 export async function getPaises(): Promise<Pais[]> {
-  const { data, error } = await supabase.from('pais').select('*').order('nombre')
+  const { data, error } = await supabase.from('pais').select('*').is('deleted_at', null).order('nombre')
   if (error) throw error
   return data.map(mapPais)
 }
 
 export async function getDepartamentos(idPais?: number): Promise<DepartamentoGeo[]> {
-  let q = supabase.from('departamento').select('*').order('nombre')
+  let q = supabase.from('departamento').select('*').is('deleted_at', null).order('nombre')
   if (idPais !== undefined) q = q.eq('id_pais', idPais)
   const { data, error } = await q
   if (error) throw error
@@ -50,7 +50,7 @@ export async function getDepartamentos(idPais?: number): Promise<DepartamentoGeo
 }
 
 export async function getCiudades(idDepartamento?: number): Promise<Ciudad[]> {
-  let q = supabase.from('ciudad').select('*').order('nombre')
+  let q = supabase.from('ciudad').select('*').is('deleted_at', null).order('nombre')
   if (idDepartamento !== undefined) q = q.eq('id_departamento', idDepartamento)
   const { data, error } = await q
   if (error) throw error
@@ -76,7 +76,7 @@ export async function updatePais(id: number, nombre: string): Promise<Pais> {
 export async function deletePais(id: number): Promise<void> {
   const { error } = await supabase
     .from('pais')
-    .update({ activo: false })
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id_pais', id)
   if (error) throw error
 }
@@ -100,7 +100,7 @@ export async function updateDepartamento(id: number, nombre: string): Promise<De
 export async function deleteDepartamento(id: number): Promise<void> {
   const { error } = await supabase
     .from('departamento')
-    .update({ activo: false })
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id_departamento', id)
   if (error) throw error
 }
@@ -124,7 +124,7 @@ export async function updateCiudad(id: number, nombre: string): Promise<Ciudad> 
 export async function deleteCiudad(id: number): Promise<void> {
   const { error } = await supabase
     .from('ciudad')
-    .update({ activo: false })
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id_ciudad', id)
   if (error) throw error
 }

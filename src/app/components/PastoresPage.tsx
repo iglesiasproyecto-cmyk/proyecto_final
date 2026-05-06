@@ -55,7 +55,7 @@ export function PastoresPage() {
   const [dialogAsign, setDialogAsign] = useState(false);
   const [dialogSolicitud, setDialogSolicitud] = useState(false);
   const [editingPastor, setEditingPastor] = useState<number | null>(null);
-  const [formP, setFormP] = useState({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0, direccion: "", fechaNacimiento: "", biografia: "" });
+  const [formP, setFormP] = useState({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
   const [formA, setFormA] = useState({ idSede: 0, idPastor: 0, esPrincipal: false, fechaInicio: "", observaciones: "" });
   const [formSolicitud, setFormSolicitud] = useState({ idPastorActual: 0, idSede: 0, idPastorNuevo: 0, esPrincipal: false, motivo: "" });
   const [confirmDeleteAsign, setConfirmDeleteAsign] = useState<{ id: number; pastorName: string; iglesiaName: string } | null>(null);
@@ -82,21 +82,24 @@ export function PastoresPage() {
     deletePastorMutation.mutate(id);
   };
 
-  const openAddPastor = () => { setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0, direccion: "", fechaNacimiento: "", biografia: "" }); setEditingPastor(null); setDialogPastor(true); };
+  const openAddPastor = () => { setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 }); setEditingPastor(null); setDialogPastor(true); };
   const openEditPastor = (id: number) => {
     const p = pastores.find(x => x.idPastor === id); if (!p) return;
-    setFormP({ nombres: p.nombres, apellidos: p.apellidos, correo: p.correo, telefono: p.telefono || "", idUsuario: p.idUsuario || 0, direccion: p.direccion || "", fechaNacimiento: p.fechaNacimiento ? p.fechaNacimiento.split("T")[0] : "", biografia: p.biografia || "" });
+    setFormP({ nombres: p.nombres, apellidos: p.apellidos, correo: p.correo, telefono: p.telefono || "", idUsuario: p.idUsuario || 0 });
     setEditingPastor(id); setDialogPastor(true);
   };
   const handleSubmitPastor = () => {
     if (!formP.nombres.trim() || !formP.apellidos.trim() || !formP.correo.trim()) return;
     if (editingPastor) updatePastorMutation.mutate(
-      { id: editingPastor, data: { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null, direccion: formP.direccion.trim() || null, fechaNacimiento: formP.fechaNacimiento || null, biografia: formP.biografia.trim() || null } },
+      { id: editingPastor, data: { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null } },
       { onSuccess: () => setDialogPastor(false) }
     );
     else createPastorMutation.mutate(
-      { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null, direccion: formP.direccion.trim() || null, fechaNacimiento: formP.fechaNacimiento || null, biografia: formP.biografia.trim() || null },
-      { onSuccess: () => setDialogPastor(false) }
+      { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null },
+      { onSuccess: () => {
+        setDialogPastor(false);
+        setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
+      } }
     );
   };
 
@@ -383,9 +386,6 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
             </div>
             <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Correo Electrónico <span className="text-destructive">*</span></label><Input type="email" value={formP.correo} onChange={e => setFormP(f => ({ ...f, correo: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
             <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Teléfono Móvil</label><Input value={formP.telefono} onChange={e => setFormP(f => ({ ...f, telefono: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
-            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Dirección</label><Input value={formP.direccion} onChange={e => setFormP(f => ({ ...f, direccion: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
-            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Fecha de Nacimiento</label><Input type="date" value={formP.fechaNacimiento} onChange={e => setFormP(f => ({ ...f, fechaNacimiento: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
-            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Biografía</label><Input value={formP.biografia} onChange={e => setFormP(f => ({ ...f, biografia: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block flex items-center gap-1.5"><Link2 className="w-3 h-3 text-[#4682b4]" /> Vincular a Usuario Sist. (Opcional)</label>
               <Select value={formP.idUsuario ? String(formP.idUsuario) : "none"} onValueChange={v => setFormP(f => ({ ...f, idUsuario: v === "none" ? 0 : Number(v) }))}>
