@@ -47,9 +47,6 @@ export interface Pastor {
   correo: string
   telefono: string | null
   idUsuario: number | null
-  direccion: string | null
-  fechaNacimiento: string | null
-  biografia: string | null
   creadoEn: string
   actualizadoEn: string
 }

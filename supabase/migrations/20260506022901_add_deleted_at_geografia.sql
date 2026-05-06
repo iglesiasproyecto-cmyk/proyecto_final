@@ -1,0 +1,4 @@
+-- Add deleted_at to geography tables for soft delete
+ALTER TABLE pais ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE departamento ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE ciudad ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;

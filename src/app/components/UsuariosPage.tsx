@@ -18,6 +18,11 @@ import { toast } from "sonner";
 export function UsuariosPage() {
   const qc = useQueryClient();
   const { iglesiaActual, rolActual, iglesiasDelUsuario } = useApp();
+
+  const isSuperAdmin = rolActual === "super_admin";
+  const isAdminIglesia = rolActual === "admin_iglesia";
+  const canManageUsers = isSuperAdmin || isAdminIglesia;
+
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
   const { data: allIglesias = [] } = useIglesias();
@@ -40,10 +45,6 @@ export function UsuariosPage() {
   const removeRolMutation = useRemoveRol();
   const updateUsuarioMutation = useUpdateUsuario();
   const deleteUsuarioMutation = useDeleteUsuarioAsSuperAdmin();
-
-  const isSuperAdmin = rolActual === "super_admin";
-  const isAdminIglesia = rolActual === "admin_iglesia";
-  const canManageUsers = isSuperAdmin || isAdminIglesia;
 
   // Invite form state
   const [inviteForm, setInviteForm] = useState({

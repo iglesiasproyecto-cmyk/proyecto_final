@@ -155,7 +155,10 @@ export function useCreatePastor() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createPastor,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['pastores'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pastores'] })
+      qc.invalidateQueries({ queryKey: ['pastores-enriquecidos'] })
+    },
   })
 }
 
@@ -164,7 +167,10 @@ export function useUpdatePastor() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updatePastor>[1] }) =>
       updatePastor(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['pastores'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pastores'] })
+      qc.invalidateQueries({ queryKey: ['pastores-enriquecidos'] })
+    },
   })
 }
 
@@ -202,9 +208,10 @@ export function useDeleteIglesia() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => deleteIglesia(id),
-    onSuccess: () => {
+    onSuccess: (result, id) => {
       qc.invalidateQueries({ queryKey: ['iglesias'] })
       qc.invalidateQueries({ queryKey: ['iglesias-enriquecidas'] })
+      // El resultado se pasa automáticamente al onSuccess del mutate
     },
   })
 }
