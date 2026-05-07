@@ -109,19 +109,17 @@ export function MyDepartmentPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative bg-card/40 backdrop-blur-xl border border-border/50 p-6 rounded-3xl shadow-sm overflow-hidden flex flex-col md:flex-row md:items-center gap-5"
+        className="relative p-6 overflow-hidden flex flex-col md:flex-row md:items-center gap-5"
       >
-        <div className="absolute top-0 right-0 w-72 h-48 bg-primary/10 rounded-full blur-[90px] pointer-events-none -z-10" />
-
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white text-xl font-black shadow-lg shadow-blue-900/30">
           {min.nombre.charAt(0)}
         </div>
 
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight leading-none mb-1 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+          <h1 className="text-3xl font-light tracking-tight leading-none mb-1">
             {min.nombre}
           </h1>
-          <p className="text-xs text-muted-foreground mb-3">{min.descripcion}</p>
+          <p className="text-xs text-foreground mb-3">{min.descripcion}</p>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 flex items-center gap-1">
               <Crown className="w-3 h-3" /> {min.liderNombre || "Sin líder"}
