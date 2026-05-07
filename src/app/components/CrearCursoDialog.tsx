@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react'
-import { useAuth } from '@/app/store/AppContext'
+import React, { useEffect, useState } from 'react'
+import { useAuth, useApp } from '@/app/store/AppContext'
 import { getUserMinisterios } from '@/lib/userHelpers'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/app/components/ui/button'
 import {
   Dialog,
@@ -25,9 +25,8 @@ import { Textarea } from '@/app/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
 import { Checkbox } from '@/app/components/ui/checkbox'
 import { useForm } from 'react-hook-form'
-import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
 import { toast } from 'sonner'
+import { crearCurso } from '@/services/aula.service'
 
 interface CrearCursoDialogProps {
   open: boolean
@@ -46,7 +45,10 @@ interface FormData {
 
 export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeriosDisponibles }: CrearCursoDialogProps) {
   const { user } = useAuth()
+  const { iglesiaActual, user: appUser } = useApp()
+  const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
+  const [tipoCurso, setTipoCurso] = useState<'ministerio' | 'iglesia'>('ministerio')
 
   const { data: miembriaMinisterios = [] } = useQuery({
     queryKey: ['ministerios-lider', internalUserId],
@@ -83,21 +85,19 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
 
     setLoading(true)
     try {
-      const { error } = await supabase
-        .from('aula_curso')
-        .insert({
-          titulo: data.nombre,
-          descripcion: data.descripcion,
-          id_ministerio: data.id_ministerio,
-          id_usuario_creador: internalUserId,
-          estado: 'borrador',
-          orden_secuencial: data.desbloqueo_secuencial,
-        })
+      await crearCurso({
+        titulo: data.nombre,
+        descripcion: data.descripcion || undefined,
+        idMinisterio: tipoCurso === 'ministerio' ? data.id_ministerio : null,
+        idIglesia: tipoCurso === 'iglesia' ? (iglesiaActual?.id ?? null) : null,
+        idUsuarioCreador: internalUserId!,
+        ordenSecuencial: data.desbloqueo_secuencial,
+      })
 
-      if (error) throw error
-
+      queryClient.invalidateQueries({ queryKey: ['cursos-admin', iglesiaActual?.id] })
       toast.success('Curso creado exitosamente')
       form.reset()
+      setTipoCurso('ministerio')
       onOpenChange(false)
     } catch (error) {
       console.error('Error creating course:', error)
@@ -106,6 +106,8 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
       setLoading(false)
     }
   }
+
+  const isAdminIglesia = appUser?.rol === 'admin_iglesia'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -151,39 +153,71 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="id_ministerio"
-              rules={{ required: 'Debes seleccionar un ministerio' }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ministerio</FormLabel>
-                  {ministeriosFiltrados.length <= 1 ? (
-                    <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted text-sm text-muted-foreground">
-                      {ministeriosFiltrados.length === 1
-                        ? ministeriosFiltrados[0].nombre
-                        : 'Cargando ministerio...'}
-                    </div>
-                  ) : (
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona un ministerio" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {ministeriosFiltrados.map((ministerio) => (
-                          <SelectItem key={ministerio.id_ministerio} value={ministerio.id_ministerio.toString()}>
-                            {ministerio.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {isAdminIglesia && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium leading-none">Tipo de Curso</p>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="radio"
+                      name="tipoCurso"
+                      value="ministerio"
+                      checked={tipoCurso === 'ministerio'}
+                      onChange={() => setTipoCurso('ministerio')}
+                      className="accent-primary"
+                    />
+                    Para el Ministerio
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="radio"
+                      name="tipoCurso"
+                      value="iglesia"
+                      checked={tipoCurso === 'iglesia'}
+                      onChange={() => setTipoCurso('iglesia')}
+                      className="accent-primary"
+                    />
+                    Para toda la Iglesia
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {tipoCurso === 'ministerio' && (
+              <FormField
+                control={form.control}
+                name="id_ministerio"
+                rules={{ required: tipoCurso === 'ministerio' ? 'Debes seleccionar un ministerio' : false }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ministerio</FormLabel>
+                    {ministeriosFiltrados.length <= 1 ? (
+                      <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted text-sm text-muted-foreground">
+                        {ministeriosFiltrados.length === 1
+                          ? ministeriosFiltrados[0].nombre
+                          : 'Cargando ministerio...'}
+                      </div>
+                    ) : (
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un ministerio" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ministeriosFiltrados.map((ministerio) => (
+                            <SelectItem key={ministerio.id_ministerio} value={ministerio.id_ministerio.toString()}>
+                              {ministerio.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -231,7 +265,10 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading || ministeriosFiltrados.length === 0}>
+              <Button
+                type="submit"
+                disabled={loading || (tipoCurso === 'ministerio' && ministeriosFiltrados.length === 0)}
+              >
                 {loading ? 'Creando...' : 'Crear Curso'}
               </Button>
             </DialogFooter>
