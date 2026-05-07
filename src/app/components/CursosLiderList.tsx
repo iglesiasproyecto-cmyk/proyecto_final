@@ -11,6 +11,7 @@ import { Edit, Users, Eye, EyeOff, Trash2, Plus, BookOpen } from 'lucide-react'
 import { motion } from 'motion/react'
 import { CrearModuloDialog } from './CrearModuloDialog'
 import { toast } from 'sonner'
+import { ConfirmDialog } from './ui/ConfirmDialog'
 
 export function CursosLiderList() {
   const { user } = useAuth()
@@ -18,6 +19,7 @@ export function CursosLiderList() {
   const queryClient = useQueryClient()
   const [showCrearModulo, setShowCrearModulo] = useState(false)
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(null)
+  const [confirmDeleteCurso, setConfirmDeleteCurso] = useState<{ isOpen: boolean; id: number; titulo: string }>({ isOpen: false, id: 0, titulo: "" })
 
   const { data: cursos, isLoading } = useQuery({
     queryKey: ['cursos-lider', user?.id],
@@ -65,9 +67,7 @@ export function CursosLiderList() {
     }
   }
 
-  const eliminarCurso = async (idCurso: number) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este curso?')) return
-
+  const ejecutarEliminarCurso = async (idCurso: number) => {
     try {
       const { error } = await supabase
         .from('aula_curso')
@@ -188,7 +188,7 @@ export function CursosLiderList() {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => eliminarCurso(curso.id_aula_curso)}
+                        onClick={() => setConfirmDeleteCurso({ isOpen: true, id: curso.id_aula_curso, titulo: curso.titulo })}
                         className="h-10 w-10 rounded-xl border-white/10 bg-background/50 hover:bg-destructive/10 hover:text-destructive transition-all"
                         title="Eliminar Curso"
                       >
@@ -207,6 +207,14 @@ export function CursosLiderList() {
         open={showCrearModulo}
         onOpenChange={setShowCrearModulo}
         idCurso={cursoSeleccionado || 0}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDeleteCurso.isOpen}
+        onClose={() => setConfirmDeleteCurso({ isOpen: false, id: 0, titulo: "" })}
+        onConfirm={() => ejecutarEliminarCurso(confirmDeleteCurso.id)}
+        title="¿Eliminar Curso?"
+        description={`¿Estás seguro de que quieres eliminar el curso "${confirmDeleteCurso.titulo}"? Esta acción es irreversible.`}
       />
     </>
   )
