@@ -240,8 +240,8 @@ export interface AulaCurso {
   estado: 'borrador' | 'activo' | 'archivado'
   ordenSecuencial: boolean
   creadoEn: string
-  updatedAt: string
-  deletedAt: string | null
+  actualizadoEn: string
+  eliminadoEn: string | null
   // computed
   ministerioNombre?: string
   iglesiaNombre?: string
