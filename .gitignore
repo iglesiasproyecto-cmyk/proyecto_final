@@ -14,6 +14,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+!.env.test.example
 
 # editor and OS
 .vscode/
@@ -23,3 +24,9 @@ Thumbs.db
 # git worktrees
 .worktrees/
 MCP_SUPABASE_SETUP.md
+
+# Playwright
+.auth/
+playwright-report/
+test-results/
+.env.test
