@@ -153,15 +153,15 @@ function SuperAdminDashboard() {
       </motion.div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard index={0} colorIndex={0} icon={<Building2 className="w-5 h-5" />} value={iglesias.length} label="Iglesias" sublabel={`${activeIglesias.length} activas`} onClick={() => navigate("/app/iglesias")} />
-        <StatCard index={1} colorIndex={0} icon={<Church className="w-5 h-5" />} value={sedes.length} label="Sedes" sublabel={`${activeSedes} activas`} onClick={() => navigate("/app/sedes")} />
-        <StatCard index={2} colorIndex={0} icon={<Users className="w-5 h-5" />} value={usuarios.length} label="Usuarios" sublabel={`${activeUsers} activos`} onClick={() => navigate("/app/usuarios")} />
-        <StatCard index={3} colorIndex={0} icon={<UserCheck className="w-5 h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/pastores")} />
+        <StatCard index={0} icon={<Building2 className="w-5 h-5" />} value={iglesias.length} label="Iglesias" sublabel={`${activeIglesias.length} activas`} onClick={() => navigate("/app/global/iglesias")} />
+        <StatCard index={1} icon={<Church className="w-5 h-5" />} value={sedes.length} label="Sedes" sublabel={`${activeSedes} activas`} onClick={() => navigate("/app/global/iglesias")} />
+        <StatCard index={2} icon={<Users className="w-5 h-5" />} value={usuarios.length} label="Usuarios" sublabel={`${activeUsers} activos`} onClick={() => navigate("/app/global/usuarios")} />
+        <StatCard index={3} icon={<UserCheck className="w-5 h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/global/iglesias")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <AnimatedCard index={4} className="p-4 lg:col-span-2">
-          <SectionHeader icon={<Activity className="w-5 h-5" />} title="Recursos por Iglesia" action={() => navigate("/app/iglesias")} actionLabel="Gestionar" />
+          <SectionHeader icon={<Activity className="w-5 h-5" />} title="Recursos por Iglesia" action={() => navigate("/app/global/iglesias")} actionLabel="Gestionar" />
           <SimpleBarChart
             data={iglesiaChartData.map((d) => ({
               label: d.name,
@@ -193,13 +193,13 @@ function SuperAdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <AnimatedCard index={6} className="p-4 lg:col-span-2">
-          <SectionHeader icon={<Building2 className="w-5 h-5" />} title="Iglesias Registradas" action={() => navigate("/app/iglesias")} actionLabel="Gestionar" />
+          <SectionHeader icon={<Building2 className="w-5 h-5" />} title="Iglesias Registradas" action={() => navigate("/app/global/iglesias")} actionLabel="Gestionar" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {iglesias.map((ig) => (
               <div
                 key={ig.idIglesia}
                 className={`group flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer bg-gradient-to-br border ${ig.estado !== "activa" ? "from-muted/20 to-muted/5 opacity-60 border-dashed border-border" : "from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm hover:shadow-md hover:-translate-y-0.5"}`}
-                onClick={() => navigate("/app/iglesias")}
+                onClick={() => navigate("/app/global/iglesias")}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${ig.estado !== "activa" ? "bg-muted text-muted-foreground" : "bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white group-hover:scale-110 transition-transform"}`}>
@@ -224,7 +224,7 @@ function SuperAdminDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={7} className="p-4 h-fit" onClick={() => navigate("/app/geografia")}>
+        <AnimatedCard index={7} className="p-4 h-fit" onClick={() => navigate("/app/global/geografia")}>
             <SectionHeader icon={<Globe className="w-4 h-4" />} title="Cobertura Geografica" />
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-3 rounded-2xl bg-[#4682b4]/10 border-[#4682b4]/10 flex flex-col items-center justify-center hover:bg-[#4682b4]/20 transition-colors"><p className="text-xl font-light text-[#4682b4] dark:text-[#709dbd]">{paises.length}</p><p className="text-[9px] font-bold uppercase tracking-widest text-[#4682b4]/70 mt-1">Paises</p></div>
@@ -250,10 +250,10 @@ function SuperAdminDashboard() {
             <SectionHeader icon={<TrendingUp className="w-4 h-4" />} title="Accesos Rapidos" />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {[
-                { label: "Nueva Iglesia", path: "/app/iglesias", icon: <Building2 className="w-5 h-5" /> },
-                { label: "Sedes", path: "/app/sedes", icon: <Church className="w-5 h-5" /> },
-                { label: "Usuarios", path: "/app/usuarios", icon: <Users className="w-5 h-5" /> },
-                { label: "Pastores", path: "/app/pastores", icon: <UserCheck className="w-5 h-5" /> },
+                { label: "Iglesias", path: "/app/global/iglesias", icon: <Building2 className="w-5 h-5" /> },
+                { label: "Catálogos", path: "/app/global/catalogos", icon: <Church className="w-5 h-5" /> },
+                { label: "Usuarios", path: "/app/global/usuarios", icon: <Users className="w-5 h-5" /> },
+                { label: "Administradores", path: "/app/global/administradores", icon: <UserCheck className="w-5 h-5" /> },
               ].map((q) => (
                 <button key={q.path + q.label} onClick={() => navigate(q.path)} className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-[#4682b4]/5 hover:bg-[#4682b4]/10 hover:-translate-y-0.5 text-muted-foreground transition-all group border border-transparent hover:border-[#4682b4]/20 shadow-sm">
                   <span className="text-[#4682b4]/60 group-hover:text-[#4682b4] transition-colors group-hover:scale-110">{q.icon}</span>
@@ -271,8 +271,9 @@ function SuperAdminDashboard() {
 function AdminIglesiaDashboard() {
   const { usuarioActual, notificacionesCount, iglesiaActual } = useApp();
   const navigate = useNavigate();
-  const { data: ministerios = [] } = useMinisterios();
-  const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(0);
+  const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : '/app';
+  const { data: ministerios = [] } = useMinisterios(iglesiaActual?.id);
+  const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(ministerios[0]?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: notificaciones = [] } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
   const { data: sedes = [] } = useSedesEnriquecidas(iglesiaActual?.id);
@@ -361,15 +362,15 @@ function AdminIglesiaDashboard() {
       </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard index={0} icon={<Settings className="w-5 h-5" />} value={activeMins.length} label="Ministerios activos" onClick={() => navigate("/app/departamentos")} />
-        <StatCard index={1} icon={<Users className="w-5 h-5" />} value={activeMembers.length} label="Miembros activos" onClick={() => navigate("/app/miembros")} />
-        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={globalEvents.length} label="Eventos globales" onClick={() => navigate("/app/eventos")} />
-        <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate("/app/notificaciones")} />
+        <StatCard index={0} icon={<Settings className="w-5 h-5" />} value={activeMins.length} label="Ministerios activos" onClick={() => navigate(`${basePath}/ministerios`)} />
+        <StatCard index={1} icon={<Users className="w-5 h-5" />} value={activeMembers.length} label="Miembros activos" onClick={() => navigate(`${basePath}/miembros`)} />
+        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={globalEvents.length} label="Eventos globales" onClick={() => navigate(`${basePath}/eventos`)} />
+        <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate(`${basePath}/notificaciones`)} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <AnimatedCard index={4} className="p-4">
-          <SectionHeader icon={<Settings className="w-5 h-5" />} title="Ministerios" action={() => navigate("/app/departamentos")} />
+          <SectionHeader icon={<Settings className="w-5 h-5" />} title="Ministerios" action={() => navigate(`${basePath}/ministerios`)} />
           {minChartData.length > 0 && (
             <div className="mb-4">
               <SimpleBarChart
@@ -383,7 +384,7 @@ function AdminIglesiaDashboard() {
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {ministerios.slice(0, 4).map((min) => (
-              <div key={min.idMinisterio} className={`group flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer bg-gradient-to-br border ${min.estado !== "activo" ? "from-muted/20 to-muted/5 opacity-60 border-dashed border-border" : "from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm hover:-translate-y-0.5"}`} onClick={() => navigate("/app/departamentos")}>
+              <div key={min.idMinisterio} className={`group flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer bg-gradient-to-br border ${min.estado !== "activo" ? "from-muted/20 to-muted/5 opacity-60 border-dashed border-border" : "from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm hover:-translate-y-0.5"}`} onClick={() => navigate(`${basePath}/ministerios`)}>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${min.estado !== "activo" ? "bg-muted text-muted-foreground" : "bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white shadow-inner group-hover:scale-110 transition-transform"}`}>
                   <span className="text-[13px] font-bold">{min.nombre.charAt(0)}</span>
                 </div>
@@ -398,7 +399,7 @@ function AdminIglesiaDashboard() {
         </AnimatedCard>
 
         <AnimatedCard index={5} className="p-4">
-          <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Eventos Globales" action={() => navigate("/app/eventos")} />
+          <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Eventos Globales" action={() => navigate(`${basePath}/eventos`)} />
           <div className="grid grid-cols-1 gap-2">
             {globalEvents.slice(0, 5).map((ev) => (
               <div key={ev.idEvento} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-[#4682b4]/5 to-transparent border border-[#4682b4]/10 hover:border-[#4682b4]/20 transition-colors shadow-sm">
@@ -417,7 +418,7 @@ function AdminIglesiaDashboard() {
         </AnimatedCard>
 
         <AnimatedCard index={6} className="p-4">
-          <SectionHeader icon={<Building2 className="w-5 h-5" />} title="Sedes y Pastores" action={() => navigate("/app/sedes")} />
+          <SectionHeader icon={<Building2 className="w-5 h-5" />} title="Sedes y Pastores" action={() => navigate(`${basePath}/sedes`)} />
           <div className="grid grid-cols-1 gap-2">
             {sedesConPastores.slice(0, 6).map((sede) => (
               <div key={sede.idSede} className={`group flex items-center gap-3 p-3 rounded-2xl transition-all border ${sede.tienePastor ? "bg-gradient-to-r from-[#4682b4]/5 to-transparent border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm" : "bg-gradient-to-r from-amber-500/5 to-transparent border-amber-500/10 hover:border-amber-500/20 shadow-sm"}`}>
@@ -455,7 +456,7 @@ function AdminIglesiaDashboard() {
         </AnimatedCard>
 
         <AnimatedCard index={7} className="p-4 lg:col-span-2">
-          <SectionHeader icon={<Bell className="w-5 h-5" />} title={`Notificaciones ${unread > 0 ? `(${unread})` : ""}`} action={() => navigate("/app/notificaciones")} actionLabel="Ver todas" />
+          <SectionHeader icon={<Bell className="w-5 h-5" />} title={`Notificaciones ${unread > 0 ? `(${unread})` : ""}`} action={() => navigate(`${basePath}/notificaciones`)} actionLabel="Ver todas" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {notificaciones.slice(0, 4).map((n) => (
               <div key={n.idNotificacion} className={`flex items-start gap-3 p-3 rounded-2xl transition-colors border ${n.leida ? "bg-muted/20 border-transparent hover:border-border" : "bg-[#4682b4]/5 border-[#4682b4]/20 shadow-sm"}`}>
@@ -477,6 +478,7 @@ function AdminIglesiaDashboard() {
 function LiderDashboard() {
   const { usuarioActual, iglesiaActual } = useApp();
   const navigate = useNavigate();
+  const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : '/app';
   const { data: ministerios = [] } = useMinisterios();
   const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(ministerios[0]?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
@@ -512,18 +514,18 @@ function LiderDashboard() {
       </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard index={0} icon={<Users className="w-5 h-5" />} value={minMembers.length} label="Miembros" onClick={() => navigate("/app/miembros")} />
-        <StatCard index={1} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
-        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
-        <StatCard index={3} icon={<BookOpen className="w-5 h-5" />} value={cursos?.filter(c => c.estado === 'activo').length || 0} label="Cursos activos" onClick={() => navigate("/app/aula")} />
+        <StatCard index={0} icon={<Users className="w-5 h-5" />} value={minMembers.length} label="Miembros" onClick={() => navigate(`${basePath}/miembros`)} />
+        <StatCard index={1} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate(`${basePath}/tareas`)} />
+        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate(`${basePath}/eventos`)} />
+        <StatCard index={3} icon={<BookOpen className="w-5 h-5" />} value={cursos?.filter(c => c.estado === 'activo').length || 0} label="Cursos activos" onClick={() => navigate(`${basePath}/aula`)} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <AnimatedCard index={5} className="p-4 lg:col-span-2">
-          <SectionHeader icon={<ListTodo className="w-5 h-5" />} title="Tareas del Ministerio" action={() => navigate("/app/tareas")} />
+          <SectionHeader icon={<ListTodo className="w-5 h-5" />} title="Tareas del Ministerio" action={() => navigate(`${basePath}/tareas`)} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {tareas.slice(0, 5).map((t) => (
-              <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate("/app/tareas")}>
+              <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate(`${basePath}/tareas`)}>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white`}>{statusIcons[t.estado]}</div>
                 <div className="flex-1 min-w-0">
                   <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-[#4682b4]"}`}>{t.titulo}</p>
@@ -550,7 +552,7 @@ function LiderDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <AnimatedCard index={7} className="p-4 lg:col-span-1">
-          <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Próximos Eventos" action={() => navigate("/app/eventos")} />
+          <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Próximos Eventos" action={() => navigate(`${basePath}/eventos`)} />
           <div className="grid grid-cols-1 gap-2">
             {upcomingEvents.map((ev) => (
               <div key={ev.idEvento} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-[#4682b4]/5 to-transparent border border-[#4682b4]/10 hover:border-[#4682b4]/20 transition-colors shadow-sm">
@@ -569,7 +571,7 @@ function LiderDashboard() {
         </AnimatedCard>
 
         <AnimatedCard index={8} className="p-4 lg:col-span-1">
-          <SectionHeader icon={<BookOpen className="w-5 h-5" />} title="Formación" action={() => navigate("/app/aula")} />
+          <SectionHeader icon={<BookOpen className="w-5 h-5" />} title="Formación" action={() => navigate(`${basePath}/aula`)} />
           <div className="space-y-3">
             {cursos && cursos.length > 0 ? (
               <div className="space-y-2">
@@ -600,7 +602,7 @@ function LiderDashboard() {
         </AnimatedCard>
 
         <AnimatedCard index={9} className="p-4 lg:col-span-1">
-          <SectionHeader icon={<Users className="w-5 h-5" />} title="Equipo" action={() => navigate("/app/miembros")} />
+          <SectionHeader icon={<Users className="w-5 h-5" />} title="Equipo" action={() => navigate(`${basePath}/miembros`)} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {minMembers.slice(0, 5).map((mm) => (
               <div key={mm.idMiembroMinisterio} className="group flex items-center gap-3 p-2.5 rounded-2xl border border-transparent hover:border-[#4682b4]/10 hover:bg-[#4682b4]/5 transition-colors cursor-default">
@@ -622,6 +624,7 @@ function LiderDashboard() {
 function ServidorDashboard() {
   const { usuarioActual, notificacionesCount, iglesiaActual } = useApp();
   const navigate = useNavigate();
+  const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : '/app';
   const { data: ministerios = [] } = useMinisterios();
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: tareas = [] } = useTareas();
@@ -656,18 +659,18 @@ function ServidorDashboard() {
       </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard index={0} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate("/app/tareas")} />
-        <StatCard index={1} icon={<CheckCircle2 className="w-5 h-5" />} value={completedTareas.length} label="Completadas" onClick={() => navigate("/app/tareas")} />
-        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate("/app/eventos")} />
-        <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate("/app/notificaciones")} />
+        <StatCard index={0} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate(`${basePath}/tareas`)} />
+        <StatCard index={1} icon={<CheckCircle2 className="w-5 h-5" />} value={completedTareas.length} label="Completadas" onClick={() => navigate(`${basePath}/tareas`)} />
+        <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate(`${basePath}/eventos`)} />
+        <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate(`${basePath}/notificaciones`)} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <AnimatedCard index={4} className="p-4">
-          <SectionHeader icon={<ListTodo className="w-5 h-5" />} title="Mis Tareas" action={() => navigate("/app/tareas")} />
+          <SectionHeader icon={<ListTodo className="w-5 h-5" />} title="Mis Tareas" action={() => navigate(`${basePath}/tareas`)} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {myTareas.slice(0, 5).map((t) => (
-              <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate("/app/tareas")}>
+              <div key={t.idTarea} className="group flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5" onClick={() => navigate(`${basePath}/tareas`)}>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white`}>{statusIcons[t.estado]}</div>
                 <div className="flex-1 min-w-0">
                   <p className={`text-[13px] font-semibold truncate transition-colors ${t.estado === "completada" ? "line-through text-muted-foreground" : "text-foreground/90 group-hover:text-[#4682b4]"}`}>{t.titulo}</p>
@@ -681,7 +684,7 @@ function ServidorDashboard() {
         </AnimatedCard>
 
         <AnimatedCard index={5} className="p-4">
-          <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Proximos Eventos" action={() => navigate("/app/eventos")} />
+          <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Proximos Eventos" action={() => navigate(`${basePath}/eventos`)} />
           <div className="grid grid-cols-1 gap-2">
             {eventos.slice(0, 4).map((ev) => (
               <div key={ev.idEvento} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-[#4682b4]/5 to-transparent border border-[#4682b4]/10 hover:border-[#4682b4]/20 transition-colors shadow-sm">
@@ -699,7 +702,7 @@ function ServidorDashboard() {
         </AnimatedCard>
 
         <AnimatedCard index={6} className="p-4">
-          <SectionHeader icon={<ClipboardCheck className="w-5 h-5" />} title="Mis Evaluaciones" action={() => navigate("/app/evaluaciones")} />
+          <SectionHeader icon={<ClipboardCheck className="w-5 h-5" />} title="Mis Evaluaciones" action={() => navigate(`${basePath}/aula`)} />
           {evaluaciones.length > 0 ? (
             <div>
               <div className="flex items-center justify-between gap-3 mb-3 p-3 rounded-2xl bg-gradient-to-r from-[#709dbd]/10 to-[#4682b4]/10 border-[#4682b4]/10">
@@ -725,10 +728,10 @@ function ServidorDashboard() {
         </AnimatedCard>
 
         <AnimatedCard index={7} className="p-4">
-          <SectionHeader icon={<BookOpen className="w-5 h-5" />} title="Aula de Formacion" action={() => navigate("/app/aula")} actionLabel="Ir al aula" />
+          <SectionHeader icon={<BookOpen className="w-5 h-5" />} title="Aula de Formacion" action={() => navigate(`${basePath}/aula`)} actionLabel="Ir al aula" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {cursos.slice(0, 3).map((c, idx) => (
-              <div key={c.id_aula_curso} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm cursor-pointer transition-all hover:-translate-y-0.5" onClick={() => navigate("/app/aula")}>
+              <div key={c.id_aula_curso} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-br from-[#709dbd]/5 to-[#4682b4]/5 hover:from-[#709dbd]/10 hover:to-[#4682b4]/10 border-[#4682b4]/10 hover:border-[#4682b4]/20 shadow-sm cursor-pointer transition-all hover:-translate-y-0.5" onClick={() => navigate(`${basePath}/aula`)}>
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white font-bold shadow-inner group-hover:scale-110 transition-transform">{idx + 1}</div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-semibold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{c.titulo}</p>

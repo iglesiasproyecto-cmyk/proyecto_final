@@ -84,7 +84,7 @@ function getNavItemsForRole(
     case "admin_iglesia":
       return [
         { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
-        { label: "Mi Iglesia", path: `/app/global/iglesias/${iglesiaActual?.id}`, icon: <Church className="w-5 h-5" />, section: "Mi Iglesia" },
+        { label: "Mi Iglesia", path: `${t}/iglesia`, icon: <Church className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Sedes", path: `${t}/sedes`, icon: <Building2 className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Pastores", path: `${t}/pastores`, icon: <UserCheck className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Ministerios", path: `${t}/ministerios`, icon: <Settings className="w-5 h-5" />, section: "Mi Iglesia" },

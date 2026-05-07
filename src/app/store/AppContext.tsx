@@ -549,7 +549,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const ctx = useContext(AppContext)
   if (!ctx) throw new Error('useAuth must be used within AppProvider')
-  return { user: ctx.user }
+  return { user: ctx.user, rolActual: ctx.rolActual, usuarioActual: ctx.usuarioActual }
 }
 
 export function useApp() {

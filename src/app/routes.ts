@@ -76,6 +76,7 @@ export const router = createBrowserRouter([
             ErrorBoundary: ErrorPage,
             children: [
               { index: true, Component: DashboardPage, ErrorBoundary: ErrorPage },
+              { path: "iglesia", Component: ChurchDetailPage, ErrorBoundary: ErrorPage },
               { path: "sedes", Component: SedesPage, ErrorBoundary: ErrorPage },
               { path: "pastores", Component: PastoresPage, ErrorBoundary: ErrorPage },
               { path: "ministerios", Component: MinisteriosPage, ErrorBoundary: ErrorPage },
