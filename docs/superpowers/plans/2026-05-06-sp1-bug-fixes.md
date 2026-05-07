@@ -28,7 +28,7 @@ Las políticas `USING (true)` para usuarios autenticados en `pais/departamento/c
 **Files:**
 - Create: `supabase/migrations/20260506100000_sp1_fix_rls_geo_super_admin.sql`
 
-- [ ] **Step 1: Verificar `is_super_admin()` en Supabase SQL Editor**
+- [x] **Step 1: Verificar `is_super_admin()` en Supabase SQL Editor**
 
 Ejecutar en el SQL Editor de Supabase:
 ```sql
@@ -40,7 +40,7 @@ WHERE proname = 'is_super_admin'
 ```
 Esperado: 1 fila con `proconfig` que incluya `search_path=public`.
 
-- [ ] **Step 2: Verificar políticas activas en tablas de geografía**
+- [x] **Step 2: Verificar políticas activas en tablas de geografía**
 
 ```sql
 SELECT tablename, policyname, cmd, qual
@@ -50,7 +50,7 @@ ORDER BY tablename, cmd;
 ```
 Esperado: cada tabla tiene políticas para SELECT, INSERT, UPDATE, DELETE.
 
-- [ ] **Step 3: Crear migración de corrección si hay políticas duplicadas o faltantes**
+- [x] **Step 3: Crear migración de corrección si hay políticas duplicadas o faltantes**
 
 ```sql
 -- supabase/migrations/20260506100000_sp1_fix_rls_geo_super_admin.sql
@@ -101,18 +101,18 @@ CREATE POLICY "tipo_evento_super_admin_mutations" ON public.tipo_evento
   WITH CHECK (is_super_admin());
 ```
 
-- [ ] **Step 4: Aplicar migración en Supabase**
+- [x] **Step 4: Aplicar migración en Supabase**
 
 ```bash
 supabase db push
 ```
 O ejecutar el SQL directamente en el SQL Editor de Supabase.
 
-- [ ] **Step 5: Probar en la UI**
+- [x] **Step 5: Probar en la UI**
 
 Iniciar sesión como super_admin. Ir a `/app/geografia`. Intentar crear un país de prueba. Esperado: sin error 403.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/20260506100000_sp1_fix_rls_geo_super_admin.sql
@@ -128,7 +128,7 @@ La función `get_all_usuarios_enriquecidos()` devuelve todos los usuarios sin fi
 **Files:**
 - Create: `supabase/migrations/20260506100100_sp1_fix_rpc_usuarios_iglesia.sql`
 
-- [ ] **Step 1: Crear migración con funciones corregidas**
+- [x] **Step 1: Crear migración con funciones corregidas**
 
 ```sql
 -- supabase/migrations/20260506100100_sp1_fix_rpc_usuarios_iglesia.sql
@@ -274,13 +274,13 @@ REVOKE EXECUTE ON FUNCTION public.get_usuarios_by_iglesia(bigint) FROM public, a
 GRANT EXECUTE ON FUNCTION public.get_usuarios_by_iglesia(bigint) TO authenticated;
 ```
 
-- [ ] **Step 2: Aplicar migración**
+- [x] **Step 2: Aplicar migración**
 
 ```bash
 supabase db push
 ```
 
-- [ ] **Step 3: Verificar en SQL Editor**
+- [x] **Step 3: Verificar en SQL Editor**
 
 ```sql
 -- Probar con un id_iglesia real
@@ -288,7 +288,7 @@ SELECT * FROM get_usuarios_by_iglesia(1) LIMIT 5;
 ```
 Esperado: Devuelve filas sin error.
 
-- [ ] **Step 4: Actualizar `usuarios.service.ts` para usar la nueva función**
+- [x] **Step 4: Actualizar `usuarios.service.ts` para usar la nueva función**
 
 En `src/services/usuarios.service.ts`, agregar:
 
@@ -312,7 +312,7 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
 }
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations/20260506100100_sp1_fix_rpc_usuarios_iglesia.sql \
@@ -329,7 +329,7 @@ El trigger `handle_new_user` debe crear automáticamente un registro en `public.
 **Files:**
 - Create: `supabase/migrations/20260506100200_sp1_fix_handle_new_user.sql`
 
-- [ ] **Step 1: Verificar que el trigger existe**
+- [x] **Step 1: Verificar que el trigger existe**
 
 ```sql
 SELECT trigger_name, event_manipulation, event_object_table, action_statement
@@ -339,7 +339,7 @@ WHERE trigger_name = 'on_auth_user_created'
 ```
 Esperado: existe un trigger `on_auth_user_created` en `auth.users`.
 
-- [ ] **Step 2: Si no existe o está roto, crear/recrear**
+- [x] **Step 2: Si no existe o está roto, crear/recrear**
 
 ```sql
 -- supabase/migrations/20260506100200_sp1_fix_handle_new_user.sql
@@ -380,7 +380,7 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 ```
 
-- [ ] **Step 3: Verificar usuarios auth sin registro en public.usuario**
+- [x] **Step 3: Verificar usuarios auth sin registro en public.usuario**
 
 ```sql
 -- Detectar usuarios auth sin perfil en public.usuario
@@ -408,17 +408,17 @@ ON CONFLICT (correo) DO UPDATE
   WHERE public.usuario.auth_user_id IS NULL;
 ```
 
-- [ ] **Step 4: Aplicar migración**
+- [x] **Step 4: Aplicar migración**
 
 ```bash
 supabase db push
 ```
 
-- [ ] **Step 5: Probar creación de tarea como usuario autenticado**
+- [x] **Step 5: Probar creación de tarea como usuario autenticado**
 
 Iniciar sesión con una cuenta real. Ir a `/app/tareas`. Intentar crear una tarea. Esperado: tarea creada sin error.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/20260506100200_sp1_fix_handle_new_user.sql
@@ -434,7 +434,7 @@ Remover los `console.log('[DEBUG]')` de producción y asegurar el comportamiento
 **Files:**
 - Modify: `src/app/store/AppContext.tsx`
 
-- [ ] **Step 1: Eliminar todos los console.log de debug**
+- [x] **Step 1: Eliminar todos los console.log de debug**
 
 En `src/app/store/AppContext.tsx`, eliminar todas las líneas que contengan `[DEBUG]`:
 
@@ -451,7 +451,7 @@ En `src/app/store/AppContext.tsx`, eliminar todas las líneas que contengan `[DE
 
 Mantener solo los `console.log('[AUTH]')` que son informativos para producción, convirtiéndolos a `console.warn` o eliminando los más verbosos.
 
-- [ ] **Step 2: Asegurar que mock mode no interfiere con sesión real inválida**
+- [x] **Step 2: Asegurar que mock mode no interfiere con sesión real inválida**
 
 Verificar que en `AppContext.tsx` el `isAuthenticated` sea:
 
@@ -461,7 +461,7 @@ isAuthenticated: !!session || isMockMode,
 
 Si la línea dice solo `!!session`, cambiarla a lo anterior.
 
-- [ ] **Step 3: Verificar que `UNAUTHORIZED` fuerza logout correctamente**
+- [x] **Step 3: Verificar que `UNAUTHORIZED` fuerza logout correctamente**
 
 Confirmar que el bloque que maneja `data === 'UNAUTHORIZED'` hace:
 ```typescript
@@ -475,7 +475,7 @@ if (data === 'UNAUTHORIZED') {
 ```
 Si está correcto, no cambiar.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/app/store/AppContext.tsx

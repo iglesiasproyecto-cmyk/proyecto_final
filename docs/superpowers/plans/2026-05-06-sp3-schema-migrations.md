@@ -31,7 +31,7 @@
 **Files:**
 - Create: `supabase/migrations/20260506300000_sp3_m1_aula_curso_iglesia.sql`
 
-- [ ] **Step 1: Crear migración M1**
+- [x] **Step 1: Crear migración M1**
 
 ```sql
 -- supabase/migrations/20260506300000_sp3_m1_aula_curso_iglesia.sql
@@ -67,13 +67,13 @@ ALTER TABLE public.aula_inscripcion
   ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 ```
 
-- [ ] **Step 2: Aplicar migración**
+- [x] **Step 2: Aplicar migración**
 
 ```bash
 supabase db push
 ```
 
-- [ ] **Step 3: Verificar en SQL Editor**
+- [x] **Step 3: Verificar en SQL Editor**
 
 ```sql
 -- Verificar constraint
@@ -86,7 +86,7 @@ SELECT count(*) FROM aula_curso WHERE id_ministerio IS NULL AND id_iglesia IS NU
 -- Esperado: 0
 ```
 
-- [ ] **Step 4: Actualizar interfaz TypeScript**
+- [x] **Step 4: Actualizar interfaz TypeScript**
 
 En `src/types/app.types.ts`, la interfaz del curso del aula (puede estar como `AulaCurso` o similar):
 
@@ -113,7 +113,7 @@ export interface AulaCurso {
 }
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations/20260506300000_sp3_m1_aula_curso_iglesia.sql \
@@ -130,7 +130,7 @@ Sin `id_iglesia` directo en `tarea`, las políticas RLS requieren un JOIN costos
 **Files:**
 - Create: `supabase/migrations/20260506300100_sp3_m2_tarea_iglesia.sql`
 
-- [ ] **Step 1: Crear migración M2**
+- [x] **Step 1: Crear migración M2**
 
 ```sql
 -- supabase/migrations/20260506300100_sp3_m2_tarea_iglesia.sql
@@ -170,13 +170,13 @@ CREATE INDEX IF NOT EXISTS idx_tarea_iglesia_ministerio
   ON public.tarea(id_iglesia, id_ministerio);
 ```
 
-- [ ] **Step 2: Aplicar migración**
+- [x] **Step 2: Aplicar migración**
 
 ```bash
 supabase db push
 ```
 
-- [ ] **Step 3: Verificar backfill**
+- [x] **Step 3: Verificar backfill**
 
 ```sql
 -- Cuántas tareas quedaron sin id_iglesia (aceptable si son muy antiguas sin ministerio)
@@ -189,7 +189,7 @@ WHERE id_iglesia IS NULL
 LIMIT 10;
 ```
 
-- [ ] **Step 4: Actualizar interfaz TypeScript `Tarea`**
+- [x] **Step 4: Actualizar interfaz TypeScript `Tarea`**
 
 En `src/types/app.types.ts`:
 
@@ -211,7 +211,7 @@ export interface Tarea {
 }
 ```
 
-- [ ] **Step 5: Actualizar mapper en `eventos.service.ts` o `tareas.service.ts`**
+- [x] **Step 5: Actualizar mapper en `eventos.service.ts` o `tareas.service.ts`**
 
 Buscar la función `mapTarea` (en `src/services/eventos.service.ts` o similar) y agregar:
 
@@ -225,7 +225,7 @@ function mapTarea(r: any): Tarea {
 }
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/20260506300100_sp3_m2_tarea_iglesia.sql \
@@ -240,7 +240,7 @@ git commit -m "feat(schema): add id_iglesia to tarea for efficient tenant-scoped
 **Files:**
 - Create: `supabase/migrations/20260506300200_sp3_m3_pastor_iglesia.sql`
 
-- [ ] **Step 1: Crear migración M3**
+- [x] **Step 1: Crear migración M3**
 
 ```sql
 -- supabase/migrations/20260506300200_sp3_m3_pastor_iglesia.sql
@@ -299,13 +299,13 @@ CREATE TRIGGER sync_pastor_iglesia_trigger
   FOR EACH ROW EXECUTE FUNCTION public.sync_pastor_iglesia();
 ```
 
-- [ ] **Step 2: Aplicar migración**
+- [x] **Step 2: Aplicar migración**
 
 ```bash
 supabase db push
 ```
 
-- [ ] **Step 3: Verificar backfill**
+- [x] **Step 3: Verificar backfill**
 
 ```sql
 SELECT count(*) FROM pastor WHERE id_iglesia IS NULL;
@@ -317,7 +317,7 @@ LEFT JOIN iglesia i ON i.id_iglesia = p.id_iglesia
 LIMIT 10;
 ```
 
-- [ ] **Step 4: Actualizar interfaz TypeScript `Pastor`**
+- [x] **Step 4: Actualizar interfaz TypeScript `Pastor`**
 
 En `src/types/app.types.ts`:
 
@@ -337,7 +337,7 @@ export interface Pastor {
 }
 ```
 
-- [ ] **Step 5: Actualizar mapper en `iglesias.service.ts`**
+- [x] **Step 5: Actualizar mapper en `iglesias.service.ts`**
 
 ```typescript
 function mapPastor(r: PastorRow): Pastor {
@@ -355,7 +355,7 @@ function mapPastor(r: PastorRow): Pastor {
 }
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/20260506300200_sp3_m3_pastor_iglesia.sql \
@@ -373,7 +373,7 @@ Supabase advisor reporta FKs sin índices. Agregar los críticos para las querie
 **Files:**
 - Create: `supabase/migrations/20260506300300_sp3_m4_aula_inscripcion_soft_delete.sql`
 
-- [ ] **Step 1: Crear migración M4**
+- [x] **Step 1: Crear migración M4**
 
 ```sql
 -- supabase/migrations/20260506300300_sp3_m4_aula_inscripcion_soft_delete.sql
@@ -399,13 +399,13 @@ CREATE INDEX IF NOT EXISTS idx_tarea_asignada_id_usuario ON public.tarea_asignad
 CREATE INDEX IF NOT EXISTS idx_tarea_id_usuario_creador ON public.tarea(id_usuario_creador);
 ```
 
-- [ ] **Step 2: Aplicar migración**
+- [x] **Step 2: Aplicar migración**
 
 ```bash
 supabase db push
 ```
 
-- [ ] **Step 3: Verificar índices creados**
+- [x] **Step 3: Verificar índices creados**
 
 ```sql
 SELECT indexname, tablename, indexdef
@@ -415,7 +415,7 @@ WHERE schemaname = 'public'
 ORDER BY tablename, indexname;
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations/20260506300300_sp3_m4_aula_inscripcion_soft_delete.sql

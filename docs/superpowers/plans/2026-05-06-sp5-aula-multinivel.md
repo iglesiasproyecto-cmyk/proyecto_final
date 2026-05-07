@@ -31,7 +31,7 @@
 **Files:**
 - Create: `supabase/migrations/20260506400000_sp5_aula_rls_multinivel.sql`
 
-- [ ] **Step 1: Crear migración**
+- [x] **Step 1: Crear migración**
 
 ```sql
 -- supabase/migrations/20260506400000_sp5_aula_rls_multinivel.sql
@@ -155,13 +155,13 @@ CREATE POLICY "aula_inscripcion_insert" ON public.aula_inscripcion
   );
 ```
 
-- [ ] **Step 2: Aplicar migración**
+- [x] **Step 2: Aplicar migración**
 
 ```bash
 supabase db push
 ```
 
-- [ ] **Step 3: Verificar en SQL Editor**
+- [x] **Step 3: Verificar en SQL Editor**
 
 ```sql
 -- Como lider autenticado, no debe ver cursos de otro ministerio
@@ -170,7 +170,7 @@ FROM aula_curso
 LIMIT 20;
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations/20260506400000_sp5_aula_rls_multinivel.sql
@@ -184,7 +184,7 @@ git commit -m "feat(rls): scope aula_curso to iglesia-level and ministerio-level
 **Files:**
 - Modify: `src/services/aula.service.ts`
 
-- [ ] **Step 1: Actualizar función `getCursos`**
+- [x] **Step 1: Actualizar función `getCursos`**
 
 En `src/services/aula.service.ts`, buscar la función que obtiene cursos y actualizarla para soportar ambos tipos:
 
@@ -294,7 +294,7 @@ export async function crearCurso(params: {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/services/aula.service.ts
@@ -308,7 +308,7 @@ git commit -m "feat(aula): update service to support iglesia-level and ministeri
 **Files:**
 - Modify: `src/app/components/CrearCursoDialog.tsx`
 
-- [ ] **Step 1: Agregar selector de tipo de curso**
+- [x] **Step 1: Agregar selector de tipo de curso**
 
 En el dialog de creación, agregar campo "Nivel del curso":
 
@@ -362,7 +362,7 @@ await crearCurso({
 })
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/app/components/CrearCursoDialog.tsx
@@ -376,7 +376,7 @@ git commit -m "feat(aula): add course type selector (iglesia vs ministerio) in c
 **Files:**
 - Modify: `src/app/components/AulaPage.tsx`
 
-- [ ] **Step 1: Agregar badge de tipo en las tarjetas de curso**
+- [x] **Step 1: Agregar badge de tipo en las tarjetas de curso**
 
 En la renderización de cada curso, agregar un badge visual:
 
@@ -400,7 +400,7 @@ import { Badge } from "@/app/components/ui/badge";
 </div>
 ```
 
-- [ ] **Step 2: Agregar filtro por tipo en la UI**
+- [x] **Step 2: Agregar filtro por tipo en la UI**
 
 ```typescript
 // Botones de filtro sobre la lista de cursos
@@ -428,7 +428,7 @@ const cursosFiltrados = cursos.filter(c =>
 </div>
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/components/AulaPage.tsx
@@ -439,22 +439,22 @@ git commit -m "feat(aula): show course type badge and filter by iglesia/minister
 
 ### Task 5: Verificación end-to-end del Aula multi-nivel
 
-- [ ] **Step 1: Como admin_iglesia**
+- [x] **Step 1: Como admin_iglesia**
   - Ir a `/app/:idIglesia/aula`
   - Crear un curso de tipo "Iglesia" — debe guardarse con `id_iglesia` e `id_ministerio = null`
   - Crear un curso de tipo "Ministerio" — debe guardar con `id_ministerio` y `id_iglesia = null`
   - Verificar que ambos aparecen con sus badges respectivos
 
-- [ ] **Step 2: Como lider**
+- [x] **Step 2: Como lider**
   - Solo debe ver: cursos de su ministerio + cursos de iglesia
   - Solo puede crear cursos de tipo "Ministerio"
   - No debe ver cursos de otros ministerios
 
-- [ ] **Step 3: Como servidor**
+- [x] **Step 3: Como servidor**
   - Solo puede ver cursos: de su ministerio + de iglesia
   - No puede crear cursos
 
-- [ ] **Step 4: Commit final**
+- [x] **Step 4: Commit final**
 
 ```bash
 git add .

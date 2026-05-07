@@ -32,7 +32,7 @@ Estas funciones son la base de todas las políticas RLS del sistema. Deben exist
 **Files:**
 - Create: `supabase/migrations/20260506200000_sp2_jwt_helper_functions.sql`
 
-- [ ] **Step 1: Crear migración con todas las funciones helper**
+- [x] **Step 1: Crear migración con todas las funciones helper**
 
 ```sql
 -- supabase/migrations/20260506200000_sp2_jwt_helper_functions.sql
@@ -127,13 +127,13 @@ GRANT EXECUTE ON FUNCTION public.get_my_ministerios() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.can_access_iglesia(bigint) TO authenticated;
 ```
 
-- [ ] **Step 2: Aplicar migración**
+- [x] **Step 2: Aplicar migración**
 
 ```bash
 supabase db push
 ```
 
-- [ ] **Step 3: Verificar funciones en SQL Editor**
+- [x] **Step 3: Verificar funciones en SQL Editor**
 
 ```sql
 -- Como super_admin autenticado:
@@ -147,7 +147,7 @@ SELECT get_my_role(), is_admin_iglesia(), get_my_tenant_id();
 
 **Nota:** Si `get_my_role()` devuelve NULL, los claims JWT aún no están configurados. Eso es normal — se configuran en Task 3. Para verificar ahora, puedes testear `is_super_admin()` que tiene fallback con la lógica antigua via `usuario_rol`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations/20260506200000_sp2_jwt_helper_functions.sql
@@ -161,7 +161,7 @@ git commit -m "feat: add JWT helper functions for RLS (get_my_tenant_id, get_my_
 **Files:**
 - Create: `supabase/migrations/20260506200100_sp2_permissions_updated_at.sql`
 
-- [ ] **Step 1: Crear migración**
+- [x] **Step 1: Crear migración**
 
 ```sql
 -- supabase/migrations/20260506200100_sp2_permissions_updated_at.sql
@@ -204,13 +204,13 @@ REVOKE EXECUTE ON FUNCTION public.get_my_permissions_updated_at() FROM public, a
 GRANT EXECUTE ON FUNCTION public.get_my_permissions_updated_at() TO authenticated;
 ```
 
-- [ ] **Step 2: Aplicar migración**
+- [x] **Step 2: Aplicar migración**
 
 ```bash
 supabase db push
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/20260506200100_sp2_permissions_updated_at.sql
@@ -226,7 +226,7 @@ Esta Edge Function se llama en el login y cuando cambian los permisos. Escribe `
 **Files:**
 - Create: `supabase/functions/set-tenant-claims/index.ts`
 
-- [ ] **Step 1: Crear la Edge Function**
+- [x] **Step 1: Crear la Edge Function**
 
 ```typescript
 // supabase/functions/set-tenant-claims/index.ts
@@ -344,7 +344,7 @@ Deno.serve(async (req) => {
 })
 ```
 
-- [ ] **Step 2: Crear directorio y desplegar**
+- [x] **Step 2: Crear directorio y desplegar**
 
 ```bash
 mkdir -p supabase/functions/set-tenant-claims
@@ -352,14 +352,14 @@ mkdir -p supabase/functions/set-tenant-claims
 supabase functions deploy set-tenant-claims
 ```
 
-- [ ] **Step 3: Verificar que la función está desplegada**
+- [x] **Step 3: Verificar que la función está desplegada**
 
 ```bash
 supabase functions list
 ```
 Esperado: `set-tenant-claims` aparece en la lista.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/functions/set-tenant-claims/index.ts
@@ -373,7 +373,7 @@ git commit -m "feat: add set-tenant-claims Edge Function for JWT app_metadata"
 **Files:**
 - Modify: `src/app/store/AppContext.tsx`
 
-- [ ] **Step 1: Agregar función `refreshTenantClaims` en AppContext.tsx**
+- [x] **Step 1: Agregar función `refreshTenantClaims` en AppContext.tsx**
 
 Después de la función `fetchNotifCountRaw`, agregar:
 
@@ -423,7 +423,7 @@ async function fetchPermissionsUpdatedAt(accessToken: string): Promise<number | 
 }
 ```
 
-- [ ] **Step 2: En `handleAuthSession`, agregar verificación de claims stale**
+- [x] **Step 2: En `handleAuthSession`, agregar verificación de claims stale**
 
 Dentro del bloque `if (session)`, después de obtener el token, agregar antes de `fetchUsuarioRaw`:
 
@@ -452,7 +452,7 @@ if (jwtClaimsAt) {
 }
 ```
 
-- [ ] **Step 3: Exponer `refreshTenantClaims` para uso externo (cuando admin cambia rol a un usuario)**
+- [x] **Step 3: Exponer `refreshTenantClaims` para uso externo (cuando admin cambia rol a un usuario)**
 
 En el `AppState` interface, agregar:
 ```typescript
@@ -473,7 +473,7 @@ Y en el `value` del context:
 refreshClaims,
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/app/store/AppContext.tsx
@@ -487,7 +487,7 @@ git commit -m "feat: AppContext calls set-tenant-claims on login and detects sta
 **Files:**
 - Create: `supabase/migrations/20260506200200_sp2_rls_tenant_scoped.sql`
 
-- [ ] **Step 1: Crear migración con políticas estrictas**
+- [x] **Step 1: Crear migración con políticas estrictas**
 
 ```sql
 -- supabase/migrations/20260506200200_sp2_rls_tenant_scoped.sql
@@ -771,13 +771,13 @@ CREATE POLICY "usuario_rol_mutations_admin" ON public.usuario_rol
   );
 ```
 
-- [ ] **Step 2: Aplicar migración**
+- [x] **Step 2: Aplicar migración**
 
 ```bash
 supabase db push
 ```
 
-- [ ] **Step 3: Verificar acceso como cada rol**
+- [x] **Step 3: Verificar acceso como cada rol**
 
 Usar el SQL Editor con `SET LOCAL role = authenticated` y simular JWTs:
 ```sql
@@ -786,7 +786,7 @@ SET LOCAL "request.jwt.claims" TO '{"sub":"<uuid>","app_metadata":{"role":"admin
 SELECT count(*) FROM sede; -- debe devolver solo sedes de iglesia 1
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations/20260506200200_sp2_rls_tenant_scoped.sql
