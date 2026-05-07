@@ -199,9 +199,10 @@ export interface Tarea {
   prioridad: 'baja' | 'media' | 'alta' | 'urgente'
   idEvento: number | null
   idUsuarioCreador: number
+  idMinisterio: number | null
+  idIglesia: number | null
   creadoEn: string
   actualizadoEn: string
-  idMinisterio?: number
   asignados?: TareaAsignada[]
 }
 
