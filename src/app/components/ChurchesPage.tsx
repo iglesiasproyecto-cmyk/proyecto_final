@@ -222,7 +222,7 @@ export function ChurchesPage() {
             </div>
 
             <div className="flex-1 mb-4">
-              <h3 className="text-xl font-medium text-foreground mb-1.5 line-clamp-1" title={ig.nombre}>{ig.nombre}</h3>
+              <h3 className="text-3xl font-light text-foreground mb-1.5 line-clamp-1" title={ig.nombre}>{ig.nombre}</h3>
               {ig.fechaFundacion && (
                 <p className="text-xs font-medium text-primary/80 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
                   <Calendar className="w-3.5 h-3.5" /> Fundada: {new Date(ig.fechaFundacion).toLocaleDateString("es", { month: "short", year: "numeric" })}

@@ -140,15 +140,14 @@ function SuperAdminDashboard() {
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/10 shrink-0 text-white" style={{ backgroundImage: `linear-gradient(135deg, ${CARD_COLORS[0].from}, ${CARD_COLORS[0].to})` }}>
             <Sparkles className="w-6 h-6" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">S.E.I.</p>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Panel de Control</h1>
+            <h1 className="text-3xl font-light tracking-tight leading-none">Panel de Control</h1>
           </div>
         </div>
       </motion.div>
@@ -349,15 +348,14 @@ function AdminIglesiaDashboard() {
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0">
             <UserCheck className="w-6 h-6 text-white" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Bienvenido de vuelta</p>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <h1 className="text-3xl font-light tracking-tight leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>
@@ -501,15 +499,14 @@ function LiderDashboard() {
   return (
     <div className="space-y-4 max-w-6xl mx-auto pb-10">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
             <Users className="w-6 h-6" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Líder &mdash; {min?.nombre}</p>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <h1 className="text-3xl font-light tracking-tight leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>
@@ -646,15 +643,14 @@ function ServidorDashboard() {
   return (
     <div className="space-y-4 max-w-6xl mx-auto pb-10">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden dark:border-white/10">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
             <UserCheck className="w-6 h-6" />
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Servidor &mdash; {min?.nombre}</p>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">{usuarioActual.nombres}</h1>
+            <h1 className="text-3xl font-light tracking-tight leading-none">{usuarioActual.nombres}</h1>
           </div>
         </div>
       </motion.div>

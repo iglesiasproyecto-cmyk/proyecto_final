@@ -113,7 +113,7 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
       {stats.topCursos.length > 0 && (
         <Card className="border-white/10 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-light uppercase tracking-[0.15em] text-foreground/70 flex items-center gap-2">
+            <CardTitle className="text-sm font-black uppercase tracking-[0.15em] text-foreground/70 flex items-center gap-2">
               <Award className="w-4 h-4 text-primary" />
               Cursos con más inscripciones
             </CardTitle>

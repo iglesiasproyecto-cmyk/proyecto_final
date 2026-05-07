@@ -119,7 +119,7 @@ export function MembersPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl shadow-sm overflow-hidden"
+        className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
 
@@ -129,10 +129,10 @@ export function MembersPage() {
           </div>
           <div>
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Directorio</p>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">
+            <h1 className="text-3xl font-light tracking-tight leading-none">
               Miembros
             </h1>
-            <p className="text-foreground font-normal text-xs sm:text-sm mt-1">
+            <p className="text-foreground text-xs sm:text-sm mt-1">
               Gestiona los miembros de los ministerios y sus roles
             </p>
           </div>

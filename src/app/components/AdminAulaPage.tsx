@@ -56,7 +56,7 @@ export function AdminAulaPage() {
                 </Badge>
               )}
             </div>
-            <h2 className="text-2xl md:text-3xl font-light mb-2 text-foreground">
+            <h2 className="text-2xl md:text-3xl font-black mb-2 text-foreground">
               Aula <span className="text-[#4682b4]">Virtual</span>
             </h2>
             <p className="text-muted-foreground font-medium leading-relaxed text-sm">
