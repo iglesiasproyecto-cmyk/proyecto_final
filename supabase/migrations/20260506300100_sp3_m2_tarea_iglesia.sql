@@ -33,4 +33,30 @@ CREATE INDEX IF NOT EXISTS idx_tarea_iglesia
 
 -- Índice compuesto para listar tareas de un ministerio en una iglesia
 CREATE INDEX IF NOT EXISTS idx_tarea_iglesia_ministerio
-  ON public.tarea(id_iglesia, id_ministerio);
+  ON public.tarea(id_iglesia, id_ministerio)
+  WHERE id_iglesia IS NOT NULL;
+
+-- Trigger para mantener id_iglesia sincronizado en nuevas tareas
+CREATE OR REPLACE FUNCTION public.sync_tarea_iglesia()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Solo derivar si id_iglesia no está explícitamente establecido
+  IF NEW.id_iglesia IS NULL AND NEW.id_ministerio IS NOT NULL THEN
+    SELECT s.id_iglesia INTO NEW.id_iglesia
+    FROM public.ministerio m
+    JOIN public.sede s ON s.id_sede = m.id_sede
+    WHERE m.id_ministerio = NEW.id_ministerio
+    LIMIT 1;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS sync_tarea_iglesia_trigger ON public.tarea;
+CREATE TRIGGER sync_tarea_iglesia_trigger
+  BEFORE INSERT OR UPDATE ON public.tarea
+  FOR EACH ROW EXECUTE FUNCTION public.sync_tarea_iglesia();
