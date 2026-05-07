@@ -38,7 +38,7 @@ Two problems:
 1. `TareaEnriquecida` is used as a type on line 68 (`prioridad: "media" as TareaEnriquecida['prioridad']`) but is never imported — TypeScript error.
 2. `useUsuarios` is imported on line 4 but is never used — dead import.
 
-- [ ] **Step 1: Remove `useUsuarios` import and add `TareaEnriquecida` import**
+- [x] **Step 1: Remove `useUsuarios` import and add `TareaEnriquecida` import**
 
 Replace line 4 (the `useUsuarios` import) and add the `TareaEnriquecida` named import from `@/services/eventos.service`.
 
@@ -60,7 +60,7 @@ import type { TareaEnriquecida } from "@/services/eventos.service";
 import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/app/components/TasksPage.tsx

@@ -33,7 +33,7 @@
 **Files:**
 - Modify: `src/app/routes.ts`
 
-- [ ] **Step 1: Reemplazar el contenido de `routes.ts`**
+- [x] **Step 1: Reemplazar el contenido de `routes.ts`**
 
 ```typescript
 // src/app/routes.ts
@@ -136,7 +136,7 @@ export const router = createBrowserRouter([
 ]);
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/app/routes.ts
@@ -150,7 +150,7 @@ git commit -m "feat(routes): restructure to multi-tenant /app/:idIglesia/* + /ap
 **Files:**
 - Create: `src/app/components/TenantLayout.tsx`
 
-- [ ] **Step 1: Crear el componente**
+- [x] **Step 1: Crear el componente**
 
 ```typescript
 // src/app/components/TenantLayout.tsx
@@ -202,7 +202,7 @@ export function TenantLayout() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/app/components/TenantLayout.tsx
@@ -216,7 +216,7 @@ git commit -m "feat: add TenantLayout guard for tenant-scoped routes"
 **Files:**
 - Create: `src/app/components/GlobalLayout.tsx`
 
-- [ ] **Step 1: Crear el componente**
+- [x] **Step 1: Crear el componente**
 
 ```typescript
 // src/app/components/GlobalLayout.tsx
@@ -253,7 +253,7 @@ export function GlobalLayout() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/app/components/GlobalLayout.tsx
@@ -267,7 +267,7 @@ git commit -m "feat: add GlobalLayout guard for super_admin-only routes"
 **Files:**
 - Modify: `src/app/components/IndexRedirect.tsx`
 
-- [ ] **Step 1: Actualizar la lógica de redirección**
+- [x] **Step 1: Actualizar la lógica de redirección**
 
 ```typescript
 // src/app/components/IndexRedirect.tsx
@@ -304,7 +304,7 @@ export function IndexRedirect() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/app/components/IndexRedirect.tsx
@@ -318,7 +318,7 @@ git commit -m "feat: IndexRedirect routes super_admin to /app/global, others to 
 **Files:**
 - Modify: `src/app/components/AppLayout.tsx`
 
-- [ ] **Step 1: Actualizar `getNavItemsForRole` para incluir tenant en rutas**
+- [x] **Step 1: Actualizar `getNavItemsForRole` para incluir tenant en rutas**
 
 Reemplazar la función `getNavItemsForRole` en `AppLayout.tsx`:
 
@@ -433,7 +433,7 @@ useEffect(() => {
 }, [location.pathname]);
 ```
 
-- [ ] **Step 2: Actualizar badge del rol**
+- [x] **Step 2: Actualizar badge del rol**
 
 En `roleLabels`:
 ```typescript
@@ -445,7 +445,7 @@ const roleLabels: Record<string, string> = {
 };
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/components/AppLayout.tsx
@@ -459,13 +459,13 @@ git commit -m "feat(nav): update sidebar navigation with tenant-scoped routes pe
 **Files:**
 - Create: `src/app/components/MinisteriosPage.tsx`
 
-- [ ] **Step 1: Copiar y renombrar**
+- [x] **Step 1: Copiar y renombrar**
 
 ```bash
 cp src/app/components/DepartmentsPage.tsx src/app/components/MinisteriosPage.tsx
 ```
 
-- [ ] **Step 2: Actualizar en `MinisteriosPage.tsx`**
+- [x] **Step 2: Actualizar en `MinisteriosPage.tsx`**
 
 1. Cambiar el export: `export function MinisteriosPage()`
 2. Reemplazar todos los textos "Departamento" → "Ministerio" en títulos y labels
@@ -482,7 +482,7 @@ export function MinisteriosPage() {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/components/MinisteriosPage.tsx
@@ -496,19 +496,19 @@ git commit -m "feat: add MinisteriosPage (renamed from DepartmentsPage) with ten
 **Files:**
 - Create: `src/app/components/MiMinisterioPage.tsx`
 
-- [ ] **Step 1: Copiar y renombrar**
+- [x] **Step 1: Copiar y renombrar**
 
 ```bash
 cp src/app/components/MyDepartmentPage.tsx src/app/components/MiMinisterioPage.tsx
 ```
 
-- [ ] **Step 2: Actualizar export y textos**
+- [x] **Step 2: Actualizar export y textos**
 
 1. `export function MiMinisterioPage()`
 2. Textos "Mi Departamento" → "Mi Ministerio"
 3. Agregar `useParams` para leer `idIglesia`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/components/MiMinisterioPage.tsx
@@ -522,7 +522,7 @@ git commit -m "feat: add MiMinisterioPage (renamed from MyDepartmentPage)"
 **Files:**
 - Create: `src/app/components/AdministradoresPage.tsx`
 
-- [ ] **Step 1: Crear página básica**
+- [x] **Step 1: Crear página básica**
 
 ```typescript
 // src/app/components/AdministradoresPage.tsx
@@ -563,7 +563,7 @@ function AdminIglesiasTable() {
 
 **Nota:** Esta página se completa en iteraciones posteriores. El shell es suficiente para que la ruta funcione.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/app/components/AdministradoresPage.tsx
@@ -579,7 +579,7 @@ Todos los hooks que hacen fetch de datos de iglesia deben aceptar el `idIglesia`
 **Files:**
 - Modify: `src/hooks/useMinisterios.ts`, `src/hooks/useEventos.ts`, `src/hooks/useUsuarios.ts`
 
-- [ ] **Step 1: Patrón a seguir para cada hook**
+- [x] **Step 1: Patrón a seguir para cada hook**
 
 Ejemplo con `useMinisterios.ts`:
 
@@ -598,7 +598,7 @@ export function useMinisterios(idIglesia?: number) {
 }
 ```
 
-- [ ] **Step 2: Actualizar las páginas que usan estos hooks**
+- [x] **Step 2: Actualizar las páginas que usan estos hooks**
 
 En cada página bajo `/app/:idIglesia/*`:
 
@@ -613,7 +613,7 @@ export function SedesPage() {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/hooks/ src/app/components/SedesPage.tsx \
@@ -626,30 +626,30 @@ git commit -m "feat: pass idIglesia from route params to hooks for tenant scopin
 
 ### Task 10: Verificación end-to-end de navegación
 
-- [ ] **Step 1: Iniciar el servidor de desarrollo**
+- [x] **Step 1: Iniciar el servidor de desarrollo**
 
 ```bash
 npm run dev
 ```
 
-- [ ] **Step 2: Probar super_admin**
+- [x] **Step 2: Probar super_admin**
   - Login como super_admin
   - Verificar redirección a `/app/global`
   - Navegar a cada sección del sidebar global
   - Verificar que `/app/global/administradores` carga sin error
 
-- [ ] **Step 3: Probar admin_iglesia**
+- [x] **Step 3: Probar admin_iglesia**
   - Login como admin_iglesia (iglesia ID 1)
   - Verificar redirección a `/app/1`
   - Intentar navegar a `/app/2` → debe redirigir a `/app/1`
   - Navegar a `/app/1/ministerios`, `/app/1/pastores`, `/app/1/sedes` — deben cargar
 
-- [ ] **Step 4: Probar lider**
+- [x] **Step 4: Probar lider**
   - Login como lider
   - Verificar redirección a `/app/:idIglesia`
   - Solo ve: Mi Ministerio, Eventos, Tareas, Aula en el sidebar
 
-- [ ] **Step 5: Commit final**
+- [x] **Step 5: Commit final**
 
 ```bash
 git add .

@@ -29,7 +29,7 @@
 **Files:**
 - Modify: `src/app/components/AppLayout.tsx`
 
-- [ ] **Step 1: Locate the admin_iglesia nav items array**
+- [x] **Step 1: Locate the admin_iglesia nav items array**
 
 Open `src/app/components/AppLayout.tsx`. Find the `case "admin_iglesia":` block (around line 71). The current items end with `"Tareas"` and then `"Notificaciones"`. Insert `"Aula de Formación"` between `"Tareas"` and `"Notificaciones"`:
 
@@ -41,14 +41,14 @@ Open `src/app/components/AppLayout.tsx`. Find the `case "admin_iglesia":` block 
 
 `BookOpen` is already imported in this file — no import change needed.
 
-- [ ] **Step 2: Verify build passes**
+- [x] **Step 2: Verify build passes**
 
 ```bash
 npm run build 2>&1 | tail -5
 ```
 Expected: `✓ built in` with no TypeScript errors.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/components/AppLayout.tsx
@@ -62,7 +62,7 @@ git commit -m "feat: add Aula de Formación to admin_iglesia sidebar"
 **Files:**
 - Modify: `src/app/components/AulaPage.tsx`
 
-- [ ] **Step 1: Add import for AdminAulaPage**
+- [x] **Step 1: Add import for AdminAulaPage**
 
 At the top of `src/app/components/AulaPage.tsx`, add:
 
@@ -72,7 +72,7 @@ import { AdminAulaPage } from './AdminAulaPage'
 
 (This file doesn't exist yet — the import will cause a build error until Task 7. That's acceptable; build errors are resolved in order.)
 
-- [ ] **Step 2: Add the admin branch to the AnimatePresence render**
+- [x] **Step 2: Add the admin branch to the AnimatePresence render**
 
 The current render (around line 62) is:
 ```tsx
@@ -108,7 +108,7 @@ Replace the entire `<motion.div>` inside `<AnimatePresence mode="wait">` with:
 </motion.div>
 ```
 
-- [ ] **Step 3: Commit (will have unresolved import — note in commit message)**
+- [x] **Step 3: Commit (will have unresolved import — note in commit message)**
 
 ```bash
 git add src/app/components/AulaPage.tsx
@@ -122,7 +122,7 @@ git commit -m "feat: route admin_iglesia to AdminAulaPage in AulaPage (wip: Admi
 **Files:**
 - Modify: `src/app/components/CursoDetallePage.tsx`
 
-- [ ] **Step 1: Extend the useAuth destructure to include rolActual**
+- [x] **Step 1: Extend the useAuth destructure to include rolActual**
 
 Find this line (around line 9 in the file):
 ```ts
@@ -133,7 +133,7 @@ Replace with:
 const { user, rolActual } = useAuth()
 ```
 
-- [ ] **Step 2: Add isAdmin computed variable**
+- [x] **Step 2: Add isAdmin computed variable**
 
 Find the `isLider` declaration (around line 86):
 ```ts
@@ -144,7 +144,7 @@ Add right below it:
 const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin"
 ```
 
-- [ ] **Step 3: Update the access gate to include admin**
+- [x] **Step 3: Update the access gate to include admin**
 
 Find the `puedeAcceder` line (around line 127):
 ```ts
@@ -155,7 +155,7 @@ Replace with:
 const puedeAcceder = isAdmin || isLider || isServidorInscrito
 ```
 
-- [ ] **Step 4: Replace all isLider UI guards with isLider || isAdmin**
+- [x] **Step 4: Replace all isLider UI guards with isLider || isAdmin**
 
 There are three occurrences. Replace each:
 
@@ -198,14 +198,14 @@ There are three occurrences. Replace each:
   <AgregarPersonasCursoDialog ...
 ```
 
-- [ ] **Step 5: Verify build passes**
+- [x] **Step 5: Verify build passes**
 
 ```bash
 npm run build 2>&1 | tail -5
 ```
 Expected: `✓ built in` (with one known import error for AdminAulaPage from Task 2 — that's acceptable until Task 7).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/app/components/CursoDetallePage.tsx
@@ -219,7 +219,7 @@ git commit -m "feat: allow admin_iglesia to manage any course in CursoDetallePag
 **Files:**
 - Modify: `src/app/components/CrearCursoDialog.tsx`
 
-- [ ] **Step 1: Extend the props interface**
+- [x] **Step 1: Extend the props interface**
 
 Find:
 ```ts
@@ -239,7 +239,7 @@ interface CrearCursoDialogProps {
 }
 ```
 
-- [ ] **Step 2: Accept the prop in the component signature**
+- [x] **Step 2: Accept the prop in the component signature**
 
 Find:
 ```ts
@@ -250,7 +250,7 @@ Replace with:
 export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeriosDisponibles }: CrearCursoDialogProps) {
 ```
 
-- [ ] **Step 3: Use ministeriosDisponibles when provided**
+- [x] **Step 3: Use ministeriosDisponibles when provided**
 
 Find the `ministeriosFiltrados` declaration (around line 57):
 ```ts
@@ -269,14 +269,14 @@ const ministeriosFiltrados = ministeriosDisponibles
       .filter(Boolean)
 ```
 
-- [ ] **Step 4: Verify build passes**
+- [x] **Step 4: Verify build passes**
 
 ```bash
 npm run build 2>&1 | tail -5
 ```
 Expected: `✓ built in`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/app/components/CrearCursoDialog.tsx
@@ -290,7 +290,7 @@ git commit -m "feat: add ministeriosDisponibles prop to CrearCursoDialog for adm
 **Files:**
 - Create: `src/app/components/CursosAdminList.tsx`
 
-- [ ] **Step 1: Create the file**
+- [x] **Step 1: Create the file**
 
 ```tsx
 import { useState, useMemo } from 'react'
@@ -548,14 +548,14 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
 }
 ```
 
-- [ ] **Step 2: Verify build passes**
+- [x] **Step 2: Verify build passes**
 
 ```bash
 npm run build 2>&1 | tail -5
 ```
 Expected: `✓ built in`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/components/CursosAdminList.tsx
@@ -569,7 +569,7 @@ git commit -m "feat: add CursosAdminList — church-wide course management for a
 **Files:**
 - Create: `src/app/components/DashboardAdmin.tsx`
 
-- [ ] **Step 1: Create the file**
+- [x] **Step 1: Create the file**
 
 ```tsx
 import { useQuery } from '@tanstack/react-query'
@@ -725,14 +725,14 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
 }
 ```
 
-- [ ] **Step 2: Verify build passes**
+- [x] **Step 2: Verify build passes**
 
 ```bash
 npm run build 2>&1 | tail -5
 ```
 Expected: `✓ built in`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/components/DashboardAdmin.tsx
@@ -746,7 +746,7 @@ git commit -m "feat: add DashboardAdmin — church-wide academic stats for admin
 **Files:**
 - Create: `src/app/components/AdminAulaPage.tsx`
 
-- [ ] **Step 1: Create the file**
+- [x] **Step 1: Create the file**
 
 ```tsx
 import { useState, useEffect } from 'react'
@@ -871,14 +871,14 @@ export function AdminAulaPage() {
 }
 ```
 
-- [ ] **Step 2: Verify full build passes with no errors**
+- [x] **Step 2: Verify full build passes with no errors**
 
 ```bash
 npm run build 2>&1 | tail -10
 ```
 Expected: `✓ built in` with no TypeScript errors. The unresolved import from Task 2 should now resolve since `AdminAulaPage` exists.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/components/AdminAulaPage.tsx
