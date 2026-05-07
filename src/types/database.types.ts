@@ -1289,6 +1289,62 @@ export type Database = {
           },
         ]
       }
+      hoja_de_vida: {
+        Row: {
+          id_hoja_de_vida: number
+          id_usuario: number
+          titulo_profesional: string | null
+          experiencia_laboral: string | null
+          habilidades: Json
+          resumen_profesional: string | null
+          foto_perfil_url: string | null
+          formacion_academica: Json
+          otros_datos: Json
+          completa: boolean
+          completada_en: string | null
+          creado_en: string
+          actualizado_en: string
+        }
+        Insert: {
+          id_hoja_de_vida?: number
+          id_usuario: number
+          titulo_profesional?: string | null
+          experiencia_laboral?: string | null
+          habilidades?: Json
+          resumen_profesional?: string | null
+          foto_perfil_url?: string | null
+          formacion_academica?: Json
+          otros_datos?: Json
+          completa?: boolean
+          completada_en?: string | null
+          creado_en?: string
+          actualizado_en?: string
+        }
+        Update: {
+          id_hoja_de_vida?: number
+          id_usuario?: number
+          titulo_profesional?: string | null
+          experiencia_laboral?: string | null
+          habilidades?: Json
+          resumen_profesional?: string | null
+          foto_perfil_url?: string | null
+          formacion_academica?: Json
+          otros_datos?: Json
+          completa?: boolean
+          completada_en?: string | null
+          creado_en?: string
+          actualizado_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hoja_de_vida_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: true
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
     }
     Views: {
       evaluacion_detalle: {

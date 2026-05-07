@@ -3,7 +3,9 @@ import { useApp } from "../store/AppContext";
 import { useUpdateUsuario } from "@/hooks/useUsuarios";
 import { useCertificadosUsuario } from "@/hooks/useCertificados";
 import { useMiAvanceCurso } from "@/hooks/useAvance";
+import { useHojaDeVida } from "@/hooks/useHojaDeVida";
 import { supabase } from "@/lib/supabaseClient";
+import * as hojaDeVidaService from "@/services/hojaDeVida.service";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -11,7 +13,9 @@ import { Input } from "./ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, CheckCircle2, Loader2, AlertTriangle, Calendar, Star, Award, TrendingUp } from "lucide-react";
+import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, CheckCircle2, Loader2, AlertTriangle, Calendar, Star, Award, TrendingUp, FileText } from "lucide-react";
+import { HojaDeVidaView } from "./hojaDeVida/HojaDeVidaView";
+import { HojaDeVidaForm } from "./hojaDeVida/HojaDeVidaForm";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -32,6 +36,17 @@ export function ProfilePage() {
   const updateUsuarioMutation = useUpdateUsuario();
   const { data: certificados = [] } = useCertificadosUsuario(usuarioActual?.idUsuario);
   const { data: avanceCursos = [] } = useMiAvanceCurso(usuarioActual?.idUsuario);
+  
+  // Hoja de Vida
+  const {
+    hoja,
+    loading: hojaLoading,
+    isUpdating: hojaUpdating,
+    actualizarHoja,
+    marcarCompleta,
+  } = useHojaDeVida();
+  
+  const [showEditHoja, setShowEditHoja] = useState(false);
 
   // Profile form state
   const [nombres, setNombres] = useState(usuarioActual?.nombres ?? "");
@@ -144,6 +159,9 @@ export function ProfilePage() {
                   <Star className="w-4 h-4 mr-3" /> Logros
                 </TabsTrigger>
               )}
+              <TabsTrigger value="hoja-de-vida" className="w-full justify-start rounded-2xl px-6 py-4 text-[12px] font-black tracking-widest uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-900/20 transition-all duration-300">
+                <FileText className="w-4 h-4 mr-3" /> Hoja de Vida
+              </TabsTrigger>
               <div className="pt-4 mt-2 border-t border-white/5 px-2">
                 <Button variant="ghost" className="w-full justify-start h-14 rounded-2xl px-4 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 font-black text-[12px] uppercase tracking-widest transition-all" onClick={() => logout()}>
                   <EyeOff className="w-4 h-4 mr-3" /> Finalizar Sesión
@@ -471,6 +489,59 @@ export function ProfilePage() {
                 )}
               </motion.div>
               )}
+            </TabsContent>
+
+            <TabsContent value="hoja-de-vida" className="mt-0">
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <div className="rounded-[40px] bg-card/40 backdrop-blur-3xl border border-white/20 dark:border-white/10 shadow-2xl overflow-hidden">
+                  {showEditHoja ? (
+                    <div className="p-10">
+                      <div className="flex items-center gap-4 mb-6 pb-6 border-b border-white/10">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg text-white">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-black tracking-tight text-foreground/90 uppercase italic">Editar Hoja de Vida</h3>
+                          <p className="text-[11px] font-bold text-muted-foreground tracking-widest uppercase">Completa tu información profesional</p>
+                        </div>
+                      </div>
+                      <HojaDeVidaForm
+                        hojaActual={hoja}
+                        onGuardar={actualizarHoja}
+                        onMarcarCompleta={marcarCompleta}
+                        isUpdating={hojaUpdating}
+                        onCancel={() => setShowEditHoja(false)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-10">
+                      <div className="flex items-center justify-between mb-6 pb-6 border-b border-white/10">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg text-white">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-black tracking-tight text-foreground/90 uppercase italic">Tu Hoja de Vida</h3>
+                            <p className="text-[11px] font-bold text-muted-foreground tracking-widest uppercase">Perfil profesional que ven administradores y líderes</p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => setShowEditHoja(true)}
+                          className="h-12 px-6 rounded-2xl bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white font-black uppercase tracking-widest shadow-2xl shadow-blue-900/30 transition-all hover:-translate-y-1"
+                        >
+                          Editar
+                        </Button>
+                      </div>
+                      <HojaDeVidaView
+                        hoja={hoja}
+                        loading={hojaLoading}
+                        puedeEditar={true}
+                        onEditar={() => setShowEditHoja(true)}
+                      />
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             </TabsContent>
           </div>
         </div>
