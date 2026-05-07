@@ -35,7 +35,7 @@ import { ModulosNavegacion } from './ModulosNavegacion'
 export function CursoDetallePage() {
   const { idCurso } = useParams<{ idCurso: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, rolActual } = useAuth()
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
   const [showAgregarPersonas, setShowAgregarPersonas] = useState(false)
 
@@ -84,6 +84,7 @@ export function CursoDetallePage() {
 
    // Verificar si el usuario es líder de este curso
    const isLider = internalUserId !== null && curso?.id_usuario_creador === internalUserId
+   const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin"
    
     // Verificar si el usuario es un servidor inscrito en este curso
     const [isServidorInscrito, setIsServidorInscrito] = useState(false)
@@ -124,7 +125,7 @@ export function CursoDetallePage() {
     }, [internalUserId, idCurso])
    
     // Permitir acceso si es líder O si es servidor inscrito
-    const puedeAcceder = isLider || isServidorInscrito
+    const puedeAcceder = isAdmin || isLider || isServidorInscrito
 
     if (checkingAccess) {
       return (
@@ -227,7 +228,7 @@ export function CursoDetallePage() {
           >
             {curso.estado}
           </Badge>
-          {isLider && (
+          {(isLider || isAdmin) && (
             <Button
               onClick={() => setShowAgregarPersonas(true)}
               size="sm"
@@ -323,7 +324,7 @@ export function CursoDetallePage() {
         </div>
 
         <TabsContent value="modulos">
-          {isLider ? (
+          {(isLider || isAdmin) ? (
             <ModulosGestion
               idCurso={parseInt(idCurso!)}
               modulos={curso.modulos || []}
@@ -343,7 +344,7 @@ export function CursoDetallePage() {
         </TabsContent>
       </Tabs>
 
-      {isLider && idCurso && (
+      {(isLider || isAdmin) && idCurso && (
         <AgregarPersonasCursoDialog
           open={showAgregarPersonas}
           onOpenChange={setShowAgregarPersonas}

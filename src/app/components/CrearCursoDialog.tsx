@@ -33,6 +33,7 @@ interface CrearCursoDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   internalUserId: number | null
+  ministeriosDisponibles?: { id_ministerio: number; nombre: string }[]
 }
 
 interface FormData {
@@ -43,7 +44,7 @@ interface FormData {
   duracion_horas?: number
 }
 
-export function CrearCursoDialog({ open, onOpenChange, internalUserId }: CrearCursoDialogProps) {
+export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeriosDisponibles }: CrearCursoDialogProps) {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
 
@@ -54,10 +55,12 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId }: CrearCu
     staleTime: 5 * 60 * 1000,
   })
 
-  const ministeriosFiltrados = miembriaMinisterios
-    .filter(m => m.rol_en_ministerio === 'Líder de Ministerio')
-    .map(m => (m.ministerio as any))
-    .filter(Boolean)
+  const ministeriosFiltrados = ministeriosDisponibles
+    ? ministeriosDisponibles
+    : miembriaMinisterios
+        .filter(m => m.rol_en_ministerio === 'Líder de Ministerio')
+        .map(m => (m.ministerio as any))
+        .filter(Boolean)
 
   const form = useForm<FormData>({
     defaultValues: {

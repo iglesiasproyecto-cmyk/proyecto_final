@@ -9,10 +9,10 @@ import {
   getServidoresMinisterio,
 } from '@/services/ministerios.service'
 
-export function useMinisterios(idSede?: number) {
+export function useMinisterios(idIglesia?: number) {
   return useQuery({
-    queryKey: ['ministerios', idSede],
-    queryFn: () => getMinisterios(idSede),
+    queryKey: ['ministerios', idIglesia],
+    queryFn: () => getMinisterios(idIglesia),
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -26,10 +26,10 @@ export function useMiembrosMinisterio(idMinisterio: number) {
   })
 }
 
-export function useMinisteriosEnriquecidos(idSede?: number) {
+export function useMinisteriosEnriquecidos(idIglesia?: number) {
   return useQuery({
-    queryKey: ['ministerios-enriquecidos', idSede],
-    queryFn: () => getMinisteriosEnriquecidos(idSede),
+    queryKey: ['ministerios-enriquecidos', idIglesia],
+    queryFn: () => getMinisteriosEnriquecidos(idIglesia),
     staleTime: 5 * 60 * 1000,
   })
 }

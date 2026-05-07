@@ -3,6 +3,7 @@ import {
   usePastoresEnriquecidos, useIglesias, useSedePastores, useSedesEnriquecidas,
   useCreatePastor, useUpdatePastor, useDeletePastor,
   useCreateSedePastor, useCloseSedePastor,
+  checkPastorCorreoExists, checkPastorUsuarioExists,
 } from "@/hooks/useIglesias";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useApp } from "../store/AppContext";
@@ -88,19 +89,40 @@ export function PastoresPage() {
     setFormP({ nombres: p.nombres, apellidos: p.apellidos, correo: p.correo, telefono: p.telefono || "", idUsuario: p.idUsuario || 0 });
     setEditingPastor(id); setDialogPastor(true);
   };
-  const handleSubmitPastor = () => {
+  const handleSubmitPastor = async () => {
     if (!formP.nombres.trim() || !formP.apellidos.trim() || !formP.correo.trim()) return;
-    if (editingPastor) updatePastorMutation.mutate(
-      { id: editingPastor, data: { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null } },
-      { onSuccess: () => setDialogPastor(false) }
-    );
-    else createPastorMutation.mutate(
-      { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null },
-      { onSuccess: () => {
-        setDialogPastor(false);
-        setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
-      } }
-    );
+
+    try {
+      // Validar correo único
+      if (await checkPastorCorreoExists(formP.correo, editingPastor || undefined)) {
+        alert('El correo ya está en uso por otro pastor activo.');
+        return;
+      }
+
+      // Validar idUsuario único si se proporciona
+      if (formP.idUsuario && await checkPastorUsuarioExists(formP.idUsuario, editingPastor || undefined)) {
+        alert('El usuario ya está asignado a otro pastor activo.');
+        return;
+      }
+
+      if (editingPastor) {
+        updatePastorMutation.mutate(
+          { id: editingPastor, data: { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null } },
+          { onSuccess: () => setDialogPastor(false) }
+        );
+      } else {
+        createPastorMutation.mutate(
+          { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null },
+          { onSuccess: () => {
+            setDialogPastor(false);
+            setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
+          } }
+        );
+      }
+    } catch (error) {
+      console.error('Error validating pastor:', error);
+      alert('Error al validar los datos del pastor.');
+    }
   };
 
   const openAsign = () => { setFormA({ idSede: 0, idPastor: 0, esPrincipal: false, fechaInicio: new Date().toISOString().split("T")[0], observaciones: "" }); setDialogAsign(true); };
@@ -257,8 +279,8 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
                       <div className="p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
                         <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-2">Miembro en:</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {p.iglesiasActivas.map((nombre, i) => (
-                            <Badge key={i} variant="secondary" className="bg-white/60 dark:bg-black/20 text-xs font-medium border-0 tracking-wide text-muted-foreground">
+                          {p.iglesiasActivas.map((nombre, idx) => (
+                            <Badge key={`${p.idPastor}-iglesia-${idx}`} variant="secondary" className="bg-white/60 dark:bg-black/20 text-xs font-medium border-0 tracking-wide text-muted-foreground">
                               <Church className="w-3 h-3 mr-1.5 opacity-70" /> {nombre}
                             </Badge>
                           ))}
@@ -270,7 +292,7 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
                       <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-2">Asignaciones de Liderazgo:</p>
                       <div className="flex flex-wrap gap-1.5">
                         {asignaciones.map(a => (
-                          <Badge key={a.idIglesiaPastor} variant={a.esPrincipal ? "default" : "outline"} className={`text-[11px] font-semibold border ${a.esPrincipal ? "bg-[#4682b4] hover:bg-[#4682b4]/90 border-[#4682b4] shadow-sm" : "bg-card border-[#4682b4]/30 text-[#4682b4] dark:border-[#4682b4]/20 dark:text-[#709dbd]"}`}>
+                          <Badge key={a.idSedePastor} variant={a.esPrincipal ? "default" : "outline"} className={`text-[11px] font-semibold border ${a.esPrincipal ? "bg-[#4682b4] hover:bg-[#4682b4]/90 border-[#4682b4] shadow-sm" : "bg-card border-[#4682b4]/30 text-[#4682b4] dark:border-[#4682b4]/20 dark:text-[#709dbd]"}`}>
                             <Church className="w-3 h-3 mr-1.5 opacity-80" /> {a.iglesiaNombre} {a.esPrincipal && "(Principal)"}
                           </Badge>
                         ))}
@@ -641,7 +663,7 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
                       <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-3">Iglesias asignadas</p>
                       <div className="space-y-2">
                         {asignaciones.map(a => (
-                          <div key={a.idIglesiaPastor} className="flex items-center justify-between p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
+                          <div key={a.idSedePastor} className="flex items-center justify-between p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
                             <div className="flex items-center gap-2">
                               <Church className="w-4 h-4 text-[#4682b4]" />
                               <span className="text-sm font-medium">{a.iglesiaNombre}</span>

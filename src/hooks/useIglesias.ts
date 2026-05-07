@@ -6,6 +6,7 @@ import {
   createPastor, updatePastor, deletePastor,
   createSedePastor, closeSedePastor,
   createSede, updateSede, deleteSede, toggleSedeEstado,
+  checkPastorCorreoExists, checkPastorUsuarioExists,
 } from '@/services/iglesias.service'
 
 export function useIglesias() {
@@ -238,3 +239,5 @@ export function useDeletePastor() {
     },
   })
 }
+
+export { checkPastorCorreoExists, checkPastorUsuarioExists }
