@@ -1,4 +1,5 @@
 # Supabase project configuration
+project_id = "heibyjbvfiokmduwwawm"
 
 [api]
 enabled = true
@@ -21,8 +22,6 @@ site_url = "http://localhost:5173"
 
 [auth.email]
 enable_confirmations = false
-
-[project]
 
 [functions.send-email]
 enabled = true

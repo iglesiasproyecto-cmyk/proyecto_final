@@ -1,7 +1,10 @@
 // supabase/functions/set-tenant-claims/index.ts
-// Called after login and when permissions change.
-// Reads the user's role from DB via get_my_roles() and writes app_metadata to their JWT.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+// Zero external imports — uses fetch() against Supabase REST API directly.
+// This avoids esm.sh import resolution failures in the Edge Runtime.
+
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,7 +13,7 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { status: 200, headers: corsHeaders })
   }
 
   try {
@@ -22,30 +25,34 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Client with the user's JWT to read their own data
-    const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
-    )
-
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser()
-    if (userError || !user) {
+    // 1. Get authenticated user
+    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        Authorization: authHeader,
+        apikey: SUPABASE_ANON_KEY,
+      },
+    })
+    if (!userRes.ok) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    const user = await userRes.json()
 
-    // Read roles from DB — get_my_roles() returns { rol_nombre, iglesia_id, ... }
-    const { data: roles, error: rolesError } = await supabaseUser.rpc('get_my_roles')
-    if (rolesError) {
-      console.error('Error fetching roles:', rolesError)
-    }
+    // 2. Get user roles via RPC
+    const rolesRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_my_roles`, {
+      method: 'POST',
+      headers: {
+        Authorization: authHeader,
+        apikey: SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    })
+    const roles: any[] = rolesRes.ok ? (await rolesRes.json()) : []
 
-    const activeRoles = (roles ?? []).filter((r: any) => !r.fecha_fin)
-
-    // Normalize role names (strip accents, lowercase)
+    const activeRoles = roles.filter((r: any) => !r.fecha_fin)
     const roleNames: string[] = activeRoles.map((r: any) =>
       String(r.rol_nombre ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
     )
@@ -67,33 +74,53 @@ Deno.serve(async (req) => {
       role = 'lider'
       const liderRole = activeRoles.find((r: any) => r.iglesia_id)
       tenantId = liderRole?.iglesia_id ? Number(liderRole.iglesia_id) : null
-      const { data: mins } = await supabaseUser.rpc('get_my_ministerios')
-      ministerioIds = (mins ?? []).map((m: any) => Number(m.id))
+      const minsRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_my_ministerios`, {
+        method: 'POST',
+        headers: {
+          Authorization: authHeader,
+          apikey: SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      })
+      const mins: any[] = minsRes.ok ? (await minsRes.json()) : []
+      ministerioIds = mins.map((m: any) => Number(m.id))
     } else {
       role = 'servidor'
       const servidorRole = activeRoles.find((r: any) => r.iglesia_id)
       tenantId = servidorRole?.iglesia_id ? Number(servidorRole.iglesia_id) : null
-      const { data: mins } = await supabaseUser.rpc('get_my_ministerios')
-      ministerioIds = (mins ?? []).map((m: any) => Number(m.id))
+      const minsRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_my_ministerios`, {
+        method: 'POST',
+        headers: {
+          Authorization: authHeader,
+          apikey: SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      })
+      const mins: any[] = minsRes.ok ? (await minsRes.json()) : []
+      ministerioIds = mins.map((m: any) => Number(m.id))
     }
 
-    // Update app_metadata using service role key
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
-
+    // 3. Update app_metadata using service role
     const claimsAt = Math.floor(Date.now() / 1000)
     const appMetadata: Record<string, unknown> = { role, claims_at: claimsAt }
     if (tenantId !== null) appMetadata.tenant_id = tenantId
     if (ministerioIds.length > 0) appMetadata.ministerio_ids = ministerioIds
 
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
-      app_metadata: appMetadata,
+    const updateRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ app_metadata: appMetadata }),
     })
 
-    if (updateError) {
-      console.error('Error updating app_metadata:', updateError)
+    if (!updateRes.ok) {
+      const err = await updateRes.text()
+      console.error('Error updating app_metadata:', err)
       return new Response(JSON.stringify({ error: 'Failed to update claims' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
