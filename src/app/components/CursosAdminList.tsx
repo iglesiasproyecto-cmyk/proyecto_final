@@ -12,15 +12,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { toast } from 'sonner'
 import { BookOpen, Eye, EyeOff, Trash2, ChevronRight, Inbox, Search } from 'lucide-react'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
-
-interface CursoAdmin {
-  id_aula_curso: number
-  titulo: string
-  descripcion: string | null
-  estado: string
-  ministerio: { nombre: string } | null
-  aula_modulo: { count: number }[]
-}
+import { getCursosParaUsuario, AulaCursoEnriquecido } from '@/services/aula.service'
 
 interface CursosAdminListProps {
   ministerios: { idMinisterio: number; nombre: string }[]
@@ -32,42 +24,28 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [ministerioFilter, setMinisterioFilter] = useState(0)
+  const [tipoFilter, setTipoFilter] = useState<'todos' | 'iglesia' | 'ministerio'>('todos')
   const [estadoFilter, setEstadoFilter] = useState('todos')
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; titulo: string }>({
     open: false, id: 0, titulo: '',
   })
 
-  const { data: cursos = [], isLoading } = useQuery<CursoAdmin[]>({
+  const { data: cursos = [], isLoading } = useQuery<AulaCursoEnriquecido[]>({
     queryKey: ['cursos-admin', iglesiaActual?.id],
-    queryFn: async () => {
-      if (!iglesiaActual?.id) return []
-      const { data, error } = await supabase
-        .from('aula_curso')
-        .select(`
-          id_aula_curso,
-          titulo,
-          descripcion,
-          estado,
-          ministerio!inner(nombre, sede!inner(id_iglesia)),
-          aula_modulo(count)
-        `)
-        .eq('ministerio.sede.id_iglesia', iglesiaActual.id)
-        .order('creado_en', { ascending: false })
-      if (error) throw error
-      return data as CursoAdmin[]
-    },
+    queryFn: getCursosParaUsuario,
     enabled: !!iglesiaActual?.id,
     staleTime: 2 * 60 * 1000,
   })
 
   const visible = useMemo(() => {
-    return cursos.filter(c => {
-      if (search && !c.titulo.toLowerCase().includes(search.toLowerCase())) return false
-      if (ministerioFilter && ministerios.find(m => m.idMinisterio === ministerioFilter)?.nombre !== c.ministerio?.nombre) return false
-      if (estadoFilter !== 'todos' && c.estado !== estadoFilter) return false
+    return cursos.filter(curso => {
+      if (search && !curso.titulo.toLowerCase().includes(search.toLowerCase())) return false
+      if (tipoFilter !== 'todos' && curso.tipo !== tipoFilter) return false
+      if (ministerioFilter && ministerios.find(m => m.idMinisterio === ministerioFilter)?.nombre !== curso.ministerioNombre) return false
+      if (estadoFilter !== 'todos' && curso.estado !== estadoFilter) return false
       return true
     })
-  }, [cursos, search, ministerioFilter, estadoFilter, ministerios])
+  }, [cursos, search, tipoFilter, ministerioFilter, estadoFilter, ministerios])
 
   const togglePublicacion = async (id: number, estadoActual: string) => {
     const nuevoEstado = estadoActual === 'activo' ? 'borrador' : 'activo'
@@ -132,6 +110,21 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
             <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>
           ))}
         </select>
+        <div className="flex gap-1">
+          {(['todos', 'iglesia', 'ministerio'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTipoFilter(t)}
+              className={`h-10 px-3 rounded-xl text-xs font-semibold capitalize transition-all ${
+                tipoFilter === t
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background/50 border border-white/10 text-foreground/60 hover:text-foreground'
+              }`}
+            >
+              {t === 'todos' ? 'Todos' : t === 'iglesia' ? 'Iglesia' : 'Ministerio'}
+            </button>
+          ))}
+        </div>
         <select
           value={estadoFilter}
           onChange={e => setEstadoFilter(e.target.value)}
@@ -146,68 +139,66 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
       {/* Course grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <AnimatePresence>
-          {visible.map((curso, idx) => {
-            const moduloCount = curso.aula_modulo?.[0]?.count ?? 0
-            return (
-              <AnimatedCard key={curso.id_aula_curso} index={idx} className="p-5 group">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    <Badge
-                      variant="outline"
-                      className={`text-[9px] uppercase font-black tracking-widest border-0 rounded-lg px-2 py-0.5 ${
-                        curso.estado === 'activo'
-                          ? 'bg-emerald-500/10 text-emerald-500'
-                          : 'bg-amber-500/10 text-amber-500'
-                      }`}
-                    >
-                      {curso.estado}
+          {visible.map((curso, idx) => (
+            <AnimatedCard key={curso.idAulaCurso} index={idx} className="p-5 group">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge
+                    variant="outline"
+                    className={`text-[9px] uppercase font-black tracking-widest border-0 rounded-lg px-2 py-0.5 ${
+                      curso.estado === 'activo'
+                        ? 'bg-emerald-500/10 text-emerald-500'
+                        : 'bg-amber-500/10 text-amber-500'
+                    }`}
+                  >
+                    {curso.estado}
+                  </Badge>
+                  {curso.tipo === 'iglesia' ? (
+                    <Badge variant="outline" className="text-[9px] uppercase font-black tracking-widest border-0 rounded-lg px-2 py-0.5 bg-blue-500/10 text-blue-400">
+                      {curso.iglesiaNombre ?? 'Iglesia'}
                     </Badge>
-                    {curso.ministerio?.nombre && (
-                      <Badge variant="outline" className="text-[9px] uppercase font-black tracking-widest border-0 rounded-lg px-2 py-0.5 bg-primary/10 text-primary">
-                        {curso.ministerio.nombre}
-                      </Badge>
-                    )}
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium shrink-0">
-                    {moduloCount} módulo{moduloCount !== 1 ? 's' : ''}
-                  </span>
+                  ) : curso.ministerioNombre ? (
+                    <Badge variant="outline" className="text-[9px] uppercase font-black tracking-widest border-0 rounded-lg px-2 py-0.5 bg-amber-500/10 text-amber-500">
+                      {curso.ministerioNombre}
+                    </Badge>
+                  ) : null}
                 </div>
+              </div>
 
-                <h3 className="font-bold text-sm leading-snug tracking-tight group-hover:text-primary transition-colors mb-2 uppercase italic line-clamp-2">
-                  {curso.titulo}
-                </h3>
-                {curso.descripcion && (
-                  <p className="text-[11px] text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
-                    {curso.descripcion}
-                  </p>
-                )}
+              <h3 className="font-bold text-sm leading-snug tracking-tight group-hover:text-primary transition-colors mb-2 uppercase italic line-clamp-2">
+                {curso.titulo}
+              </h3>
+              {curso.descripcion && (
+                <p className="text-[11px] text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+                  {curso.descripcion}
+                </p>
+              )}
 
-                <div className="flex items-center gap-2 pt-3 border-t border-white/5">
-                  <Button
-                    size="sm"
-                    className="flex-1 h-8 rounded-xl text-xs"
-                    onClick={() => navigate(`/app/aula/curso/${curso.id_aula_curso}`)}
-                  >
-                    <ChevronRight className="w-3.5 h-3.5 mr-1" /> Ver detalle
-                  </Button>
-                  <button
-                    className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/50 hover:text-primary hover:bg-primary/10 transition-all"
-                    onClick={() => togglePublicacion(curso.id_aula_curso, curso.estado)}
-                    title={curso.estado === 'activo' ? 'Despublicar' : 'Publicar'}
-                  >
-                    {curso.estado === 'activo' ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                  <button
-                    className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/50 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-                    onClick={() => setDeleteConfirm({ open: true, id: curso.id_aula_curso, titulo: curso.titulo })}
-                    title="Eliminar curso"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </AnimatedCard>
-            )
-          })}
+              <div className="flex items-center gap-2 pt-3 border-t border-white/5">
+                <Button
+                  size="sm"
+                  className="flex-1 h-8 rounded-xl text-xs"
+                  onClick={() => navigate(`/app/aula/curso/${curso.idAulaCurso}`)}
+                >
+                  <ChevronRight className="w-3.5 h-3.5 mr-1" /> Ver detalle
+                </Button>
+                <button
+                  className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/50 hover:text-primary hover:bg-primary/10 transition-all"
+                  onClick={() => togglePublicacion(curso.idAulaCurso, curso.estado)}
+                  title={curso.estado === 'activo' ? 'Despublicar' : 'Publicar'}
+                >
+                  {curso.estado === 'activo' ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+                <button
+                  className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/50 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                  onClick={() => setDeleteConfirm({ open: true, id: curso.idAulaCurso, titulo: curso.titulo })}
+                  title="Eliminar curso"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </AnimatedCard>
+          ))}
         </AnimatePresence>
       </div>
 
