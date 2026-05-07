@@ -1,0 +1,79 @@
+<h2>Enfoques para Multi-Tenancy SaaS</h2>
+<p class="subtitle">La decisión más crítica: ¿cómo aislar los datos de cada iglesia? Elige un enfoque antes de continuar.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>JWT Claims + RLS estricta</h3>
+      <p>Al hacer login, se guarda en el token JWT: <code>{ tenant_id: id_iglesia, role: "admin_iglesia", ministerio_ids: [1,2] }</code>. Las políticas RLS leen directamente del token — sin consultas extra a la DB.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Más rápido (0 joins en RLS)</li>
+          <li>Enfoque oficial Supabase para SaaS</li>
+          <li>Sin cambios de esquema grandes</li>
+        </ul></div>
+        <div class="cons"><h4>Contras</h4><ul>
+          <li>Si cambia el rol, hay que refrescar el token</li>
+          <li>Requiere Edge Function o trigger para poblar claims</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Funciones SQL SECURITY DEFINER</h3>
+      <p>RLS llama a funciones como <code>get_my_tenant_id()</code>, <code>is_admin_of_iglesia(x)</code>, <code>get_my_ministerios()</code> que consultan la DB en cada verificación de fila.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Permisos siempre actualizados en tiempo real</li>
+          <li>Sin lógica de claims/token</li>
+          <li>Ya tienes funciones parciales en el proyecto</li>
+        </ul></div>
+        <div class="cons"><h4>Contras</h4><ul>
+          <li>Más lento (consulta DB por cada fila)</li>
+          <li>Puede ser problemático con tablas grandes</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Híbrido (Recomendado ★)</h3>
+      <p>JWT Claims para las verificaciones simples y frecuentes (<code>tenant_id</code>, <code>role</code>). Funciones SQL para reglas complejas (¿es lider de este ministerio específico?). Lo mejor de los dos mundos.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Rápido en el 90% de los casos (JWT)</li>
+          <li>Flexible para reglas complejas (SQL)</li>
+          <li>Escalable a producción real</li>
+          <li>Patrón usado por Supabase en sus guías SaaS</li>
+        </ul></div>
+        <div class="cons"><h4>Contras</h4><ul>
+          <li>Más complejo de implementar inicialmente</li>
+          <li>Requiere trigger para sincronizar claims</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:24px">
+  <h3>¿Cómo funciona el Híbrido en la práctica?</h3>
+  <div class="mockup">
+    <div class="mockup-header">Flujo de autenticación SaaS</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:13px;line-height:1.8">
+      <div>1. Usuario hace login → Supabase Auth emite JWT</div>
+      <div>2. Trigger <code>on_auth_user_login</code> → llama RPC <code>set_tenant_claims()</code></div>
+      <div>3. Claims en JWT: <code>{ app_metadata: { tenant_id: 5, role: "admin_iglesia" } }</code></div>
+      <div>4. RLS simple: <code>WHERE id_iglesia = (jwt → 'app_metadata' → 'tenant_id')::int</code></div>
+      <div>5. RLS compleja (lider): <code>WHERE id_ministerio IN (SELECT get_my_ministerios())</code></div>
+      <div style="margin-top:8px;color:#27ae60">✅ Superadmin: claim especial <code>role: "super_admin"</code> → bypass RLS vía <code>USING (is_super_admin())</code></div>
+    </div>
+  </div>
+</div>
