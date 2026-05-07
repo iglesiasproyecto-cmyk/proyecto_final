@@ -40,10 +40,11 @@ export default defineConfig({
     },
 
     // 4 proyectos paralelos — cada uno usa la sesión de su rol
+    // WSL2: usando Firefox porque Chromium requiere libnspr4/libnss3 no disponibles
     {
       name: 'super_admin',
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices['Desktop Firefox'],
         storageState: '.auth/super_admin.json',
       },
       dependencies: ['setup'],
@@ -52,7 +53,7 @@ export default defineConfig({
     {
       name: 'admin_iglesia',
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices['Desktop Firefox'],
         storageState: '.auth/admin_iglesia.json',
       },
       dependencies: ['setup'],
@@ -61,7 +62,7 @@ export default defineConfig({
     {
       name: 'lider',
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices['Desktop Firefox'],
         storageState: '.auth/lider.json',
       },
       dependencies: ['setup'],
@@ -70,17 +71,17 @@ export default defineConfig({
     {
       name: 'servidor',
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices['Desktop Firefox'],
         storageState: '.auth/servidor.json',
       },
       dependencies: ['setup'],
       testMatch: /specs\/.+\.spec\.ts/,
     },
 
-    // Proyecto RLS: tests sin browser (API-only), corre con sesiones ya creadas
+    // Proyecto RLS: tests sin browser (API-only)
     {
       name: 'rls',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Firefox'] },
       dependencies: ['setup'],
       testMatch: /specs\/10-rls-backend\.spec\.ts/,
     },
