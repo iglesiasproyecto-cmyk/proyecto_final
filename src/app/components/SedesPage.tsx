@@ -253,30 +253,30 @@ export function SedesPage() {
         </AnimatedCard>
         <AnimatedCard index={1} className="p-5">
            <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
                  <Power className="w-5 h-5" />
               </div>
-              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-500 border-0">OK</Badge>
+              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-0">OK</Badge>
            </div>
            <p className="text-3xl font-light tracking-tight text-foreground">{sedes.filter(s => s.estado === 'activa').length}</p>
            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Sedes Activas</p>
         </AnimatedCard>
         <AnimatedCard index={2} className="p-5">
            <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
                  <Globe className="w-5 h-5" />
               </div>
-              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 border-0">Geografía</Badge>
+              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-0">Geografía</Badge>
            </div>
            <p className="text-3xl font-light tracking-tight text-foreground">{new Set(sedes.map(s => s.idCiudad)).size}</p>
            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Ciudades Cubiertas</p>
         </AnimatedCard>
         <AnimatedCard index={3} className="p-5">
            <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white shadow-lg">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
                  <Users className="w-5 h-5" />
               </div>
-              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-500 border-0">Staff</Badge>
+              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-0">Staff</Badge>
            </div>
            <p className="text-3xl font-light tracking-tight text-foreground">{sedes.reduce((acc, s) => acc + (s.cantidadMinisterios || 0), 0)}</p>
            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Min. Operativos</p>

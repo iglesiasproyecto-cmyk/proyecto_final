@@ -170,10 +170,10 @@ export function ChurchDetailPage() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="grid grid-cols-2 md:grid-cols-4 gap-4"
       >
-        <StatCard icon={<Church className="w-5 h-5 text-blue-500" />} label="Sedes" value={sedes.length} />
-        <StatCard icon={<Users className="w-5 h-5 text-emerald-500" />} label="Pastores" value={pastores.length} />
-        <StatCard icon={<ShieldCheck className="w-5 h-5 text-purple-500" />} label="Admins" value={admins.length} />
-        <StatCard icon={<Globe className="w-5 h-5 text-indigo-500" />} label="Estado" value={iglesia.estado} />
+        <StatCard icon={<Church className="w-5 h-5 text-[#4682b4]" />} label="Sedes" value={sedes.length} />
+        <StatCard icon={<Users className="w-5 h-5 text-[#4682b4]" />} label="Pastores" value={pastores.length} />
+        <StatCard icon={<ShieldCheck className="w-5 h-5 text-[#4682b4]" />} label="Admins" value={admins.length} />
+        <StatCard icon={<Globe className="w-5 h-5 text-[#4682b4]" />} label="Estado" value={iglesia.estado} />
       </motion.div>
 
       {/* Sedes */}

@@ -106,7 +106,7 @@ export function CatalogosPage() {
                     <TableCell className="p-5 text-right">
                       <div className="flex gap-2 justify-end">
                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-[#4682b4] hover:bg-[#4682b4]/10 hover:text-[#4682b4]/80 hover:rotate-12 transition-all shadow-sm bg-background/50" onClick={() => openEditTE(te.idTipoEvento)}><Pencil className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-red-500 hover:bg-red-500/10 hover:text-red-600 hover:-rotate-12 transition-all shadow-sm bg-background/50" onClick={() => setConfirmDeleteTE({ id: te.idTipoEvento, name: te.nombre })}><Trash2 className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-[#4682b4] hover:bg-[#4682b4]/10 hover:text-[#4682b4] hover:-rotate-12 transition-all shadow-sm bg-background/50" onClick={() => setConfirmDeleteTE({ id: te.idTipoEvento, name: te.nombre })}><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>

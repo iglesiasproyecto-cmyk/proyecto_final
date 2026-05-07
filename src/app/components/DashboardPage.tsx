@@ -153,10 +153,10 @@ function SuperAdminDashboard() {
       </motion.div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard index={0} icon={<Building2 className="w-5 h-5" />} value={iglesias.length} label="Iglesias" sublabel={`${activeIglesias.length} activas`} onClick={() => navigate("/app/iglesias")} />
-        <StatCard index={1} icon={<Church className="w-5 h-5" />} value={sedes.length} label="Sedes" sublabel={`${activeSedes} activas`} onClick={() => navigate("/app/sedes")} />
-        <StatCard index={2} icon={<Users className="w-5 h-5" />} value={usuarios.length} label="Usuarios" sublabel={`${activeUsers} activos`} onClick={() => navigate("/app/usuarios")} />
-        <StatCard index={3} icon={<UserCheck className="w-5 h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/pastores")} />
+        <StatCard index={0} colorIndex={0} icon={<Building2 className="w-5 h-5" />} value={iglesias.length} label="Iglesias" sublabel={`${activeIglesias.length} activas`} onClick={() => navigate("/app/iglesias")} />
+        <StatCard index={1} colorIndex={0} icon={<Church className="w-5 h-5" />} value={sedes.length} label="Sedes" sublabel={`${activeSedes} activas`} onClick={() => navigate("/app/sedes")} />
+        <StatCard index={2} colorIndex={0} icon={<Users className="w-5 h-5" />} value={usuarios.length} label="Usuarios" sublabel={`${activeUsers} activos`} onClick={() => navigate("/app/usuarios")} />
+        <StatCard index={3} colorIndex={0} icon={<UserCheck className="w-5 h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/pastores")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

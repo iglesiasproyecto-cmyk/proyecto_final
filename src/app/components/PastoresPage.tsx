@@ -344,7 +344,7 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
                 </Button>
               )}
               {rolActual === "admin_iglesia" && (
-                <Button onClick={() => setDialogSolicitud(true)} className="shadow-md shadow-amber-500/20 rounded-full px-6 bg-amber-600 hover:bg-amber-700 shadow-amber-900/20">
+                <Button onClick={() => setDialogSolicitud(true)} className="shadow-md shadow-primary/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
                   <Plus className="w-4 h-4 mr-2" /> Solicitar Asignación
                 </Button>
               )}
@@ -584,7 +584,7 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
             <Button
               onClick={handleSolicitarCambio}
               disabled={!formSolicitud.idSede || !formSolicitud.idPastorNuevo || !formSolicitud.motivo.trim()}
-              className="rounded-full px-5 bg-amber-600 hover:bg-amber-700 shadow-amber-900/20"
+              className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"
             >
               <Save className="w-4 h-4 mr-1.5" />
               Enviar Solicitud de Cambio

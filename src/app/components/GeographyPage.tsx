@@ -142,11 +142,11 @@ export function GeographyPage() {
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5"/> Países</p>
         </div>
         <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm dark:border-white/10 dark:bg-card/20 flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
-          <p className="text-3xl font-light text-violet-600 dark:text-violet-400">{departamentosGeo.length}</p>
+          <p className="text-3xl font-light text-[#4682b4] dark:text-[#709dbd]">{departamentosGeo.length}</p>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5"/> Departamentos</p>
         </div>
         <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm dark:border-white/10 dark:bg-card/20 flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
-          <p className="text-3xl font-light text-emerald-600 dark:text-emerald-400">{ciudades.length}</p>
+          <p className="text-3xl font-light text-[#4682b4] dark:text-[#709dbd]">{ciudades.length}</p>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 flex items-center gap-1.5"><Building className="w-3.5 h-3.5"/> Ciudades</p>
         </div>
       </motion.div>

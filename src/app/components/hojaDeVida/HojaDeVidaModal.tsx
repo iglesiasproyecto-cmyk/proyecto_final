@@ -4,9 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from '@/app/components/ui/dialog';
-import { X } from 'lucide-react';
 import { useHojaDeVidaPorUsuario } from '@/hooks/useHojaDeVida';
 import { HojaDeVidaView } from './HojaDeVidaView';
 
@@ -29,14 +27,9 @@ export function HojaDeVidaModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-black uppercase tracking-tight">
-              Hoja de Vida - {nombreUsuario}
-            </DialogTitle>
-            <DialogClose className="opacity-70 hover:opacity-100 transition-opacity">
-              <X className="w-4 h-4" />
-            </DialogClose>
-          </div>
+          <DialogTitle className="text-2xl font-black uppercase tracking-tight">
+            Hoja de Vida - {nombreUsuario}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="mt-6">
