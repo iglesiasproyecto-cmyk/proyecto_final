@@ -33,8 +33,10 @@ function mapPastor(r: PastorRow): Pastor {
     correo: r.correo,
     telefono: r.telefono,
     idUsuario: r.id_usuario,
+    idIglesia: (r as any).id_iglesia ?? null,
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
+    iglesiaNombre: (r as any).iglesia?.nombre ?? undefined,
   }
 }
 

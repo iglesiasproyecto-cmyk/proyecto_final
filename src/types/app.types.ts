@@ -47,8 +47,11 @@ export interface Pastor {
   correo: string
   telefono: string | null
   idUsuario: number | null
+  idIglesia: number | null
   creadoEn: string
   actualizadoEn: string
+  // computed
+  iglesiaNombre?: string
 }
 
 export interface IglesiaPastor {
