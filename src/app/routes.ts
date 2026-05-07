@@ -15,8 +15,9 @@ import { ChurchesPage } from "./components/ChurchesPage";
 import { ChurchDetailPage } from "./components/ChurchDetailPage";
 import { SedesPage } from "./components/SedesPage";
 import { PastoresPage } from "./components/PastoresPage";
-import { DepartmentsPage } from "./components/DepartmentsPage";
-import { MyDepartmentPage } from "./components/MyDepartmentPage";
+import { MinisteriosPage } from "./components/MinisteriosPage";
+import { MiMinisterioPage } from "./components/MiMinisterioPage";
+import { AdministradoresPage } from "./components/AdministradoresPage";
 import { MembersPage } from "./components/MembersPage";
 import { EventsPage } from "./components/EventsPage";
 import { TasksPage } from "./components/TasksPage";
@@ -64,6 +65,7 @@ export const router = createBrowserRouter([
               { path: "notificaciones", Component: NotificationsPage, ErrorBoundary: ErrorPage },
               { path: "perfil", Component: ProfilePage, ErrorBoundary: ErrorPage },
               { path: "sitemap", Component: SitemapPage, ErrorBoundary: ErrorPage },
+              { path: "administradores", Component: AdministradoresPage, ErrorBoundary: ErrorPage },
             ],
           },
 
@@ -76,7 +78,7 @@ export const router = createBrowserRouter([
               { index: true, Component: DashboardPage, ErrorBoundary: ErrorPage },
               { path: "sedes", Component: SedesPage, ErrorBoundary: ErrorPage },
               { path: "pastores", Component: PastoresPage, ErrorBoundary: ErrorPage },
-              { path: "ministerios", Component: DepartmentsPage, ErrorBoundary: ErrorPage },
+              { path: "ministerios", Component: MinisteriosPage, ErrorBoundary: ErrorPage },
               { path: "usuarios", Component: UsuariosPage, ErrorBoundary: ErrorPage },
               { path: "miembros", Component: MembersPage, ErrorBoundary: ErrorPage },
               { path: "eventos", Component: EventsPage, ErrorBoundary: ErrorPage },
@@ -84,7 +86,7 @@ export const router = createBrowserRouter([
               { path: "aula", Component: AulaPage, ErrorBoundary: ErrorPage },
               { path: "aula/curso/:idCurso", Component: CursoDetallePage, ErrorBoundary: ErrorPage },
               { path: "aula/curso/:idCurso/servidor/:idUsuario", Component: ProgresoIndividualPage, ErrorBoundary: ErrorPage },
-              { path: "mi-ministerio", Component: MyDepartmentPage, ErrorBoundary: ErrorPage },
+              { path: "mi-ministerio", Component: MiMinisterioPage, ErrorBoundary: ErrorPage },
               { path: "notificaciones", Component: NotificationsPage, ErrorBoundary: ErrorPage },
               { path: "perfil", Component: ProfilePage, ErrorBoundary: ErrorPage },
             ],
