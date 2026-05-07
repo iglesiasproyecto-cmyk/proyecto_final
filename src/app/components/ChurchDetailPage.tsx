@@ -131,54 +131,34 @@ export function ChurchDetailPage() {
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Volver al listado
         </Button>
 
-        <div className="flex flex-col md:flex-row md:items-start gap-6">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <Building2 className="w-10 h-10 text-white" />
+        <div className="flex items-start gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <Building2 className="w-8 h-8 text-white" />
           </div>
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold tracking-tight">{iglesia.nombre}</h1>
-                <Badge
-                  variant="outline"
-                  className={`text-xs font-semibold tracking-wide ${estadoBadgeColors[iglesia.estado] ?? ""}`}
-                >
-                  {estadoLabels[iglesia.estado] ?? iglesia.estado}
-                </Badge>
-                {canEditIglesia && (
-                  <Button
-                    size="sm"
-                    onClick={openEditDialog}
-                    className="h-7 px-3 text-xs bg-[#4682b4] text-white hover:bg-[#4682b4]/90 shadow-md shadow-blue-900/20"
-                  >
-                    ✏️ Editar Iglesia
-                  </Button>
-                )}
-              </div>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-primary/70" />
-                {iglesia.ciudadNombre || iglesia.direccion || "Ubicación no disponible"}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-primary/70" />
-                {iglesia.fechaFundacion ? new Date(iglesia.fechaFundacion).toLocaleDateString("es", { month: "short", year: "numeric" }) : "Fundación no disponible"}
-              </span>
-              {iglesia.telefono && (
-                <span className="flex items-center gap-1.5">
-                  <Phone className="w-4 h-4 text-primary/70" />
-                  {iglesia.telefono}
-                </span>
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-3xl font-light">{iglesia.nombre}</h1>
+              <Badge
+                variant="outline"
+                className={`text-xs font-semibold tracking-wide ${estadoBadgeColors[iglesia.estado] ?? ""}`}
+              >
+                {estadoLabels[iglesia.estado] ?? iglesia.estado}
+              </Badge>
+            </div>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              {(iglesia.ciudadNombre || iglesia.direccion) && (
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-primary/60" />
+                  <span>{iglesia.ciudadNombre || iglesia.direccion}</span>
+                </div>
               )}
-              {iglesia.sitioWeb && (
-                <span className="flex items-center gap-1.5">
-                  <Globe className="w-4 h-4 text-primary/70" />
-                  <a href={iglesia.sitioWeb} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{iglesia.sitioWeb}</a>
-                </span>
+              {iglesia.fechaFundacion && (
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-primary/60" />
+                  <span>{new Date(iglesia.fechaFundacion).toLocaleDateString("es", { month: "short", year: "numeric" })}</span>
+                </div>
               )}
             </div>
-            {iglesia.descripcion && (
-              <p className="text-sm text-muted-foreground mt-2">{iglesia.descripcion}</p>
-            )}
           </div>
         </div>
       </motion.div>

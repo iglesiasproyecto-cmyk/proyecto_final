@@ -80,15 +80,7 @@ export function DashboardCarousel() {
         </button>
       </div>
 
-      {/* Indicadores */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-        {screenshots.map((_, i) => (
-          <div 
-            key={i} 
-            className={`h-1 rounded-full transition-all duration-500 ${i === index ? 'w-8 bg-[#2596be]' : 'w-2 bg-white/30'}`}
-          />
-        ))}
-      </div>
+
     </div>
   );
 }
