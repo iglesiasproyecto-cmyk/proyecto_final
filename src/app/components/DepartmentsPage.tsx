@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
 import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2, Settings } from "lucide-react";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-700", servidor: "bg-gray-100 text-gray-700" };
@@ -232,14 +233,14 @@ export function DepartmentsPage() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedMin, setSelectedMin] = useState<number | null>(null);
+  const [confirmDeleteMinisterio, setConfirmDeleteMinisterio] = useState<{ isOpen: boolean; id: number; nombre: string }>({ isOpen: false, id: 0, nombre: "" });
 
   const toggleEstadoMutation = useToggleMinisterioEstado();
   const createMinisterioMutation = useCreateMinisterio();
   const deleteMinisterioMutation = useDeleteMinisterio();
 
   function handleDeleteMinisterio(id: number, nombre: string) {
-    if (!confirm(`¿Eliminar ministerio "${nombre}"? Esta acción no se puede deshacer.`)) return;
-    deleteMinisterioMutation.mutate(id);
+    setConfirmDeleteMinisterio({ isOpen: true, id, nombre });
   }
   const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idSede: "" });
 
@@ -406,6 +407,14 @@ export function DepartmentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteMinisterio.isOpen}
+        onClose={() => setConfirmDeleteMinisterio({ isOpen: false, id: 0, nombre: "" })}
+        onConfirm={() => deleteMinisterioMutation.mutate(confirmDeleteMinisterio.id)}
+        title="¿Eliminar Ministerio?"
+        description={`¿Estás seguro de que quieres eliminar el ministerio "${confirmDeleteMinisterio.nombre}"? Esta acción no se puede deshacer.`}
+      />
     </div>
   );
 }

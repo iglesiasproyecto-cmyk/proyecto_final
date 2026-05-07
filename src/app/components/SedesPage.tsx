@@ -12,6 +12,7 @@ import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Sa
 import { motion } from "motion/react";
 import { AnimatedCard } from "./ui/AnimatedCard";
 import { toast } from "sonner";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 
 export function SedesPage() {
   const [search, setSearch] = useState("");
@@ -21,6 +22,7 @@ export function SedesPage() {
   const [dialogPastor, setDialogPastor] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const [selectedSede, setSelectedSede] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; id: number; nombre: string }>({ isOpen: false, id: 0, nombre: "" });
   const [form, setForm] = useState({ nombre: "", direccion: "", idCiudad: 0, idDepartamento: 0, idPais: 0, idIglesia: 0, estado: "activa" as "activa" | "inactiva" | "en_construccion" });
   const [pastorForm, setPastorForm] = useState({
     idSede: 0,
@@ -111,8 +113,7 @@ export function SedesPage() {
   };
 
   const handleDeleteSede = (id: number, nombre: string) => {
-    if (!confirm(`¿Eliminar sede "${nombre}"? Esta acción es irreversible.`)) return;
-    deleteSedeMutation.mutate(id);
+    setConfirmDelete({ isOpen: true, id, nombre });
   };
 
   const lookupIglesia = (idIglesia: number) => iglesias.find(i => i.idIglesia === idIglesia)?.nombre || "-";
@@ -473,6 +474,14 @@ export function SedesPage() {
           </Dialog>
         );
       })()}
+
+      <ConfirmDialog
+        isOpen={confirmDelete.isOpen}
+        onClose={() => setConfirmDelete({ isOpen: false, id: 0, nombre: "" })}
+        onConfirm={() => deleteSedeMutation.mutate(confirmDelete.id)}
+        title="¿Eliminar Sede?"
+        description={`¿Estás seguro de que quieres eliminar la sede "${confirmDelete.nombre}"? Esta acción es irreversible.`}
+      />
 
       {/* MODAL (Diálogo de Creación / Edición) */}
       <Dialog open={dialog} onOpenChange={setDialog}>
