@@ -228,7 +228,25 @@ export interface TareaEvidencia {
   nombreCompleto?: string
 }
 
-
+// ── Aula ──
+export interface AulaCurso {
+  idAulaCurso: number
+  idMinisterio: number | null
+  idIglesia: number | null
+  idUsuarioCreador: number
+  titulo: string
+  descripcion: string | null
+  imagenUrl: string | null
+  estado: 'borrador' | 'activo' | 'archivado'
+  ordenSecuencial: boolean
+  creadoEn: string
+  updatedAt: string
+  deletedAt: string | null
+  // computed
+  ministerioNombre?: string
+  iglesiaNombre?: string
+  tipo?: 'ministerio' | 'iglesia'
+}
 
 // ── Session ──
 export type RolClave = 'super_admin' | 'admin_iglesia' | 'lider' | 'servidor'
