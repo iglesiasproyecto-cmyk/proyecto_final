@@ -217,33 +217,71 @@ Cada ✅/❌ implica un test. Los ❌ verifican: (a) el elemento UI está oculto
 
 ---
 
-## Patrón de cada test
+## Qué verifica cada test
 
-Cada spec sigue este patrón:
+Cada spec cubre **dos dimensiones** para cada operación CRUD:
+
+### 1. Tests funcionales — "¿El CRUD realmente funciona?"
+
+Para roles CON permiso: el test ejecuta la operación completa en el navegador y verifica el resultado real en la UI.
 
 ```ts
-// El test sabe en qué proyecto corre via process.env.PLAYWRIGHT_PROJECT_NAME o test.info().project.name
-const role = test.info().project.name  // 'super_admin' | 'admin_iglesia' | 'lider' | 'servidor'
-
-test('can create sede', async ({ page }) => {
-  // 1. Navegar al módulo
+test('super_admin can create sede and it appears in list', async ({ page }) => {
   await page.goto(`${BASE_URL}/app/${IGLESIA_ID}/sedes`)
-  
-  // 2. Verificar visibilidad del botón (UI guard)
-  const btnCreate = page.getByRole('button', { name: /nueva sede/i })
-  if (['super_admin', 'admin_iglesia'].includes(role)) {
-    await expect(btnCreate).toBeVisible()
-    // 3a. Ejecutar la acción CRUD
-    await btnCreate.click()
-    // ... fill form, submit, verify toast success
-  } else {
-    // 3b. Verificar que el botón NO existe (protección frontend)
-    await expect(btnCreate).not.toBeVisible()
-  }
+
+  // Abrir formulario
+  await page.getByRole('button', { name: /nueva sede/i }).click()
+
+  // Llenar y enviar
+  const nombre = `Sede Test ${Date.now()}`
+  await page.getByLabel(/nombre/i).fill(nombre)
+  await page.getByRole('button', { name: /guardar|crear/i }).click()
+
+  // Verificar que aparece en la lista (funcionalidad real)
+  await expect(page.getByText(nombre)).toBeVisible()
+})
+
+test('super_admin can edit sede and change persists', async ({ page }) => {
+  // ... navega, abre edit, cambia nombre, guarda, verifica nuevo nombre en lista
+})
+
+test('super_admin can delete sede and it disappears', async ({ page }) => {
+  // ... navega, hace delete, confirma, verifica que ya no aparece en lista
 })
 ```
 
-Los tests de RLS backend (verificación directa a Supabase) se escriben como tests sin browser usando la `supabase-js` client con el token JWT del usuario de prueba.
+### 2. Tests de permisos — "¿Los roles sin permiso están bloqueados?"
+
+Para roles SIN permiso: verifica que (a) la UI no expone el control, y (b) la RLS bloquea la operación si se intenta directamente.
+
+```ts
+test('servidor cannot see create button', async ({ page }) => {
+  await page.goto(`${BASE_URL}/app/${IGLESIA_ID}/sedes`)
+  await expect(page.getByRole('button', { name: /nueva sede/i })).not.toBeVisible()
+})
+
+// Test RLS sin browser — usa supabase-js con JWT del rol
+test('servidor is blocked by RLS on direct insert', async () => {
+  const { error } = await servidorSupabase.from('sede').insert({ nombre: 'hack', id_iglesia: IGLESIA_ID })
+  expect(error?.code).toBe('42501')  // insufficient_privilege
+})
+```
+
+### Cobertura funcional por módulo
+
+| Módulo | Operaciones funcionales testeadas (rol con permiso) |
+|--------|-----------------------------------------------------|
+| Sedes | Create → aparece en lista; Edit → nombre actualizado; Delete → desaparece |
+| Iglesias | Edit datos básicos → cambio persiste en detalle |
+| Pastores | Asignar pastor → aparece en la sección; Desasignar → desaparece |
+| Miembros | Agregar al ministerio → aparece en tabla; Eliminar → desaparece |
+| Ministerios | Create ministerio → aparece en lista; Edit nombre → actualizado |
+| Eventos | Create → aparece en calendar/lista; Edit → cambio visible; Delete → desaparece |
+| Tareas | Create + asignar servidor → tarea visible; servidor marca como completada → estado cambia |
+| Cursos | Create curso → aparece en aula; agregar módulo → módulo visible; servidor rinde evaluación → avance registrado |
+| Usuarios | Invitar → usuario aparece en lista; toggle activo → estado cambia |
+
+Los tests de RLS sin browser (Fase 5) se escriben como tests de Node usando la `supabase-js` client con el token JWT del usuario de prueba, sin instancia de browser.
 
 ---
 
