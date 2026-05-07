@@ -131,7 +131,7 @@ export function AppLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !usuarioActual) navigate("/login");
+    if (!authLoading && !usuarioActual) navigate("/login", { replace: true });
   }, [authLoading, usuarioActual, navigate]);
 
   useEffect(() => {
