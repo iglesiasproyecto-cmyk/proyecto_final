@@ -39,17 +39,31 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  v_id_pastor bigint;
+  v_new_iglesia bigint;
 BEGIN
-  IF NEW.es_principal AND NEW.fecha_fin IS NULL THEN
-    UPDATE public.pastor
-    SET id_iglesia = NEW.id_iglesia
-    WHERE id_pastor = NEW.id_pastor;
-  END IF;
-  RETURN NEW;
+  -- Determine which pastor to update
+  v_id_pastor := COALESCE(NEW.id_pastor, OLD.id_pastor);
+
+  -- Re-derive the best current iglesia for this pastor
+  SELECT ip.id_iglesia INTO v_new_iglesia
+  FROM public.iglesia_pastor ip
+  WHERE ip.id_pastor = v_id_pastor
+    AND ip.fecha_fin IS NULL
+  ORDER BY ip.es_principal DESC, ip.fecha_inicio DESC
+  LIMIT 1;
+
+  -- Update pastor.id_iglesia (sets NULL if no active assignment remains)
+  UPDATE public.pastor
+  SET id_iglesia = v_new_iglesia
+  WHERE id_pastor = v_id_pastor;
+
+  RETURN COALESCE(NEW, OLD);
 END;
 $$;
 
 DROP TRIGGER IF EXISTS sync_pastor_iglesia_trigger ON public.iglesia_pastor;
 CREATE TRIGGER sync_pastor_iglesia_trigger
-  AFTER INSERT OR UPDATE ON public.iglesia_pastor
+  AFTER INSERT OR UPDATE OR DELETE ON public.iglesia_pastor
   FOR EACH ROW EXECUTE FUNCTION public.sync_pastor_iglesia();
