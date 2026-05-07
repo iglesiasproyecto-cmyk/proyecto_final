@@ -4,14 +4,14 @@
  */
 
 export const CARD_COLORS = [
-  { from: "#709dbd", to: "#4682b4", name: "azul" },           // Azul primario
-  { from: "#1a7fa8", to: "#15617d", name: "tealprimary" },    // Teal primario
-  { from: "#2596be", to: "#1a6fa0", name: "cyan" },           // Cyan
-  { from: "#5cbcd6", to: "#3fa8c9", name: "lightcyan" },      // Light cyan
-  { from: "#c5a96a", to: "#a88855", name: "gold" },           // Gold
-  { from: "#e8927c", to: "#d97560", name: "coral" },          // Coral
-  { from: "#4db8e8", to: "#2a9fd6", name: "skyblue" },        // Sky blue
-  { from: "#6b5b95", to: "#4a3a6e", name: "purple" },         // Purple
+  { from: "#709dbd", to: "#4682b4", name: "primary" },        // Azul primario (botones)
+  { from: "#4682b4", to: "#2a5a8a", name: "darkblue" },       // Azul oscuro
+  { from: "#709dbd", to: "#2a5a8a", name: "gradient1" },      // Gradiente fuerte
+  { from: "#5a8aad", to: "#3a6a8d", name: "mediumblue" },     // Azul medio
+  { from: "#709dbd", to: "#4682b4", name: "primaryalt" },     // Primario alternativo
+  { from: "#6a8dab", to: "#4a72a0", name: "gradient2" },      // Gradiente suave
+  { from: "#7aadcd", to: "#5a8aab", name: "lightblue" },      // Azul claro
+  { from: "#4682b4", to: "#1a4a74", name: "deepblue" },       // Azul profundo
 ];
 
 /**
