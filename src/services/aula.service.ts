@@ -76,3 +76,102 @@ export async function getAulaCursoCompleto(idCurso: number) {
 //   if (error) throw error
 //   return data
 // }
+
+export type TipoCurso = 'ministerio' | 'iglesia'
+
+export interface AulaCursoEnriquecido {
+  idAulaCurso: number
+  titulo: string
+  descripcion: string | null
+  imagenUrl: string | null
+  estado: 'borrador' | 'activo' | 'archivado'
+  ordenSecuencial: boolean
+  idMinisterio: number | null
+  idIglesia: number | null
+  idUsuarioCreador: number
+  tipo: TipoCurso
+  ministerioNombre?: string
+  iglesiaNombre?: string
+  creadoEn: string
+  actualizadoEn: string
+}
+
+export async function getCursosParaUsuario(): Promise<AulaCursoEnriquecido[]> {
+  const { data, error } = await supabase
+    .from('aula_curso')
+    .select(`
+      *,
+      ministerio:id_ministerio(nombre),
+      iglesia:id_iglesia(nombre)
+    `)
+    .is('deleted_at', null)
+    .order('creado_en', { ascending: false })
+
+  if (error) throw error
+
+  return (data ?? []).map((r: any) => ({
+    idAulaCurso: r.id_aula_curso,
+    titulo: r.titulo,
+    descripcion: r.descripcion,
+    imagenUrl: r.imagen_url,
+    estado: r.estado,
+    ordenSecuencial: r.orden_secuencial,
+    idMinisterio: r.id_ministerio,
+    idIglesia: r.id_iglesia,
+    idUsuarioCreador: r.id_usuario_creador,
+    tipo: r.id_iglesia ? 'iglesia' : 'ministerio',
+    ministerioNombre: r.ministerio?.nombre ?? undefined,
+    iglesiaNombre: r.iglesia?.nombre ?? undefined,
+    creadoEn: r.creado_en,
+    actualizadoEn: r.updated_at,
+  }))
+}
+
+export async function crearCurso(params: {
+  titulo: string
+  descripcion?: string
+  idMinisterio?: number | null
+  idIglesia?: number | null
+  idUsuarioCreador: number
+  ordenSecuencial?: boolean
+}): Promise<AulaCursoEnriquecido> {
+  if (!params.idMinisterio && !params.idIglesia) {
+    throw new Error('Un curso debe pertenecer a un ministerio o a una iglesia')
+  }
+  if (params.idMinisterio && params.idIglesia) {
+    throw new Error('Un curso no puede pertenecer a un ministerio y a una iglesia al mismo tiempo')
+  }
+
+  const { data, error } = await supabase
+    .from('aula_curso')
+    .insert({
+      titulo: params.titulo,
+      descripcion: params.descripcion ?? null,
+      id_ministerio: params.idMinisterio ?? null,
+      id_iglesia: params.idIglesia ?? null,
+      id_usuario_creador: params.idUsuarioCreador,
+      orden_secuencial: params.ordenSecuencial ?? true,
+      estado: 'borrador',
+    })
+    .select(`*, ministerio:id_ministerio(nombre), iglesia:id_iglesia(nombre)`)
+    .single()
+
+  if (error) throw error
+
+  return {
+    idAulaCurso: data.id_aula_curso,
+    titulo: data.titulo,
+    descripcion: data.descripcion,
+    imagenUrl: data.imagen_url,
+    estado: data.estado,
+    ordenSecuencial: data.orden_secuencial,
+    idMinisterio: data.id_ministerio,
+    idIglesia: data.id_iglesia,
+    idUsuarioCreador: data.id_usuario_creador,
+    tipo: data.id_iglesia ? 'iglesia' : 'ministerio',
+    ministerioNombre: (data as any).ministerio?.nombre ?? undefined,
+    iglesiaNombre: (data as any).iglesia?.nombre ?? undefined,
+    creadoEn: data.creado_en,
+    actualizadoEn: data.updated_at,
+  }
+}
