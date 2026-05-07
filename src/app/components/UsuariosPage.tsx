@@ -12,8 +12,9 @@ import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
-import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, Phone, UserPlus, ShieldPlus, Pencil, X, Loader2, Trash2, AlertTriangle } from "lucide-react";
+import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, Phone, UserPlus, ShieldPlus, Pencil, X, Loader2, Trash2, AlertTriangle, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { HojaDeVidaModal } from "./hojaDeVida/HojaDeVidaModal";
 
 export function UsuariosPage() {
   const qc = useQueryClient();
@@ -27,6 +28,7 @@ export function UsuariosPage() {
   const [filterRol, setFilterRol] = useState("all");
   const [filterIglesia, setFilterIglesia] = useState<string>("all");
   const [detail, setDetail] = useState<number | null>(null);
+  const [showHojaDeVida, setShowHojaDeVida] = useState<number | null>(null);
   const [showInvite, setShowInvite] = useState(false);
   const [showAssignRol, setShowAssignRol] = useState<number | null>(null);
   const [editUser, setEditUser] = useState<number | null>(null);
@@ -310,6 +312,9 @@ export function UsuariosPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex gap-1 justify-end">
+                    <Button variant="ghost" size="sm" title="Ver Hoja de Vida" onClick={() => setShowHojaDeVida(u.idUsuario)}>
+                      <FileText className="w-3.5 h-3.5 text-cyan-600" />
+                    </Button>
                     <Button variant="ghost" size="sm" title="Ver detalle" onClick={() => setDetail(u.idUsuario)}><Eye className="w-3.5 h-3.5" /></Button>
                     <Button variant="ghost" size="sm" title="Editar usuario" onClick={() => openEditDialog(u.idUsuario)}>
                       <Pencil className="w-3.5 h-3.5 text-amber-600" />
@@ -640,6 +645,19 @@ export function UsuariosPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <HojaDeVidaModal
+        idUsuario={showHojaDeVida}
+        isOpen={showHojaDeVida !== null}
+        onClose={() => setShowHojaDeVida(null)}
+        nombreUsuario={
+          showHojaDeVida
+            ? enriched.find((u) => u.idUsuario === showHojaDeVida)
+                ? `${enriched.find((u) => u.idUsuario === showHojaDeVida)?.nombres} ${enriched.find((u) => u.idUsuario === showHojaDeVida)?.apellidos}`
+                : "Usuario"
+            : "Usuario"
+        }
+      />
     </div>
   );
 }
