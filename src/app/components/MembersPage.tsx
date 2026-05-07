@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router";
 import { useMinisterios, useMiembrosMinisterioEnriquecidos, useCreateMiembroMinisterio, useDeleteMiembroMinisterio, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useApp } from "../store/AppContext";
@@ -24,10 +25,12 @@ const rolColors: Record<string, string> = {
 };
 
 export function MembersPage() {
+  const { idIglesia } = useParams<{ idIglesia: string }>();
+  const idIglesiaNum = Number(idIglesia) || undefined;
   const { usuarioActual, iglesiaActual } = useApp();
   const { data: ministeriosIdsUsuario = [] } = useMinisteriosIdsDeUsuario(usuarioActual?.idUsuario);
   const isLider = ministeriosIdsUsuario.length > 0;
-  const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios(iglesiaActual?.id);
+  const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios(idIglesiaNum);
   const { data: usuarios = [] } = useUsuarios();
   const [search, setSearch] = useState("");
   const [selectedMinisterioId, setSelectedMinisterioId] = useState<number>(0);

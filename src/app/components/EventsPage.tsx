@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useParams } from "react-router";
 import { useEventosEnriquecidos, useDeleteEvento, useTiposEvento, useCreateEvento, useUpdateEvento } from "@/hooks/useEventos";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
@@ -118,11 +119,13 @@ function EventDialogFields({ form, setForm, tiposEvento, sedes = [], ministerios
 }
 
 export function EventsPage() {
+  const { idIglesia } = useParams<{ idIglesia: string }>();
+  const idIglesiaNum = Number(idIglesia) || undefined;
   const { iglesiaActual, rolActual } = useApp();
-  const { data: eventos = [], isLoading } = useEventosEnriquecidos(iglesiaActual?.id);
+  const { data: eventos = [], isLoading } = useEventosEnriquecidos(idIglesiaNum);
   const { data: tiposEvento = [] } = useTiposEvento();
-  const { data: sedes = [] } = useSedesEnriquecidas(iglesiaActual?.id);
-  const { data: ministerios = [] } = useMinisteriosEnriquecidos(iglesiaActual?.id);
+  const { data: sedes = [] } = useSedesEnriquecidas(idIglesiaNum);
+  const { data: ministerios = [] } = useMinisteriosEnriquecidos(idIglesiaNum);
   const createEventoMutation = useCreateEvento();
   const deleteEventoMutation = useDeleteEvento();
   const updateEventoMutation = useUpdateEvento();
@@ -153,9 +156,9 @@ export function EventsPage() {
   };
 
   const handleCreateEvento = () => {
-    if (!createForm.nombre.trim() || !createForm.idTipoEvento || !createForm.fechaInicio || !createForm.fechaFin || !iglesiaActual?.id) return;
+    if (!createForm.nombre.trim() || !createForm.idTipoEvento || !createForm.fechaInicio || !createForm.fechaFin || !(idIglesiaNum ?? iglesiaActual?.id)) return;
     createEventoMutation.mutate(
-      { nombre: createForm.nombre.trim(), descripcion: createForm.descripcion.trim() || null, idTipoEvento: createForm.idTipoEvento, fechaInicio: createForm.fechaInicio, fechaFin: createForm.fechaFin, idIglesia: iglesiaActual.id, idSede: createForm.idSede || null, idMinisterio: createForm.idMinisterio || null },
+      { nombre: createForm.nombre.trim(), descripcion: createForm.descripcion.trim() || null, idTipoEvento: createForm.idTipoEvento, fechaInicio: createForm.fechaInicio, fechaFin: createForm.fechaFin, idIglesia: idIglesiaNum ?? iglesiaActual?.id ?? 0, idSede: createForm.idSede || null, idMinisterio: createForm.idMinisterio || null },
       { onSuccess: () => { setShowCreate(false); resetCreateForm(); } }
     );
   };

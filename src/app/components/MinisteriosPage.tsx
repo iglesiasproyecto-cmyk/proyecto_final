@@ -225,11 +225,12 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
 
 export function MinisteriosPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
+  const idIglesiaNum = Number(idIglesia) || undefined;
   const { iglesiaActual } = useApp();
-  const { data: ministerios = [], isLoading } = useMinisteriosEnriquecidos(iglesiaActual?.id);
+  const { data: ministerios = [], isLoading } = useMinisteriosEnriquecidos(idIglesiaNum);
   const { data: todasSedes = [] } = useSedesEnriquecidas();
-  const sedes = iglesiaActual
-    ? todasSedes.filter(s => s.idIglesia === iglesiaActual.id)
+  const sedes = idIglesiaNum
+    ? todasSedes.filter(s => s.idIglesia === idIglesiaNum)
     : todasSedes;
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);

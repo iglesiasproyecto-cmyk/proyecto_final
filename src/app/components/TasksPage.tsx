@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useParams } from "react-router";
 import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia } from "@/hooks/useEventos";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
@@ -38,8 +39,10 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function TasksPage() {
+  const { idIglesia } = useParams<{ idIglesia: string }>();
+  const idIglesiaNum = Number(idIglesia) || undefined;
   const { usuarioActual, rolActual, iglesiaActual } = useApp();
-  const { data: tareas = [], isLoading } = useTareasEnriquecidas(undefined, iglesiaActual?.id);
+  const { data: tareas = [], isLoading } = useTareasEnriquecidas(undefined, idIglesiaNum);
   const createTareaMutation = useCreateTarea();
   const updateEstadoMutation = useUpdateTareaEstado();
   const updateTareaMutation = useUpdateTarea();
@@ -47,7 +50,7 @@ export function TasksPage() {
   const createAsignadaMutation = useCreateTareaAsignada();
   const deleteAsignadaMutation = useDeleteTareaAsignada();
   const createEvidenciaMutation = useCreateTareaEvidencia();
-  const { data: ministerios = [] } = useMinisteriosEnriquecidos(iglesiaActual?.id);
+  const { data: ministerios = [] } = useMinisteriosEnriquecidos(idIglesiaNum);
 
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState<number | null>(null);
