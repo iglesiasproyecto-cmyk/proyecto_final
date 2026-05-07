@@ -3,7 +3,7 @@
 
 -- Agregar columna id_iglesia nullable
 ALTER TABLE public.aula_curso
-  ADD COLUMN IF NOT EXISTS id_iglesia bigint REFERENCES public.iglesia(id_iglesia) ON DELETE CASCADE;
+  ADD COLUMN IF NOT EXISTS id_iglesia bigint REFERENCES public.iglesia(id_iglesia) ON DELETE RESTRICT;
 
 -- Hacer id_ministerio nullable (los cursos de iglesia no tienen ministerio)
 ALTER TABLE public.aula_curso
@@ -28,7 +28,3 @@ CREATE INDEX IF NOT EXISTS idx_aula_curso_iglesia
 -- Índice para búsquedas por ministerio (ya existía, verificar)
 CREATE INDEX IF NOT EXISTS idx_aula_curso_ministerio
   ON public.aula_curso(id_ministerio) WHERE id_ministerio IS NOT NULL;
-
--- Soft delete en aula_inscripcion para consistencia
-ALTER TABLE public.aula_inscripcion
-  ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
