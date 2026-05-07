@@ -44,22 +44,15 @@ function normalizeAppRole(rawRoles: string[]): string {
       .trim()
   )
 
-  console.log('[DEBUG] normalizeAppRole - rawRoles:', rawRoles)
-  console.log('[DEBUG] normalizeAppRole - normalized:', normalized)
-
   if (normalized.some((name) => name === 'super administrador')) {
-    console.log('[DEBUG] normalizeAppRole - returning super_admin')
     return 'super_admin'
   }
   if (normalized.some((name) => name === 'administrador de iglesia')) {
-    console.log('[DEBUG] normalizeAppRole - returning admin_iglesia')
     return 'admin_iglesia'
   }
   if (normalized.some((name) => name.includes('lider'))) {
-    console.log('[DEBUG] normalizeAppRole - returning lider')
     return 'lider'
   }
-  console.log('[DEBUG] normalizeAppRole - returning servidor (fallback)')
   return 'servidor'
 }
 
@@ -430,9 +423,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Effect to set a mock user if in mock mode and no real user
   useEffect(() => {
-    console.log('[DEBUG] Mock mode effect - isMockMode:', isMockMode, 'usuarioActual:', !!usuarioActual, 'authLoading:', authLoading, 'mockRol:', mockRol)
     if (isMockMode && !usuarioActual && !authLoading) {
-      console.log('[DEBUG] Setting up mock user with role:', mockRol)
       setUsuarioActual({
         idUsuario: 999,
         nombres: 'Usuario',
@@ -448,7 +439,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         actualizadoEn: new Date().toISOString(),
       })
       const mockDerivedRol = normalizeAppRole([mockRol])
-      console.log('[DEBUG] Mock user role normalized to:', mockDerivedRol)
       setRolActual(mockDerivedRol)
       setIglesiasDelUsuario([{ id: 1, nombre: 'Iglesia Mock' }])
       setIglesiaActual({ id: 1, nombre: 'Iglesia Mock' })

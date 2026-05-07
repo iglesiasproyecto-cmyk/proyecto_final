@@ -1,0 +1,104 @@
+<h2>Diseño SaaS — Sección 3b: Estructura de Rutas Multi-Tenant</h2>
+<p class="subtitle">El id_iglesia va en la URL como tenant scope. Confirmá la estructura antes de continuar.</p>
+
+<div class="section">
+  <h3>🗺️ Nueva estructura de rutas</h3>
+  <div class="mockup">
+    <div class="mockup-header">routes.ts — árbol completo</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:12px;line-height:1.9">
+
+      <div style="color:#64748b">/ → LandingPage (pública)</div>
+      <div style="color:#64748b">/login → LoginPage (pública)</div>
+      <div style="color:#64748b">/forgot-password → ForgotPasswordPage (pública)</div>
+      <div style="margin-top:8px"></div>
+
+      <div style="color:#dc2626;font-weight:600">/app → AppLayout (guard: autenticado)</div>
+      <div style="padding-left:20px;color:#dc2626">  /app → IndexRedirect (→ super_admin: /app/global | otros: /app/:id_iglesia)</div>
+
+      <div style="margin-top:10px;color:#dc2626;font-weight:600">  /app/global → SuperAdminLayout (guard: solo super_admin)</div>
+      <div style="padding-left:40px;color:#94a3b8">    /app/global                  → Dashboard global</div>
+      <div style="padding-left:40px;color:#94a3b8">    /app/global/iglesias         → CRUD todas las iglesias</div>
+      <div style="padding-left:40px;color:#94a3b8">    /app/global/administradores  → Gestión de admin_iglesia</div>
+      <div style="padding-left:40px;color:#94a3b8">    /app/global/usuarios         → Todos los usuarios</div>
+      <div style="padding-left:40px;color:#94a3b8">    /app/global/geografia        → CRUD geografía</div>
+      <div style="padding-left:40px;color:#94a3b8">    /app/global/catalogos        → Tipos evento, etc.</div>
+      <div style="padding-left:40px;color:#94a3b8">    /app/global/notificaciones   → Notificaciones propias</div>
+      <div style="padding-left:40px;color:#94a3b8">    /app/global/perfil           → Mi perfil</div>
+
+      <div style="margin-top:10px;color:#4f46e5;font-weight:600">  /app/:idIglesia → TenantLayout (guard: tiene acceso a esa iglesia)</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia                          → Dashboard del tenant</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/sedes                    → Sedes de la iglesia</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/pastores                 → Pastores de la iglesia</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/ministerios              → Ministerios</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/usuarios                 → Usuarios del tenant</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/miembros                 → Miembros</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/eventos                  → Eventos</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/tareas                   → Tareas</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/aula                     → Aula de Formación</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/aula/curso/:idCurso      → Detalle curso</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/aula/curso/:idCurso/servidor/:idUsuario → Progreso</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/mi-ministerio            → Mi ministerio (lider/servidor)</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/notificaciones           → Notificaciones</div>
+      <div style="padding-left:40px;color:#818cf8">    /app/:idIglesia/perfil                   → Mi perfil</div>
+
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🔀 Redirección automática por rol al hacer login</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
+    <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:12px;border-radius:4px">
+      <div style="font-weight:700;color:#dc2626">super_admin</div>
+      <div style="margin-top:4px">→ <code>/app/global</code></div>
+      <div style="color:#64748b;margin-top:4px">Puede navegar a cualquier <code>/app/:idIglesia/*</code> para ver ese tenant.</div>
+    </div>
+    <div style="background:#eff6ff;border-left:4px solid #4f46e5;padding:12px;border-radius:4px">
+      <div style="font-weight:700;color:#4f46e5">admin_iglesia</div>
+      <div style="margin-top:4px">→ <code>/app/5</code> <span style="color:#64748b">(su id_iglesia desde JWT)</span></div>
+      <div style="color:#64748b;margin-top:4px">Solo puede acceder a <code>/app/5/*</code>. Otro idIglesia → 403.</div>
+    </div>
+    <div style="background:#fffbeb;border-left:4px solid #d97706;padding:12px;border-radius:4px">
+      <div style="font-weight:700;color:#d97706">lider</div>
+      <div style="margin-top:4px">→ <code>/app/5/mi-ministerio</code></div>
+      <div style="color:#64748b;margin-top:4px">Scoped a su iglesia. Solo ve rutas de su ministerio dentro del tenant.</div>
+    </div>
+    <div style="background:#ecfeff;border-left:4px solid #0891b2;padding:12px;border-radius:4px">
+      <div style="font-weight:700;color:#0891b2">servidor</div>
+      <div style="margin-top:4px">→ <code>/app/5/mi-ministerio</code></div>
+      <div style="color:#64748b;margin-top:4px">Igual que lider pero con permisos solo lectura en la mayoría de vistas.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🛡️ Guard del TenantLayout</h3>
+  <div class="mockup">
+    <div class="mockup-header">Lógica de acceso en TenantLayout.tsx</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:12px;line-height:1.8">
+      <div><span style="color:#64748b">// idIglesia viene del parámetro de ruta</span></div>
+      <div>const { idIglesia } = useParams()</div>
+      <div>const { rolActual, iglesiaActual } = useApp()</div>
+      <div style="margin-top:8px">if (rolActual === 'super_admin') → ✅ siempre pasa</div>
+      <div>if (iglesiaActual.id === Number(idIglesia)) → ✅ pasa</div>
+      <div>else → ❌ navigate('/403') o navigate('/app/[su_iglesia]')</div>
+      <div style="margin-top:8px;color:#64748b">// Todos los servicios usan idIglesia del param, no del contexto</div>
+      <div>// → URL es la fuente de verdad del tenant activo</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>⚠️ Impacto en servicios y hooks existentes</h3>
+  <div style="background:#fef9c3;border:1px solid #fde047;border-radius:6px;padding:12px;font-size:12px">
+    <div style="font-weight:600;color:#92400e;margin-bottom:6px">Todos los servicios deben recibir <code>idIglesia</code> explícitamente:</div>
+    <div style="line-height:2">
+      • <code>useEventos(idIglesia)</code> — filtra por tenant desde la URL<br/>
+      • <code>useTareas(idIglesia)</code> — filtra por tenant<br/>
+      • <code>useMinisterios(idIglesia)</code> — filtra por tenant<br/>
+      • <code>useUsuarios(idIglesia)</code> — filtra por tenant<br/>
+      • Los servicios de <b>super_admin global</b> no pasan idIglesia (ven todo vía RLS bypass)<br/>
+      • RLS en Supabase es la segunda línea de defensa — aunque se manipule el param, la DB filtra igual
+    </div>
+  </div>
+</div>

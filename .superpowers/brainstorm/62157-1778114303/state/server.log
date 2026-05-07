@@ -1,0 +1,11 @@
+{"type":"server-started","port":52278,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:52278","screen_dir":"/home/juanda/Proyectofinal/.superpowers/brainstorm/62157-1778114303/content","state_dir":"/home/juanda/Proyectofinal/.superpowers/brainstorm/62157-1778114303/state"}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/62157-1778114303/content/estado-actual.html"}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/62157-1778114303/content/waiting-1.html"}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/62157-1778114303/content/enfoques-multitenant.html"}
+{"source":"user-event","type":"click","text":"C\n    \n      Híbrido (Recomendado ★)\n      JWT Claims para las verificaciones simples y frecuentes (tenant_id, role). Funciones SQL para reglas complejas (¿es lider de este ministerio específico?). Lo mejor de los dos mundos.\n      \n        Pros\n          Rápido en el 90% de los casos (JWT)\n          Flexible para reglas complejas (SQL)\n          Escalable a producción real\n          Patrón usado por Supabase en sus guías SaaS\n        \n        Contras\n          Más complejo de implementar inicialmente\n          Requiere trigger para sincronizar claims","choice":"c","id":null,"timestamp":1778114793879}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/62157-1778114303/content/diseno-seccion1.html"}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/62157-1778114303/content/diseno-seccion2.html"}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/62157-1778114303/content/diseno-seccion3.html"}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/62157-1778114303/content/diseno-seccion3b.html"}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/62157-1778114303/content/diseno-resumen.html"}
+{"type":"server-stopped","reason":"idle timeout"}

@@ -1,0 +1,125 @@
+<h2>Diseño SaaS — Sección 1: Arquitectura Multi-Tenant</h2>
+<p class="subtitle">Revisá este diseño y confirmá si está bien antes de continuar con las secciones siguientes.</p>
+
+<div class="section">
+  <h3>🏗️ Descomposición en sub-proyectos (orden de ejecución)</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:12px;border-radius:4px">
+      <div style="font-weight:700;color:#dc2626">SP-1 — Corrección de bugs críticos</div>
+      <div style="font-size:12px;margin-top:4px;color:#7f1d1d">Bloquea todo lo demás. Primero esto.</div>
+      <ul style="font-size:12px;margin:6px 0 0 16px;line-height:1.7">
+        <li>403 en mutaciones geografía (RLS faltante)</li>
+        <li>400 en lista de usuarios enriquecida</li>
+        <li>Creación de tareas rota (auth_user_id desvinculado)</li>
+        <li>Mock mode con sesión expirada → loop infinito</li>
+      </ul>
+    </div>
+    <div style="background:#fff7ed;border-left:4px solid #f97316;padding:12px;border-radius:4px">
+      <div style="font-weight:700;color:#c2410c">SP-2 — Multi-tenancy + RLS estricta</div>
+      <div style="font-size:12px;margin-top:4px;color:#7c2d12">Core del SaaS. JWT Claims + políticas por rol.</div>
+      <ul style="font-size:12px;margin:6px 0 0 16px;line-height:1.7">
+        <li>Trigger <code>set_tenant_claims()</code> en login/cambio de rol</li>
+        <li>Funciones SQL: <code>get_my_tenant_id()</code>, <code>is_super_admin()</code>, <code>get_my_ministerios()</code></li>
+        <li>RLS estricta por tabla y por rol</li>
+        <li>Mecanismo de invalidación de caché JWT</li>
+      </ul>
+    </div>
+    <div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:12px;border-radius:4px">
+      <div style="font-weight:700;color:#15803d">SP-3 — Migración de esquema</div>
+      <div style="font-size:12px;margin-top:4px;color:#166534">Ajustes al schema para SaaS + cursos mixtos.</div>
+      <ul style="font-size:12px;margin:6px 0 0 16px;line-height:1.7">
+        <li><code>curso</code>: <code>id_ministerio</code> nullable + agregar <code>id_iglesia</code></li>
+        <li><code>tarea</code>: agregar <code>id_sede</code> y <code>id_ministerio</code> explícito</li>
+        <li><code>evento</code>: verificar FK de sede/ministerio</li>
+        <li>Índices de performance en columnas tenant</li>
+      </ul>
+    </div>
+    <div style="background:#eff6ff;border-left:4px solid #3b82f6;padding:12px;border-radius:4px">
+      <div style="font-weight:700;color:#1d4ed8">SP-4 — CRUDs completos por rol</div>
+      <div style="font-size:12px;margin-top:4px;color:#1e3a8a">UI completa para cada rol con permisos correctos.</div>
+      <ul style="font-size:12px;margin:6px 0 0 16px;line-height:1.7">
+        <li>Admin iglesia: gestionar sedes, ministerios, miembros, pastores asignados</li>
+        <li>Lider: gestionar su ministerio completo</li>
+        <li>Servidor: vista personal (tareas, eventos, aula)</li>
+        <li>Superadmin: administradores de iglesia (nuevo CRUD)</li>
+      </ul>
+    </div>
+    <div style="background:#faf5ff;border-left:4px solid #a855f7;padding:12px;border-radius:4px;grid-column:span 2">
+      <div style="font-weight:700;color:#7e22ce">SP-5 — Aula de Formación multi-nivel</div>
+      <div style="font-size:12px;margin-top:4px;color:#581c87">Cursos de iglesia (todos los miembros) y cursos de ministerio (solo ese ministerio).</div>
+      <ul style="font-size:12px;margin:6px 0 0 16px;line-height:1.7;columns:2">
+        <li>Cursos de iglesia: admin crea, todos los miembros los ven</li>
+        <li>Cursos de ministerio: líder crea, solo miembros del ministerio</li>
+        <li>RLS scoped al nivel correcto</li>
+        <li>UI diferenciada por tipo de curso</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🔐 Arquitectura JWT Claims + Cache Management</h3>
+  <div class="mockup">
+    <div class="mockup-header">Flujo completo: Login → Claims → RLS → Cache Refresh</div>
+    <div class="mockup-body" style="font-size:13px;line-height:2">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div style="font-weight:600;color:#1d4ed8;margin-bottom:4px">📥 Al hacer login:</div>
+          <div style="font-family:monospace;font-size:11px;background:#f8fafc;padding:8px;border-radius:4px;line-height:1.6">
+            JWT app_metadata: {<br/>
+            &nbsp;&nbsp;tenant_id: 5,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// id_iglesia<br/>
+            &nbsp;&nbsp;role: "admin_iglesia",<br/>
+            &nbsp;&nbsp;claims_at: 1746000000  // timestamp<br/>
+            }
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:600;color:#15803d;margin-bottom:4px">🔄 Cuando cambia rol/iglesia:</div>
+          <div style="font-size:12px;line-height:1.8">
+            1. DB actualiza <code>usuario_rol</code><br/>
+            2. Trigger llama <code>update_user_claims()</code><br/>
+            3. Actualiza <code>app_metadata</code> via service role<br/>
+            4. Frontend detecta <code>claims_at</code> stale<br/>
+            5. Llama <code>supabase.auth.refreshSession()</code><br/>
+            6. Nuevo JWT con claims actualizados ✅
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px">
+        <div style="font-weight:600;color:#166534">⚡ Estrategia de caché:</div>
+        <div style="font-size:12px;line-height:1.8;color:#14532d">
+          • <code>claims_at</code> en JWT vs <code>permissions_updated_at</code> en tabla <code>usuario_rol</code><br/>
+          • AppContext compara en cada carga → si <code>DB.updated_at > claims_at</code> → fuerza refresh automático<br/>
+          • JWT expira en 1 hora por defecto → máximo 1h de claims stale en el peor caso<br/>
+          • Para cambios críticos (desactivar usuario): usar <code>supabase.auth.admin.signOut(userId)</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🔒 Matriz de RLS por rol y tabla</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead>
+      <tr style="background:#1e293b;color:white">
+        <th style="padding:8px;text-align:left">Tabla</th>
+        <th style="padding:8px;text-align:center">super_admin</th>
+        <th style="padding:8px;text-align:center">admin_iglesia</th>
+        <th style="padding:8px;text-align:center">lider</th>
+        <th style="padding:8px;text-align:center">servidor</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:7px;border:1px solid #e2e8f0;font-weight:600">iglesia</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#16a34a">ALL</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#2563eb">SELECT su iglesia</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT su iglesia</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT su iglesia</td></tr>
+      <tr style="background:#f8fafc"><td style="padding:7px;border:1px solid #e2e8f0;font-weight:600">sede</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#16a34a">ALL</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#2563eb">ALL donde id_iglesia = tenant</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT su sede</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT su sede</td></tr>
+      <tr><td style="padding:7px;border:1px solid #e2e8f0;font-weight:600">ministerio</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#16a34a">ALL</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#2563eb">ALL en su iglesia</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#d97706">ALL sus ministerios</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT sus ministerios</td></tr>
+      <tr style="background:#f8fafc"><td style="padding:7px;border:1px solid #e2e8f0;font-weight:600">usuario</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#16a34a">ALL</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#2563eb">ALL en su iglesia</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#d97706">SELECT sus ministerios</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT propio</td></tr>
+      <tr><td style="padding:7px;border:1px solid #e2e8f0;font-weight:600">evento</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#16a34a">ALL</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#2563eb">ALL en su iglesia</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#d97706">ALL sus ministerios</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT sus ministerios</td></tr>
+      <tr style="background:#f8fafc"><td style="padding:7px;border:1px solid #e2e8f0;font-weight:600">tarea</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#16a34a">ALL</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#2563eb">ALL en su iglesia</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#d97706">ALL sus ministerios</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT asignadas a él</td></tr>
+      <tr><td style="padding:7px;border:1px solid #e2e8f0;font-weight:600">curso</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#16a34a">ALL</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#2563eb">ALL en su iglesia</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#d97706">ALL sus ministerios + iglesia</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT sus ministerios + iglesia</td></tr>
+      <tr style="background:#f8fafc"><td style="padding:7px;border:1px solid #e2e8f0;font-weight:600">pastor</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#16a34a">ALL</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#2563eb">ALL en su iglesia</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT su iglesia</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">—</td></tr>
+      <tr><td style="padding:7px;border:1px solid #e2e8f0;font-weight:600">pais/dpto/ciudad</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#16a34a">ALL</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT</td><td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#64748b">SELECT</td></tr>
+    </tbody>
+  </table>
+</div>

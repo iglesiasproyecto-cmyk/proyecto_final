@@ -1,0 +1,95 @@
+<h2>Diseño SaaS — Resumen Final de Decisiones</h2>
+<p class="subtitle">Todo lo acordado en esta sesión. Este contenido va al spec document.</p>
+
+<div class="section">
+  <h3>✅ Decisiones tomadas</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px">
+      <div style="font-weight:600;color:#15803d">1. Multi-tenancy: Híbrido JWT + SQL</div>
+      <div style="color:#166534;margin-top:4px">JWT claims para tenant_id y role. Funciones SQL para reglas complejas (ministerio_ids). Cache invalidation con permissions_updated_at.</div>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px">
+      <div style="font-weight:600;color:#15803d">2. Tabla pastor se mantiene</div>
+      <div style="color:#166534;margin-top:4px">Pastor = entidad de persona. Admin de Iglesia = rol de usuario. Un pastor puede tener cuenta y rol admin_iglesia pero no es obligatorio.</div>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px">
+      <div style="font-weight:600;color:#15803d">3. Admin iglesia → 1 sola iglesia</div>
+      <div style="color:#166534;margin-top:4px">Cada admin_iglesia gestiona exactamente una iglesia y todo lo que contiene (sedes, ministerios, miembros, etc).</div>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px">
+      <div style="font-weight:600;color:#15803d">4. Lider/Servidor: múltiples ministerios</div>
+      <div style="color:#166534;margin-top:4px">Pueden pertenecer a varios ministerios. RLS usa get_my_ministerios() para scoping. Generalmente es uno solo.</div>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px">
+      <div style="font-weight:600;color:#15803d">5. Cursos mixtos (tipo D)</div>
+      <div style="color:#166534;margin-top:4px">Cursos de iglesia (todos los miembros) + cursos de ministerio (solo ese ministerio). aula_curso.id_ministerio → nullable + agregar id_iglesia.</div>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px">
+      <div style="font-weight:600;color:#15803d">6. Rutas con tenant ID en URL</div>
+      <div style="color:#166534;margin-top:4px">/app/global/* para super_admin. /app/:idIglesia/* para todos los demás. TenantLayout valida acceso al tenant del param.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>📦 5 Sub-proyectos — orden de ejecución</h3>
+  <div style="font-size:12px">
+    <div style="display:flex;gap:8px;align-items:stretch;margin-bottom:8px">
+      <div style="background:#dc2626;color:white;padding:6px 10px;border-radius:6px;font-weight:700;min-width:40px;text-align:center;display:flex;align-items:center">SP-1</div>
+      <div style="flex:1;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:10px">
+        <div style="font-weight:600;color:#dc2626">Corrección de bugs críticos (prioridad máxima)</div>
+        <div style="color:#7f1d1d;margin-top:2px">403 geografía · 400 usuarios enriquecidos · Creación de tareas rota · Mock mode + sesión inválida</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:stretch;margin-bottom:8px">
+      <div style="background:#f97316;color:white;padding:6px 10px;border-radius:6px;font-weight:700;min-width:40px;text-align:center;display:flex;align-items:center">SP-2</div>
+      <div style="flex:1;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:10px">
+        <div style="font-weight:600;color:#c2410c">Multi-tenancy + RLS estricta</div>
+        <div style="color:#7c2d12;margin-top:2px">Trigger set_tenant_claims · Funciones SQL SECURITY DEFINER · RLS por tabla/rol · Cache invalidation · permissions_updated_at</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:stretch;margin-bottom:8px">
+      <div style="background:#eab308;color:white;padding:6px 10px;border-radius:6px;font-weight:700;min-width:40px;text-align:center;display:flex;align-items:center">SP-3</div>
+      <div style="flex:1;background:#fefce8;border:1px solid #fde047;border-radius:6px;padding:10px">
+        <div style="font-weight:600;color:#a16207">Migración de esquema</div>
+        <div style="color:#78350f;margin-top:2px">aula_curso: id_ministerio nullable + id_iglesia · tarea: agregar id_iglesia · pastor: agregar id_iglesia · aula_inscripcion: deleted_at · índices FK</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:stretch;margin-bottom:8px">
+      <div style="background:#3b82f6;color:white;padding:6px 10px;border-radius:6px;font-weight:700;min-width:40px;text-align:center;display:flex;align-items:center">SP-4</div>
+      <div style="flex:1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px">
+        <div style="font-weight:600;color:#1d4ed8">Rutas multi-tenant + CRUDs completos</div>
+        <div style="color:#1e3a8a;margin-top:2px">Nueva estructura /app/global + /app/:idIglesia · TenantLayout guard · Renombrar rutas departamentos→ministerios · Nueva página Administradores · Completar CRUDs por rol</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:stretch">
+      <div style="background:#a855f7;color:white;padding:6px 10px;border-radius:6px;font-weight:700;min-width:40px;text-align:center;display:flex;align-items:center">SP-5</div>
+      <div style="flex:1;background:#faf5ff;border:1px solid #d8b4fe;border-radius:6px;padding:10px">
+        <div style="font-weight:600;color:#7e22ce">Aula multi-nivel</div>
+        <div style="color:#581c87;margin-top:2px">Cursos de iglesia vs ministerio · UI diferenciada por tipo · RLS scoping · Admin crea cursos de iglesia · Líder crea cursos de ministerio</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🗄️ Migraciones SQL exactas (SP-3)</h3>
+  <div class="mockup">
+    <div class="mockup-header">4 migraciones en orden</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:11px;line-height:1.8">
+      <div style="color:#7c3aed;font-weight:600">-- M1: aula_curso cursos mixtos</div>
+      <div>ALTER TABLE aula_curso ADD COLUMN id_iglesia bigint REFERENCES iglesia(id_iglesia);</div>
+      <div>ALTER TABLE aula_curso ALTER COLUMN id_ministerio DROP NOT NULL;</div>
+      <div>ALTER TABLE aula_curso ADD CONSTRAINT aula_curso_scope_check</div>
+      <div>&nbsp;&nbsp;CHECK ((id_ministerio IS NOT NULL) != (id_iglesia IS NOT NULL));</div>
+      <div style="margin-top:8px;color:#7c3aed;font-weight:600">-- M2: tarea con id_iglesia directo</div>
+      <div>ALTER TABLE tarea ADD COLUMN id_iglesia bigint REFERENCES iglesia(id_iglesia);</div>
+      <div style="color:#64748b">-- backfill: UPDATE tarea t SET id_iglesia = (SELECT s.id_iglesia FROM ministerio m JOIN sede s ON m.id_sede = s.id_sede WHERE m.id_ministerio = t.id_ministerio) WHERE id_ministerio IS NOT NULL;</div>
+      <div style="margin-top:8px;color:#7c3aed;font-weight:600">-- M3: pastor con id_iglesia</div>
+      <div>ALTER TABLE pastor ADD COLUMN id_iglesia bigint REFERENCES iglesia(id_iglesia);</div>
+      <div style="margin-top:8px;color:#7c3aed;font-weight:600">-- M4: cache invalidation + soft delete</div>
+      <div>ALTER TABLE usuario_rol ADD COLUMN permissions_updated_at TIMESTAMPTZ DEFAULT now();</div>
+      <div>ALTER TABLE aula_inscripcion ADD COLUMN deleted_at TIMESTAMPTZ;</div>
+    </div>
+  </div>
+</div>

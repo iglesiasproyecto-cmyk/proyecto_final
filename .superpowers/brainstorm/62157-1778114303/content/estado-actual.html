@@ -1,0 +1,115 @@
+<h2>Análisis del Estado Actual — IGLESIABD</h2>
+<p class="subtitle">Diagnóstico completo antes de planear la conversión a SaaS multi-tenant</p>
+
+<div class="section">
+  <h3>🏛️ Jerarquía de entidades actual vs. requerida</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">Estado ACTUAL (inconsistente)</div>
+      <div class="mockup-body" style="font-family:monospace;font-size:13px;line-height:2">
+        <div style="color:#e74c3c">❌ <b>Pastor</b> — entidad separada de Usuario</div>
+        <div style="color:#e74c3c;padding-left:20px">↳ tabla <code>pastor</code> + tabla <code>usuario</code> → duplicación</div>
+        <div style="margin-top:8px">Iglesia</div>
+        <div style="padding-left:20px">↳ Sede (FK id_iglesia ✅)</div>
+        <div style="padding-left:40px">↳ Ministerio (FK id_sede ✅)</div>
+        <div style="padding-left:60px">↳ MiembroMinisterio</div>
+        <div style="margin-top:8px;color:#e67e22">⚠️ Pastores asignados por iglesia_pastor / sede_pastor (tablas de historial)</div>
+        <div style="color:#e67e22">⚠️ Sin tenant_id → no hay aislamiento por iglesia en RLS</div>
+        <div style="color:#e67e22">⚠️ RLS permisiva (<code>USING (true)</code>) en producción</div>
+        <div style="color:#e74c3c">❌ proceso_asignado_curso → FK a <code>iglesia</code> (debería ser <code>sede</code>?)</div>
+        <div style="color:#e74c3c">❌ curso → FK a <code>ministerio</code> (¿correcto?)</div>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">Estado OBJETIVO (SaaS multi-tenant)</div>
+      <div class="mockup-body" style="font-family:monospace;font-size:13px;line-height:2">
+        <div style="color:#27ae60">✅ <b>Admin de Iglesia</b> = usuario con rol <code>admin_iglesia</code></div>
+        <div style="color:#27ae60;padding-left:20px">↳ tabla <code>pastor</code> ELIMINADA o renombrada</div>
+        <div style="margin-top:8px"><b>Iglesia</b> (= tenant)</div>
+        <div style="padding-left:20px">↳ Sede (N sedes por iglesia)</div>
+        <div style="padding-left:40px">↳ Ministerio (N ministerios por sede)</div>
+        <div style="padding-left:60px">↳ Líder (usuario con rol <code>lider</code>)</div>
+        <div style="padding-left:60px">↳ Servidor (usuario con rol <code>servidor</code>)</div>
+        <div style="margin-top:8px;color:#27ae60">✅ RLS basada en id_iglesia como tenant key</div>
+        <div style="color:#27ae60">✅ Políticas estrictas por rol</div>
+        <div style="color:#27ae60">✅ Superadmin cross-tenant</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🚨 Bugs críticos documentados</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px">
+      <div style="font-weight:600;color:#dc2626;margin-bottom:6px">403 en mutaciones geografía</div>
+      <div style="font-size:13px;color:#7f1d1d">RLS de INSERT/UPDATE/DELETE faltante en <code>pais</code>, <code>departamento</code>, <code>ciudad</code></div>
+    </div>
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px">
+      <div style="font-weight:600;color:#dc2626;margin-bottom:6px">400 en lista de usuarios enriquecida</div>
+      <div style="font-size:13px;color:#7f1d1d">RLS de <code>usuario</code> bloquea embed de <code>usuario_rol</code> + <code>miembro_ministerio</code></div>
+    </div>
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px">
+      <div style="font-weight:600;color:#dc2626;margin-bottom:6px">Creación de tareas rota</div>
+      <div style="font-size:13px;color:#7f1d1d">Script de usuario de prueba usa columnas inexistentes, <code>auth_user_id</code> no vinculado</div>
+    </div>
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px">
+      <div style="font-weight:600;color:#dc2626;margin-bottom:6px">Mock mode + sesión inválida</div>
+      <div style="font-size:13px;color:#7f1d1d">Token expirado en localStorage → 403, sistema no maneja el fallback</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>📋 Roles actuales vs. rol objetivo</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead>
+      <tr style="background:#f1f5f9">
+        <th style="padding:8px;border:1px solid #e2e8f0;text-align:left">Rol</th>
+        <th style="padding:8px;border:1px solid #e2e8f0;text-align:left">Estado Actual</th>
+        <th style="padding:8px;border:1px solid #e2e8f0;text-align:left">Objetivo SaaS</th>
+        <th style="padding:8px;border:1px solid #e2e8f0;text-align:left">Cambio requerido</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="padding:8px;border:1px solid #e2e8f0"><b>super_admin</b></td>
+        <td style="padding:8px;border:1px solid #e2e8f0">Existe, acceso total UI</td>
+        <td style="padding:8px;border:1px solid #e2e8f0">Acceso total todas las iglesias (cross-tenant)</td>
+        <td style="padding:8px;border:1px solid #e2e8f0;color:#f59e0b">Agregar acceso a Pastores/Admins en sidebar. RLS bypass.</td>
+      </tr>
+      <tr style="background:#fafafa">
+        <td style="padding:8px;border:1px solid #e2e8f0"><b>admin_iglesia</b><br/><small style="color:#666">(antes: Pastor)</small></td>
+        <td style="padding:8px;border:1px solid #e2e8f0">Parcial. Falta gestión de sedes, pastores</td>
+        <td style="padding:8px;border:1px solid #e2e8f0">Todo dentro de su iglesia + sedes + ministerios + miembros + eventos + tareas + aula</td>
+        <td style="padding:8px;border:1px solid #e2e8f0;color:#dc2626">Eliminar tabla pastor, renombrar en UI, completar permisos</td>
+      </tr>
+      <tr>
+        <td style="padding:8px;border:1px solid #e2e8f0"><b>lider</b></td>
+        <td style="padding:8px;border:1px solid #e2e8f0">Parcial. Solo ve su ministerio</td>
+        <td style="padding:8px;border:1px solid #e2e8f0">Gestiona su ministerio: miembros, eventos, tareas, aula</td>
+        <td style="padding:8px;border:1px solid #e2e8f0;color:#f59e0b">Reforzar RLS scoping a ministerio. Completar CRUDs.</td>
+      </tr>
+      <tr style="background:#fafafa">
+        <td style="padding:8px;border:1px solid #e2e8f0"><b>servidor</b></td>
+        <td style="padding:8px;border:1px solid #e2e8f0">Parcial. Ve sus tareas y eventos</td>
+        <td style="padding:8px;border:1px solid #e2e8f0">Ve solo lo que le toca: tareas asignadas, eventos de su ministerio, aula</td>
+        <td style="padding:8px;border:1px solid #e2e8f0;color:#f59e0b">RLS estricta por usuario. Completar vista.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h3>📦 Alcance: Este es un proyecto GRANDE — necesita descomposición</h3>
+  <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:16px">
+    <div style="font-weight:600;color:#1d4ed8;margin-bottom:8px">Se identifican 5 sub-proyectos independientes:</div>
+    <ol style="margin:0;padding-left:20px;line-height:2;font-size:13px">
+      <li><b>SP-1:</b> Multi-tenant DB — Migración de esquema para SaaS (tenant isolation + RLS estricta)</li>
+      <li><b>SP-2:</b> Pastor → Admin de Iglesia — Refactor de entidad y renombrado en UI</li>
+      <li><b>SP-3:</b> Corrección de bugs críticos (403, 400, tareas, mock mode)</li>
+      <li><b>SP-4:</b> Completar CRUDs faltantes por rol (admin_iglesia, lider, servidor)</li>
+      <li><b>SP-5:</b> Aula de Formación multi-sede (cursos por sede/ministerio con RLS)</li>
+    </ol>
+  </div>
+</div>
