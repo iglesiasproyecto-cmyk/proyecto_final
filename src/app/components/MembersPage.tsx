@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { motion, AnimatePresence } from "motion/react";
 import { Plus, Search, Mail, Phone, Filter, Inbox, Trash2, Users, ShieldCheck, User } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolIcons: Record<string, React.ReactNode> = {
@@ -51,6 +52,7 @@ export function MembersPage() {
   const deleteMiembroMutation = useDeleteMiembroMinisterio();
   const [inviteForm, setInviteForm] = useState({ idUsuario: 0, rolEnMinisterio: "servidor" });
   const [inviteUserSearch, setInviteUserSearch] = useState("");
+  const [confirmDeleteMiembro, setConfirmDeleteMiembro] = useState<{ isOpen: boolean; id: number; nombre: string }>({ isOpen: false, id: 0, nombre: "" });
 
   const isLoading = ministeriosLoading || miembrosLoading;
 
@@ -85,8 +87,7 @@ export function MembersPage() {
     });
 
   function handleDeleteMiembro(id: number, nombre: string) {
-    if (!confirm(`¿Eliminar a "${nombre}" del ministerio?`)) return;
-    deleteMiembroMutation.mutate(id);
+    setConfirmDeleteMiembro({ isOpen: true, id, nombre });
   }
 
   const handleInvite = () => {
@@ -385,6 +386,14 @@ export function MembersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteMiembro.isOpen}
+        onClose={() => setConfirmDeleteMiembro({ isOpen: false, id: 0, nombre: "" })}
+        onConfirm={() => deleteMiembroMutation.mutate(confirmDeleteMiembro.id)}
+        title="¿Eliminar Miembro?"
+        description={`¿Estás seguro de que quieres eliminar a "${confirmDeleteMiembro.nombre}" del ministerio?`}
+      />
     </div>
   );
 }

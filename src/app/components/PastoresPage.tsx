@@ -20,6 +20,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { motion } from "motion/react";
 import { UserCheck, Plus, Pencil, Trash2, Search, Link2, Church, Mail, Phone, Save, X, Eye, Calendar } from "lucide-react";
 
@@ -61,6 +62,7 @@ export function PastoresPage() {
   const [formSolicitud, setFormSolicitud] = useState({ idPastorActual: 0, idSede: 0, idPastorNuevo: 0, esPrincipal: false, motivo: "" });
   const [confirmDeleteAsign, setConfirmDeleteAsign] = useState<{ id: number; pastorName: string; iglesiaName: string } | null>(null);
   const [selectedPastor, setSelectedPastor] = useState<number | null>(null);
+  const [confirmDeletePastor, setConfirmDeletePastor] = useState<{ isOpen: boolean; id: number; nombre: string }>({ isOpen: false, id: 0, nombre: "" });
 
   const createPastorMutation = useCreatePastor();
   const updatePastorMutation = useUpdatePastor();
@@ -79,8 +81,7 @@ export function PastoresPage() {
   );
 
   const handleDeletePastor = (id: number, nombre: string) => {
-    if (!confirm(`¿Eliminar pastor "${nombre}"? Esta acción es irreversible.`)) return;
-    deletePastorMutation.mutate(id);
+    setConfirmDeletePastor({ isOpen: true, id, nombre });
   };
 
   const openAddPastor = () => { setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 }); setEditingPastor(null); setDialogPastor(true); };
@@ -718,6 +719,14 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ConfirmDialog
+        isOpen={confirmDeletePastor.isOpen}
+        onClose={() => setConfirmDeletePastor({ isOpen: false, id: 0, nombre: "" })}
+        onConfirm={() => deletePastorMutation.mutate(confirmDeletePastor.id)}
+        title="¿Eliminar Pastor?"
+        description={`¿Estás seguro de que quieres eliminar al pastor "${confirmDeletePastor.nombre}"? Esta acción es irreversible.`}
+      />
     </div>
   );
 }

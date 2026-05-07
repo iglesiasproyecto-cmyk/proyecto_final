@@ -19,6 +19,7 @@ import {
   Calendar, Inbox, Trash2, UserPlus, X, Paperclip,
 } from "lucide-react"
 import { CrearTareaDialog } from "./CrearTareaDialog"
+import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog"
 
 const statusConfig = {
   pendiente:   { label: "Pendiente",   color: "bg-amber-500/10 text-amber-400 border-amber-500/20",   dot: "bg-amber-400",   icon: <AlertCircle className="w-3.5 h-3.5" /> },
@@ -59,6 +60,7 @@ export function LiderTareasView() {
   const [dateFilter, setDateFilter] = useState("")
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest")
   const [assignUserId, setAssignUserId] = useState(0)
+  const [confirmRemoveAssign, setConfirmRemoveAssign] = useState<{ open: boolean; id: number; nombre: string }>({ open: false, id: 0, nombre: "" })
 
   const task = selectedTaskId ? tareas.find(t => t.idTarea === selectedTaskId) ?? null : null
   const { data: evidencias = [] } = useTareaEvidencias(selectedTaskId ?? undefined)
@@ -287,7 +289,7 @@ export function LiderTareasView() {
                           <span className="text-xs font-medium">{a.nombreCompleto}</span>
                           <button
                             className="text-muted-foreground/40 hover:text-rose-400 transition-colors ml-0.5"
-                            onClick={() => { if (confirm(`¿Remover a ${a.nombreCompleto}?`)) deleteAsignada.mutate(a.idTareaAsignada) }}
+                            onClick={() => setConfirmRemoveAssign({ open: true, id: a.idTareaAsignada, nombre: a.nombreCompleto || "" })}
                             disabled={deleteAsignada.isPending}
                           >
                             <X className="w-3 h-3" />
@@ -404,6 +406,17 @@ export function LiderTareasView() {
         onOpenChange={setShowCreate}
         idUsuarioCreador={usuarioActual?.idUsuario ?? 0}
         onCreated={idTarea => setSelectedTaskId(idTarea)}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmRemoveAssign.isOpen}
+        onClose={() => setConfirmRemoveAssign({ open: false, id: 0, nombre: "" })}
+        onConfirm={() => {
+          deleteAsignada.mutate(confirmRemoveAssign.id);
+          setConfirmRemoveAssign({ open: false, id: 0, nombre: "" });
+        }}
+        title="¿Remover Asignación?"
+        description={`¿Estás seguro de que quieres remover a ${confirmRemoveAssign.nombre} de esta tarea?`}
       />
     </div>
   )

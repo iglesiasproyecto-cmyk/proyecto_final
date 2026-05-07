@@ -16,6 +16,7 @@ import {
   CalendarDays, Plus, MapPin, Clock, Globe, Users, Pencil, Trash2, Eye,
   CheckCircle2, XCircle, PlayCircle, BookMarked, Church,
 } from "lucide-react";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 
 const estadoConfig: Record<string, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
   programado:  { label: "Programado",  color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",    dot: "bg-[#4682b4]",    icon: <BookMarked className="w-3 h-3" /> },
@@ -129,6 +130,7 @@ export function EventsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [editEvento, setEditEvento] = useState<EventoEnriquecido | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventoEnriquecido | null>(null);
+  const [confirmDeleteEvento, setConfirmDeleteEvento] = useState<{ isOpen: boolean; id: number; nombre: string }>({ isOpen: false, id: 0, nombre: "" });
 
   const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
   const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "", estado: "programado" as string, idSede: 0, idMinisterio: 0 });
@@ -167,8 +169,7 @@ export function EventsPage() {
   };
 
   function handleDeleteEvento(id: number, nombre: string) {
-    if (!confirm(`¿Eliminar evento "${nombre}"?`)) return;
-    deleteEventoMutation.mutate(id);
+    setConfirmDeleteEvento({ isOpen: true, id, nombre });
   }
 
   if (!iglesiaActual) return (
@@ -522,6 +523,14 @@ export function EventsPage() {
           })()}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteEvento.isOpen}
+        onClose={() => setConfirmDeleteEvento({ isOpen: false, id: 0, nombre: "" })}
+        onConfirm={() => deleteEventoMutation.mutate(confirmDeleteEvento.id)}
+        title="¿Eliminar Evento?"
+        description={`¿Estás seguro de que quieres eliminar el evento "${confirmDeleteEvento.nombre}"?`}
+      />
     </div>
   );
 }

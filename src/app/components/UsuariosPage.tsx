@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, Phone, UserPlus, ShieldPlus, Pencil, X, Loader2, Trash2, AlertTriangle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { HojaDeVidaModal } from "./hojaDeVida/HojaDeVidaModal";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 
 export function UsuariosPage() {
   const qc = useQueryClient();
@@ -40,6 +41,7 @@ export function UsuariosPage() {
   const [editForm, setEditForm] = useState({ nombres: "", apellidos: "", telefono: "" });
   const [deleteUser, setDeleteUser] = useState<number | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [confirmRemoveRol, setConfirmRemoveRol] = useState<{ isOpen: boolean; idUsuarioRol: number; rolNombre: string }>({ isOpen: false, idUsuarioRol: 0, rolNombre: "" });
 
   const toggleActivoMutation = useToggleUsuarioActivo();
   const inviteMutation = useInviteUser();
@@ -154,9 +156,15 @@ export function UsuariosPage() {
   };
 
   const handleRemoveRol = (idUsuarioRol: number, rolNombre: string) => {
-    if (!confirm(`¿Remover el rol "${rolNombre}"? El usuario perderá los permisos asociados.`)) return;
-    removeRolMutation.mutate(idUsuarioRol, {
-      onSuccess: () => toast.success(`Rol "${rolNombre}" removido`),
+    setConfirmRemoveRol({ isOpen: true, idUsuarioRol, rolNombre });
+  };
+
+  const executeRemoveRol = () => {
+    removeRolMutation.mutate(confirmRemoveRol.idUsuarioRol, {
+      onSuccess: () => {
+        toast.success(`Rol "${confirmRemoveRol.rolNombre}" removido`);
+        setConfirmRemoveRol({ isOpen: false, idUsuarioRol: 0, rolNombre: "" });
+      },
     });
   };
 
@@ -659,6 +667,14 @@ export function UsuariosPage() {
             : "Usuario"
         }
       />
+
+      <ConfirmDialog
+        isOpen={confirmRemoveRol.isOpen}
+        onClose={() => setConfirmRemoveRol({ isOpen: false, idUsuarioRol: 0, rolNombre: "" })}
+        onConfirm={executeRemoveRol}
+        title="¿Remover Rol?"
+        description={`¿Estás seguro de que quieres remover el rol "${confirmRemoveRol.rolNombre}"? El usuario perderá los permisos asociados.`}
+      />
     </div>
   );
 }
@@ -683,37 +699,42 @@ function RoleRow({ rolNombre, iglesiaNombre, idRol, idIglesia, idUsuario, onRemo
   // Si no puede ver el rol específico, intentará quitarlo de todas formas
   const isSuperAdmin = rolActual === 'super_admin';
   const canRemove = !!matchingRol || isSuperAdmin;
+  const [confirmSuperRemove, setConfirmSuperRemove] = useState(false);
+
+  const executeSuperRemove = async () => {
+    try {
+      const { error } = await supabase
+        .from('usuario_rol')
+        .update({ fecha_fin: new Date().toISOString().split('T')[0] })
+        .eq('id_usuario', idUsuario)
+        .eq('id_rol', idRol)
+        .eq('id_iglesia', idIglesia)
+        .is('fecha_fin', null);
+
+      if (error) {
+        console.error('Error removing role:', error);
+        toast.error('Error al remover el rol: ' + error.message);
+      } else {
+        toast.success(`Rol "${rolNombre}" removido`);
+        // Refresh data
+        qc.invalidateQueries({ queryKey: ['usuario-rol', idUsuario] });
+        qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] });
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error('Error inesperado al remover el rol');
+    } finally {
+      setConfirmSuperRemove(false);
+    }
+  };
 
   const handleRemoveClick = async () => {
-    if (!confirm(`¿Remover el rol "${rolNombre}" de este usuario? El usuario perderá los permisos asociados.`)) return;
-
     if (matchingRol) {
-      // Si puede ver el rol, quitar normalmente
+      // Si puede ver el rol, quitar normalmente usando la función inyectada
       onRemove(matchingRol.idUsuarioRol, rolNombre);
     } else if (isSuperAdmin) {
-      // Si es Super Admin pero no ve el rol, intentar quitar directamente
-      try {
-        const { error } = await supabase
-          .from('usuario_rol')
-          .update({ fecha_fin: new Date().toISOString().split('T')[0] })
-          .eq('id_usuario', idUsuario)
-          .eq('id_rol', idRol)
-          .eq('id_iglesia', idIglesia)
-          .is('fecha_fin', null);
-
-        if (error) {
-          console.error('Error removing role:', error);
-          toast.error('Error al remover el rol: ' + error.message);
-        } else {
-          toast.success(`Rol "${rolNombre}" removido`);
-          // Refresh data
-          qc.invalidateQueries({ queryKey: ['usuario-rol', idUsuario] });
-          qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] });
-        }
-      } catch (err) {
-        console.error('Unexpected error:', err);
-        toast.error('Error inesperado al remover el rol');
-      }
+      // Si es Super Admin pero no ve el rol, pedir confirmación
+      setConfirmSuperRemove(true);
     }
   };
 
@@ -739,6 +760,14 @@ function RoleRow({ rolNombre, iglesiaNombre, idRol, idIglesia, idUsuario, onRemo
           <X className="w-3.5 h-3.5" />
         </Button>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmSuperRemove}
+        onClose={() => setConfirmSuperRemove(false)}
+        onConfirm={executeSuperRemove}
+        title="¿Remover Rol Forzadamente?"
+        description={`¿Estás seguro de que quieres remover el rol "${rolNombre}" de este usuario? Perderá los permisos asociados. (Acción de SuperAdmin)`}
+      />
     </div>
   );
 }

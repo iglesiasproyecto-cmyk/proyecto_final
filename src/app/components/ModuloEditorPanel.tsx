@@ -78,6 +78,10 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
   const [nuevoDesc, setNuevoDesc] = useState('')
   const [guardandoEnlace, setGuardandoEnlace] = useState(false)
 
+  // ── Confirmaciones ────────────────────────────────────────────────────────
+  const [confirmDeleteArchivo, setConfirmDeleteArchivo] = useState<{ isOpen: boolean; archivo: AulaModuloArchivo | null }>({ isOpen: false, archivo: null })
+  const [confirmDeleteEnlace, setConfirmDeleteEnlace] = useState<{ isOpen: boolean; enlace: AulaModuloEnlace | null }>({ isOpen: false, enlace: null })
+
   // ── Carga inicial ─────────────────────────────────────────────────────────
   const [cargando, setCargando] = useState(true)
 
@@ -135,13 +139,20 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
   }, [idModulo])
 
   const handleEliminarArchivo = async (archivo: AulaModuloArchivo) => {
-    if (!confirm(`¿Eliminar "${archivo.nombre}"?`)) return
+    setConfirmDeleteArchivo({ isOpen: true, archivo })
+  }
+
+  const ejecutarEliminarArchivo = async () => {
+    const archivo = confirmDeleteArchivo.archivo
+    if (!archivo) return
     try {
       await eliminarArchivoModulo(archivo.id_archivo, archivo.storage_path)
       setArchivos(prev => prev.filter(a => a.id_archivo !== archivo.id_archivo))
       toast.success('Archivo eliminado')
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Error al eliminar')
+    } finally {
+      setConfirmDeleteArchivo({ isOpen: false, archivo: null })
     }
   }
 
@@ -176,13 +187,20 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
   }
 
   const handleEliminarEnlace = async (enlace: AulaModuloEnlace) => {
-    if (!confirm(`¿Eliminar "${enlace.titulo}"?`)) return
+    setConfirmDeleteEnlace({ isOpen: true, enlace })
+  }
+
+  const ejecutarEliminarEnlace = async () => {
+    const enlace = confirmDeleteEnlace.enlace
+    if (!enlace) return
     try {
       await eliminarEnlaceModulo(enlace.id_enlace)
       setEnlaces(prev => prev.filter(e => e.id_enlace !== enlace.id_enlace))
       toast.success('Enlace eliminado')
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Error al eliminar enlace')
+    } finally {
+      setConfirmDeleteEnlace({ isOpen: false, enlace: null })
     }
   }
 
@@ -437,6 +455,22 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
           </ul>
         )}
       </Card>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteArchivo.isOpen}
+        onClose={() => setConfirmDeleteArchivo({ isOpen: false, archivo: null })}
+        onConfirm={ejecutarEliminarArchivo}
+        title="¿Eliminar Archivo?"
+        description={`¿Estás seguro de que quieres eliminar "${confirmDeleteArchivo.archivo?.nombre}"? Esta acción no se puede deshacer.`}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDeleteEnlace.isOpen}
+        onClose={() => setConfirmDeleteEnlace({ isOpen: false, enlace: null })}
+        onConfirm={ejecutarEliminarEnlace}
+        title="¿Eliminar Enlace?"
+        description={`¿Estás seguro de que quieres eliminar "${confirmDeleteEnlace.enlace?.titulo}"? Esta acción no se puede deshacer.`}
+      />
     </div>
   )
 }

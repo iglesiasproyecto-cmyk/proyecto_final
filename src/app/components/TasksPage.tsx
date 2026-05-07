@@ -16,6 +16,7 @@ import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar,
   ChevronRight, Inbox, Trash2, UserPlus, X, Paperclip, Pencil,
 } from "lucide-react";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 
 const statusConfig = {
   pendiente:   { label: "Pendiente",   color: "bg-amber-500/10 text-amber-400 border-amber-500/20",   dot: "bg-amber-400",   icon: <AlertCircle className="w-3.5 h-3.5" /> },
@@ -60,6 +61,8 @@ export function TasksPage() {
   const [ministerioFilter, setMinisterioFilter] = useState<number>(0);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [evidenceUploading, setEvidenceUploading] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState<{ open: boolean; id: number }>({ open: false, id: 0 });
+  const [confirmRemoveAssign, setConfirmRemoveAssign] = useState<{ open: boolean; id: number; nombre: string }>({ open: false, id: 0, nombre: "" });
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState({
     titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as TareaEnriquecida['prioridad']
@@ -578,7 +581,7 @@ export function TasksPage() {
                           {canManageTasks && (
                             <button
                               className="text-muted-foreground/40 hover:text-rose-400 transition-colors ml-0.5"
-                              onClick={() => { if (confirm(`¿Remover a ${a.nombreCompleto}?`)) deleteAsignadaMutation.mutate(a.idTareaAsignada); }}
+                              onClick={() => setConfirmRemoveAssign({ open: true, id: a.idTareaAsignada, nombre: a.nombreCompleto || "" })}
                               disabled={deleteAsignadaMutation.isPending}
                             >
                               <X className="w-3 h-3" />
@@ -700,12 +703,7 @@ export function TasksPage() {
                         <button
                           className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-sm font-medium text-amber-500 hover:bg-amber-500/10 transition-colors"
                           disabled={updateEstadoMutation.isPending}
-                          onClick={() => { 
-                            if (confirm("¿Cancelar esta tarea?")) {
-                              updateEstadoMutation.mutate({ id: task.idTarea, estado: 'cancelada' }); 
-                              setSelectedTask(null);
-                            }
-                          }}
+                          onClick={() => setConfirmCancel({ open: true, id: task.idTarea })}
                         >
                           Cancelar Tarea
                         </button>
@@ -863,6 +861,29 @@ export function TasksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmCancel.isOpen}
+        onClose={() => setConfirmCancel({ open: false, id: 0 })}
+        onConfirm={() => {
+          updateEstadoMutation.mutate({ id: confirmCancel.id, estado: 'cancelada' });
+          setConfirmCancel({ open: false, id: 0 });
+          setSelectedTask(null);
+        }}
+        title="¿Cancelar Tarea?"
+        description="¿Estás seguro de que quieres cancelar esta tarea? Se marcará como cancelada y detendrá su progreso."
+      />
+
+      <ConfirmDialog
+        isOpen={confirmRemoveAssign.isOpen}
+        onClose={() => setConfirmRemoveAssign({ open: false, id: 0, nombre: "" })}
+        onConfirm={() => {
+          deleteAsignadaMutation.mutate(confirmRemoveAssign.id);
+          setConfirmRemoveAssign({ open: false, id: 0, nombre: "" });
+        }}
+        title="¿Remover Asignación?"
+        description={`¿Estás seguro de que quieres remover a ${confirmRemoveAssign.nombre} de esta tarea?`}
+      />
     </div>
   );
 }
