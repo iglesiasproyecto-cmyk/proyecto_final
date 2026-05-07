@@ -223,6 +223,7 @@ export interface EventoEnriquecido extends Evento {
 
 export interface TareaEnriquecida extends Tarea {
   eventoNombre: string
+  ministerioNombre: string
   asignadosCount: number
   asignados: (TareaAsignada & { nombreCompleto: string })[]
 }
@@ -247,12 +248,20 @@ export async function getEventosEnriquecidos(idIglesia?: number): Promise<Evento
   }))
 }
 
-export async function getTareasEnriquecidas(idEvento?: number): Promise<TareaEnriquecida[]> {
+export async function getTareasEnriquecidas(idEvento?: number, idIglesia?: number): Promise<TareaEnriquecida[]> {
   let q = supabase
     .from('tarea')
-    .select('*, evento(nombre), tarea_asignada(*, usuario(nombres, apellidos))')
+    .select(`
+      *,
+      ministerio!inner(nombre, sede!inner(id_iglesia)),
+      evento(nombre),
+      tarea_asignada(*, usuario(nombres, apellidos))
+    `)
     .order('creado_en', { ascending: false })
+
   if (idEvento !== undefined) q = q.eq('id_evento', idEvento)
+  if (idIglesia !== undefined) q = q.eq('ministerio.sede.id_iglesia', idIglesia)
+
   const { data, error } = await q
   if (error) {
     console.error('[getTareasEnriquecidas] ERROR fetching tasks:', error.message, error.code, error.details)
@@ -269,12 +278,10 @@ export async function getTareasEnriquecidas(idEvento?: number): Promise<TareaEnr
       ...mapTareaAsignada(ta),
       nombreCompleto: `${ta.usuario?.nombres ?? ''} ${ta.usuario?.apellidos ?? ''}`.trim(),
     }))
-    if (asignados.length === 0 && asignadosRaw && !Array.isArray(asignadosRaw)) {
-      console.warn('[getTareasEnriquecidas] Task', r.id_tarea, 'has non-array tarea_asignada:', asignadosRaw)
-    }
     return {
       ...mapTarea(r),
       eventoNombre: r.evento?.nombre ?? '',
+      ministerioNombre: r.ministerio?.nombre ?? '',
       asignadosCount: asignados.length,
       asignados,
     }
