@@ -46,7 +46,8 @@ function mapTarea(r: TareaRow): Tarea {
     prioridad: r.prioridad as Tarea['prioridad'],
     idEvento: r.id_evento,
     idUsuarioCreador: r.id_usuario_creador,
-    idMinisterio: r.id_ministerio ?? undefined,
+    idMinisterio: r.id_ministerio ?? null,
+    idIglesia: (r as any).id_iglesia ?? null,
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
   }
