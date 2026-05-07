@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router";
 import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia } from "@/hooks/useEventos";
-import { useUsuarios } from "@/hooks/useUsuarios";
+import type { TareaEnriquecida } from "@/services/eventos.service";
 import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
 import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service";
 import { filterAndSortTareas } from "@/lib/taskUtils";
