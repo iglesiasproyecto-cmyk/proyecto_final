@@ -142,6 +142,39 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
   }))
 }
 
+export async function getUsuariosByIglesia(idIglesia: number): Promise<UsuarioEnriquecido[]> {
+  const { data, error } = await supabase.rpc('get_usuarios_by_iglesia', {
+    p_id_iglesia: idIglesia,
+  })
+  if (error) throw error
+  return (data ?? []).map((r: any) => ({
+    idUsuario: r.id_usuario,
+    nombres: r.nombres,
+    apellidos: r.apellidos,
+    correo: r.correo,
+    contrasenaHash: null,
+    telefono: r.telefono,
+    fechaNacimiento: null,
+    activo: r.activo,
+    ultimoAcceso: r.ultimo_acceso,
+    authUserId: r.auth_user_id,
+    creadoEn: r.creado_en,
+    actualizadoEn: r.updated_at,
+    roleNames: (r.roles ?? []).map((rol: any) => ({
+      idUsuarioRol: rol.id_usuario_rol,
+      idRol: rol.id_rol,
+      idIglesia: rol.id_iglesia,
+      rolNombre: rol.rol_nombre ?? '',
+      iglesiaNombre: rol.iglesia_nombre ?? '',
+      fechaFin: rol.fecha_fin,
+    })),
+    minNames: (r.ministerios ?? []).map((mm: any) => ({
+      nombre: mm.ministerio_nombre ?? '',
+      rol: mm.rol_en_ministerio ?? '',
+    })),
+  }))
+}
+
 // ── Usuario mutations ──
 
 export async function updateUsuario(
