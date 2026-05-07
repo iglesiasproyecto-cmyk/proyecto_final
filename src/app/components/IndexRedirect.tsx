@@ -16,7 +16,7 @@ export function IndexRedirect() {
 
     if (rolActual === "super_admin") {
       navigate("/app/global", { replace: true });
-    } else if (iglesiaActual?.id) {
+    } else if (iglesiaActual?.id != null) {
       navigate(`/app/${iglesiaActual.id}`, { replace: true });
     } else {
       navigate("/login", { replace: true });

@@ -11,7 +11,7 @@ export function TenantLayout() {
   useEffect(() => {
     if (authLoading) return;
     if (!usuarioActual) {
-      navigate("/login");
+      navigate("/login", { replace: true });
       return;
     }
 
@@ -26,7 +26,7 @@ export function TenantLayout() {
 
     // Todos los demás solo pueden acceder a su propia iglesia
     if (iglesiaActual?.id !== tenantId) {
-      if (iglesiaActual?.id) {
+      if (iglesiaActual?.id != null) {
         navigate(`/app/${iglesiaActual.id}`, { replace: true });
       } else {
         navigate("/app", { replace: true });

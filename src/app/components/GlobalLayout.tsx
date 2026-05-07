@@ -10,11 +10,11 @@ export function GlobalLayout() {
   useEffect(() => {
     if (authLoading) return;
     if (!usuarioActual) {
-      navigate("/login");
+      navigate("/login", { replace: true });
       return;
     }
     if (rolActual !== "super_admin") {
-      const destino = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : "/app";
+      const destino = iglesiaActual?.id != null ? `/app/${iglesiaActual.id}` : "/app";
       navigate(destino, { replace: true });
     }
   }, [authLoading, usuarioActual, rolActual, iglesiaActual, navigate]);
