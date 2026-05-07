@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useApp } from '@/app/store/AppContext'
-import { useAuth } from '@/app/store/AppContext'
+import { useApp, useAuth } from '@/app/store/AppContext'
 import { getInternalUserId } from '@/lib/userHelpers'
 import { useMinisteriosEnriquecidos } from '@/hooks/useMinisterios'
 import { Badge } from '@/app/components/ui/badge'
@@ -13,7 +12,7 @@ import { DashboardAdmin } from './DashboardAdmin'
 import { CrearCursoDialog } from './CrearCursoDialog'
 
 export function AdminAulaPage() {
-  const { iglesiaActual } = useApp()
+  const { iglesiaActual, user: appUser } = useApp()
   const { user } = useAuth()
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
   const [showCrearCurso, setShowCrearCurso] = useState(false)
@@ -65,7 +64,7 @@ export function AdminAulaPage() {
           </div>
           <Button
             onClick={() => setShowCrearCurso(true)}
-            disabled={ministeriosDisponibles.length === 0}
+            disabled={appUser?.rol !== 'admin_iglesia' && ministeriosDisponibles.length === 0}
             className="bg-gradient-to-r from-[#4682b4] to-[#709dbd] hover:from-[#3b6d96] hover:to-[#5b84a1] text-white rounded-2xl px-6 py-6 h-auto shadow-lg shadow-blue-900/30 transition-all hover:scale-105 active:scale-95 shrink-0"
           >
             <Plus className="h-5 w-5 mr-2" />
