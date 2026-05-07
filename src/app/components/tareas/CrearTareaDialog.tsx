@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useCreateTarea, useCreateTareaAsignada, useEventosPorMinisterio } from "@/hooks/useEventos"
 import { useMinisteriosEnriquecidos, useServidoresMinisterio } from "@/hooks/useMinisterios"
+import { useApp } from "@/app/store/AppContext"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/app/components/ui/dialog"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
@@ -30,7 +31,8 @@ interface Props {
 }
 
 export function CrearTareaDialog({ open, onOpenChange, idUsuarioCreador, onCreated }: Props) {
-  const { data: ministerios = [] } = useMinisteriosEnriquecidos()
+  const { iglesiaActual } = useApp()
+  const { data: ministerios = [] } = useMinisteriosEnriquecidos(iglesiaActual?.id)
   const createTarea = useCreateTarea()
   const createAsignada = useCreateTareaAsignada()
 

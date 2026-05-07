@@ -121,7 +121,7 @@ export function EventsPage() {
   const { data: eventos = [], isLoading } = useEventosEnriquecidos(iglesiaActual?.id);
   const { data: tiposEvento = [] } = useTiposEvento();
   const { data: sedes = [] } = useSedesEnriquecidas(iglesiaActual?.id);
-  const { data: ministerios = [] } = useMinisteriosEnriquecidos();
+  const { data: ministerios = [] } = useMinisteriosEnriquecidos(iglesiaActual?.id);
   const createEventoMutation = useCreateEvento();
   const deleteEventoMutation = useDeleteEvento();
   const updateEventoMutation = useUpdateEvento();

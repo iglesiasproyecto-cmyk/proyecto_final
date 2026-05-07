@@ -44,18 +44,28 @@ export interface MiembroMinisterioEnriquecido extends MiembroMinisterio {
   ministerioNombre: string
 }
 
-export async function getMinisteriosEnriquecidos(idSede?: number): Promise<MinisterioEnriquecido[]> {
+export async function getMinisteriosEnriquecidos(idIglesia?: number): Promise<MinisterioEnriquecido[]> {
   let q = supabase
     .from('ministerio')
     .select('*, sede(nombre)')
     .is('deleted_at', null)
     .order('nombre')
-  if (idSede !== undefined) q = q.eq('id_sede', idSede)
+
+  if (idIglesia !== undefined) {
+    const { data: sedesData } = await supabase
+      .from('sede')
+      .select('id_sede')
+      .eq('id_iglesia', idIglesia)
+    const sedeIds = (sedesData ?? []).map(s => s.id_sede)
+    if (sedeIds.length === 0) return []
+    q = q.in('id_sede', sedeIds)
+  }
+
   const { data, error } = await q
   if (error) throw error
   return (data as any[]).map(r => ({
     ...mapMinisterio(r),
-    cantidadMiembros: 0, // Temporarily disabled to isolate RLS issues
+    cantidadMiembros: 0,
     sedeNombre: r.sede?.nombre ?? '',
   }))
 }
@@ -77,12 +87,22 @@ export async function getMiembrosMinisterioEnriquecidos(idMinisterio?: number): 
   }))
 }
 
-export async function getMinisterios(idSede?: number): Promise<Ministerio[]> {
-  let q = supabase.from('ministerio').select('*').order('nombre')
-  if (idSede !== undefined) q = q.eq('id_sede', idSede)
+export async function getMinisterios(idIglesia?: number): Promise<Ministerio[]> {
+  let q = supabase.from('ministerio').select('*').is('deleted_at', null).order('nombre')
+
+  if (idIglesia !== undefined) {
+    const { data: sedesData } = await supabase
+      .from('sede')
+      .select('id_sede')
+      .eq('id_iglesia', idIglesia)
+    const sedeIds = (sedesData ?? []).map(s => s.id_sede)
+    if (sedeIds.length === 0) return []
+    q = q.in('id_sede', sedeIds)
+  }
+
   const { data, error } = await q
   if (error) throw error
-  return data.map(mapMinisterio)
+  return (data ?? []).map(mapMinisterio)
 }
 
 export async function getMiembrosMinisterio(idMinisterio: number): Promise<MiembroMinisterio[]> {

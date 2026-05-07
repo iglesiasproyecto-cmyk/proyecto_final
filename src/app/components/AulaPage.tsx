@@ -1,6 +1,7 @@
 import { useAuth } from '@/app/store/AppContext'
 import { LiderAulaPage } from './LiderAulaPage'
 import { ServidorAulaPage } from './ServidorAulaPage'
+import { AdminAulaPage } from './AdminAulaPage'
 import { Alert, AlertDescription } from '@/app/components/ui/alert'
 import { GraduationCap, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
@@ -59,13 +60,25 @@ export function AulaPage() {
         <div className="relative">
           <AnimatePresence mode="wait">
             <motion.div
-              key={rolActual === "lider" ? 'lider' : 'servidor'}
-              initial={{ opacity: 0, x: rolActual === "lider" ? 20 : -20 }}
+              key={
+                rolActual === "admin_iglesia" || rolActual === "super_admin"
+                  ? 'admin'
+                  : rolActual === "lider"
+                  ? 'lider'
+                  : 'servidor'
+              }
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: rolActual === "lider" ? -20 : 20 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
             >
-              {rolActual === "lider" ? <LiderAulaPage /> : <ServidorAulaPage />}
+              {rolActual === "admin_iglesia" || rolActual === "super_admin" ? (
+                <AdminAulaPage />
+              ) : rolActual === "lider" ? (
+                <LiderAulaPage />
+              ) : (
+                <ServidorAulaPage />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>

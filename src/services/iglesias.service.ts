@@ -33,9 +33,6 @@ function mapPastor(r: PastorRow): Pastor {
     correo: r.correo,
     telefono: r.telefono,
     idUsuario: r.id_usuario,
-    direccion: r.direccion,
-    fechaNacimiento: r.fecha_nacimiento,
-    biografia: r.biografia,
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
   }
@@ -247,13 +244,13 @@ export async function getIglesiasEnriquecidas(): Promise<IglesiaEnriquecida[]> {
 export async function getPastoresEnriquecidos(): Promise<PastorEnriquecido[]> {
   const { data, error } = await supabase
     .from('pastor')
-    .select('*, iglesia_pastor(fecha_fin, iglesia(nombre))')
+    .select('*, iglesia_pastor(fecha_fin, iglesia!inner(nombre))')
     .order('apellidos')
   if (error) throw error
   return (data as any[]).map(r => ({
     ...mapPastor(r),
     iglesiasActivas: ((r.iglesia_pastor as any[]) || [])
-      .filter((ip: any) => ip.fecha_fin === null)
+      .filter((ip: any) => ip.fecha_fin === null && ip.iglesia?.estado === 'activa')
       .map((ip: any) => ip.iglesia?.nombre ?? ''),
   }))
 }
@@ -328,12 +325,11 @@ export async function getSedes(idIglesia?: number): Promise<Sede[]> {
   let q = supabase
     .from('sede')
     .select('*')
-    .is('deleted_at', null)
     .order('nombre')
   if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
   const { data, error } = await q
   if (error) throw error
-  return data.map(mapSede)
+  return (data ?? []).map(mapSede)
 }
 
 // ── Iglesia mutations ──
@@ -434,11 +430,11 @@ export async function toggleSedeEstado(id: number): Promise<void> {
 // ── Pastor mutations ──
 
 export async function createPastor(
-  data: { nombres: string; apellidos: string; correo: string; telefono: string | null; idUsuario: number | null; direccion?: string | null; fechaNacimiento?: string | null; biografia?: string | null }
+  data: { nombres: string; apellidos: string; correo: string; telefono: string | null; idUsuario: number | null }
 ): Promise<Pastor> {
   const { data: result, error } = await supabase
     .from('pastor')
-    .insert([{ nombres: data.nombres, apellidos: data.apellidos, correo: data.correo, telefono: data.telefono, id_usuario: data.idUsuario, direccion: data.direccion || null, fecha_nacimiento: data.fechaNacimiento || null, biografia: data.biografia || null }])
+    .insert([{ nombres: data.nombres, apellidos: data.apellidos, correo: data.correo, telefono: data.telefono, id_usuario: data.idUsuario }])
     .select()
     .single()
   if (error) throw error
@@ -447,7 +443,7 @@ export async function createPastor(
 
 export async function updatePastor(
   id: number,
-  data: { nombres?: string; apellidos?: string; correo?: string; telefono?: string | null; idUsuario?: number | null; direccion?: string | null; fechaNacimiento?: string | null; biografia?: string | null }
+  data: { nombres?: string; apellidos?: string; correo?: string; telefono?: string | null; idUsuario?: number | null }
 ): Promise<Pastor> {
   const { data: result, error } = await supabase
     .from('pastor')
@@ -457,9 +453,6 @@ export async function updatePastor(
       ...(data.correo !== undefined && { correo: data.correo }),
       ...(data.telefono !== undefined && { telefono: data.telefono }),
       ...(data.idUsuario !== undefined && { id_usuario: data.idUsuario }),
-      ...(data.direccion !== undefined && { direccion: data.direccion }),
-      ...(data.fechaNacimiento !== undefined && { fecha_nacimiento: data.fechaNacimiento }),
-      ...(data.biografia !== undefined && { biografia: data.biografia }),
     })
     .eq('id_pastor', id)
     .select()
@@ -512,12 +505,50 @@ export async function closeSedePastor(id: number): Promise<void> {
   if (error) throw error
 }
 
-export async function deleteIglesia(id: number): Promise<void> {
-  const { error } = await supabase
-    .from('iglesia')
-    .update({ activo: false })
+export async function deleteIglesia(id: number): Promise<{ type: 'soft' | 'hard' }> {
+  // Verificar si la iglesia tiene dependencias
+  const { count: sedesCount } = await supabase
+    .from('sede')
+    .select('id_sede', { count: 'exact', head: true })
     .eq('id_iglesia', id)
-  if (error) throw error
+    .is('deleted_at', null)
+
+  const { count: pastoresCount } = await supabase
+    .from('iglesia_pastor')
+    .select('id_iglesia_pastor', { count: 'exact', head: true })
+    .eq('id_iglesia', id)
+    .is('fecha_fin', null)
+
+  const { count: eventosCount } = await supabase
+    .from('evento')
+    .select('id_evento', { count: 'exact', head: true })
+    .eq('id_iglesia', id)
+
+  const { count: rolesCount } = await supabase
+    .from('usuario_rol')
+    .select('id_usuario_rol', { count: 'exact', head: true })
+    .eq('id_iglesia', id)
+    .is('fecha_fin', null)
+
+  const hasDependencies = (sedesCount || 0) > 0 || (pastoresCount || 0) > 0 || (eventosCount || 0) > 0 || (rolesCount || 0) > 0
+
+  if (hasDependencies) {
+    // Si tiene dependencias, hacer soft delete
+    const { error } = await supabase
+      .from('iglesia')
+      .update({ activo: false })
+      .eq('id_iglesia', id)
+    if (error) throw error
+    return { type: 'soft' }
+  } else {
+    // Si no tiene dependencias, hacer hard delete
+    const { error } = await supabase
+      .from('iglesia')
+      .delete()
+      .eq('id_iglesia', id)
+    if (error) throw error
+    return { type: 'hard' }
+  }
 }
 
 export async function deleteSede(id: number): Promise<void> {
@@ -528,11 +559,38 @@ export async function deleteSede(id: number): Promise<void> {
   if (error) throw error
 }
 
-export async function deletePastor(id: number): Promise<void> {
-  const { error } = await supabase
+export async function checkPastorCorreoExists(correo: string, excludeId?: number): Promise<boolean> {
+  let q = supabase
     .from('pastor')
-    .update({ activo: false })
-    .eq('id_pastor', id)
+    .select('id_pastor', { count: 'exact', head: true })
+    .eq('correo', correo)
+    .eq('activo', true)
+  if (excludeId) q = q.neq('id_pastor', excludeId)
+  const { count, error } = await q
+  if (error) throw error
+  return (count || 0) > 0
+}
+
+export async function checkPastorUsuarioExists(idUsuario: number, excludeId?: number): Promise<boolean> {
+  let q = supabase
+    .from('pastor')
+    .select('id_pastor', { count: 'exact', head: true })
+    .eq('id_usuario', idUsuario)
+    .eq('activo', true)
+  if (excludeId) q = q.neq('id_pastor', excludeId)
+  const { count, error } = await q
+  if (error) throw error
+  return (count || 0) > 0
+}
+
+export async function deletePastor(id: number): Promise<void> {
+  const { error: spError } = await supabase.from('sede_pastor').delete().eq('id_pastor', id)
+  if (spError) throw spError
+
+  const { error: ipError } = await supabase.from('iglesia_pastor').delete().eq('id_pastor', id)
+  if (ipError) throw ipError
+
+  const { error } = await supabase.from('pastor').delete().eq('id_pastor', id)
   if (error) throw error
 }
 
