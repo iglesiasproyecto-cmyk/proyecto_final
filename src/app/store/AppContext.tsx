@@ -23,6 +23,7 @@ interface AppState {
   toggleSidebar: () => void
   toggleDarkMode: () => void
   logout: () => Promise<void>
+  refreshClaims: () => Promise<void>
   // MOCK MODE FOR UI DESIGN
   isMockMode: boolean
   setMockMode: (val: boolean) => void
@@ -185,7 +186,47 @@ async function fetchNotifCountRaw(accessToken: string): Promise<number> {
   return 0
 }
 
+async function refreshTenantClaims(accessToken: string): Promise<void> {
+  try {
+    await fetchWithTimeout(
+      `${SUPABASE_URL}/functions/v1/set-tenant-claims`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: '{}',
+      },
+      8000
+    )
+  } catch (err: any) {
+    console.warn('[AUTH] set-tenant-claims failed:', err.message)
+  }
+}
 
+async function fetchPermissionsUpdatedAt(accessToken: string): Promise<number | null> {
+  try {
+    const res = await fetchWithTimeout(
+      `${SUPABASE_URL}/rest/v1/rpc/get_my_permissions_updated_at`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: '{}',
+      },
+      3000
+    )
+    if (res.ok) {
+      const val = await res.json()
+      return val ? Math.floor(new Date(val).getTime() / 1000) : null
+    }
+  } catch { /* skip */ }
+  return null
+}
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -281,6 +322,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const token = session.access_token
         const authUserId = session.user.id
         console.log('[AUTH] Loading profile for:', session.user.email, authUserId)
+
+        // Check if JWT claims are stale and refresh if needed
+        const jwtClaimsAt = session.user.app_metadata?.claims_at as number | undefined
+        if (jwtClaimsAt) {
+          const dbPermissionsAt = await fetchPermissionsUpdatedAt(token)
+          if (dbPermissionsAt && dbPermissionsAt > jwtClaimsAt) {
+            console.warn('[AUTH] Claims stale — refreshing...')
+            await refreshTenantClaims(token)
+            const { data: refreshData } = await supabase.auth.refreshSession()
+            if (refreshData.session) {
+              setSession(refreshData.session)
+            }
+          }
+        } else {
+          // First login — populate JWT claims
+          await refreshTenantClaims(token)
+          const { data: refreshData } = await supabase.auth.refreshSession()
+          if (refreshData.session) {
+            setSession(refreshData.session)
+          }
+        }
 
         try {
           const data = await fetchUsuarioRaw(token, authUserId)
@@ -421,6 +483,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  const refreshClaims = async () => {
+    if (!session) return
+    await refreshTenantClaims(session.access_token)
+    await supabase.auth.refreshSession()
+  }
+
   // Effect to set a mock user if in mock mode and no real user
   useEffect(() => {
     if (isMockMode && !usuarioActual && !authLoading) {
@@ -466,6 +534,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         toggleSidebar: () => setSidebarOpen((p) => !p),
         toggleDarkMode: () => setDarkMode((p) => !p),
         logout,
+        refreshClaims,
         isMockMode,
         setMockMode: setIsMockMode,
         mockRol,
