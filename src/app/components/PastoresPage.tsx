@@ -3,6 +3,7 @@ import {
   usePastoresEnriquecidos, useIglesias, useSedePastores, useSedesEnriquecidas,
   useCreatePastor, useUpdatePastor, useDeletePastor,
   useCreateSedePastor, useCloseSedePastor,
+  checkPastorCorreoExists, checkPastorUsuarioExists,
 } from "@/hooks/useIglesias";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useApp } from "../store/AppContext";
@@ -55,7 +56,7 @@ export function PastoresPage() {
   const [dialogAsign, setDialogAsign] = useState(false);
   const [dialogSolicitud, setDialogSolicitud] = useState(false);
   const [editingPastor, setEditingPastor] = useState<number | null>(null);
-  const [formP, setFormP] = useState({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0, direccion: "", fechaNacimiento: "", biografia: "" });
+  const [formP, setFormP] = useState({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
   const [formA, setFormA] = useState({ idSede: 0, idPastor: 0, esPrincipal: false, fechaInicio: "", observaciones: "" });
   const [formSolicitud, setFormSolicitud] = useState({ idPastorActual: 0, idSede: 0, idPastorNuevo: 0, esPrincipal: false, motivo: "" });
   const [confirmDeleteAsign, setConfirmDeleteAsign] = useState<{ id: number; pastorName: string; iglesiaName: string } | null>(null);
@@ -82,22 +83,46 @@ export function PastoresPage() {
     deletePastorMutation.mutate(id);
   };
 
-  const openAddPastor = () => { setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0, direccion: "", fechaNacimiento: "", biografia: "" }); setEditingPastor(null); setDialogPastor(true); };
+  const openAddPastor = () => { setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 }); setEditingPastor(null); setDialogPastor(true); };
   const openEditPastor = (id: number) => {
     const p = pastores.find(x => x.idPastor === id); if (!p) return;
-    setFormP({ nombres: p.nombres, apellidos: p.apellidos, correo: p.correo, telefono: p.telefono || "", idUsuario: p.idUsuario || 0, direccion: p.direccion || "", fechaNacimiento: p.fechaNacimiento ? p.fechaNacimiento.split("T")[0] : "", biografia: p.biografia || "" });
+    setFormP({ nombres: p.nombres, apellidos: p.apellidos, correo: p.correo, telefono: p.telefono || "", idUsuario: p.idUsuario || 0 });
     setEditingPastor(id); setDialogPastor(true);
   };
-  const handleSubmitPastor = () => {
+  const handleSubmitPastor = async () => {
     if (!formP.nombres.trim() || !formP.apellidos.trim() || !formP.correo.trim()) return;
-    if (editingPastor) updatePastorMutation.mutate(
-      { id: editingPastor, data: { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null, direccion: formP.direccion.trim() || null, fechaNacimiento: formP.fechaNacimiento || null, biografia: formP.biografia.trim() || null } },
-      { onSuccess: () => setDialogPastor(false) }
-    );
-    else createPastorMutation.mutate(
-      { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null, direccion: formP.direccion.trim() || null, fechaNacimiento: formP.fechaNacimiento || null, biografia: formP.biografia.trim() || null },
-      { onSuccess: () => setDialogPastor(false) }
-    );
+
+    try {
+      // Validar correo único
+      if (await checkPastorCorreoExists(formP.correo, editingPastor || undefined)) {
+        alert('El correo ya está en uso por otro pastor activo.');
+        return;
+      }
+
+      // Validar idUsuario único si se proporciona
+      if (formP.idUsuario && await checkPastorUsuarioExists(formP.idUsuario, editingPastor || undefined)) {
+        alert('El usuario ya está asignado a otro pastor activo.');
+        return;
+      }
+
+      if (editingPastor) {
+        updatePastorMutation.mutate(
+          { id: editingPastor, data: { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null } },
+          { onSuccess: () => setDialogPastor(false) }
+        );
+      } else {
+        createPastorMutation.mutate(
+          { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null },
+          { onSuccess: () => {
+            setDialogPastor(false);
+            setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
+          } }
+        );
+      }
+    } catch (error) {
+      console.error('Error validating pastor:', error);
+      alert('Error al validar los datos del pastor.');
+    }
   };
 
   const openAsign = () => { setFormA({ idSede: 0, idPastor: 0, esPrincipal: false, fechaInicio: new Date().toISOString().split("T")[0], observaciones: "" }); setDialogAsign(true); };
@@ -254,8 +279,8 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
                       <div className="p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
                         <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-2">Miembro en:</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {p.iglesiasActivas.map((nombre, i) => (
-                            <Badge key={i} variant="secondary" className="bg-white/60 dark:bg-black/20 text-xs font-medium border-0 tracking-wide text-muted-foreground">
+                          {p.iglesiasActivas.map((nombre, idx) => (
+                            <Badge key={`${p.idPastor}-iglesia-${idx}`} variant="secondary" className="bg-white/60 dark:bg-black/20 text-xs font-medium border-0 tracking-wide text-muted-foreground">
                               <Church className="w-3 h-3 mr-1.5 opacity-70" /> {nombre}
                             </Badge>
                           ))}
@@ -267,7 +292,7 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
                       <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-2">Asignaciones de Liderazgo:</p>
                       <div className="flex flex-wrap gap-1.5">
                         {asignaciones.map(a => (
-                          <Badge key={a.idIglesiaPastor} variant={a.esPrincipal ? "default" : "outline"} className={`text-[11px] font-semibold border ${a.esPrincipal ? "bg-[#4682b4] hover:bg-[#4682b4]/90 border-[#4682b4] shadow-sm" : "bg-card border-[#4682b4]/30 text-[#4682b4] dark:border-[#4682b4]/20 dark:text-[#709dbd]"}`}>
+                          <Badge key={a.idSedePastor} variant={a.esPrincipal ? "default" : "outline"} className={`text-[11px] font-semibold border ${a.esPrincipal ? "bg-[#4682b4] hover:bg-[#4682b4]/90 border-[#4682b4] shadow-sm" : "bg-card border-[#4682b4]/30 text-[#4682b4] dark:border-[#4682b4]/20 dark:text-[#709dbd]"}`}>
                             <Church className="w-3 h-3 mr-1.5 opacity-80" /> {a.iglesiaNombre} {a.esPrincipal && "(Principal)"}
                           </Badge>
                         ))}
@@ -383,9 +408,6 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
             </div>
             <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Correo Electrónico <span className="text-destructive">*</span></label><Input type="email" value={formP.correo} onChange={e => setFormP(f => ({ ...f, correo: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
             <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Teléfono Móvil</label><Input value={formP.telefono} onChange={e => setFormP(f => ({ ...f, telefono: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
-            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Dirección</label><Input value={formP.direccion} onChange={e => setFormP(f => ({ ...f, direccion: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
-            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Fecha de Nacimiento</label><Input type="date" value={formP.fechaNacimiento} onChange={e => setFormP(f => ({ ...f, fechaNacimiento: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
-            <div><label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Biografía</label><Input value={formP.biografia} onChange={e => setFormP(f => ({ ...f, biografia: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" /></div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block flex items-center gap-1.5"><Link2 className="w-3 h-3 text-[#4682b4]" /> Vincular a Usuario Sist. (Opcional)</label>
               <Select value={formP.idUsuario ? String(formP.idUsuario) : "none"} onValueChange={v => setFormP(f => ({ ...f, idUsuario: v === "none" ? 0 : Number(v) }))}>
@@ -641,7 +663,7 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
                       <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-3">Iglesias asignadas</p>
                       <div className="space-y-2">
                         {asignaciones.map(a => (
-                          <div key={a.idIglesiaPastor} className="flex items-center justify-between p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
+                          <div key={a.idSedePastor} className="flex items-center justify-between p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5">
                             <div className="flex items-center gap-2">
                               <Church className="w-4 h-4 text-[#4682b4]" />
                               <span className="text-sm font-medium">{a.iglesiaNombre}</span>

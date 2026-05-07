@@ -23,10 +23,10 @@ const rolColors: Record<string, string> = {
 };
 
 export function MembersPage() {
-  const { usuarioActual } = useApp();
+  const { usuarioActual, iglesiaActual } = useApp();
   const { data: ministeriosIdsUsuario = [] } = useMinisteriosIdsDeUsuario(usuarioActual?.idUsuario);
   const isLider = ministeriosIdsUsuario.length > 0;
-  const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios();
+  const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios(iglesiaActual?.id);
   const { data: usuarios = [] } = useUsuarios();
   const [search, setSearch] = useState("");
   const [selectedMinisterioId, setSelectedMinisterioId] = useState<number>(0);

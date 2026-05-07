@@ -102,7 +102,7 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
     .from('usuario')
     .select(`
       *,
-      usuario_rol!inner(
+      usuario_rol(
         id_usuario_rol,
         id_rol,
         id_iglesia,
@@ -116,6 +116,7 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
         fecha_salida
       )
     `)
+    .is('deleted_at', null)
     .order('apellidos')
 
   if (error) throw error

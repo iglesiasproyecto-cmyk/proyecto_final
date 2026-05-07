@@ -110,11 +110,10 @@ export function useEventosEnriquecidos(idIglesia?: number) {
   })
 }
 
-export function useTareasEnriquecidas(idEvento?: number) {
+export function useTareasEnriquecidas(idEvento?: number, idIglesia?: number) {
   return useQuery({
-    queryKey: ['tareas-enriquecidas', idEvento],
-    queryFn: () => getTareasEnriquecidas(idEvento),
-    enabled: !!idEvento,
+    queryKey: ['tareas-enriquecidas', idEvento, idIglesia],
+    queryFn: () => getTareasEnriquecidas(idEvento, idIglesia),
     staleTime: 5 * 60 * 1000,
   })
 }

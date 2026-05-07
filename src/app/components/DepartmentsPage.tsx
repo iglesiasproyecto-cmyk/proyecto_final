@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   useMinisteriosEnriquecidos, useDeleteMinisterio, useMiembrosMinisterio, useToggleMinisterioEstado, useCreateMinisterio, useCreateMiembroMinisterio,
 } from "@/hooks/useMinisterios";
-import { useSedes } from "@/hooks/useIglesias";
+import { useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
 import { useApp } from "../store/AppContext";
@@ -223,8 +223,12 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
 }
 
 export function DepartmentsPage() {
-  const { data: ministerios = [], isLoading } = useMinisteriosEnriquecidos();
-  const { data: sedes = [] } = useSedes(); // Fetch all sedes, but we'll filter in UI
+  const { iglesiaActual } = useApp();
+  const { data: ministerios = [], isLoading } = useMinisteriosEnriquecidos(iglesiaActual?.id);
+  const { data: todasSedes = [] } = useSedesEnriquecidas();
+  const sedes = iglesiaActual
+    ? todasSedes.filter(s => s.idIglesia === iglesiaActual.id)
+    : todasSedes;
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedMin, setSelectedMin] = useState<number | null>(null);

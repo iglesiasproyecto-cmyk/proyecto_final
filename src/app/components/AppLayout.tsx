@@ -77,6 +77,8 @@ function getNavItemsForRole(role: string, iglesiaActual?: { id: number; nombre: 
         { label: "Usuarios", path: "/app/usuarios", icon: <Users className="w-5 h-5" />, section: "Iglesia" },
         { label: "Miembros", path: "/app/miembros", icon: <Users className="w-5 h-5" />, section: "Iglesia" },
         { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Iglesia" },
+        { label: "Tareas", path: "/app/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Iglesia" },
+        { label: "Aula de Formación", path: "/app/aula", icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
         { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: "/app/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
       ];

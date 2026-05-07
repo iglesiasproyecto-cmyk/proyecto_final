@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useTareasEnriquecidas, useCreateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia } from "@/hooks/useEventos";
+import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia } from "@/hooks/useEventos";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
 import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service";
@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar,
-  ChevronRight, Inbox, Trash2, UserPlus, X, Paperclip,
+  ChevronRight, Inbox, Trash2, UserPlus, X, Paperclip, Pencil,
 } from "lucide-react";
 
 const statusConfig = {
@@ -37,16 +37,16 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function TasksPage() {
-  const { usuarioActual, rolActual } = useApp();
-  const { data: tareas = [], isLoading } = useTareasEnriquecidas();
+  const { usuarioActual, rolActual, iglesiaActual } = useApp();
+  const { data: tareas = [], isLoading } = useTareasEnriquecidas(undefined, iglesiaActual?.id);
   const createTareaMutation = useCreateTarea();
   const updateEstadoMutation = useUpdateTareaEstado();
+  const updateTareaMutation = useUpdateTarea();
   const deleteTareaMutation = useDeleteTarea();
   const createAsignadaMutation = useCreateTareaAsignada();
   const deleteAsignadaMutation = useDeleteTareaAsignada();
   const createEvidenciaMutation = useCreateTareaEvidencia();
-  const { data: usuarios = [] } = useUsuarios();
-  const { data: ministerios = [] } = useMinisteriosEnriquecidos();
+  const { data: ministerios = [] } = useMinisteriosEnriquecidos(iglesiaActual?.id);
 
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState<number | null>(null);
@@ -57,13 +57,40 @@ export function TasksPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; titulo: string }>({ open: false, id: 0, titulo: "" });
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("");
+  const [ministerioFilter, setMinisterioFilter] = useState<number>(0);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [evidenceUploading, setEvidenceUploading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editForm, setEditForm] = useState({
+    titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as TareaEnriquecida['prioridad']
+  });
 
   const task = selectedTask ? tareas.find(t => t.idTarea === selectedTask) : null;
   const { data: evidencias = [] } = useTareaEvidencias(task?.idTarea);
 
+  const usuariosDeIglesia = useMemo(() => {
+    const seen = new Set<number>();
+    return (ministerios || []).flatMap(m => m.miembros ?? []).filter(u => {
+      if (seen.has(u.idUsuario)) return false;
+      seen.add(u.idUsuario);
+      return u.activo !== false;
+    });
+  }, [ministerios]);
+
   const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: 0 });
+
+  useEffect(() => {
+    if (!task) {
+      setEditMode(false);
+      return;
+    }
+    setEditForm({
+      titulo: task.titulo,
+      descripcion: task.descripcion || "",
+      fechaLimite: task.fechaLimite || "",
+      prioridad: task.prioridad,
+    });
+  }, [task]);
 
   useEffect(() => {
     if (createForm.idMinisterio || ministerios.length !== 1) return;
@@ -159,6 +186,11 @@ export function TasksPage() {
     [tareas, searchQuery, dateFilter, sortOrder]
   );
 
+  const visibleTareas = useMemo(() => {
+    if (!ministerioFilter) return filteredAndSortedTareas;
+    return filteredAndSortedTareas.filter(t => t.idMinisterio === ministerioFilter);
+  }, [filteredAndSortedTareas, ministerioFilter]);
+
   if (isLoading) return (
     <div className="flex items-center justify-center h-48">
       <div className="flex flex-col items-center gap-3 text-muted-foreground">
@@ -190,7 +222,7 @@ export function TasksPage() {
     return null;
   };
 
-  const tasksByStatus = (status: string) => filteredAndSortedTareas.filter(t => t.estado === status);
+  const tasksByStatus = (status: string) => visibleTareas.filter(t => t.estado === status);
   const COLS = ["pendiente", "en_progreso", "en_revision", "completada"] as const;
 
   return (
@@ -281,6 +313,18 @@ export function TasksPage() {
             <option value="newest">Más recientes primero</option>
             <option value="oldest">Más antiguas primero</option>
           </select>
+          {isAdmin && (
+            <select
+              value={ministerioFilter}
+              onChange={(e) => setMinisterioFilter(Number(e.target.value))}
+              className="w-[180px] h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+            >
+              <option value={0}>Todos los ministerios</option>
+              {ministerios.map(m => (
+                <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>
+              ))}
+            </select>
+          )}
         </div>
       </motion.div>
 
@@ -341,6 +385,12 @@ export function TasksPage() {
 
                           <h4 className="text-[14px] font-bold leading-snug tracking-tight group-hover:text-[#4682b4] transition-colors mb-2 uppercase italic">{t.titulo}</h4>
                           
+                          {t.ministerioNombre && (
+                            <p className="text-[10px] font-bold text-primary/60 mb-2 truncate uppercase tracking-wider">
+                              {t.ministerioNombre}
+                            </p>
+                          )}
+
                           {t.eventoNombre && (
                             <p className="text-[10px] font-bold text-[#4682b4]/70 mb-2 truncate uppercase tracking-wider">{t.eventoNombre}</p>
                           )}
@@ -410,14 +460,25 @@ export function TasksPage() {
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
             {task ? (
-              <div className="flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-xl ${statusConfig[task.estado]?.color} border flex items-center justify-center shrink-0 mt-0.5`}>
-                  {statusConfig[task.estado]?.icon}
+              <div className="flex items-start justify-between w-full">
+                <div className="flex items-start gap-3">
+                  <div className={`w-9 h-9 rounded-xl ${statusConfig[task.estado]?.color} border flex items-center justify-center shrink-0 mt-0.5`}>
+                    {statusConfig[task.estado]?.icon}
+                  </div>
+                  <div>
+                    <DialogTitle className="text-lg font-bold tracking-tight leading-snug">{task.titulo}</DialogTitle>
+                    {task.ministerioNombre && <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest mt-1">{task.ministerioNombre}</p>}
+                    {task.eventoNombre && <p className="text-[11px] text-primary/40">{task.eventoNombre}</p>}
+                  </div>
                 </div>
-                <div>
-                  <DialogTitle className="text-lg font-bold tracking-tight leading-snug">{task.titulo}</DialogTitle>
-                  {task.eventoNombre && <p className="text-[11px] text-primary/60 mt-0.5">{task.eventoNombre}</p>}
-                </div>
+                {isAdmin && (
+                  <button 
+                    onClick={() => setEditMode(!editMode)}
+                    className={`p-2 rounded-lg transition-colors ${editMode ? 'bg-primary text-white' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             ) : (
               <DialogTitle className="text-lg font-bold tracking-tight leading-snug">Detalle de Tarea</DialogTitle>
@@ -427,35 +488,82 @@ export function TasksPage() {
             <>
 
               <div className="space-y-5 py-1">
-                {task.descripcion && (
-                  <div>
-                    <FieldLabel>Descripción</FieldLabel>
-                    <p className="text-sm text-foreground/80 leading-relaxed bg-background/40 rounded-xl p-3 border border-white/5">{task.descripcion}</p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <FieldLabel>Estado</FieldLabel>
-                    <Badge variant="outline" className={`${statusConfig[task.estado]?.color} border text-[10px] uppercase font-bold tracking-wider w-full justify-center py-1`}>
-                      {statusConfig[task.estado]?.label}
-                    </Badge>
-                  </div>
-                  <div>
-                    <FieldLabel>Prioridad</FieldLabel>
-                    <Badge variant="outline" className={`${prioridadConfig[task.prioridad]?.color} border text-[10px] uppercase font-bold tracking-wider w-full justify-center py-1`}>
-                      {prioridadConfig[task.prioridad]?.label}
-                    </Badge>
-                  </div>
-                  {task.fechaLimite && (
+                {editMode ? (
+                  <div className="space-y-4">
                     <div>
-                      <FieldLabel>Fecha Límite</FieldLabel>
-                      <div className="flex items-center gap-1 text-xs text-foreground/70 bg-background/40 rounded-xl px-2 py-1.5 border border-white/5">
-                        <Calendar className="w-3 h-3 text-primary/50 shrink-0" /> {task.fechaLimite}
+                      <FieldLabel>Título</FieldLabel>
+                      <Input 
+                        value={editForm.titulo} 
+                        onChange={e => setEditForm(p => ({ ...p, titulo: e.target.value }))}
+                        className="h-10 bg-background/50 border-white/10"
+                      />
+                    </div>
+                    <div>
+                      <FieldLabel>Descripción</FieldLabel>
+                      <Input 
+                        value={editForm.descripcion} 
+                        onChange={e => setEditForm(p => ({ ...p, descripcion: e.target.value }))}
+                        className="h-10 bg-background/50 border-white/10"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <FieldLabel>Fecha Límite</FieldLabel>
+                        <Input 
+                          type="date"
+                          value={editForm.fechaLimite} 
+                          onChange={e => setEditForm(p => ({ ...p, fechaLimite: e.target.value }))}
+                          className="h-10 bg-background/50 border-white/10"
+                        />
+                      </div>
+                      <div>
+                        <FieldLabel>Prioridad</FieldLabel>
+                        <select
+                          value={editForm.prioridad}
+                          onChange={e => setEditForm(p => ({ ...p, prioridad: e.target.value as any }))}
+                          className="w-full h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none"
+                        >
+                          <option value="baja">Baja</option>
+                          <option value="media">Media</option>
+                          <option value="alta">Alta</option>
+                          <option value="urgente">Urgente</option>
+                        </select>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <>
+                    {task.descripcion && (
+                      <div>
+                        <FieldLabel>Descripción</FieldLabel>
+                        <p className="text-sm text-foreground/80 leading-relaxed bg-background/40 rounded-xl p-3 border border-white/5">{task.descripcion}</p>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <FieldLabel>Estado</FieldLabel>
+                        <Badge variant="outline" className={`${statusConfig[task.estado]?.color} border text-[10px] uppercase font-bold tracking-wider w-full justify-center py-1`}>
+                          {statusConfig[task.estado]?.label}
+                        </Badge>
+                      </div>
+                      <div>
+                        <FieldLabel>Prioridad</FieldLabel>
+                        <Badge variant="outline" className={`${prioridadConfig[task.prioridad]?.color} border text-[10px] uppercase font-bold tracking-wider w-full justify-center py-1`}>
+                          {prioridadConfig[task.prioridad]?.label}
+                        </Badge>
+                      </div>
+                      {task.fechaLimite && (
+                        <div>
+                          <FieldLabel>Fecha Límite</FieldLabel>
+                          <div className="flex items-center gap-1 text-xs text-foreground/70 bg-background/40 rounded-xl px-2 py-1.5 border border-white/5">
+                            <Calendar className="w-3 h-3 text-primary/50 shrink-0" /> {task.fechaLimite}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
 
                 {/* Assigned users */}
                 {task.asignados && task.asignados.length > 0 && (
@@ -494,8 +602,8 @@ export function TasksPage() {
                         onChange={e => setAssignUserId(Number(e.target.value))}
                       >
                         <option value={0}>Seleccionar usuario...</option>
-                        {usuarios
-                          .filter(u => u.activo && !(task?.asignados || []).some(a => a.idUsuario === u.idUsuario))
+                        {usuariosDeIglesia
+                          .filter(u => !(task?.asignados || []).some(a => a.idUsuario === u.idUsuario))
                           .map(u => <option key={u.idUsuario} value={u.idUsuario}>{u.nombres} {u.apellidos}</option>)
                         }
                       </select>
@@ -560,49 +668,93 @@ export function TasksPage() {
               </div>
 
               <DialogFooter className="border-t border-border/50 pt-4 gap-2">
-                {canManageTasks && (
-                  <button
-                    className="mr-auto h-9 px-3 rounded-xl flex items-center gap-1.5 text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
-                    disabled={deleteTareaMutation.isPending}
-                    onClick={() => { handleDeleteTarea(task.idTarea, task.titulo); setSelectedTask(null); }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Eliminar
-                  </button>
-                )}
-                <Button variant="ghost" className="rounded-xl" onClick={() => setSelectedTask(null)}>Cerrar</Button>
-                {(() => {
-                  const serverAction = canActAsServidor ? getActionForServer(task.estado) : null;
-                  if (!serverAction) return null;
-                  return (
-                    <Button
-                      className="rounded-xl"
-                      onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: serverAction.next }); setSelectedTask(null); }}
+                {editMode ? (
+                  <>
+                    <Button variant="ghost" className="rounded-xl" onClick={() => setEditMode(false)}>Cancelar</Button>
+                    <Button 
+                      className="rounded-xl" 
+                      disabled={updateTareaMutation.isPending}
+                      onClick={() => {
+                        updateTareaMutation.mutate({
+                          id: task.idTarea,
+                          data: {
+                            titulo: editForm.titulo,
+                            descripcion: editForm.descripcion || null,
+                            fechaLimite: editForm.fechaLimite || null,
+                            prioridad: editForm.prioridad,
+                          }
+                        }, {
+                          onSuccess: () => {
+                            toast.success("Tarea actualizada");
+                            setEditMode(false);
+                          }
+                        });
+                      }}
                     >
-                      {serverAction.label}
+                      {updateTareaMutation.isPending ? "Guardando..." : "Guardar cambios"}
                     </Button>
-                  );
-                })()}
-                {(() => {
-                  const leaderAction = canManageTasks ? getActionForLeader(task.estado) : null;
-                  if (!leaderAction) return null;
-                  return (
-                    <>
-                      <Button
-                        variant="ghost"
-                        className="rounded-xl"
-                        onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.rework.next }); setSelectedTask(null); }}
-                      >
-                        {leaderAction.rework.label}
-                      </Button>
-                      <Button
-                        className="rounded-xl"
-                        onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.approve.next }); setSelectedTask(null); }}
-                      >
-                        {leaderAction.approve.label}
-                      </Button>
-                    </>
-                  );
-                })()}
+                  </>
+                ) : (
+                  <>
+                    {isAdmin && (
+                      <div className="mr-auto flex gap-2">
+                        <button
+                          className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-sm font-medium text-amber-500 hover:bg-amber-500/10 transition-colors"
+                          disabled={updateEstadoMutation.isPending}
+                          onClick={() => { 
+                            if (confirm("¿Cancelar esta tarea?")) {
+                              updateEstadoMutation.mutate({ id: task.idTarea, estado: 'cancelada' }); 
+                              setSelectedTask(null);
+                            }
+                          }}
+                        >
+                          Cancelar Tarea
+                        </button>
+                        <button
+                          className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          disabled={deleteTareaMutation.isPending}
+                          onClick={() => { handleDeleteTarea(task.idTarea, task.titulo); setSelectedTask(null); }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Eliminar
+                        </button>
+                      </div>
+                    )}
+                    <Button variant="ghost" className="rounded-xl" onClick={() => setSelectedTask(null)}>Cerrar</Button>
+                    {(() => {
+                      const serverAction = canActAsServidor ? getActionForServer(task.estado) : null;
+                      if (!serverAction) return null;
+                      return (
+                        <Button
+                          className="rounded-xl"
+                          onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: serverAction.next }); setSelectedTask(null); }}
+                        >
+                          {serverAction.label}
+                        </Button>
+                      );
+                    })()}
+                    {(() => {
+                      const leaderAction = canManageTasks ? getActionForLeader(task.estado) : null;
+                      if (!leaderAction) return null;
+                      return (
+                        <>
+                          <Button
+                            variant="ghost"
+                            className="rounded-xl"
+                            onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.rework.next }); setSelectedTask(null); }}
+                          >
+                            {leaderAction.rework.label}
+                          </Button>
+                          <Button
+                            className="rounded-xl"
+                            onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.approve.next }); setSelectedTask(null); }}
+                          >
+                            {leaderAction.approve.label}
+                          </Button>
+                        </>
+                      );
+                    })()}
+                  </>
+                )}
               </DialogFooter>
             </>
           )}

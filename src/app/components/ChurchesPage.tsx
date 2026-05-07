@@ -58,9 +58,10 @@ export function ChurchesPage() {
   const [filter, setFilter] = useState<"all" | "activa" | "inactiva">("all");
   const [showCreate, setShowCreate] = useState(false);
   const [editingIglesia, setEditingIglesia] = useState<IglesiaEnriquecida | null>(null);
+  const [deletingIglesia, setDeletingIglesia] = useState<IglesiaEnriquecida | null>(null);
   const [form, setForm] = useState<IglesiaFormData>({ nombre: "", fechaFundacion: "", direccion: "", telefono: "", descripcion: "", sitioWeb: "" });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof IglesiaFormData, string>>>({});
-  
+
   const createIglesiaMutation = useCreateIglesia();
   const updateIglesiaMutation = useUpdateIglesia();
   const toggleEstadoMutation = useToggleIglesiaEstado();
@@ -105,9 +106,21 @@ export function ChurchesPage() {
     );
   };
 
-  const handleDeleteIglesia = (id: number, nombre: string) => {
-    if (!confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`)) return;
-    deleteIglesiaMutation.mutate(id);
+  const handleDeleteIglesia = () => {
+    if (!deletingIglesia) return;
+    deleteIglesiaMutation.mutate(deletingIglesia.idIglesia, {
+      onSuccess: (result) => {
+        setDeletingIglesia(null);
+        if (result.type === 'hard') {
+          alert(`✅ Iglesia "${deletingIglesia.nombre}" eliminada permanentemente.`);
+        } else {
+          alert(`⚠️ Iglesia "${deletingIglesia.nombre}" desactivada (tiene datos asociados).`);
+        }
+      },
+      onError: (error) => {
+        alert(`❌ Error al eliminar iglesia: ${error.message}`);
+      }
+    });
   };
 
   const filtered = iglesias.filter((ig) => {
@@ -251,16 +264,16 @@ export function ChurchesPage() {
                    }}>
                     <Pencil className="w-3.5 h-3.5 mr-1.5" /> Editar
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-xl px-3 text-destructive hover:bg-destructive/10 transition-colors"
-                    onClick={() => handleDeleteIglesia(ig.idIglesia, ig.nombre)}
-                    disabled={deleteIglesiaMutation.isPending}
-                    title="Eliminar iglesia"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                   <Button
+                     variant="ghost"
+                     size="sm"
+                     className="rounded-xl px-3 text-destructive hover:bg-destructive/10 transition-colors"
+                     onClick={() => setDeletingIglesia(ig)}
+                     disabled={deleteIglesiaMutation.isPending}
+                     title="Eliminar iglesia"
+                   >
+                     <X className="w-4 h-4" />
+                   </Button>
                 </>
               )}
               {rolActual === "super_admin" && (
@@ -315,6 +328,68 @@ export function ChurchesPage() {
           <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
              <Button variant="ghost" onClick={() => setShowCreate(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
              <Button onClick={handleCreate} className="rounded-full px-5 shadow-sm shadow-primary/20"><Save className="w-4 h-4 mr-1.5" /> Crear Iglesia</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deletingIglesia} onOpenChange={(open) => !open && setDeletingIglesia(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
+          <div className="px-6 py-4 bg-destructive/10 border-b border-border/40">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-destructive">
+                <X className="w-5 h-5" /> Eliminar Iglesia
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+          <div className="px-6 py-4 space-y-4">
+            <p className="text-sm text-muted-foreground">
+              ¿Estás seguro de que quieres eliminar la iglesia <strong>"{deletingIglesia?.nombre}"</strong>?
+            </p>
+            {deletingIglesia && deletingIglesia.cantidadSedes > 0 && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <p className="text-sm text-amber-800 dark:text-amber-200 font-medium flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  ⚠️ Esta iglesia tiene {deletingIglesia.cantidadSedes} sede{deletingIglesia.cantidadSedes !== 1 ? 's' : ''} activa{deletingIglesia.cantidadSedes !== 1 ? 's' : ''}
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                  Será desactivada en lugar de eliminada permanentemente para proteger la integridad de los datos.
+                </p>
+              </div>
+            )}
+            <div className="text-xs text-muted-foreground">
+              {deletingIglesia && deletingIglesia.cantidadSedes === 0 ? (
+                <p>✅ <strong>Eliminación permanente:</strong> Esta iglesia no tiene sedes ni datos asociados, será eliminada completamente.</p>
+              ) : (
+                <p>⚠️ <strong>Desactivación:</strong> Esta iglesia tiene datos asociados y será desactivada para mantener la integridad de la información.</p>
+              )}
+            </div>
+          </div>
+          <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => setDeletingIglesia(null)}
+              className="rounded-full px-5"
+              disabled={deleteIglesiaMutation.isPending}
+            >
+              <X className="w-4 h-4 mr-1.5" /> Cancelar
+            </Button>
+            <Button
+              onClick={handleDeleteIglesia}
+              className="rounded-full px-5 shadow-sm shadow-destructive/20 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              disabled={deleteIglesiaMutation.isPending}
+            >
+              {deleteIglesiaMutation.isPending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5" />
+                  Eliminando...
+                </>
+              ) : (
+                <>
+                  <X className="w-4 h-4 mr-1.5" />
+                  {deletingIglesia && deletingIglesia.cantidadSedes === 0 ? 'Eliminar Permanentemente' : 'Desactivar Iglesia'}
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
