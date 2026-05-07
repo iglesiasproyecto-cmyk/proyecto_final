@@ -27,9 +27,11 @@ const rolColors: Record<string, string> = {
 export function MembersPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
   const idIglesiaNum = Number(idIglesia) || undefined;
-  const { usuarioActual, iglesiaActual } = useApp();
+  const { usuarioActual, iglesiaActual, rolActual } = useApp();
   const { data: ministeriosIdsUsuario = [] } = useMinisteriosIdsDeUsuario(usuarioActual?.idUsuario);
-  const isLider = ministeriosIdsUsuario.length > 0;
+  const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin";
+  const isLider = rolActual === "lider" && ministeriosIdsUsuario.length > 0;
+  const canManageMembers = isAdmin || isLider;
   const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios(idIglesiaNum);
   const { data: usuarios = [] } = useUsuarios();
   const [search, setSearch] = useState("");
@@ -39,17 +41,20 @@ export function MembersPage() {
 
   const ministerioIdsLider = useMemo(() => new Set(ministeriosIdsUsuario), [ministeriosIdsUsuario]);
   const ministeriosVisibles = useMemo(() => {
-    if (!isLider) return ministerios;
+    if (isAdmin) return ministerios;
+    if (isLider) return ministerios.filter((m) => ministerioIdsLider.has(m.idMinisterio));
     return ministerios.filter((m) => ministerioIdsLider.has(m.idMinisterio));
-  }, [isLider, ministerios, ministerioIdsLider]);
+  }, [isAdmin, isLider, ministerios, ministerioIdsLider]);
 
   useEffect(() => {
-    if (!isLider) return;
+    if (isAdmin) return;
     const firstId = ministeriosVisibles[0]?.idMinisterio ?? 0;
     if (selectedMinisterioId !== firstId) setSelectedMinisterioId(firstId);
-  }, [isLider, ministeriosVisibles, selectedMinisterioId]);
+  }, [isAdmin, ministeriosVisibles, selectedMinisterioId]);
 
-  const effectiveMinisterioId = isLider ? (selectedMinisterioId || ministeriosVisibles[0]?.idMinisterio || 0) : selectedMinisterioId;
+  const effectiveMinisterioId = (!isAdmin && ministeriosVisibles.length > 0)
+    ? (selectedMinisterioId || ministeriosVisibles[0]?.idMinisterio || 0)
+    : selectedMinisterioId;
   const { data: miembros = [], isLoading: miembrosLoading } = useMiembrosMinisterioEnriquecidos(effectiveMinisterioId || undefined);
   const createMiembroMutation = useCreateMiembroMinisterio();
   const deleteMiembroMutation = useDeleteMiembroMinisterio();
@@ -114,7 +119,7 @@ export function MembersPage() {
 
   const activeCount = filtered.filter(m => m.activo).length;
   const leaderCount = filtered.filter(m => m.rolEnMinisterio === "lider").length;
-  const showMinisterioColumn = !isLider && selectedMinisterioId === 0;
+  const showMinisterioColumn = isAdmin && selectedMinisterioId === 0;
 
   return (
     <div className="space-y-5 max-w-6xl mx-auto">
@@ -171,31 +176,33 @@ export function MembersPage() {
                 setSelectedMinisterioId(Number(e.target.value));
                 setHighlightFilter(false);
               }}
-              disabled={isLider}
+              disabled={!isAdmin && isLider}
               className="text-sm bg-transparent border-0 outline-none text-foreground/80 min-w-0 cursor-pointer [&_option]:bg-white [&_option]:text-gray-900 dark:[&_option]:bg-gray-800 dark:[&_option]:text-gray-100"
             >
-              {!isLider && <option value={0}>Todos los ministerios</option>}
+              {isAdmin && <option value={0}>Todos los ministerios</option>}
               {ministeriosVisibles.map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
             </select>
           </motion.div>
 
-          <Button
-            onClick={() => {
-              if (!effectiveMinisterioId) {
-                setHighlightFilter(true);
-                toast.warning("Elige un ministerio específico", {
-                  description: "Usa el filtro para elegir a qué ministerio agregarás al miembro.",
-                  duration: 4000,
-                });
-                window.setTimeout(() => setHighlightFilter(false), 2500);
-                return;
-              }
-              setShowInvite(true);
-            }}
-            className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all"
-          >
-            <Plus className="w-4 h-4 mr-1.5" /> Agregar
-          </Button>
+          {canManageMembers && (
+            <Button
+              onClick={() => {
+                if (!effectiveMinisterioId) {
+                  setHighlightFilter(true);
+                  toast.warning("Elige un ministerio específico", {
+                    description: "Usa el filtro para elegir a qué ministerio agregarás al miembro.",
+                    duration: 4000,
+                  });
+                  window.setTimeout(() => setHighlightFilter(false), 2500);
+                  return;
+                }
+                setShowInvite(true);
+              }}
+              className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all"
+            >
+              <Plus className="w-4 h-4 mr-1.5" /> Agregar
+            </Button>
+          )}
         </div>
       </motion.div>
 
@@ -294,6 +301,7 @@ export function MembersPage() {
 
                   {/* Acciones */}
                   <div className="flex md:justify-end">
+                    {canManageMembers && (
                     <button
                       className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-all duration-300 opacity-0 group-hover:opacity-100"
                       onClick={() => handleDeleteMiembro(mm.idMiembroMinisterio, name)}
@@ -302,6 +310,7 @@ export function MembersPage() {
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
+                    )}
                   </div>
                 </motion.div>
               );
