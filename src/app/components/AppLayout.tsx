@@ -14,7 +14,7 @@ import { SEILogo } from "./SEILogo";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
-  admin_iglesia: "Admin. de Iglesia",
+  admin_iglesia: "Administrador de Iglesia",
   lider: "Lider de Ministerio",
   servidor: "Servidor",
 };
@@ -34,75 +34,92 @@ interface NavItem {
 }
 
 const pageTitles: Record<string, string> = {
-  "/app": "Dashboard",
-  "/app/iglesias": "Gestion de Iglesias",
-  "/app/sedes": "Gestion de Sedes",
-  "/app/geografia": "Geografia",
-  "/app/pastores": "Pastores",
-  "/app/usuarios": "Usuarios",
-  "/app/catalogos": "Catalogos",
-  "/app/departamentos": "Ministerios",
-  "/app/mi-departamento": "Mi Ministerio",
-  "/app/miembros": "Miembros",
-  "/app/eventos": "Eventos",
-  "/app/tareas": "Tareas",
-   "/app/aula": "Aula de Formacion",
-   "/app/aula/curso/:idCurso": "Detalle del Curso",
-   "/app/aula/curso/:idCurso/servidor/:idUsuario": "Progreso Individual",
-  "/app/evaluaciones": "Evaluaciones",
-  "/app/notificaciones": "Notificaciones",
-  "/app/perfil": "Mi Perfil",
+  "/app/global": "Dashboard Global",
+  "/app/global/iglesias": "Gestión de Iglesias",
+  "/app/global/administradores": "Administradores de Iglesia",
+  "/app/global/usuarios": "Usuarios",
+  "/app/global/geografia": "Geografía",
+  "/app/global/catalogos": "Catálogos",
+  "/app/global/notificaciones": "Notificaciones",
+  "/app/global/perfil": "Mi Perfil",
 };
 
-function getNavItemsForRole(role: string, iglesiaActual?: { id: number; nombre: string } | null): NavItem[] {
+function getDynamicPageTitle(pathname: string): string {
+  if (pathname.match(/\/app\/\d+\/sedes/)) return "Sedes";
+  if (pathname.match(/\/app\/\d+\/pastores/)) return "Pastores";
+  if (pathname.match(/\/app\/\d+\/ministerios/)) return "Ministerios";
+  if (pathname.match(/\/app\/\d+\/usuarios/)) return "Usuarios";
+  if (pathname.match(/\/app\/\d+\/miembros/)) return "Miembros";
+  if (pathname.match(/\/app\/\d+\/eventos/)) return "Eventos";
+  if (pathname.match(/\/app\/\d+\/tareas/)) return "Tareas";
+  if (pathname.match(/\/app\/\d+\/aula\/curso\/\d+\/servidor/)) return "Progreso Individual";
+  if (pathname.match(/\/app\/\d+\/aula\/curso/)) return "Detalle del Curso";
+  if (pathname.match(/\/app\/\d+\/aula/)) return "Aula de Formación";
+  if (pathname.match(/\/app\/\d+\/mi-ministerio/)) return "Mi Ministerio";
+  if (pathname.match(/\/app\/\d+\/notificaciones/)) return "Notificaciones";
+  if (pathname.match(/\/app\/\d+\/perfil/)) return "Mi Perfil";
+  if (pathname.match(/\/app\/\d+$/)) return "Dashboard";
+  return "Panel";
+}
+
+function getNavItemsForRole(
+  role: string,
+  iglesiaActual?: { id: number; nombre: string } | null
+): NavItem[] {
+  const t = iglesiaActual?.id != null ? `/app/${iglesiaActual.id}` : "/app";
+
   switch (role) {
     case "super_admin":
       return [
-        { label: "Dashboard", path: "/app", icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
-        { label: "Iglesias", path: "/app/iglesias", icon: <Building2 className="w-5 h-5" />, section: "Gestion" },
-        { label: "Sedes", path: "/app/sedes", icon: <Church className="w-5 h-5" />, section: "Gestion" },
-        { label: "Pastores", path: "/app/pastores", icon: <UserCheck className="w-5 h-5" />, section: "Gestion" },
-        { label: "Usuarios", path: "/app/usuarios", icon: <Users className="w-5 h-5" />, section: "Gestion" },
-        { label: "Geografia", path: "/app/geografia", icon: <Globe className="w-5 h-5" />, section: "Configuracion" },
-        { label: "Catalogos", path: "/app/catalogos", icon: <Settings2 className="w-5 h-5" />, section: "Configuracion" },
-        { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
-        { label: "Mi Perfil", path: "/app/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
+        { label: "Dashboard", path: "/app/global", icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
+        { label: "Iglesias", path: "/app/global/iglesias", icon: <Building2 className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Administradores", path: "/app/global/administradores", icon: <UserCheck className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Usuarios", path: "/app/global/usuarios", icon: <Users className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Geografía", path: "/app/global/geografia", icon: <Globe className="w-5 h-5" />, section: "Configuración" },
+        { label: "Catálogos", path: "/app/global/catalogos", icon: <Settings2 className="w-5 h-5" />, section: "Configuración" },
+        { label: "Notificaciones", path: "/app/global/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
+        { label: "Mi Perfil", path: "/app/global/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
+
     case "admin_iglesia":
       return [
-        { label: "Dashboard", path: "/app", icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
-        { label: "Mi Iglesia", path: iglesiaActual ? `/app/iglesias/${iglesiaActual.id}` : "/app", icon: <Church className="w-5 h-5" />, section: "Iglesia" },
-        { label: "Ministerios", path: "/app/departamentos", icon: <Settings className="w-5 h-5" />, section: "Iglesia" },
-        { label: "Sedes", path: "/app/sedes", icon: <Building2 className="w-5 h-5" />, section: "Iglesia" },
-        { label: "Usuarios", path: "/app/usuarios", icon: <Users className="w-5 h-5" />, section: "Iglesia" },
-        { label: "Miembros", path: "/app/miembros", icon: <Users className="w-5 h-5" />, section: "Iglesia" },
-        { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Iglesia" },
-        { label: "Tareas", path: "/app/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Iglesia" },
-        { label: "Aula de Formación", path: "/app/aula", icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
-        { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
-        { label: "Mi Perfil", path: "/app/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
+        { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
+        { label: "Mi Iglesia", path: `/app/global/iglesias/${iglesiaActual?.id}`, icon: <Church className="w-5 h-5" />, section: "Mi Iglesia" },
+        { label: "Sedes", path: `${t}/sedes`, icon: <Building2 className="w-5 h-5" />, section: "Mi Iglesia" },
+        { label: "Pastores", path: `${t}/pastores`, icon: <UserCheck className="w-5 h-5" />, section: "Mi Iglesia" },
+        { label: "Ministerios", path: `${t}/ministerios`, icon: <Settings className="w-5 h-5" />, section: "Mi Iglesia" },
+        { label: "Usuarios", path: `${t}/usuarios`, icon: <Users className="w-5 h-5" />, section: "Mi Iglesia" },
+        { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Mi Iglesia" },
+        { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
+        { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
+        { label: "Mi Perfil", path: `${t}/perfil`, icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
+
     case "lider":
       return [
-        { label: "Dashboard", path: "/app", icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
-        { label: "Mi Ministerio", path: "/app/mi-departamento", icon: <FolderHeart className="w-5 h-5" />, section: "Ministerio" },
-        { label: "Miembros", path: "/app/miembros", icon: <Users className="w-5 h-5" />, section: "Ministerio" },
-        { label: "Aula de Formación", path: "/app/aula", icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
-        { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
-        { label: "Tareas", path: "/app/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
-        { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
-        { label: "Mi Perfil", path: "/app/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
+        { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
+        { label: "Mi Ministerio", path: `${t}/mi-ministerio`, icon: <FolderHeart className="w-5 h-5" />, section: "Ministerio" },
+        { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Ministerio" },
+        { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
+        { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
+        { label: "Mi Perfil", path: `${t}/perfil`, icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
+
     case "servidor":
       return [
-        { label: "Dashboard", path: "/app", icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
-        { label: "Mi Ministerio", path: "/app/mi-departamento", icon: <FolderHeart className="w-5 h-5" />, section: "Ministerio" },
-        { label: "Aula de Formación", path: "/app/aula", icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
-        { label: "Eventos", path: "/app/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
-        { label: "Mis Tareas", path: "/app/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
-        { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
-        { label: "Mi Perfil", path: "/app/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
+        { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
+        { label: "Mi Ministerio", path: `${t}/mi-ministerio`, icon: <FolderHeart className="w-5 h-5" />, section: "Ministerio" },
+        { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Mis Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
+        { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
+        { label: "Mi Perfil", path: `${t}/perfil`, icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
+
     default:
       return [
         { label: "Dashboard", path: "/app", icon: <LayoutDashboard className="w-5 h-5" /> },
@@ -135,8 +152,8 @@ export function AppLayout() {
   }, [authLoading, usuarioActual, navigate]);
 
   useEffect(() => {
-    const sectionTitle = pageTitles[location.pathname] || "Panel"
-    document.title = `${sectionTitle} | IGLESIABD`
+    const title = pageTitles[location.pathname] ?? getDynamicPageTitle(location.pathname);
+    document.title = `${title} | IGLESIABD`;
   }, [location.pathname]);
 
   if (authLoading) {
@@ -157,7 +174,7 @@ export function AppLayout() {
   const showChurchSelectorPanel = rol !== "super_admin";
   const fullName = `${usuarioActual.nombres} ${usuarioActual.apellidos}`;
   const initials = `${usuarioActual.nombres.charAt(0)}${usuarioActual.apellidos.charAt(0)}`;
-  const currentPageTitle = pageTitles[location.pathname] || "S.E.I.";
+  const currentPageTitle = pageTitles[location.pathname] ?? getDynamicPageTitle(location.pathname);
 
   const sidebarWidth = isCollapsed ? "w-[72px]" : "w-64";
 
@@ -438,7 +455,12 @@ export function AppLayout() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={() => navigate("/app/notificaciones")}
+                    onClick={() => {
+                      const notifPath = rolActual === "super_admin"
+                        ? "/app/global/notificaciones"
+                        : iglesiaActual?.id != null ? `/app/${iglesiaActual.id}/notificaciones` : "/app";
+                      navigate(notifPath);
+                    }}
                     className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                   >
                     <Bell className="w-5 h-5" />
@@ -472,7 +494,12 @@ export function AppLayout() {
               </Tooltip>
 
               <button
-                onClick={() => navigate("/app/perfil")}
+                onClick={() => {
+                  const perfilPath = rolActual === "super_admin"
+                    ? "/app/global/perfil"
+                    : iglesiaActual?.id != null ? `/app/${iglesiaActual.id}/perfil` : "/app";
+                  navigate(perfilPath);
+                }}
                 className="flex items-center gap-3 p-1.5 pr-4 rounded-xl hover:bg-accent transition-colors border border-transparent hover:border-border"
               >
                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center text-white text-[11px] font-bold shadow-sm">
