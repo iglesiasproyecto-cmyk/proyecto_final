@@ -122,9 +122,9 @@ function getNavItemsForRole(
 
     default:
       return [
-        { label: "Dashboard", path: "/app", icon: <LayoutDashboard className="w-5 h-5" /> },
-        { label: "Notificaciones", path: "/app/notificaciones", icon: <Bell className="w-5 h-5" /> },
-        { label: "Mi Perfil", path: "/app/perfil", icon: <User className="w-5 h-5" /> },
+        { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" /> },
+        { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" /> },
+        { label: "Mi Perfil", path: `${t}/perfil`, icon: <User className="w-5 h-5" /> },
       ];
   }
 }
@@ -174,8 +174,6 @@ export function AppLayout() {
   const showChurchSelectorPanel = rol !== "super_admin";
   const fullName = `${usuarioActual.nombres} ${usuarioActual.apellidos}`;
   const initials = `${usuarioActual.nombres.charAt(0)}${usuarioActual.apellidos.charAt(0)}`;
-  const currentPageTitle = pageTitles[location.pathname] ?? getDynamicPageTitle(location.pathname);
-
   const sidebarWidth = isCollapsed ? "w-[72px]" : "w-64";
 
   return (
