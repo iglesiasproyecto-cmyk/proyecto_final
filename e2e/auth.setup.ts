@@ -1,4 +1,4 @@
-import { test as setup, expect } from '@playwright/test'
+import { test as setup } from '@playwright/test'
 
 const BASE_URL = process.env.TEST_URL ?? 'http://localhost:5173'
 
@@ -44,6 +44,9 @@ const roles: RoleCredentials[] = [
 
 for (const creds of roles) {
   setup(`authenticate as ${creds.role}`, async ({ page }) => {
+    // Small delay between sequential logins to respect Supabase cloud rate limits
+    await page.waitForTimeout(1_500)
+
     await page.goto(`${BASE_URL}/login`)
 
     // Fill login form
