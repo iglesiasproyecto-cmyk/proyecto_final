@@ -18,6 +18,7 @@ import { PastoresPage } from "./components/PastoresPage";
 import { MinisteriosPage } from "./components/MinisteriosPage";
 import { MiMinisterioPage } from "./components/MiMinisterioPage";
 import { AdministradoresPage } from "./components/AdministradoresPage";
+import { AdminSedesPage } from "./components/AdminSedesPage";
 import { MembersPage } from "./components/MembersPage";
 import { EventsPage } from "./components/EventsPage";
 import { TasksPage } from "./components/TasksPage";
@@ -66,6 +67,7 @@ export const router = createBrowserRouter([
               { path: "perfil", Component: ProfilePage, ErrorBoundary: ErrorPage },
               { path: "sitemap", Component: SitemapPage, ErrorBoundary: ErrorPage },
               { path: "administradores", Component: AdministradoresPage, ErrorBoundary: ErrorPage },
+              { path: "admin-sedes", Component: AdminSedesPage, ErrorBoundary: ErrorPage },
             ],
           },
 
