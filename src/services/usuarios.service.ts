@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
+import { ROLE_IDS } from '@/app/constants/roles'
 import type { Rol, Usuario, UsuarioRol, AdminSedeAsignacion } from '@/types/app.types'
 import type { Database } from '@/types/database.types'
 
@@ -111,9 +112,9 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
         iglesia:iglesia(nombre)
       ),
       miembro_ministerio(
-        ministerio:ministerio(nombre),
         rol_en_ministerio,
-        fecha_salida
+        fecha_salida,
+        id_ministerio
       )
     `)
     .is('deleted_at', null)
@@ -136,7 +137,7 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
     minNames: (r.miembro_ministerio || [])
       .filter((mm: any) => mm.fecha_salida === null)
       .map((mm: any) => ({
-        nombre: mm.ministerio?.nombre ?? '',
+        nombre: `Ministerio #${mm.id_ministerio}`,
         rol: mm.rol_en_ministerio ?? '',
       })),
   }))
@@ -329,7 +330,7 @@ export async function fetchAdminSedesAsignaciones(idIglesia?: number): Promise<A
         iglesia:id_iglesia(nombre),
         ciudad:sede(ciudad:ciudad(nombre))
       `)
-      .eq('rol.nombre', 'Administrador de Sede')
+      .eq('id_rol', ROLE_IDS.ADMIN_SEDE)
       .is('fecha_fin', null)
 
     if (idIglesia) {

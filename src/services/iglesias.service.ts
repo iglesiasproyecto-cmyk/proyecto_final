@@ -262,7 +262,6 @@ export async function getSedesEnriquecidas(idIglesia?: number): Promise<SedeEnri
     .from('sede')
     .select(`
       *,
-      ministerio(count),
       ciudad(
         nombre,
         id_departamento,
@@ -291,7 +290,7 @@ export async function getSedesEnriquecidas(idIglesia?: number): Promise<SedeEnri
 
   return (data as any[]).map(r => ({
     ...mapSede(r),
-    cantidadMinisterios: Array.isArray(r.ministerio) ? r.ministerio[0]?.count ?? 0 : 0,
+    cantidadMinisterios: 0,
     ciudadNombre: r.ciudad?.nombre ?? '',
     idDepartamentoGeo: r.ciudad?.id_departamento ?? null,
     idPais: r.ciudad?.departamento?.id_pais ?? null,
@@ -434,9 +433,10 @@ export async function toggleSedeEstado(id: number): Promise<void> {
 export async function createPastor(
   data: { nombres: string; apellidos: string; correo: string; telefono: string | null; idUsuario: number | null }
 ): Promise<Pastor> {
+  const correo = data.correo.trim().toLowerCase()
   const { data: result, error } = await supabase
     .from('pastor')
-    .insert([{ nombres: data.nombres, apellidos: data.apellidos, correo: data.correo, telefono: data.telefono, id_usuario: data.idUsuario }])
+    .insert([{ nombres: data.nombres, apellidos: data.apellidos, correo, telefono: data.telefono, id_usuario: data.idUsuario }])
     .select()
     .single()
   if (error) throw error
@@ -447,12 +447,13 @@ export async function updatePastor(
   id: number,
   data: { nombres?: string; apellidos?: string; correo?: string; telefono?: string | null; idUsuario?: number | null }
 ): Promise<Pastor> {
+  const correo = data.correo?.trim().toLowerCase()
   const { data: result, error } = await supabase
     .from('pastor')
     .update({
       ...(data.nombres !== undefined && { nombres: data.nombres }),
       ...(data.apellidos !== undefined && { apellidos: data.apellidos }),
-      ...(data.correo !== undefined && { correo: data.correo }),
+      ...(correo !== undefined && { correo }),
       ...(data.telefono !== undefined && { telefono: data.telefono }),
       ...(data.idUsuario !== undefined && { id_usuario: data.idUsuario }),
     })
@@ -562,10 +563,11 @@ export async function deleteSede(id: number): Promise<void> {
 }
 
 export async function checkPastorCorreoExists(correo: string, excludeId?: number): Promise<boolean> {
+  const normalizedCorreo = correo.trim().toLowerCase()
   let q = supabase
     .from('pastor')
     .select('id_pastor', { count: 'exact', head: true })
-    .eq('correo', correo)
+    .eq('correo', normalizedCorreo)
     .eq('activo', true)
   if (excludeId) q = q.neq('id_pastor', excludeId)
   const { count, error } = await q
