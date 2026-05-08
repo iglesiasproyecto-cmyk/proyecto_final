@@ -409,7 +409,7 @@ function AdminIglesiaDashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-bold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{ev.nombre}</p>
-                  <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{ev.sedeNombre || ev.tipoEventoNombre}</p>
+                  <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{ev.sedeNombre || ev.tipoEventoTexto}</p>
                 </div>
               </div>
             ))}
@@ -562,7 +562,7 @@ function LiderDashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-bold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{ev.nombre}</p>
-                  <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{ev.sedeNombre || ev.tipoEventoNombre}</p>
+                  <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{ev.sedeNombre || ev.tipoEventoTexto}</p>
                 </div>
                 <Badge variant="secondary" className={`text-[9px] px-2 py-0 border-0 ${ev.idMinisterio ? "bg-amber-500/10 text-amber-600" : "bg-[#4682b4]/10 text-[#4682b4]"} uppercase tracking-widest`}>{ev.idMinisterio ? "Min." : "Global"}</Badge>
               </div>
@@ -694,7 +694,7 @@ function ServidorDashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-bold text-foreground/90 truncate group-hover:text-[#4682b4] transition-colors">{ev.nombre}</p>
-                  <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{ev.sedeNombre || ev.tipoEventoNombre}</p>
+                  <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{ev.sedeNombre || ev.tipoEventoTexto}</p>
                 </div>
               </div>
             ))}

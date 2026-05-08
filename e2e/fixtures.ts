@@ -22,12 +22,12 @@ export type PermissionMap = {
 
 /** Navega a una ruta tenant-scoped (usa IGLESIA_ID del entorno) */
 export async function gotoTenant(page: Page, path: string) {
-  await page.goto(`${BASE_URL}/app/${IGLESIA_ID}/${path}`)
+  await page.goto(`${BASE_URL}/app/${IGLESIA_ID}/${path}`, { waitUntil: 'domcontentloaded' })
 }
 
 /** Navega a una ruta global (solo super_admin) */
 export async function gotoGlobal(page: Page, path: string) {
-  await page.goto(`${BASE_URL}/app/global/${path}`)
+  await page.goto(`${BASE_URL}/app/global/${path}`, { waitUntil: 'domcontentloaded' })
 }
 
 // ── Helpers de toast ─────────────────────────────────────────────────────────

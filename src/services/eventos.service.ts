@@ -1,30 +1,19 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { TipoEvento, Evento, Tarea, TareaAsignada, TareaEvidencia } from '@/types/app.types'
+import type { Evento, Tarea, TareaAsignada, TareaEvidencia } from '@/types/app.types'
 import type { Database } from '@/types/database.types'
 import { sendEmail } from './email.service'
 
-type TipoEventoRow = Database['public']['Tables']['tipo_evento']['Row']
 type EventoRow = Database['public']['Tables']['evento']['Row']
 type TareaRow = Database['public']['Tables']['tarea']['Row']
 type TareaAsignadaRow = Database['public']['Tables']['tarea_asignada']['Row']
 type TareaEvidenciaRow = Database['public']['Tables']['tarea_evidencia']['Row']
-
-function mapTipoEvento(r: TipoEventoRow): TipoEvento {
-  return {
-    idTipoEvento: r.id_tipo_evento,
-    nombre: r.nombre,
-    descripcion: r.descripcion,
-    creadoEn: r.creado_en,
-    actualizadoEn: r.updated_at,
-  }
-}
 
 function mapEvento(r: EventoRow): Evento {
   return {
     idEvento: r.id_evento,
     nombre: r.nombre,
     descripcion: r.descripcion,
-    idTipoEvento: r.id_tipo_evento,
+    tipoEventoTexto: (r as any).tipo_evento_texto ?? null,
     fechaInicio: r.fecha_inicio,
     fechaFin: r.fecha_fin,
     estado: r.estado as Evento['estado'],
@@ -78,16 +67,6 @@ function mapTareaEvidencia(r: TareaEvidenciaRow): TareaEvidencia {
   }
 }
 
-// NOTE: tipo_evento table doesn't have 'activo' column - access controlled by RLS policies
-export async function getTiposEvento(): Promise<TipoEvento[]> {
-  const { data, error } = await supabase
-    .from('tipo_evento')
-    .select('*')
-    .order('nombre', { ascending: true })
-  if (error) throw error
-  return data.map(mapTipoEvento)
-}
-
 // NOTE: evento table uses 'estado' column, not 'activo' - access controlled by RLS policies
 export async function getEventos(idIglesia?: number): Promise<Evento[]> {
   let q = supabase.from('evento').select('*').order('fecha_inicio', { ascending: false })
@@ -118,35 +97,11 @@ export async function getTareasAsignadas(idUsuario: number): Promise<TareaAsigna
   return data.map(mapTareaAsignada)
 }
 
-// â”€â”€ TipoEvento mutations â”€â”€
-
-export async function createTipoEvento(
-  data: {
-    nombre: string
-    descripcion: string | null
-  }
-): Promise<TipoEvento> {
-  const { data: result, error } = await supabase
-    .from('tipo_evento')
-    .insert([{
-      nombre: data.nombre,
-      descripcion: data.descripcion,
-    }])
-    .select()
-    .single()
-
-  if (error) {
-    console.error('[AUDIT] Failed to create tipo_evento - audit logging may be affected:', error)
-    throw new Error(`Error creando tipo de evento: ${error.message}`)
-  }
-  return mapTipoEvento(result)
-}
-
 export async function createEvento(
   data: {
     nombre: string
     descripcion: string | null
-    idTipoEvento: number
+    tipoEventoTexto?: string | null
     fechaInicio: string
     fechaFin: string
     idIglesia: number
@@ -159,7 +114,7 @@ export async function createEvento(
     .insert([{
       nombre: data.nombre,
       descripcion: data.descripcion,
-      id_tipo_evento: data.idTipoEvento,
+      tipo_evento_texto: data.tipoEventoTexto ?? null,
       fecha_inicio: data.fechaInicio,
       fecha_fin: data.fechaFin,
       estado: 'programado',
@@ -218,7 +173,7 @@ export async function updateTareaEstado(id: number, estado: Tarea['estado']): Pr
 // â”€â”€ Enriched interfaces â”€â”€
 
 export interface EventoEnriquecido extends Evento {
-  tipoEventoNombre: string
+  tipoEventoTexto: string | null
   cantidadTareas: number
 }
 
@@ -234,7 +189,7 @@ export interface TareaEnriquecida extends Tarea {
 export async function getEventosEnriquecidos(idIglesia?: number): Promise<EventoEnriquecido[]> {
   let q = supabase
     .from('evento')
-    .select('*, tipo_evento(nombre), tarea(count)')
+    .select('*, tarea(count)')
     .order('fecha_inicio', { ascending: false })
   if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
   const { data, error } = await q;
@@ -244,7 +199,7 @@ export async function getEventosEnriquecidos(idIglesia?: number): Promise<Evento
   }
   return (data as any[]).map(r => ({
     ...mapEvento(r),
-    tipoEventoNombre: r.tipo_evento?.nombre ?? '',
+    tipoEventoTexto: r.tipo_evento_texto ?? null,
     cantidadTareas: Array.isArray(r.tarea) ? r.tarea[0]?.count ?? 0 : 0,
   }))
 }
@@ -298,7 +253,7 @@ export async function updateEvento(
     descripcion?: string | null
     fechaInicio?: string
     fechaFin?: string | null
-    idTipoEvento?: number
+    tipoEventoTexto?: string | null
     estado?: string
   }
 ): Promise<Evento> {
@@ -307,7 +262,7 @@ export async function updateEvento(
   if (data.descripcion !== undefined) patch.descripcion = data.descripcion
   if (data.fechaInicio !== undefined) patch.fecha_inicio = data.fechaInicio
   if (data.fechaFin !== undefined) patch.fecha_fin = data.fechaFin
-  if (data.idTipoEvento !== undefined) patch.id_tipo_evento = data.idTipoEvento
+  if (data.tipoEventoTexto !== undefined) patch.tipo_evento_texto = data.tipoEventoTexto
   if (data.estado !== undefined) patch.estado = data.estado
   const { data: result, error } = await supabase
     .from('evento')

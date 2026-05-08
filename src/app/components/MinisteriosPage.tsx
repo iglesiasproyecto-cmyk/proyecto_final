@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router";
 import {
-  useMinisteriosEnriquecidos, useDeleteMinisterio, useMiembrosMinisterio, useToggleMinisterioEstado, useCreateMinisterio, useCreateMiembroMinisterio,
+  useMinisteriosEnriquecidos, useDeleteMinisterio, useMiembrosMinisterioEnriquecidos, useToggleMinisterioEstado, useCreateMinisterio, useCreateMiembroMinisterio,
 } from "@/hooks/useMinisterios";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -20,9 +20,17 @@ import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Tr
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-700", servidor: "bg-gray-100 text-gray-700" };
 
+function normalizeRol(rol?: string | null) {
+  const raw = `${rol ?? ""}`
+  const normalized = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  if (normalized.includes('lider')) return 'lider'
+  if (normalized.includes('servidor')) return 'servidor'
+  return 'servidor'
+}
+
 function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void }) {
   const { rolActual } = useApp();
-  const { data: minMembers = [] } = useMiembrosMinisterio(min.idMinisterio);
+  const { data: minMembers = [] } = useMiembrosMinisterioEnriquecidos(min.idMinisterio);
   const { data: allUsers = [] } = useUsuariosEnriquecidos();
   const [showAddMember, setShowAddMember] = useState(false);
   const [memberForm, setMemberForm] = useState({ idUsuario: "", rolEnMinisterio: "servidor" });
@@ -101,8 +109,8 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
                      </div>
                   </div>
                   <div className="flex items-center gap-2 sm:shrink-0 justify-end">
-                     <Badge variant="outline" className={`${rolColors[mm.rolEnMinisterio || "servidor"]} border-white/10 text-[10px] uppercase font-bold tracking-widest px-2 py-0.5`}>{rolLabels[mm.rolEnMinisterio || "servidor"] || mm.rolEnMinisterio}</Badge>
-                     <Badge variant={mm.activo ? "secondary" : "outline"} className={`text-[10px] ${mm.activo ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200' : 'bg-background/50 border-white/5'}`}>{mm.activo ? "Activo" : "Inactivo"}</Badge>
+                    <Badge variant="outline" className={`${rolColors[normalizeRol(mm.rolEnMinisterio)]} border-white/10 text-[10px] uppercase font-bold tracking-widest px-2 py-0.5`}>{rolLabels[normalizeRol(mm.rolEnMinisterio)] || mm.rolEnMinisterio}</Badge>
+                    <Badge variant={mm.activo ? "secondary" : "outline"} className={`text-[10px] ${mm.activo ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200' : 'bg-background/50 border-white/5'}`}>{mm.activo ? "Activo" : "Inactivo"}</Badge>
                   </div>
                 </div>
               ))}
@@ -226,8 +234,8 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
 export function MinisteriosPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
   const idIglesiaNum = Number(idIglesia) || undefined;
-  const { iglesiaActual } = useApp();
-  const { data: ministerios = [], isLoading } = useMinisteriosEnriquecidos(idIglesiaNum);
+  const { iglesiaActual, iglesiasDelUsuario, rolActual, setIglesiaActual } = useApp();
+  const { data: ministerios = [], isLoading, error } = useMinisteriosEnriquecidos(idIglesiaNum);
   const { data: todasSedes = [] } = useSedesEnriquecidas();
   const sedes = idIglesiaNum
     ? todasSedes.filter(s => s.idIglesia === idIglesiaNum)
@@ -257,6 +265,18 @@ export function MinisteriosPage() {
 
   const handleCreateMinisterio = () => {
     if (!createForm.nombre.trim() || !createForm.idSede) return;
+
+    // Verificar si ya existe un ministerio con el mismo nombre en la misma sede
+    const existingMinisterio = ministerios.find(m =>
+      m.nombre.toLowerCase() === createForm.nombre.trim().toLowerCase() &&
+      m.idSede === parseInt(createForm.idSede)
+    );
+
+    if (existingMinisterio) {
+      alert(`Ya existe un ministerio llamado "${existingMinisterio.nombre}" en esta sede. Por favor elige un nombre diferente.`);
+      return;
+    }
+
     createMinisterioMutation.mutate(
       {
         nombre: createForm.nombre.trim(),
@@ -269,9 +289,24 @@ export function MinisteriosPage() {
           setShowCreate(false);
           setCreateForm({ nombre: "", descripcion: "", idSede: "" });
         },
+        onError: (error: any) => {
+          console.error('Error creando ministerio:', error);
+          if (error.message?.includes('duplicate key') || error.code === '23505') {
+            alert('Ya existe un ministerio con este nombre en la sede seleccionada. Por favor elige un nombre diferente.');
+          } else {
+            alert('Error al crear el ministerio: ' + (error.message || 'Error desconocido'));
+          }
+        }
       }
     );
   };
+
+  // Validación en tiempo real del nombre
+  const isNombreDuplicado = createForm.nombre.trim() && createForm.idSede &&
+    ministerios.some(m =>
+      m.nombre.toLowerCase() === createForm.nombre.trim().toLowerCase() &&
+      m.idSede === parseInt(createForm.idSede)
+    );
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -371,8 +406,11 @@ export function MinisteriosPage() {
                 value={createForm.nombre}
                 onChange={(e) => setCreateForm(p => ({ ...p, nombre: e.target.value }))}
                 placeholder="Ej. Alabanza y Adoración"
-                className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
+                className={`h-11 bg-background/50 border-white/10 rounded-xl text-sm ${isNombreDuplicado ? 'border-red-500 focus-visible:ring-red-500/30' : ''}`}
               />
+              {isNombreDuplicado && (
+                <p className="text-red-500 text-xs mt-1">⚠️ Ya existe un ministerio con este nombre en la sede seleccionada</p>
+              )}
             </div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">Descripción</label>
@@ -403,7 +441,7 @@ export function MinisteriosPage() {
             <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); setCreateForm({ nombre: "", descripcion: "", idSede: "" }); }}>
               Cancelar
             </Button>
-            <Button variant="default" className="rounded-xl" onClick={handleCreateMinisterio} disabled={!createForm.nombre.trim() || !createForm.idSede || createMinisterioMutation.isPending}>
+            <Button variant="default" className="rounded-xl" onClick={handleCreateMinisterio} disabled={!createForm.nombre.trim() || !createForm.idSede || createMinisterioMutation.isPending || isNombreDuplicado}>
               {createMinisterioMutation.isPending ? "Creando..." : "Crear Ministerio"}
             </Button>
           </DialogFooter>
