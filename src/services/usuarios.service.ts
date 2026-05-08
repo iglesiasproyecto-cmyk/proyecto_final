@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Rol, Usuario, UsuarioRol } from '@/types/app.types'
+import type { Rol, Usuario, UsuarioRol, AdminSedeAsignacion } from '@/types/app.types'
 import type { Database } from '@/types/database.types'
 
 type RolRow = Database['public']['Tables']['rol']['Row']
@@ -306,4 +306,121 @@ export async function deleteUsuarioAsSuperAdmin(idUsuario: number): Promise<'har
   })
   if (error) throw error
   return data as 'hard' | 'soft'
+}
+
+// ── Admin Sede ──
+
+export async function fetchAdminSedesAsignaciones(idIglesia?: number): Promise<AdminSedeAsignacion[]> {
+  try {
+    let query = supabase
+      .from('usuario_rol_sede')
+      .select(`
+        id_usuario_rol_sede,
+        id_usuario,
+        id_sede,
+        id_iglesia,
+        id_rol,
+        fecha_inicio,
+        fecha_fin,
+        creado_en,
+        updated_at,
+        usuario:id_usuario(nombres, apellidos, correo),
+        sede:id_sede(nombre),
+        iglesia:id_iglesia(nombre),
+        ciudad:sede(ciudad:ciudad(nombre))
+      `)
+      .eq('rol.nombre', 'Administrador de Sede')
+      .is('fecha_fin', null)
+
+    if (idIglesia) {
+      query = query.eq('id_iglesia', idIglesia)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    return (data as any[]).map((item: any) => ({
+      idAdminSedeAsignacion: item.id_usuario_rol_sede,
+      idUsuario: item.id_usuario,
+      idSede: item.id_sede,
+      idIglesia: item.id_iglesia,
+      idRol: item.id_rol,
+      fechaInicio: item.fecha_inicio,
+      fechaFin: item.fecha_fin,
+      creadoEn: item.creado_en,
+      actualizadoEn: item.updated_at,
+      nombreCompleto: item.usuario ? `${item.usuario.nombres} ${item.usuario.apellidos}` : '',
+      correo: item.usuario?.correo ?? '',
+      sedeNombre: item.sede?.nombre ?? '',
+      iglesiaNombre: item.iglesia?.nombre ?? '',
+      ciudadNombre: item.ciudad?.[0]?.nombre ?? '',
+    }))
+  } catch (error) {
+    console.error('Error fetching admin sedes asignaciones:', error)
+    throw error
+  }
+}
+
+export async function assignAdminSede(data: {
+  idUsuario: number
+  idSede: number
+  idIglesia: number
+}): Promise<{ success: boolean; message: string; idAdminSedeAsignacion?: number }> {
+  try {
+    // Get ID_ROL for 'Administrador de Sede'
+    const { data: rolData, error: rolError } = await supabase
+      .from('rol')
+      .select('id_rol')
+      .eq('nombre', 'Administrador de Sede')
+      .single()
+
+    if (rolError) throw new Error('No se encontró el rol Administrador de Sede')
+    if (!rolData) throw new Error('Rol no encontrado')
+
+    // Insert into usuario_rol_sede
+    const { data: result, error } = await supabase
+      .from('usuario_rol_sede')
+      .insert({
+        id_usuario: data.idUsuario,
+        id_sede: data.idSede,
+        id_iglesia: data.idIglesia,
+        id_rol: rolData.id_rol,
+        fecha_inicio: new Date().toISOString().split('T')[0],
+        fecha_fin: null,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error assigning admin sede:', error)
+      throw new Error(error.message || 'Error al asignar administrador de sede')
+    }
+
+    return {
+      success: true,
+      message: 'Administrador de sede asignado correctamente',
+      idAdminSedeAsignacion: result.id_usuario_rol_sede,
+    }
+  } catch (error) {
+    console.error('Error in assignAdminSede:', error)
+    if (error instanceof Error) {
+      throw new Error(error.message)
+    }
+    throw new Error('Error desconocido al asignar administrador de sede')
+  }
+}
+
+export async function removeAdminSede(idAdminSedeAsignacion: number): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('usuario_rol_sede')
+      .update({ fecha_fin: new Date().toISOString().split('T')[0] })
+      .eq('id_usuario_rol_sede', idAdminSedeAsignacion)
+
+    if (error) throw error
+  } catch (error) {
+    console.error('Error removing admin sede:', error)
+    throw error
+  }
 }
