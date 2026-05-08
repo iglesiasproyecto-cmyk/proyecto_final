@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router";
-import { useEventosEnriquecidos, useDeleteEvento, useTiposEvento, useCreateEvento, useUpdateEvento } from "@/hooks/useEventos";
+import { useEventosEnriquecidos, useDeleteEvento, useCreateEvento, useUpdateEvento } from "@/hooks/useEventos";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
 import type { EventoEnriquecido } from "@/services/eventos.service";
@@ -56,7 +56,7 @@ function GlassSelect({ value, onChange, children }: { value: number; onChange: (
   );
 }
 
-function EventDialogFields({ form, setForm, tiposEvento, sedes = [], ministerios = [] }: { form: any; setForm: (f: any) => void; tiposEvento: any[]; sedes?: any[]; ministerios?: any[] }) {
+function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { form: any; setForm: (f: any) => void; sedes?: any[]; ministerios?: any[] }) {
   return (
     <div className="space-y-4 py-2">
       <div>
@@ -64,11 +64,8 @@ function EventDialogFields({ form, setForm, tiposEvento, sedes = [], ministerios
         <GlassInput value={form.nombre} onChange={e => setForm((p: any) => ({ ...p, nombre: e.target.value }))} placeholder="Ej. Culto de Adoración Especial" />
       </div>
       <div>
-        <FieldLabel>Tipo de Evento</FieldLabel>
-        <GlassSelect value={form.idTipoEvento} onChange={v => setForm((p: any) => ({ ...p, idTipoEvento: v }))}>
-          <option value={0}>Seleccionar tipo...</option>
-          {tiposEvento.map(te => <option key={te.idTipoEvento} value={te.idTipoEvento}>{te.nombre}</option>)}
-        </GlassSelect>
+        <FieldLabel>Detalle del Evento <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span></FieldLabel>
+        <GlassInput value={form.tipoEventoTexto} onChange={e => setForm((p: any) => ({ ...p, tipoEventoTexto: e.target.value }))} placeholder="Ej. Vigilia, aniversario, campaña, culto especial..." />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -123,7 +120,6 @@ export function EventsPage() {
   const idIglesiaNum = Number(idIglesia) || undefined;
   const { iglesiaActual, rolActual } = useApp();
   const { data: eventos = [], isLoading } = useEventosEnriquecidos(idIglesiaNum);
-  const { data: tiposEvento = [] } = useTiposEvento();
   const { data: sedes = [] } = useSedesEnriquecidas(idIglesiaNum);
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(idIglesiaNum);
   const createEventoMutation = useCreateEvento();
@@ -135,18 +131,18 @@ export function EventsPage() {
   const [selectedEvent, setSelectedEvent] = useState<EventoEnriquecido | null>(null);
   const [confirmDeleteEvento, setConfirmDeleteEvento] = useState<{ isOpen: boolean; id: number; nombre: string }>({ isOpen: false, id: 0, nombre: "" });
 
-  const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
-  const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "", estado: "programado" as string, idSede: 0, idMinisterio: 0 });
+  const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
+  const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", estado: "programado" as string, idSede: 0, idMinisterio: 0 });
 
   const canManageEvents = rolActual === "lider" || rolActual === "admin_iglesia" || rolActual === "super_admin";
 
-  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", idTipoEvento: 0, fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
+  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
 
   const openEditDialog = (ev: EventoEnriquecido) => {
     setEditEvento(ev);
     setEditForm({
       nombre: ev.nombre, descripcion: ev.descripcion ?? "",
-      idTipoEvento: ev.idTipoEvento,
+      tipoEventoTexto: ev.tipoEventoTexto ?? "",
       fechaInicio: ev.fechaInicio?.replace(" ", "T").slice(0, 16) ?? "",
       fechaFin: ev.fechaFin?.replace(" ", "T").slice(0, 16) ?? "",
       estado: ev.estado,
@@ -156,9 +152,9 @@ export function EventsPage() {
   };
 
   const handleCreateEvento = () => {
-    if (!createForm.nombre.trim() || !createForm.idTipoEvento || !createForm.fechaInicio || !createForm.fechaFin || !(idIglesiaNum ?? iglesiaActual?.id)) return;
+    if (!createForm.nombre.trim() || !createForm.fechaInicio || !createForm.fechaFin || !(idIglesiaNum ?? iglesiaActual?.id)) return;
     createEventoMutation.mutate(
-      { nombre: createForm.nombre.trim(), descripcion: createForm.descripcion.trim() || null, idTipoEvento: createForm.idTipoEvento, fechaInicio: createForm.fechaInicio, fechaFin: createForm.fechaFin, idIglesia: idIglesiaNum ?? iglesiaActual?.id ?? 0, idSede: createForm.idSede || null, idMinisterio: createForm.idMinisterio || null },
+      { nombre: createForm.nombre.trim(), descripcion: createForm.descripcion.trim() || null, tipoEventoTexto: createForm.tipoEventoTexto.trim() || null, fechaInicio: createForm.fechaInicio, fechaFin: createForm.fechaFin, idIglesia: idIglesiaNum ?? iglesiaActual?.id ?? 0, idSede: createForm.idSede || null, idMinisterio: createForm.idMinisterio || null },
       { onSuccess: () => { setShowCreate(false); resetCreateForm(); } }
     );
   };
@@ -166,7 +162,7 @@ export function EventsPage() {
   const handleUpdateEvento = () => {
     if (!editEvento || !editForm.nombre.trim()) return;
     updateEventoMutation.mutate(
-      { id: editEvento.idEvento, data: { nombre: editForm.nombre.trim(), descripcion: editForm.descripcion.trim() || null, idTipoEvento: editForm.idTipoEvento, fechaInicio: editForm.fechaInicio, fechaFin: editForm.fechaFin || null, estado: editForm.estado, idSede: editForm.idSede || null, idMinisterio: editForm.idMinisterio || null } },
+      { id: editEvento.idEvento, data: { nombre: editForm.nombre.trim(), descripcion: editForm.descripcion.trim() || null, tipoEventoTexto: editForm.tipoEventoTexto.trim() || null, fechaInicio: editForm.fechaInicio, fechaFin: editForm.fechaFin || null, estado: editForm.estado, idSede: editForm.idSede || null, idMinisterio: editForm.idMinisterio || null } },
       { onSuccess: () => setEditEvento(null) }
     );
   };
@@ -295,9 +291,9 @@ export function EventsPage() {
                       <Badge variant="outline" className={`${scope.color} border-0 text-[10px] uppercase font-black tracking-widest px-2.5 py-1 flex items-center gap-1.5 rounded-lg`}>
                         {scope.icon} {isGlobal ? "Global" : evento.ministerioNombre}
                       </Badge>
-                      {evento.tipoEventoNombre && (
+                      {evento.tipoEventoTexto && (
                         <Badge variant="outline" className="bg-white/5 border-0 text-muted-foreground text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-lg">
-                          {evento.tipoEventoNombre}
+                          {evento.tipoEventoTexto}
                         </Badge>
                       )}
                     </div>
@@ -417,7 +413,7 @@ export function EventsPage() {
             </DialogTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Completa los datos para programar un nuevo evento.</p>
           </DialogHeader>
-          <EventDialogFields form={createForm} setForm={setCreateForm} tiposEvento={tiposEvento} sedes={sedes} ministerios={ministerios} />
+          <EventDialogFields form={createForm} setForm={setCreateForm} sedes={sedes} ministerios={ministerios} />
           <DialogFooter className="border-t border-border/50 pt-4 mt-2">
             <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
             <Button className="rounded-xl" onClick={handleCreateEvento} disabled={createEventoMutation.isPending}>
@@ -436,7 +432,7 @@ export function EventsPage() {
             </DialogTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Modifica los datos del evento seleccionado.</p>
           </DialogHeader>
-          <EventDialogFields form={editForm} setForm={setEditForm} tiposEvento={tiposEvento} sedes={sedes} ministerios={ministerios} />
+          <EventDialogFields form={editForm} setForm={setEditForm} sedes={sedes} ministerios={ministerios} />
           <DialogFooter className="border-t border-border/50 pt-4 mt-2">
             <Button variant="ghost" className="rounded-xl" onClick={() => setEditEvento(null)}>Cancelar</Button>
             <Button className="rounded-xl" onClick={handleUpdateEvento} disabled={updateEventoMutation.isPending}>
@@ -495,11 +491,11 @@ export function EventsPage() {
                     </div>
                   </div>
 
-                  {selectedEvent.tipoEventoNombre && (
+                  {selectedEvent.tipoEventoTexto && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo:</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Detalle:</span>
                       <Badge variant="outline" className="bg-white/5 border-0 text-muted-foreground text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-lg">
-                        {selectedEvent.tipoEventoNombre}
+                        {selectedEvent.tipoEventoTexto}
                       </Badge>
                     </div>
                   )}

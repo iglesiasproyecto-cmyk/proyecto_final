@@ -166,20 +166,11 @@ export interface Notificacion {
   actualizadoEn: string
 }
 
-// ── Eventos & Tareas ──
-export interface TipoEvento {
-  idTipoEvento: number
-  nombre: string
-  descripcion: string | null
-  creadoEn: string
-  actualizadoEn: string
-}
-
 export interface Evento {
   idEvento: number
   nombre: string
   descripcion: string | null
-  idTipoEvento: number
+  tipoEventoTexto?: string | null
   fechaInicio: string
   fechaFin: string
   estado: 'programado' | 'en_curso' | 'finalizado' | 'cancelado'
@@ -188,7 +179,6 @@ export interface Evento {
   idMinisterio: number | null
   creadoEn: string
   actualizadoEn: string
-  tipoEventoNombre?: string
   ministerioNombre?: string
   sedeNombre?: string
 }

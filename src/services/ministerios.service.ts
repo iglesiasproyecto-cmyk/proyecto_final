@@ -35,6 +35,7 @@ function mapMiembro(r: MiembroRow): MiembroMinisterio {
 export interface MinisterioEnriquecido extends Ministerio {
   cantidadMiembros: number
   sedeNombre: string
+  liderNombre: string
 }
 
 export interface MiembroMinisterioEnriquecido extends MiembroMinisterio {
@@ -42,12 +43,14 @@ export interface MiembroMinisterioEnriquecido extends MiembroMinisterio {
   usuarioCorreo: string
   telefono: string | null
   ministerioNombre: string
+  nombreCompleto: string
+  correo: string
 }
 
 export async function getMinisteriosEnriquecidos(idIglesia?: number): Promise<MinisterioEnriquecido[]> {
   let q = supabase
     .from('ministerio')
-    .select('*, sede(nombre)')
+    .select('*, sede(nombre), miembro_ministerio(rol_en_ministerio, fecha_salida, usuario(nombres, apellidos))')
     .is('deleted_at', null)
     .order('nombre')
 
@@ -63,11 +66,23 @@ export async function getMinisteriosEnriquecidos(idIglesia?: number): Promise<Mi
 
   const { data, error } = await q
   if (error) throw error
-  return (data as any[]).map(r => ({
-    ...mapMinisterio(r),
-    cantidadMiembros: 0,
-    sedeNombre: r.sede?.nombre ?? '',
-  }))
+  return (data as any[]).map(r => {
+    const miembros = Array.isArray(r.miembro_ministerio) ? r.miembro_ministerio : []
+    const miembrosActivos = miembros.filter((m: any) => !m.fecha_salida)
+    const lider = miembrosActivos.find((m: any) => {
+      const raw = `${m.rol_en_ministerio ?? ''}`
+      const normalized = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      return normalized.includes('lider')
+    })
+    return {
+      ...mapMinisterio(r),
+      cantidadMiembros: miembrosActivos.length,
+      sedeNombre: r.sede?.nombre ?? '',
+      liderNombre: lider?.usuario
+        ? `${lider.usuario.nombres ?? ''} ${lider.usuario.apellidos ?? ''}`.trim()
+        : '',
+    }
+  })
 }
 
 export async function getMiembrosMinisterioEnriquecidos(idMinisterio?: number): Promise<MiembroMinisterioEnriquecido[]> {
@@ -78,13 +93,18 @@ export async function getMiembrosMinisterioEnriquecidos(idMinisterio?: number): 
   if (idMinisterio !== undefined) q = q.eq('id_ministerio', idMinisterio)
   const { data, error } = await q
   if (error) throw error
-  return (data as any[]).map(r => ({
-    ...mapMiembro(r),
-    usuarioNombre: `${r.usuario?.nombres ?? ''} ${r.usuario?.apellidos ?? ''}`.trim(),
-    usuarioCorreo: r.usuario?.correo ?? '',
-    telefono: r.usuario?.telefono ?? null,
-    ministerioNombre: r.ministerio?.nombre ?? '',
-  }))
+  return (data as any[]).map(r => {
+    const nombreCompleto = `${r.usuario?.nombres ?? ''} ${r.usuario?.apellidos ?? ''}`.trim()
+    return {
+      ...mapMiembro(r),
+      usuarioNombre: nombreCompleto,
+      usuarioCorreo: r.usuario?.correo ?? '',
+      telefono: r.usuario?.telefono ?? null,
+      ministerioNombre: r.ministerio?.nombre ?? '',
+      nombreCompleto,
+      correo: r.usuario?.correo ?? '',
+    }
+  })
 }
 
 export async function getMinisterios(idIglesia?: number): Promise<Ministerio[]> {

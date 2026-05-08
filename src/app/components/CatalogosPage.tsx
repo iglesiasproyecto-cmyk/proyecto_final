@@ -31,12 +31,20 @@ export function CatalogosPage() {
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
 
-  const openAddTE = () => { setFormTE({ nombre: "", descripcion: "" }); setEditingTE(null); setDialogTE(true); };
-  const openEditTE = (id: number) => {
-    const te = tiposEvento.find(x => x.idTipoEvento === id); if (!te) return;
-    setFormTE({ nombre: te.nombre, descripcion: te.descripcion || "" });
-    setEditingTE(id); setDialogTE(true);
+  const openAddTE = () => {
+    setFormTE({ nombre: "", descripcion: "" });
+    setEditingTE(null);
+    setDialogTE(true);
   };
+
+  const openEditTE = (id: number) => {
+    const te = tiposEvento.find((x) => x.idTipoEvento === id);
+    if (!te) return;
+    setFormTE({ nombre: te.nombre, descripcion: te.descripcion || "" });
+    setEditingTE(id);
+    setDialogTE(true);
+  };
+
   const handleSubmitTE = () => {
     if (!formTE.nombre.trim()) return;
     if (editingTE) {
@@ -73,7 +81,6 @@ export function CatalogosPage() {
           <TabsTrigger value="roles" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all"><ShieldCheck className="w-4 h-4 mr-2" /> Roles ({roles.length})</TabsTrigger>
         </TabsList>
 
-        {/* Tipos de Evento */}
         <TabsContent value="tipos_evento" className="space-y-6 mt-8">
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-card/20 p-5 rounded-3xl border border-white/10 backdrop-blur-xl shadow-sm">
             <div className="flex-1">
@@ -94,7 +101,7 @@ export function CatalogosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tiposEvento.map(te => (
+                {tiposEvento.map((te) => (
                   <TableRow key={te.idTipoEvento} className="group hover:bg-[#4682b4]/5 border-white/5 transition-colors">
                     <TableCell className="p-5">
                       <span className="text-[14px] font-black tracking-tight text-foreground/90 group-hover:text-[#4682b4] transition-colors py-1">{te.nombre}</span>
@@ -123,14 +130,13 @@ export function CatalogosPage() {
           </div>
         </TabsContent>
 
-        {/* Roles (read-only) */}
         <TabsContent value="roles" className="space-y-6 mt-8">
           <div className="flex flex-col bg-card/20 p-5 rounded-3xl border border-white/10 backdrop-blur-xl shadow-sm">
             <h3 className="text-sm font-bold text-foreground tracking-tight">Roles del Sistema</h3>
             <p className="text-[12px] font-medium text-muted-foreground mt-0.5">Definidos en el sistema (Tabla: Rol). Los roles base son fijos para la correcta seguridad del MVP.</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {roles.map(r => (
+            {roles.map((r) => (
               <div key={r.idRol} className="group flex flex-col p-5 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all cursor-default">
                 <div className="flex items-start justify-between">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform mb-4"><ShieldCheck className="w-6 h-6 text-[#4682b4]" /></div>
@@ -149,13 +155,12 @@ export function CatalogosPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialog TipoEvento */}
       <Dialog open={dialogTE} onOpenChange={setDialogTE}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader><DialogTitle>{editingTE ? "Editar" : "Nuevo"} Tipo de Evento</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><label className="text-sm">Nombre *</label><Input value={formTE.nombre} onChange={e => setFormTE(f => ({ ...f, nombre: e.target.value }))} className="mt-1" /></div>
-            <div><label className="text-sm">Descripción</label><Textarea value={formTE.descripcion} onChange={e => setFormTE(f => ({ ...f, descripcion: e.target.value }))} className="mt-1" rows={3} /></div>
+            <div><label className="text-sm">Nombre *</label><Input value={formTE.nombre} onChange={(e) => setFormTE((f) => ({ ...f, nombre: e.target.value }))} className="mt-1" /></div>
+            <div><label className="text-sm">Descripción</label><Textarea value={formTE.descripcion} onChange={(e) => setFormTE((f) => ({ ...f, descripcion: e.target.value }))} className="mt-1" rows={3} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" className="rounded-xl border-white/10" onClick={() => setDialogTE(false)}>Cancelar</Button>

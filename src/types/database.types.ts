@@ -431,8 +431,9 @@ export type Database = {
           id_iglesia: number
           id_ministerio: number | null
           id_sede: number | null
-          id_tipo_evento: number
+          id_tipo_evento: number | null
           nombre: string
+          tipo_evento_texto: string | null
           updated_at: string
         }
         Insert: {
@@ -445,8 +446,9 @@ export type Database = {
           id_iglesia: number
           id_ministerio?: number | null
           id_sede?: number | null
-          id_tipo_evento: number
+          id_tipo_evento?: number | null
           nombre: string
+          tipo_evento_texto?: string | null
           updated_at?: string
         }
         Update: {
@@ -459,8 +461,9 @@ export type Database = {
           id_iglesia?: number
           id_ministerio?: number | null
           id_sede?: number | null
-          id_tipo_evento?: number
+          id_tipo_evento?: number | null
           nombre?: string
+          tipo_evento_texto?: string | null
           updated_at?: string
         }
         Relationships: [
