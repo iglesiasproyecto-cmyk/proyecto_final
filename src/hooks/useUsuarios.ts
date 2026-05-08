@@ -10,6 +10,9 @@ import {
   removeRol,
   inviteUser,
   deleteUsuarioAsSuperAdmin,
+  fetchAdminSedesAsignaciones,
+  assignAdminSede,
+  removeAdminSede,
 } from '@/services/usuarios.service'
 
 export function useRoles() {
@@ -111,6 +114,39 @@ export function useDeleteUsuarioAsSuperAdmin() {
       qc.invalidateQueries({ queryKey: ['usuarios'] })
       qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })
       qc.invalidateQueries({ queryKey: ['usuario-rol'] })
+    },
+  })
+}
+
+// ── Admin Sede Hooks ──
+
+export function useAdminSedesAsignaciones(idIglesia?: number) {
+  return useQuery({
+    queryKey: ['admin-sedes-asignaciones', idIglesia],
+    queryFn: () => fetchAdminSedesAsignaciones(idIglesia),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useAssignAdminSede() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof assignAdminSede>[0]) => assignAdminSede(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-sedes-asignaciones'] })
+      qc.invalidateQueries({ queryKey: ['sedes-enriquecidas'] })
+      qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })
+    },
+  })
+}
+
+export function useRemoveAdminSede() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (idAdminSedeAsignacion: number) => removeAdminSede(idAdminSedeAsignacion),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-sedes-asignaciones'] })
+      qc.invalidateQueries({ queryKey: ['sedes-enriquecidas'] })
     },
   })
 }
