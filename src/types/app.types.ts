@@ -153,6 +153,24 @@ export interface UsuarioRol {
   actualizadoEn: string
 }
 
+export interface AdminSedeAsignacion {
+  idAdminSedeAsignacion: number
+  idUsuario: number
+  idSede: number
+  idIglesia: number
+  idRol: number
+  fechaInicio: string
+  fechaFin: string | null
+  creadoEn: string
+  actualizadoEn: string
+  // Computed (enriquecido)
+  nombreCompleto?: string
+  correo?: string
+  sedeNombre?: string
+  iglesiaNombre?: string
+  ciudadNombre?: string
+}
+
 // ── Notificaciones ──
 export interface Notificacion {
   idNotificacion: number
@@ -243,7 +261,7 @@ export interface AulaCurso {
 }
 
 // ── Session ──
-export type RolClave = 'super_admin' | 'admin_iglesia' | 'lider' | 'servidor'
+export type RolClave = 'super_admin' | 'admin_iglesia' | 'admin_sede' | 'lider' | 'servidor'
 
 export interface SessionUser {
   idUsuario: number
