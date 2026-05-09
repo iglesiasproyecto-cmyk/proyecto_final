@@ -18,6 +18,13 @@ test.describe('Route guards por rol', () => {
     }
   })
 
+  test('servidor sin iglesia queda en /app/sin-iglesia', async ({ page, role }) => {
+    test.skip(role !== 'servidor', 'Solo aplica a servidor')
+
+    await page.goto(`${BASE_URL}/app`)
+    await expect(page).toHaveURL(/\/app\/sin-iglesia/, { timeout: 12_000 })
+  })
+
   test('todos los roles acceden a su dashboard tenant', async ({ page, role }) => {
     await page.goto(`${BASE_URL}/app/${IGLESIA_ID}`)
 

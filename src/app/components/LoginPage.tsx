@@ -15,7 +15,7 @@ import {
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { session, usuarioActual, authLoading, isHydrated } = useApp()
+  const { session, usuarioActual, authLoading, isHydrated, rolActual, iglesiaActual, isClaimsReady } = useApp()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -24,19 +24,22 @@ export function LoginPage() {
   const [showTransitionLoader, setShowTransitionLoader] = useState(false)
 
   const handleLoginSuccess = useCallback(() => {
-    setShowTransitionLoader(true)
-    
-    setTimeout(() => {
-      setShowTransitionLoader(false)
+    if (rolActual === "super_admin") {
       navigate('/app')
-    }, 500)
-  }, [navigate])
+      return
+    }
+    if (!iglesiaActual?.id) {
+      navigate("/app/sin-iglesia")
+      return
+    }
+    navigate('/app')
+  }, [navigate, rolActual, iglesiaActual])
 
   useEffect(() => {
-    if (!authLoading && session && usuarioActual && isHydrated) {
+    if (!authLoading && session && usuarioActual && isHydrated && isClaimsReady && rolActual) {
       handleLoginSuccess()
     }
-  }, [authLoading, session, usuarioActual, isHydrated, handleLoginSuccess])
+  }, [authLoading, session, usuarioActual, isHydrated, isClaimsReady, rolActual, handleLoginSuccess])
 
   if (showTransitionLoader) {
     return <GlobalLoader show={true} message="Preparando tu experiencia..." fullScreen={true} />
@@ -78,7 +81,7 @@ export function LoginPage() {
       setIsLoading(false)
     } else {
       toast.success('¡Bienvenido!')
-      navigate('/app')
+      handleLoginSuccess()
     }
   }
 

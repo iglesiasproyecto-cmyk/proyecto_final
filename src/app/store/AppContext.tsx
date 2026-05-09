@@ -431,7 +431,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const roleNames = roles.map((r: any) => String(r.rol_nombre ?? ''))
           const derivedRol = normalizeAppRole(roleNames)
           setRolActual(derivedRol)
-          setIsClaimsReady(true)
 
           // Build iglesias
           const iglesiasMap = new Map<number, string>()
@@ -454,6 +453,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           console.log('[AUTH] ✅ Fully loaded — role:', derivedRol, '— iglesias:', iglesias.length)
           hydratedUserIdRef.current = authUserId
           hydratedTokenRef.current = token
+          setIsClaimsReady(true)
         } catch (err) {
           console.error('[AUTH] Error loading user data:', err)
           setAuthError('Error cargando el perfil')

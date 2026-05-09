@@ -13,6 +13,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { Plus, Search, Mail, Phone, Filter, Inbox, Trash2, Users, ShieldCheck, User } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
+import { TableSkeleton } from "./loading/skeletons";
+import { Skeleton } from "./ui/skeleton";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolIcons: Record<string, React.ReactNode> = {
@@ -65,11 +67,15 @@ export function MembersPage() {
   const isLoading = ministeriosLoading || miembrosLoading;
 
   if (isLoading) return (
-    <div className="flex items-center justify-center h-48 text-muted-foreground">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        <span className="text-sm">Cargando miembros...</span>
+    <div className="space-y-6 max-w-6xl mx-auto px-4">
+      <div className="flex items-center gap-4 p-5">
+        <Skeleton className="h-12 w-12 rounded-2xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
       </div>
+      <TableSkeleton rows={8} columns={5} />
     </div>
   );
 

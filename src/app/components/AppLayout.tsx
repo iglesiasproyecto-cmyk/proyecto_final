@@ -544,14 +544,7 @@ export function AppLayout() {
           <main className="flex-1 overflow-y-auto">
             <div className="flex justify-center px-4 md:px-6 lg:px-8 min-h-full">
               <div className="w-full max-w-7xl py-4 md:py-6 lg:py-8">
-                <motion.div
-                  key={location.pathname}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
-                >
-                  <Outlet />
-                </motion.div>
+                <Outlet />
               </div>
             </div>
           </main>
