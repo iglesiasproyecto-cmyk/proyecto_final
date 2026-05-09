@@ -36,10 +36,10 @@ export function LoginPage() {
   }, [navigate, rolActual, iglesiaActual])
 
   useEffect(() => {
-    if (!authLoading && session && usuarioActual && isHydrated && isClaimsReady && rolActual) {
+    if (session && usuarioActual && isClaimsReady && rolActual) {
       handleLoginSuccess()
     }
-  }, [authLoading, session, usuarioActual, isHydrated, isClaimsReady, rolActual, handleLoginSuccess])
+  }, [session, usuarioActual, isClaimsReady, rolActual, handleLoginSuccess])
 
   if (showTransitionLoader) {
     return <GlobalLoader show={true} message="Preparando tu experiencia..." fullScreen={true} />
@@ -81,7 +81,7 @@ export function LoginPage() {
       setIsLoading(false)
     } else {
       toast.success('¡Bienvenido!')
-      handleLoginSuccess()
+      setShowTransitionLoader(true)
     }
   }
 

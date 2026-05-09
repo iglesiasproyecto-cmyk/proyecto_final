@@ -3,9 +3,9 @@ import { FormSkeleton } from "./FormSkeleton";
 import { CardSkeleton } from "./CardSkeleton";
 import { TableSkeleton } from "./TableSkeleton";
 import { ProfileSkeleton } from "./ProfileSkeleton";
-import { ListSkeleton } from "./ListSkeleton";
+import { ListSkeleton, NotificationSkeleton } from "./ListSkeleton";
 import { DashboardSkeleton } from "./DashboardSkeleton";
-import { AulaSkeleton } from "./AulaSkeleton";
+import { AulaSkeleton, ModuleSkeleton } from "./AulaSkeleton";
 
 export type SkeletonType =
   | "dashboard"

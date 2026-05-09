@@ -12,6 +12,26 @@ import { toast } from "sonner";
 import { Skeleton } from "./ui/skeleton";
 import { CardSkeleton } from "./loading/skeletons";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
+import { AnimatedCard } from "./ui/AnimatedCard";
+import {
+  Building2,
+  Church,
+  Eye,
+  Globe,
+  MapPin,
+  Pencil,
+  Plus,
+  Power,
+  PowerOff,
+  RotateCcw,
+  Save,
+  Search,
+  Trash2,
+  User,
+  UserCheck,
+  Users,
+  X,
+} from "lucide-react";
 
 export function SedesPage() {
   const [search, setSearch] = useState("");
