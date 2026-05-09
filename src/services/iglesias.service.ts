@@ -286,8 +286,6 @@ export async function getSedesEnriquecidas(idIglesia?: number): Promise<SedeEnri
     throw error
   }
 
-  console.log('SEDES CARGADAS:', data)
-
   return (data as any[]).map(r => ({
     ...mapSede(r),
     cantidadMinisterios: 0,
@@ -539,7 +537,7 @@ export async function deleteIglesia(id: number): Promise<{ type: 'soft' | 'hard'
     // Si tiene dependencias, hacer soft delete
     const { error } = await supabase
       .from('iglesia')
-      .update({ activo: false })
+      .update({ estado: 'inactiva' })
       .eq('id_iglesia', id)
     if (error) throw error
     return { type: 'soft' }
@@ -568,7 +566,6 @@ export async function checkPastorCorreoExists(correo: string, excludeId?: number
     .from('pastor')
     .select('id_pastor', { count: 'exact', head: true })
     .eq('correo', normalizedCorreo)
-    .eq('activo', true)
   if (excludeId) q = q.neq('id_pastor', excludeId)
   const { count, error } = await q
   if (error) throw error
@@ -580,7 +577,6 @@ export async function checkPastorUsuarioExists(idUsuario: number, excludeId?: nu
     .from('pastor')
     .select('id_pastor', { count: 'exact', head: true })
     .eq('id_usuario', idUsuario)
-    .eq('activo', true)
   if (excludeId) q = q.neq('id_pastor', excludeId)
   const { count, error } = await q
   if (error) throw error
@@ -597,4 +593,3 @@ export async function deletePastor(id: number): Promise<void> {
   const { error } = await supabase.from('pastor').delete().eq('id_pastor', id)
   if (error) throw error
 }
-

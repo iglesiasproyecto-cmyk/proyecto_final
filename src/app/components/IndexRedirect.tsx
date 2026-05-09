@@ -1,16 +1,19 @@
 // src/app/components/IndexRedirect.tsx
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useApp } from "../store/AppContext";
 
 export function IndexRedirect() {
-  const { rolActual, iglesiaActual, authLoading, usuarioActual } = useApp();
+  const { rolActual, iglesiaActual, authLoading, usuarioActual, isHydrated, isClaimsReady } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    if (authLoading) return;
+    if (!isHydrated || !isClaimsReady) return;
     if (!usuarioActual) {
-      navigate("/login", { replace: true });
+      if (location.pathname !== "/login") {
+        navigate("/login", { replace: true });
+      }
       return;
     }
 
@@ -21,11 +24,15 @@ export function IndexRedirect() {
     } else {
       navigate("/login", { replace: true });
     }
-  }, [authLoading, usuarioActual, rolActual, iglesiaActual, navigate]);
+  }, [isHydrated, usuarioActual, rolActual, iglesiaActual, navigate, location.pathname]);
 
-  return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-    </div>
-  );
+  if (!isHydrated || authLoading || !isClaimsReady) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  return null;
 }

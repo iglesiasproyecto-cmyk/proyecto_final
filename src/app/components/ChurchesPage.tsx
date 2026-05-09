@@ -8,6 +8,7 @@ import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { motion } from "motion/react";
+import { toast } from "sonner";
 
 import { Building2, Plus, Search, MapPin, Power, PowerOff, Globe, Pencil, Save, X, Calendar, Eye } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -112,13 +113,13 @@ export function ChurchesPage() {
       onSuccess: (result) => {
         setDeletingIglesia(null);
         if (result.type === 'hard') {
-          alert(`✅ Iglesia "${deletingIglesia.nombre}" eliminada permanentemente.`);
+          toast.success(`Iglesia "${deletingIglesia.nombre}" eliminada permanentemente.`);
         } else {
-          alert(`⚠️ Iglesia "${deletingIglesia.nombre}" desactivada (tiene datos asociados).`);
+          toast.warning(`Iglesia "${deletingIglesia.nombre}" desactivada (tiene datos asociados).`);
         }
       },
       onError: (error) => {
-        alert(`❌ Error al eliminar iglesia: ${error.message}`);
+        toast.error(`Error al eliminar iglesia: ${error.message}`);
       }
     });
   };
@@ -160,25 +161,26 @@ export function ChurchesPage() {
   );
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <Building2 className="w-6 h-6 text-white" />
+    <div className="space-y-6 max-w-6xl mx-auto pb-10 px-4 md:px-0">
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
-            <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest pl-1">Directorio</p>
-            <h1 className="text-3xl font-light tracking-tight leading-tight">Gestión de Iglesias</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm font-medium uppercase tracking-widest pl-1 hidden sm:block">Directorio</p>
+            <h1 className="text-2xl sm:text-3xl font-light tracking-tight leading-tight">Gestión de Iglesias</h1>
           </div>
         </div>
         {rolActual === "super_admin" && (
-          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", direccion: "", telefono: "", descripcion: "", sitioWeb: "" }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
-            <Plus className="w-4 h-4 mr-2" /> Nueva Iglesia
+          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", direccion: "", telefono: "", descripcion: "", sitioWeb: "" }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20 text-sm">
+            <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Nueva Iglesia</span>
+            <span className="sm:hidden">Nueva</span>
           </Button>
         )}
       </motion.div>
 
-      <div className="flex flex-col sm:flex-row gap-3 border-t border-border/30 pt-3 md:pt-0">
+      <div className="flex flex-col sm:flex-row gap-3 border-t border-border/30 pt-3 sm:pt-0">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
           <Input 
@@ -188,14 +190,14 @@ export function ChurchesPage() {
             className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
           />
         </div>
-        <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto h-10 items-center">
+        <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto h-10 items-center min-w-0">
           {(["all", "activa", "inactiva"] as const).map((f) => (
             <Button 
               key={f} 
               variant={filter === f ? "default" : "ghost"} 
               size="sm" 
               onClick={() => setFilter(f)} 
-              className={`h-full px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm bg-[#4682b4] text-white hover:bg-[#4682b4]/90" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
+              className={`h-full px-3 sm:px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm bg-[#4682b4] text-white hover:bg-[#4682b4]/90" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
             >
               {f === "all" ? "Todas" : f === "activa" ? "Activas" : "Inactivas"}
             </Button>
@@ -204,15 +206,15 @@ export function ChurchesPage() {
       </div>
 
       {/* Grid de Iglesias */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {filtered.map((ig, i) => (
           <GlassCard key={ig.idIglesia} index={i} isActive={ig.estado === "activa"}>
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/5 flex items-center justify-center shadow-inner border border-primary/10 transition-transform hover:scale-105">
-                <Building2 className="w-7 h-7 text-primary/80" />
+            <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/5 flex items-center justify-center shadow-inner border border-primary/10 transition-transform hover:scale-105">
+                <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-primary/80" />
               </div>
               <div className="flex flex-col items-end gap-1.5">
-                <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className={`shadow-sm tracking-wide ${ig.estado === "activa" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : ""}`}>{estadoLabels[ig.estado]}</Badge>
+                <Badge variant={ig.estado === "activa" ? "default" : "secondary"} className={`shadow-sm tracking-wide text-xs ${ig.estado === "activa" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : ""}`}>{estadoLabels[ig.estado]}</Badge>
                 {ig.cantidadSedes > 0 && (
                   <Badge variant="outline" className="text-[10px] bg-card/50 border-white/50 dark:border-white/10 uppercase font-semibold">
                     {ig.cantidadSedes} {ig.cantidadSedes === 1 ? "sede" : "sedes"}
@@ -221,18 +223,18 @@ export function ChurchesPage() {
               </div>
             </div>
 
-            <div className="flex-1 mb-4">
-              <h3 className="text-3xl font-light text-foreground mb-1.5 line-clamp-1" title={ig.nombre}>{ig.nombre}</h3>
+            <div className="flex-1 mb-3 sm:mb-4">
+              <h3 className="text-xl sm:text-2xl font-light text-foreground mb-1.5 line-clamp-1" title={ig.nombre}>{ig.nombre}</h3>
               {ig.fechaFundacion && (
-                <p className="text-xs font-medium text-primary/80 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
-                  <Calendar className="w-3.5 h-3.5" /> Fundada: {new Date(ig.fechaFundacion).toLocaleDateString("es", { month: "short", year: "numeric" })}
+                <p className="text-xs font-medium text-primary/80 mb-2 sm:mb-3 flex items-center gap-1.5 uppercase tracking-wide">
+                  <Calendar className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Fundada:</span> {new Date(ig.fechaFundacion).toLocaleDateString("es", { month: "short", year: "numeric" })}
                 </p>
               )}
               
-              <div className="space-y-2 mt-4 p-3 rounded-xl bg-white/30 dark:bg-black/10 border border-white/20 dark:border-white/5">
-                <div className="flex items-start gap-2.5 text-sm">
+              <div className="space-y-2 mt-3 sm:mt-4 p-2 sm:p-3 rounded-xl bg-white/30 dark:bg-black/10 border border-white/20 dark:border-white/5">
+                <div className="flex items-start gap-2 text-sm">
                   <MapPin className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-                  <span className="text-foreground/90 font-medium">
+                  <span className="text-foreground/90 font-medium text-xs sm:text-sm">
                     {ig.ciudadNombre || "--"}
                     {ig.departamentoNombre ? `, ${ig.departamentoNombre}` : ""}
                   </span>
@@ -246,33 +248,34 @@ export function ChurchesPage() {
               </div>
             </div>
 
-            <div className="mt-auto pt-4 border-t border-border/40 flex items-center gap-2">
+            <div className="mt-auto pt-3 sm:pt-4 border-t border-border/40 flex flex-wrap gap-2">
               <Button
                 variant="secondary"
                 size="sm"
-                className="flex-1 rounded-xl bg-[#4682b4]/10 hover:bg-[#4682b4]/20 text-[#4682b4] transition-colors"
-                onClick={() => navigate(`/app/iglesias/${ig.idIglesia}`)}
+                className="flex-1 rounded-xl bg-[#4682b4]/10 hover:bg-[#4682b4]/20 text-[#4682b4] transition-colors text-xs sm:text-sm"
+                onClick={() => navigate(`/app/global/iglesias/${ig.idIglesia}`)}
               >
-                <Eye className="w-3.5 h-3.5 mr-1.5" /> Ver detalle
+                <Eye className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Ver detalle</span>
+                <span className="sm:hidden">Detalle</span>
               </Button>
-              {rolActual === "super_admin" && (
+{rolActual === "super_admin" && (
                 <>
-                   <Button variant="secondary" size="sm" className="flex-1 rounded-xl bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 transition-colors" onClick={() => {
-                     setFormErrors({});
-                     setForm({ nombre: ig.nombre, fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "", direccion: ig.direccion || "", telefono: ig.telefono || "", descripcion: ig.descripcion || "", sitioWeb: ig.sitioWeb || "" });
-                     setEditingIglesia(ig);
-                   }}>
-                    <Pencil className="w-3.5 h-3.5 mr-1.5" /> Editar
-                  </Button>
+                   <Button variant="secondary" size="sm" className="flex-1 rounded-xl bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 transition-colors text-xs sm:text-sm" onClick={() => {
+                      setFormErrors({});
+                      setForm({ nombre: ig.nombre, fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "", direccion: ig.direccion || "", telefono: ig.telefono || "", descripcion: ig.descripcion || "", sitioWeb: ig.sitioWeb || "" });
+                      setEditingIglesia(ig);
+                    }}>
+                     <Pencil className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Editar</span>
+                   </Button>
                    <Button
-                     variant="ghost"
-                     size="sm"
-                     className="rounded-xl px-3 text-destructive hover:bg-destructive/10 transition-colors"
-                     onClick={() => setDeletingIglesia(ig)}
-                     disabled={deleteIglesiaMutation.isPending}
-                     title="Eliminar iglesia"
-                   >
-                     <X className="w-4 h-4" />
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-xl px-2 sm:px-3 text-destructive hover:bg-destructive/10 transition-colors"
+                      onClick={() => setDeletingIglesia(ig)}
+                      disabled={deleteIglesiaMutation.isPending}
+                      title="Eliminar iglesia"
+                    >
+                      <X className="w-4 h-4" />
                    </Button>
                 </>
               )}
@@ -280,7 +283,7 @@ export function ChurchesPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`rounded-xl px-3 transition-all ${ig.estado === "activa" ? "text-amber-500 hover:bg-amber-500/10" : "text-emerald-500 hover:bg-emerald-500/10"}`}
+                  className={`rounded-xl px-2 sm:px-3 transition-all ${ig.estado === "activa" ? "text-amber-500 hover:bg-amber-500/10" : "text-emerald-500 hover:bg-emerald-500/10"}`}
                   onClick={() => toggleEstadoMutation.mutate(ig.idIglesia)}
                   title={ig.estado === "activa" ? "Desactivar" : "Activar"}
                 >
@@ -303,45 +306,45 @@ export function ChurchesPage() {
       )}
 
       <Dialog open={!!editingIglesia} onOpenChange={(open) => !open && setEditingIglesia(null)}>
-        <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
-          <div className="px-6 py-4 bg-muted/30 border-b border-border/40">
+        <DialogContent className="sm:max-w-md max-h-[90vh] rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
+          <div className="px-4 sm:px-6 py-4 bg-muted/30 border-b border-border/40">
             <DialogHeader><DialogTitle className="flex items-center gap-2 text-lg font-semibold"><Pencil className="w-4 h-4 text-primary" /> Editar Iglesia</DialogTitle></DialogHeader>
           </div>
-          <div className="px-6 py-4">
+          <div className="px-4 sm:px-6 py-4 overflow-y-auto max-h-[50vh]">
              {renderFormFields()}
           </div>
-          <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
-             <Button variant="ghost" onClick={() => setEditingIglesia(null)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
-             <Button onClick={handleSaveEdit} className="rounded-full px-5 shadow-sm shadow-primary/20"><Save className="w-4 h-4 mr-1.5" /> Guardar Cambios</Button>
+          <div className="px-4 sm:px-6 py-4 bg-muted/20 border-t border-border/40 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+             <Button variant="ghost" onClick={() => setEditingIglesia(null)} className="rounded-full px-5 w-full sm:w-auto"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
+             <Button onClick={handleSaveEdit} className="rounded-full px-5 shadow-sm shadow-primary/20 w-full sm:w-auto"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
           </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
-          <div className="px-6 py-4 bg-muted/30 border-b border-border/40">
-            <DialogHeader><DialogTitle className="flex items-center gap-2 text-lg font-semibold"><Plus className="w-5 h-5 text-primary" /> Nueva Iglesia</DialogTitle></DialogHeader>
+        <DialogContent className="sm:max-w-md max-h-[90vh] rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
+          <div className="px-4 sm:px-6 py-4 bg-muted/30 border-b border-border/40">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold"><Plus className="w-5 h-5 text-primary" /> Nueva Iglesia</DialogTitle>
           </div>
-          <div className="px-6 py-4">
+          <div className="px-4 sm:px-6 py-4 overflow-y-auto max-h-[50vh]">
              {renderFormFields()}
           </div>
-          <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
-             <Button variant="ghost" onClick={() => setShowCreate(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
-             <Button onClick={handleCreate} className="rounded-full px-5 shadow-sm shadow-primary/20"><Save className="w-4 h-4 mr-1.5" /> Crear Iglesia</Button>
+          <div className="px-4 sm:px-6 py-4 bg-muted/20 border-t border-border/40 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+             <Button variant="ghost" onClick={() => setShowCreate(false)} className="rounded-full px-5 w-full sm:w-auto"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
+             <Button onClick={handleCreate} className="rounded-full px-5 shadow-sm shadow-primary/20 w-full sm:w-auto"><Save className="w-4 h-4 mr-1.5" /> Crear</Button>
           </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!deletingIglesia} onOpenChange={(open) => !open && setDeletingIglesia(null)}>
-        <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
-          <div className="px-6 py-4 bg-destructive/10 border-b border-border/40">
+        <DialogContent className="sm:max-w-md max-h-[90vh] rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
+          <div className="px-4 sm:px-6 py-4 bg-destructive/10 border-b border-border/40">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-destructive">
                 <X className="w-5 h-5" /> Eliminar Iglesia
               </DialogTitle>
             </DialogHeader>
           </div>
-          <div className="px-6 py-4 space-y-4">
+          <div className="px-4 sm:px-6 py-4 space-y-4 overflow-y-auto max-h-[50vh]">
             <p className="text-sm text-muted-foreground">
               ¿Estás seguro de que quieres eliminar la iglesia <strong>"{deletingIglesia?.nombre}"</strong>?
             </p>
@@ -364,18 +367,18 @@ export function ChurchesPage() {
               )}
             </div>
           </div>
-          <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
+          <div className="px-4 sm:px-6 py-4 bg-muted/20 border-t border-border/40 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
             <Button
               variant="ghost"
               onClick={() => setDeletingIglesia(null)}
-              className="rounded-full px-5"
+              className="rounded-full px-5 w-full sm:w-auto"
               disabled={deleteIglesiaMutation.isPending}
             >
               <X className="w-4 h-4 mr-1.5" /> Cancelar
             </Button>
             <Button
               onClick={handleDeleteIglesia}
-              className="rounded-full px-5 shadow-sm shadow-destructive/20 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              className="rounded-full px-5 shadow-sm shadow-destructive/20 bg-destructive hover:bg-destructive/90 text-destructive-foreground w-full sm:w-auto"
               disabled={deleteIglesiaMutation.isPending}
             >
               {deleteIglesiaMutation.isPending ? (
@@ -386,7 +389,7 @@ export function ChurchesPage() {
               ) : (
                 <>
                   <X className="w-4 h-4 mr-1.5" />
-                  {deletingIglesia && deletingIglesia.cantidadSedes === 0 ? 'Eliminar Permanentemente' : 'Desactivar Iglesia'}
+                  {deletingIglesia && deletingIglesia.cantidadSedes === 0 ? 'Eliminar' : 'Desactivar'}
                 </>
               )}
             </Button>

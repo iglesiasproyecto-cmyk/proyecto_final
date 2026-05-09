@@ -177,7 +177,10 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
                 <Button
                   size="sm"
                   className="flex-1 h-8 rounded-xl text-xs"
-                  onClick={() => navigate(`/app/aula/curso/${curso.idAulaCurso}`)}
+                  onClick={() => {
+                    if (!iglesiaActual?.id) return
+                    navigate(`/app/${iglesiaActual.id}/aula/curso/${curso.idAulaCurso}`)
+                  }}
                 >
                   <ChevronRight className="w-3.5 h-3.5 mr-1" /> Ver detalle
                 </Button>

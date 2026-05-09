@@ -20,7 +20,6 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { motion } from "motion/react";
 import { UserCheck, Plus, Pencil, Trash2, Search, Link2, Church, Mail, Phone, Save, X, Eye, Calendar } from "lucide-react";
 
@@ -44,6 +43,12 @@ function GlassCard({ children, index = 0 }: { children: React.ReactNode; index?:
   );
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
 export function PastoresPage() {
   const { rolActual } = useApp();
   const { data: pastores = [], isLoading } = usePastoresEnriquecidos();
@@ -62,7 +67,6 @@ export function PastoresPage() {
   const [formSolicitud, setFormSolicitud] = useState({ idPastorActual: 0, idSede: 0, idPastorNuevo: 0, esPrincipal: false, motivo: "" });
   const [confirmDeleteAsign, setConfirmDeleteAsign] = useState<{ id: number; pastorName: string; iglesiaName: string } | null>(null);
   const [selectedPastor, setSelectedPastor] = useState<number | null>(null);
-  const [confirmDeletePastor, setConfirmDeletePastor] = useState<{ isOpen: boolean; id: number; nombre: string }>({ isOpen: false, id: 0, nombre: "" });
 
   const createPastorMutation = useCreatePastor();
   const updatePastorMutation = useUpdatePastor();
@@ -81,7 +85,8 @@ export function PastoresPage() {
   );
 
   const handleDeletePastor = (id: number, nombre: string) => {
-    setConfirmDeletePastor({ isOpen: true, id, nombre });
+    if (!confirm(`¿Eliminar pastor "${nombre}"? Esta acción es irreversible.`)) return;
+    deletePastorMutation.mutate(id);
   };
 
   const openAddPastor = () => { setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 }); setEditingPastor(null); setDialogPastor(true); };
@@ -91,11 +96,16 @@ export function PastoresPage() {
     setEditingPastor(id); setDialogPastor(true);
   };
   const handleSubmitPastor = async () => {
-    if (!formP.nombres.trim() || !formP.apellidos.trim() || !formP.correo.trim()) return;
+    const correo = normalizeEmail(formP.correo);
+    if (!formP.nombres.trim() || !formP.apellidos.trim() || !correo) return;
+    if (!EMAIL_REGEX.test(correo)) {
+      alert('Ingresa un correo electrónico válido.');
+      return;
+    }
 
     try {
       // Validar correo único
-      if (await checkPastorCorreoExists(formP.correo, editingPastor || undefined)) {
+      if (await checkPastorCorreoExists(correo, editingPastor || undefined)) {
         alert('El correo ya está en uso por otro pastor activo.');
         return;
       }
@@ -108,12 +118,12 @@ export function PastoresPage() {
 
       if (editingPastor) {
         updatePastorMutation.mutate(
-          { id: editingPastor, data: { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null } },
+          { id: editingPastor, data: { nombres: formP.nombres, apellidos: formP.apellidos, correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null } },
           { onSuccess: () => setDialogPastor(false) }
         );
       } else {
         createPastorMutation.mutate(
-          { nombres: formP.nombres, apellidos: formP.apellidos, correo: formP.correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null },
+          { nombres: formP.nombres, apellidos: formP.apellidos, correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null },
           { onSuccess: () => {
             setDialogPastor(false);
             setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
@@ -208,29 +218,29 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
     return `${p.nombres} ${p.apellidos}`.toLowerCase().includes(q) || p.correo.toLowerCase().includes(q);
   });
 
-  return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+return (
+    <div className="space-y-6 max-w-7xl mx-auto pb-10 px-4 md:px-0">
       {/* HEADER */}
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <UserCheck className="w-6 h-6 text-white" />
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <UserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
-            <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest pl-1">Estructura</p>
-            <h1 className="text-3xl font-light tracking-tight leading-tight">Gestión de Pastores</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm font-medium uppercase tracking-widest pl-1 hidden sm:block">Estructura</p>
+            <h1 className="text-2xl sm:text-3xl font-light tracking-tight leading-tight">Gestión de Pastores</h1>
           </div>
         </div>
       </motion.div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <div className="flex justify-start">
-          <TabsList className="bg-card/40 backdrop-blur-xl border border-white/20 dark:border-white/10 dark:bg-card/20 rounded-2xl h-14 px-1.5 shadow-sm">
-            <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
-              Directorio ({pastores.length})
+        <div className="flex justify-start overflow-x-auto">
+          <TabsList className="bg-card/40 backdrop-blur-xl border border-white/20 dark:border-white/10 dark:bg-card/20 rounded-2xl h-12 sm:h-14 px-1.5 shadow-sm">
+            <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-10 sm:h-11 px-4 sm:px-6 font-medium text-xs sm:text-sm transition-all text-muted-foreground data-[state=active]:text-white">
+              <span className="hidden sm:inline">Directorio</span><span className="sm:hidden">Pastores</span> ({pastores.length})
             </TabsTrigger>
-            <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-11 px-6 font-medium text-sm transition-all text-muted-foreground data-[state=active]:text-white">
-              Asignaciones ({sedePastores.filter(sp => !sp.fechaFin).length})
+            <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-10 sm:h-11 px-4 sm:px-6 font-medium text-xs sm:text-sm transition-all text-muted-foreground data-[state=active]:text-white">
+              Asig. ({sedePastores.filter(sp => !sp.fechaFin).length})
             </TabsTrigger>
           </TabsList>
         </div>
@@ -239,34 +249,35 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
           {/* ACTION BAR */}
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
             <div className="p-3 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm flex flex-col sm:flex-row justify-between gap-3 dark:border-white/10 dark:bg-card/20">
-              <div className="relative flex-1 md:max-w-md">
+              <div className="relative flex-1 sm:max-w-md">
                 <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input 
-                  placeholder="Buscar pastores por nombre o correo..." 
+                  placeholder="Buscar pastores..." 
                   value={search} 
                   onChange={e => setSearch(e.target.value)} 
                   className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
                 />
               </div>
-              <Button onClick={openAddPastor} className="shrink-0 shadow-md shadow-blue-900/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
-                <Plus className="w-4 h-4 mr-2" /> Nuevo Pastor
+              <Button onClick={openAddPastor} className="shrink-0 shadow-md shadow-blue-900/20 rounded-full px-4 sm:px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20 text-sm">
+                <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Nuevo Pastor</span>
+                <span className="sm:hidden">Nuevo</span>
               </Button>
             </div>
           </motion.div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
             {filteredPastores.map((p, i) => {
               const asignaciones = getSedesForPastor(p.idPastor);
               const linkedUser = p.idUsuario ? usuarios.find(u => u.idUsuario === p.idUsuario) : null;
               return (
                 <GlassCard key={p.idPastor} index={i}>
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/10 text-[#4682b4] dark:text-[#709dbd] border-[#4682b4]/10 flex items-center justify-center font-semibold">
-                        {p.nombres[0]}{p.apellidos[0]}
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/10 text-[#4682b4] dark:text-[#709dbd] border-[#4682b4]/10 flex items-center justify-center font-semibold text-sm sm:text-base">
+                          {p.nombres[0]}{p.apellidos[0]}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-foreground truncate">{p.nombres} {p.apellidos}</p>
+                        <p className="font-medium text-foreground truncate text-sm sm:text-base">{p.nombres} {p.apellidos}</p>
                         <div className="flex flex-col gap-0.5 mt-1">
                           <p className="flex items-center gap-1.5 text-xs font-medium text-primary/70"><Mail className="w-3 h-3" /> <span className="truncate">{p.correo}</span></p>
                           {p.telefono && <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Phone className="w-3 h-3" /> {p.telefono}</p>}
@@ -345,7 +356,7 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
                 </Button>
               )}
               {rolActual === "admin_iglesia" && (
-                <Button onClick={() => setDialogSolicitud(true)} className="shadow-md shadow-primary/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
+                <Button onClick={() => setDialogSolicitud(true)} className="shadow-md shadow-amber-500/20 rounded-full px-6 bg-amber-600 hover:bg-amber-700 shadow-amber-900/20">
                   <Plus className="w-4 h-4 mr-2" /> Solicitar Asignación
                 </Button>
               )}
@@ -422,7 +433,7 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
           </div>
           <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setDialogPastor(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
-            <Button onClick={handleSubmitPastor} disabled={!formP.nombres.trim() || !formP.apellidos.trim() || !formP.correo.trim()} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
+            <Button onClick={handleSubmitPastor} disabled={!formP.nombres.trim() || !formP.apellidos.trim() || !normalizeEmail(formP.correo) || !EMAIL_REGEX.test(normalizeEmail(formP.correo))} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -585,7 +596,7 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
             <Button
               onClick={handleSolicitarCambio}
               disabled={!formSolicitud.idSede || !formSolicitud.idPastorNuevo || !formSolicitud.motivo.trim()}
-              className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"
+              className="rounded-full px-5 bg-amber-600 hover:bg-amber-700 shadow-amber-900/20"
             >
               <Save className="w-4 h-4 mr-1.5" />
               Enviar Solicitud de Cambio
@@ -719,14 +730,6 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <ConfirmDialog
-        isOpen={confirmDeletePastor.isOpen}
-        onClose={() => setConfirmDeletePastor({ isOpen: false, id: 0, nombre: "" })}
-        onConfirm={() => deletePastorMutation.mutate(confirmDeletePastor.id)}
-        title="¿Eliminar Pastor?"
-        description={`¿Estás seguro de que quieres eliminar al pastor "${confirmDeletePastor.nombre}"? Esta acción es irreversible.`}
-      />
     </div>
   );
 }

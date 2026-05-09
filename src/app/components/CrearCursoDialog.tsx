@@ -230,6 +230,7 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
                       type="number"
                       placeholder="Ej: 20"
                       {...field}
+                      value={field.value ?? ''}
                       onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                     />
                   </FormControl>

@@ -1870,8 +1870,6 @@ export type Database = {
       [_ in never]: never
     }
   }
-}
-
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]

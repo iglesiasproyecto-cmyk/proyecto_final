@@ -4,10 +4,27 @@ import { ServidorAulaPage } from './ServidorAulaPage'
 import { AdminAulaPage } from './AdminAulaPage'
 import { Alert, AlertDescription } from '@/app/components/ui/alert'
 import { GraduationCap, Sparkles } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion } from 'motion/react'
+import { useMemo } from 'react'
 
 export function AulaPage() {
-  const { user, rolActual } = useAuth()
+  const { user, rolActual, isHydrated, isClaimsReady } = useAuth()
+
+  const stableRole = useMemo(() => {
+    if (!isHydrated || !isClaimsReady || !rolActual) return null
+    return rolActual
+  }, [isHydrated, isClaimsReady, rolActual])
+
+  if (!isHydrated || (!isClaimsReady && !user)) {
+    return (
+      <div className="container mx-auto py-12 px-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-48" />
+          <div className="h-4 bg-muted rounded w-64" />
+        </div>
+      </div>
+    )
+  }
 
   if (!user) {
     return (
@@ -21,21 +38,37 @@ export function AulaPage() {
     )
   }
 
+  const renderContent = () => {
+    if (!stableRole) {
+      return (
+        <div className="animate-pulse space-y-4">
+          <div className="h-32 bg-muted rounded-lg" />
+          <div className="h-32 bg-muted rounded-lg" />
+        </div>
+      )
+    }
+    if (stableRole === "admin_iglesia" || stableRole === "super_admin") {
+      return <AdminAulaPage />
+    }
+    if (stableRole === "lider") {
+      return <LiderAulaPage />
+    }
+    return <ServidorAulaPage />
+  }
+
   return (
     <div className="relative min-h-full">
-      {/* Background Decorative Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-[#4682b4]/10 rounded-full blur-[100px]" />
         <div className="absolute top-[20%] -left-[10%] w-[30%] h-[30%] bg-[#709dbd]/10 rounded-full blur-[80px]" />
       </div>
 
-      <motion.div 
+      <motion.div
         className="container mx-auto py-2 sm:py-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Header Section */}
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -56,31 +89,14 @@ export function AulaPage() {
           </div>
         </div>
 
-        {/* Content Area */}
         <div className="relative">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={
-                rolActual === "admin_iglesia" || rolActual === "super_admin"
-                  ? 'admin'
-                  : rolActual === "lider"
-                  ? 'lider'
-                  : 'servidor'
-              }
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {rolActual === "admin_iglesia" || rolActual === "super_admin" ? (
-                <AdminAulaPage />
-              ) : rolActual === "lider" ? (
-                <LiderAulaPage />
-              ) : (
-                <ServidorAulaPage />
-              )}
-            </motion.div>
-          </AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.25 }}
+          >
+            {renderContent()}
+          </motion.div>
         </div>
       </motion.div>
     </div>

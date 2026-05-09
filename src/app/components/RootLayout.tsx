@@ -1,6 +1,19 @@
 import { Outlet } from "react-router";
 import { AppProvider } from "../store/AppContext";
+import { LoadingProvider, useLoading } from "../store/LoadingContext";
+import { GlobalLoader } from "./GlobalLoader";
 import React from "react";
+
+function RootContent() {
+  const { loadingState } = useLoading();
+  
+  return (
+    <>
+      <GlobalLoader show={loadingState.isLoading} message={loadingState.message} />
+      <Outlet />
+    </>
+  );
+}
 
 class AppProviderErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -38,7 +51,9 @@ export function RootLayout() {
   return (
     <AppProviderErrorBoundary>
       <AppProvider>
-        <Outlet />
+        <LoadingProvider>
+          <RootContent />
+        </LoadingProvider>
       </AppProvider>
     </AppProviderErrorBoundary>
   );

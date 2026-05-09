@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { useApp } from "../store/AppContext";
+import { GlobalLoader } from "./GlobalLoader";
+import { AuthRecovery } from "./AuthRecovery";
 import { Badge } from "./ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { motion, AnimatePresence } from "motion/react";
@@ -15,6 +17,7 @@ import { SEILogo } from "./SEILogo";
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
   admin_iglesia: "Administrador de Iglesia",
+  admin_sede: "Administrador de Sede",
   lider: "Lider de Ministerio",
   servidor: "Servidor",
 };
@@ -22,6 +25,7 @@ const roleLabels: Record<string, string> = {
 const roleBadgeColors: Record<string, string> = {
   super_admin: "bg-red-500/10 text-red-600 border-red-500/20",
   admin_iglesia: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20",
+  admin_sede: "bg-violet-500/10 text-violet-600 border-violet-500/20",
   lider: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   servidor: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20",
 };
@@ -36,6 +40,7 @@ interface NavItem {
 const pageTitles: Record<string, string> = {
   "/app/global": "Dashboard Global",
   "/app/global/iglesias": "Gestión de Iglesias",
+  "/app/global/sedes": "Gestión de Sedes",
   "/app/global/administradores": "Administradores de Iglesia",
   "/app/global/usuarios": "Usuarios",
   "/app/global/geografia": "Geografía",
@@ -73,6 +78,7 @@ function getNavItemsForRole(
       return [
         { label: "Dashboard", path: "/app/global", icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
         { label: "Iglesias", path: "/app/global/iglesias", icon: <Building2 className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Sedes", path: "/app/global/sedes", icon: <Church className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Administradores", path: "/app/global/administradores", icon: <UserCheck className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Administradores de Sede", path: "/app/global/admin-sedes", icon: <Settings className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Usuarios", path: "/app/global/usuarios", icon: <Users className="w-5 h-5" />, section: "Gestión Global" },
@@ -87,7 +93,7 @@ function getNavItemsForRole(
         { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
         { label: "Mi Iglesia", path: `${t}/iglesia`, icon: <Church className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Sedes", path: `${t}/sedes`, icon: <Building2 className="w-5 h-5" />, section: "Mi Iglesia" },
-        { label: "Administradores de Sede", path: `/app/global/admin-sedes`, icon: <Settings className="w-5 h-5" />, section: "Mi Iglesia" },
+        { label: "Administradores de Sede", path: `${t}/admin-sedes`, icon: <Settings className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Pastores", path: `${t}/pastores`, icon: <UserCheck className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Ministerios", path: `${t}/ministerios`, icon: <Settings2 className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Usuarios", path: `${t}/usuarios`, icon: <Users className="w-5 h-5" />, section: "Mi Iglesia" },
@@ -104,6 +110,17 @@ function getNavItemsForRole(
         { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
         { label: "Mi Ministerio", path: `${t}/mi-ministerio`, icon: <FolderHeart className="w-5 h-5" />, section: "Ministerio" },
         { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Ministerio" },
+        { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
+        { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
+        { label: "Mi Perfil", path: `${t}/perfil`, icon: <User className="w-5 h-5" />, section: "Personal" },
+      ];
+
+    case "admin_sede":
+      return [
+        { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
+        { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Operaciones" },
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
         { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
@@ -143,30 +160,38 @@ function groupBySection(items: NavItem[]) {
 }
 
 export function AppLayout() {
-  const { usuarioActual, logout, notificacionesCount, sidebarOpen, toggleSidebar, darkMode, toggleDarkMode, authLoading, iglesiaActual, setIglesiaActual, iglesiasDelUsuario, rolActual } = useApp();
+  const { usuarioActual, logout, notificacionesCount, sidebarOpen, toggleSidebar, darkMode, toggleDarkMode, authLoading, iglesiaActual, setIglesiaActual, iglesiasDelUsuario, rolActual, isHydrated, isInitializing, isClaimsReady, authError } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [showChurchSelector, setShowChurchSelector] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !usuarioActual) navigate("/login", { replace: true });
-  }, [authLoading, usuarioActual, navigate]);
+    if (!isHydrated) return;
+    if (!usuarioActual && location.pathname !== "/login") {
+      navigate("/login", { replace: true });
+    }
+  }, [isHydrated, usuarioActual, navigate, location.pathname]);
+
+  const isLoading = !isHydrated || authLoading || !usuarioActual || (!isClaimsReady && !authError);
 
   useEffect(() => {
     const title = pageTitles[location.pathname] ?? getDynamicPageTitle(location.pathname);
     document.title = `${title} | IGLESIABD`;
   }, [location.pathname]);
 
-  if (authLoading) {
+  if (authError) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
-      </div>
-    );
+      <AuthRecovery
+        title="Se detecto un problema de autenticacion"
+        description="Tu sesion no se pudo hidratar correctamente. Cierra sesion para reintentar."
+      />
+    )
   }
 
-  if (!usuarioActual) return null;
+  if (isLoading || isInitializing) {
+    return <GlobalLoader show={true} message="Cargando aplicación..." fullScreen={true} />
+  }
 
   const rol = rolActual;
   const unreadCount = notificacionesCount;
@@ -481,9 +506,9 @@ export function AppLayout() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={() => {
-                      logout();
-                      navigate("/login");
+                    onClick={async () => {
+                      await logout();
+                      navigate("/login", { replace: true });
                     }}
                     className="p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-red-500 transition-colors"
                   >

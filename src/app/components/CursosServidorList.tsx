@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/app/store/AppContext'
 import { supabase } from '@/lib/supabaseClient'
 import { getInternalUserId } from '@/lib/userHelpers'
@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useProgresoCurso } from '@/hooks/useProgreso'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Badge } from '@/app/components/ui/badge'
-import { Plus, BookOpen, TrendingUp, GraduationCap, ShieldCheck, Sparkles, Users, Clock, ArrowRight } from 'lucide-react'
+import { Plus, BookOpen, TrendingUp, GraduationCap, ShieldCheck, Sparkles, Users, Clock, ArrowRight, Award } from 'lucide-react'
 import { BarraProgreso } from './BarraProgreso'
 import { motion } from 'motion/react'
 import { useNavigate } from 'react-router'
@@ -14,16 +14,35 @@ import { useNavigate } from 'react-router'
 export function CursosServidorList() {
   const { user } = useAuth()
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
+  const [internalUserLoading, setInternalUserLoading] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+
+    const resolveInternalUser = async () => {
+      if (!user?.id) {
+        if (mounted) setInternalUserId(null)
+        return
+      }
+
+      setInternalUserLoading(true)
+      const userId = await getInternalUserId(user.id)
+      if (mounted) {
+        setInternalUserId(userId)
+        setInternalUserLoading(false)
+      }
+    }
+
+    resolveInternalUser()
+    return () => {
+      mounted = false
+    }
+  }, [user?.id])
 
   const { data: cursos, isLoading } = useQuery({
-    queryKey: ['cursos-servidor', user?.id],
+    queryKey: ['cursos-servidor', internalUserId],
     queryFn: async () => {
-      if (!user?.id) return []
-
-      const userId = await getInternalUserId(user.id)
-      if (!userId) return []
-
-      setInternalUserId(userId)
+      if (!internalUserId) return []
 
       const { data, error } = await supabase
         .from('aula_inscripcion')
@@ -37,7 +56,7 @@ export function CursosServidorList() {
             ministerio:ministerio(nombre)
           )
         `)
-        .eq('id_usuario', userId)
+        .eq('id_usuario', internalUserId)
         .eq('activo', true)
         .eq('aula_curso.estado', 'activo')
         .is('aula_curso.deleted_at', null)
@@ -52,8 +71,19 @@ export function CursosServidorList() {
         fecha_inscripcion: item.inscrito_en,
       })) || []
     },
-    enabled: !!user?.id,
+    enabled: !!internalUserId,
+    staleTime: 30 * 1000,
   })
+
+  if (internalUserLoading) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-[280px] rounded-3xl bg-muted/50 animate-pulse border border-border/50" />
+        ))}
+      </div>
+    )
+  }
 
   if (isLoading) {
     return (
