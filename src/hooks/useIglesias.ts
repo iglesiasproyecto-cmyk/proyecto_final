@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getIglesias, getPastores, getSedePastores, getSedes,
   getIglesiasEnriquecidas, getPastoresEnriquecidos, getSedesEnriquecidas, getPastoresPorSede, getIglesiaEnriquecidaById, getPastoresPorIglesia, getAdminsPorIglesia,
-  createIglesia, updateIglesia, deleteIglesia,
+  createIglesia, updateIglesia, deleteIglesia, toggleIglesiaEstado,
   createPastor, updatePastor, deletePastor,
   createSedePastor, closeSedePastor,
   createSede, updateSede, deleteSede, toggleSedeEstado,
@@ -99,9 +99,10 @@ export function useUpdateIglesia() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateIglesia>[1] }) =>
       updateIglesia(id, data),
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       qc.invalidateQueries({ queryKey: ['iglesias'] })
       qc.invalidateQueries({ queryKey: ['iglesias-enriquecidas'] })
+      qc.invalidateQueries({ queryKey: ['iglesia-enriquecida', variables.id] })
     },
   })
 }

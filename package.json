@@ -6,6 +6,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
     "test:e2e": "npx playwright test --no-deps --workers=1",
     "test:e2e:setup": "npx playwright test --project=setup",
     "test:e2e:ui": "npx playwright test --no-deps --workers=1 --ui",

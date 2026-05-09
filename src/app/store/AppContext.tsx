@@ -10,6 +10,10 @@ interface AppState {
   usuarioActual: Usuario | null
   isAuthenticated: boolean
   authLoading: boolean
+  isHydrated: boolean
+  isClaimsReady: boolean
+  authError: string | null
+  isInitializing: boolean
   iglesiaActual: { id: number; nombre: string } | null
   setIglesiaActual: (ig: { id: number; nombre: string } | null) => void
   iglesiasDelUsuario: { id: number; nombre: string }[]
@@ -24,6 +28,7 @@ interface AppState {
   toggleDarkMode: () => void
   logout: () => Promise<void>
   refreshClaims: () => Promise<void>
+  setInitializing: (val: boolean) => void
   // MOCK MODE FOR UI DESIGN
   isMockMode: boolean
   setMockMode: (val: boolean) => void
@@ -50,6 +55,9 @@ function normalizeAppRole(rawRoles: string[]): string {
   }
   if (normalized.some((name) => name === 'administrador de iglesia')) {
     return 'admin_iglesia'
+  }
+  if (normalized.some((name) => name === 'administrador de sede')) {
+    return 'admin_sede'
   }
   if (normalized.some((name) => name.includes('lider'))) {
     return 'lider'
@@ -232,10 +240,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [usuarioActual, setUsuarioActual] = useState<Usuario | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [isHydrated, setIsHydrated] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
+  const [isClaimsReady, setIsClaimsReady] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
   const [iglesiaActual, setIglesiaActual] = useState<{ id: number; nombre: string } | null>(null)
   const [iglesiasDelUsuario, setIglesiasDelUsuario] = useState<{ id: number; nombre: string }[]>([])
   const [sedesDelUsuario, setSedesDelUsuario] = useState<{ id: number; nombre: string }[]>([])
-  const [rolActual, setRolActual] = useState<string>('servidor')
+  const [rolActual, setRolActual] = useState<string>('')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [notificacionesCount, setNotificacionesCount] = useState(0)
   const [darkMode, setDarkMode] = useState(() => {
@@ -259,6 +271,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return 'super_admin'
   })
   const lastHandledTokenRef = useRef<string | null>(null)
+  const isHydratingRef = useRef(false)
+  const hydratingUserIdRef = useRef<string | null>(null)
+  const hydratedUserIdRef = useRef<string | null>(null)
+  const hydratedTokenRef = useRef<string | null>(null)
 
   // Development check for user synchronization issues - DISABLED
   // This was causing 403 errors when trying to use Admin API from frontend with anon key
@@ -304,6 +320,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!loadingResolved) {
         loadingResolved = true
         setAuthLoading(false)
+        setIsHydrated(true)
+        setIsInitializing(false)
       }
     }
 
@@ -317,8 +335,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const handleAuthSession = async (session: Session | null, callId: number) => {
       setSession(session)
+      setAuthError(null)
 
       if (session) {
+        if (isHydratingRef.current) return
+        isHydratingRef.current = true
+        hydratingUserIdRef.current = session.user.id
         const token = session.access_token
         const authUserId = session.user.id
         console.log('[AUTH] Loading profile for:', session.user.email, authUserId)
@@ -345,6 +367,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
 
         try {
+          setIsClaimsReady(false)
           const data = await fetchUsuarioRaw(token, authUserId)
           if (callId !== callCounter) return
 
@@ -353,6 +376,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             await supabase.auth.signOut()
             setUsuarioActual(null)
             setSession(null)
+            setAuthError('Token invalido o expirado')
+            hydratedUserIdRef.current = null
+            hydratedTokenRef.current = null
+            setIsClaimsReady(false)
             resolveLoading()
             return
           }
@@ -367,6 +394,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             await supabase.auth.signOut()
             setUsuarioActual(null)
             setSession(null)
+            setAuthError('Usuario no sincronizado con auth')
+            hydratedUserIdRef.current = null
+            hydratedTokenRef.current = null
+            setIsClaimsReady(false)
             resolveLoading()
             return
           }
@@ -400,6 +431,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const roleNames = roles.map((r: any) => String(r.rol_nombre ?? ''))
           const derivedRol = normalizeAppRole(roleNames)
           setRolActual(derivedRol)
+          setIsClaimsReady(true)
 
           // Build iglesias
           const iglesiasMap = new Map<number, string>()
@@ -420,8 +452,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setSedesDelUsuario(sedes)
 
           console.log('[AUTH] ✅ Fully loaded — role:', derivedRol, '— iglesias:', iglesias.length)
+          hydratedUserIdRef.current = authUserId
+          hydratedTokenRef.current = token
         } catch (err) {
           console.error('[AUTH] Error loading user data:', err)
+          setAuthError('Error cargando el perfil')
+        } finally {
+          isHydratingRef.current = false
+          hydratingUserIdRef.current = null
         }
       } else {
         if (callId !== callCounter) return
@@ -430,7 +468,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIglesiaActual(null)
         setIglesiasDelUsuario([])
         setSedesDelUsuario([])
-        setRolActual('servidor')
+        setRolActual('')
+        setIsClaimsReady(false)
+        setAuthError(null)
+        hydratedUserIdRef.current = null
+        hydratedTokenRef.current = null
+        isHydratingRef.current = false
+        hydratingUserIdRef.current = null
       }
       resolveLoading()
     }
@@ -441,6 +485,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('[AUTH] onAuthStateChange:', _event, !!session)
+
+      if (session) {
+        const authUserId = session.user.id
+        const token = session.access_token
+
+        if (isHydratingRef.current && hydratingUserIdRef.current === authUserId) {
+          setSession(session)
+          return
+        }
+
+        if (hydratedUserIdRef.current === authUserId) {
+          hydratedTokenRef.current = token
+          setSession(session)
+          return
+        }
+      }
 
       // Supabase puede emitir SIGNED_IN repetido con la misma sesion.
       // Evitamos recargar perfil si el access token no cambio.
@@ -480,7 +540,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     setIsMockMode(false)
+    setIsHydrated(false)
+    setIsInitializing(true)
+    setUsuarioActual(null)
+    setRolActual('')
+    setIglesiaActual(null)
+    setIglesiasDelUsuario([])
+    setSedesDelUsuario([])
+    setNotificacionesCount(0)
+    setAuthLoading(true)
+    setIsClaimsReady(false)
+    setAuthError(null)
+    lastHandledTokenRef.current = null
+    hydratedUserIdRef.current = null
+    hydratedTokenRef.current = null
+    isHydratingRef.current = false
+    hydratingUserIdRef.current = null
     await supabase.auth.signOut()
+    setIsInitializing(false)
   }
 
   const refreshClaims = async () => {
@@ -510,6 +587,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setRolActual(mockDerivedRol)
       setIglesiasDelUsuario([{ id: 1, nombre: 'Iglesia Mock' }])
       setIglesiaActual({ id: 1, nombre: 'Iglesia Mock' })
+      setIsClaimsReady(true)
     }
   }, [isMockMode, usuarioActual, authLoading, mockRol])
 
@@ -521,6 +599,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         usuarioActual,
         isAuthenticated: !!session || isMockMode,
         authLoading,
+        isHydrated,
+        isInitializing,
+        isClaimsReady,
+        authError,
         iglesiaActual,
         setIglesiaActual,
         iglesiasDelUsuario,
@@ -535,6 +617,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         toggleDarkMode: () => setDarkMode((p) => !p),
         logout,
         refreshClaims,
+        setInitializing: setIsInitializing,
         isMockMode,
         setMockMode: setIsMockMode,
         mockRol,
@@ -549,7 +632,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const ctx = useContext(AppContext)
   if (!ctx) throw new Error('useAuth must be used within AppProvider')
-  return { user: ctx.user, rolActual: ctx.rolActual, usuarioActual: ctx.usuarioActual }
+  return {
+    user: ctx.user,
+    rolActual: ctx.rolActual,
+    usuarioActual: ctx.usuarioActual,
+    isHydrated: ctx.isHydrated,
+    isClaimsReady: ctx.isClaimsReady,
+    authError: ctx.authError,
+  }
 }
 
 export function useApp() {

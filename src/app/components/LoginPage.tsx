@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { supabase } from '@/lib/supabaseClient'
 import { useApp } from "../store/AppContext"
+import { GlobalLoader } from './GlobalLoader'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { toast } from 'sonner'
@@ -14,29 +15,35 @@ import {
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { session, usuarioActual, authLoading } = useApp()
+  const { session, usuarioActual, authLoading, isHydrated } = useApp()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [isResettingPassword, setIsResettingPassword] = useState(false)
+  const [showTransitionLoader, setShowTransitionLoader] = useState(false)
+
+  const handleLoginSuccess = useCallback(() => {
+    setShowTransitionLoader(true)
+    
+    setTimeout(() => {
+      setShowTransitionLoader(false)
+      navigate('/app')
+    }, 500)
+  }, [navigate])
 
   useEffect(() => {
-    if (!authLoading && session && usuarioActual) navigate("/app")
-  }, [authLoading, session, usuarioActual, navigate])
+    if (!authLoading && session && usuarioActual && isHydrated) {
+      handleLoginSuccess()
+    }
+  }, [authLoading, session, usuarioActual, isHydrated, handleLoginSuccess])
 
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0c2340]">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-primary animate-ping" />
-          </div>
-        </div>
-      </div>
-    )
+  if (showTransitionLoader) {
+    return <GlobalLoader show={true} message="Preparando tu experiencia..." fullScreen={true} />
+  }
+
+  if (authLoading && (session || usuarioActual)) {
+    return <GlobalLoader show={true} message="Cargando..." fullScreen={true} />
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,31 +80,6 @@ export function LoginPage() {
       toast.success('¡Bienvenido!')
       navigate('/app')
     }
-  }
-
-  const handleResetPassword = async () => {
-    const cleanEmail = email.trim().toLowerCase()
-    if (!cleanEmail) {
-      setError('Ingresa tu correo para recuperar la contrasena.')
-      return
-    }
-
-    setIsResettingPassword(true)
-    setError('')
-
-    const redirectTo = `${window.location.origin}/auth/callback?next=/login`
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-      redirectTo,
-    })
-
-    setIsResettingPassword(false)
-
-    if (resetError) {
-      setError('No se pudo enviar el correo de recuperacion. Intenta nuevamente.')
-      return
-    }
-
-    toast.success('Te enviamos un correo para restablecer tu contrasena.')
   }
 
   return (

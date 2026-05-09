@@ -39,15 +39,8 @@ export function useAccesoModulos(vars: {
       if (modulosError) throw modulosError
       if (!modulos || modulos.length === 0) return []
 
-      const progresoCache = new Map<number, { completado: boolean; totalElementos: number }>()
-
-      const obtenerProgreso = async (idModulo: number) => {
-        if (progresoCache.has(idModulo)) return progresoCache.get(idModulo)!
-
-        const progreso = await obtenerProgresoModulo(vars.idUsuario!, idModulo)
-        progresoCache.set(idModulo, progreso)
-        return progreso
-      }
+      const moduloIds = modulos.map((m) => m.id_aula_modulo)
+      const progresoPorModulo = await obtenerProgresoModulosBatch(vars.idUsuario!, moduloIds)
 
       const accesoModulos = [] as Array<{
         idModulo: number
@@ -68,11 +61,11 @@ export function useAccesoModulos(vars: {
           estadoAcceso = 'disponible'
         } else {
           const moduloAnterior = modulos[index - 1]
-          const progresoAnterior = await obtenerProgreso(moduloAnterior.id_aula_modulo)
+          const progresoAnterior = progresoPorModulo.get(moduloAnterior.id_aula_modulo) ?? { completado: false, totalElementos: 0 }
           estadoAcceso = progresoAnterior.completado ? 'disponible' : 'bloqueado'
         }
 
-        const progresoActual = await obtenerProgreso(modulo.id_aula_modulo)
+        const progresoActual = progresoPorModulo.get(modulo.id_aula_modulo) ?? { completado: false, totalElementos: 0 }
         if (progresoActual.completado) {
           estadoAcceso = 'completado'
         }
@@ -94,63 +87,87 @@ export function useAccesoModulos(vars: {
   })
 }
 
-async function obtenerProgresoModulo(idUsuario: number, idModulo: number) {
-  // Obtener información del módulo para verificar contenido
-  const { data: modulo } = await supabase
+async function obtenerProgresoModulosBatch(idUsuario: number, moduloIds: number[]) {
+  const result = new Map<number, { completado: boolean; totalElementos: number }>()
+  if (moduloIds.length === 0) return result
+
+  const { data: modulos } = await supabase
     .from('aula_modulo')
-    .select('contenido_md, descripcion')
-    .eq('id_aula_modulo', idModulo)
-    .single()
+    .select('id_aula_modulo, contenido_md, descripcion')
+    .in('id_aula_modulo', moduloIds)
 
   const { data: actividades } = await supabase
     .from('aula_actividad')
-    .select('id_aula_actividad')
-    .eq('id_aula_modulo', idModulo)
+    .select('id_aula_actividad, id_aula_modulo')
+    .in('id_aula_modulo', moduloIds)
 
   const { data: evaluaciones } = await supabase
     .from('aula_evaluacion')
-    .select('id_aula_evaluacion')
-    .eq('id_aula_modulo', idModulo)
+    .select('id_aula_evaluacion, id_aula_modulo')
+    .in('id_aula_modulo', moduloIds)
 
-  const actividadIds = actividades?.map(a => a.id_aula_actividad) || []
-  const evaluacionIds = evaluaciones?.map(e => e.id_aula_evaluacion) || []
-  const totalElementos = actividadIds.length + evaluacionIds.length
+  const actividadIds = (actividades ?? []).map((a) => a.id_aula_actividad)
+  const evaluacionIds = (evaluaciones ?? []).map((e) => e.id_aula_evaluacion)
 
-  // Si el módulo tiene contenido (contenido_md o descripcion), es completable
-  const tieneContenido = modulo && (modulo.contenido_md || modulo.descripcion)
+  const { data: actividadesCompletadas } = actividadIds.length
+    ? await supabase
+        .from('aula_progreso_actividad')
+        .select('id_aula_actividad')
+        .eq('id_usuario', idUsuario)
+        .in('id_aula_actividad', actividadIds)
+        .eq('completada', true)
+    : { data: [] as Array<{ id_aula_actividad: number }> }
 
-  // Si no hay actividades ni evaluaciones, pero sí hay contenido, el módulo se completa automáticamente
-  if (totalElementos === 0 && tieneContenido) {
-    return { completado: true, totalElementos: 1 }
+  const { data: evaluacionesAprobadas } = evaluacionIds.length
+    ? await supabase
+        .from('aula_intento_evaluacion')
+        .select('id_aula_evaluacion')
+        .eq('id_usuario', idUsuario)
+        .in('id_aula_evaluacion', evaluacionIds)
+        .eq('aprobado', true)
+    : { data: [] as Array<{ id_aula_evaluacion: number }> }
+
+  const actividadesByModulo = new Map<number, number[]>()
+  for (const actividad of actividades ?? []) {
+    const list = actividadesByModulo.get(actividad.id_aula_modulo) ?? []
+    list.push(actividad.id_aula_actividad)
+    actividadesByModulo.set(actividad.id_aula_modulo, list)
   }
 
-  // Si no hay elementos para completar en absoluto, no está completado
-  if (totalElementos === 0 && !tieneContenido) {
-    return { completado: false, totalElementos: 0 }
+  const evaluacionesByModulo = new Map<number, number[]>()
+  for (const evaluacion of evaluaciones ?? []) {
+    const list = evaluacionesByModulo.get(evaluacion.id_aula_modulo) ?? []
+    list.push(evaluacion.id_aula_evaluacion)
+    evaluacionesByModulo.set(evaluacion.id_aula_modulo, list)
   }
 
-  const { data: actividadesCompletadas } = await supabase
-    .from('aula_progreso_actividad')
-    .select('id_aula_actividad')
-    .eq('id_usuario', idUsuario)
-    .in('id_aula_actividad', actividadIds)
-    .eq('completada', true)
+  const completedActividadSet = new Set((actividadesCompletadas ?? []).map((r) => r.id_aula_actividad))
+  const approvedEvalSet = new Set((evaluacionesAprobadas ?? []).map((r) => r.id_aula_evaluacion))
 
-  const { data: evaluacionesAprobadas } = await supabase
-    .from('aula_intento_evaluacion')
-    .select('id_aula_evaluacion')
-    .eq('id_usuario', idUsuario)
-    .in('id_aula_evaluacion', evaluacionIds)
-    .eq('aprobado', true)
+  for (const modulo of modulos ?? []) {
+    const actividadModuloIds = actividadesByModulo.get(modulo.id_aula_modulo) ?? []
+    const evaluacionModuloIds = evaluacionesByModulo.get(modulo.id_aula_modulo) ?? []
+    const totalElementos = actividadModuloIds.length + evaluacionModuloIds.length
+    const tieneContenido = !!(modulo.contenido_md || modulo.descripcion)
 
-  const evaluacionesUnicas = new Set(
-    evaluacionesAprobadas?.map(e => e.id_aula_evaluacion)
-  )
+    if (totalElementos === 0 && tieneContenido) {
+      result.set(modulo.id_aula_modulo, { completado: true, totalElementos: 1 })
+      continue
+    }
+    if (totalElementos === 0 && !tieneContenido) {
+      result.set(modulo.id_aula_modulo, { completado: false, totalElementos: 0 })
+      continue
+    }
 
-  const elementosCompletados = (actividadesCompletadas?.length || 0) + evaluacionesUnicas.size
+    const actividadesCompletadasCount = actividadModuloIds.filter((id) => completedActividadSet.has(id)).length
+    const evaluacionesCompletadasCount = evaluacionModuloIds.filter((id) => approvedEvalSet.has(id)).length
+    const elementosCompletados = actividadesCompletadasCount + evaluacionesCompletadasCount
 
-  return {
-    completado: elementosCompletados >= totalElementos,
-    totalElementos
+    result.set(modulo.id_aula_modulo, {
+      completado: elementosCompletados >= totalElementos,
+      totalElementos,
+    })
   }
+
+  return result
 }

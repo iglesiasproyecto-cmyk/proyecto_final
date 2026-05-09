@@ -80,14 +80,25 @@ function SectionHeader({ icon, title, action, actionLabel = "Ver todos" }: {
 }
 
 export function DashboardPage() {
-  const { usuarioActual, rolActual } = useApp();
+  const { usuarioActual, rolActual, isHydrated, isClaimsReady } = useApp();
+  
+  if (!isHydrated || !isClaimsReady) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+  
   if (!usuarioActual) return null;
-  switch (rolActual) {
+  
+  const stableRole = rolActual;
+  switch (stableRole) {
     case "super_admin": return <SuperAdminDashboard />;
     case "admin_iglesia": return <AdminIglesiaDashboard />;
     case "lider": return <LiderDashboard />;
     case "servidor": return <ServidorDashboard />;
-    default: return <ServidorDashboard />;
+    default: return null;
   }
 }
 export default DashboardPage;

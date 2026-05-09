@@ -14,15 +14,23 @@ export function NotificacionesAula() {
   const qc = useQueryClient()
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
 
-  // Get internal user ID
   useEffect(() => {
+    let mounted = true
+
     const getUserId = async () => {
-      if (user?.id) {
-        const id = await getInternalUserId(user.id)
-        setInternalUserId(id)
+      if (!user?.id) {
+        if (mounted) setInternalUserId(null)
+        return
       }
+
+      const id = await getInternalUserId(user.id)
+      if (mounted) setInternalUserId(id)
     }
+
     getUserId()
+    return () => {
+      mounted = false
+    }
   }, [user?.id])
 
   const { data: notificaciones, isLoading } = useQuery({
@@ -42,6 +50,7 @@ export function NotificacionesAula() {
       return data
     },
     enabled: !!internalUserId,
+    staleTime: 30 * 1000,
   })
 
   const marcarComoLeida = useMutation({

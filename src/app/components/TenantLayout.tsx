@@ -1,17 +1,23 @@
 // src/app/components/TenantLayout.tsx
 import { useEffect } from "react";
-import { Outlet, useNavigate, useParams } from "react-router";
+import { Outlet, useNavigate, useParams, useLocation } from "react-router";
 import { useApp } from "../store/AppContext";
+import { GlobalLoader } from "./GlobalLoader";
+import { AuthRecovery } from "./AuthRecovery";
 
 export function TenantLayout() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
-  const { rolActual, iglesiaActual, authLoading, usuarioActual } = useApp();
+  const { rolActual, iglesiaActual, authLoading, usuarioActual, isHydrated, isInitializing, isClaimsReady, authError } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    if (authLoading) return;
+    if (!isHydrated || authLoading || !isClaimsReady) return;
+
     if (!usuarioActual) {
-      navigate("/login", { replace: true });
+      if (location.pathname !== "/login") {
+        navigate("/login", { replace: true });
+      }
       return;
     }
 
@@ -21,10 +27,8 @@ export function TenantLayout() {
       return;
     }
 
-    // super_admin puede acceder a cualquier tenant
     if (rolActual === "super_admin") return;
 
-    // Todos los demás solo pueden acceder a su propia iglesia
     if (iglesiaActual?.id !== tenantId) {
       if (iglesiaActual?.id != null) {
         navigate(`/app/${iglesiaActual.id}`, { replace: true });
@@ -32,14 +36,19 @@ export function TenantLayout() {
         navigate("/app", { replace: true });
       }
     }
-  }, [authLoading, usuarioActual, rolActual, iglesiaActual, idIglesia, navigate]);
+  }, [isHydrated, authLoading, usuarioActual, rolActual, iglesiaActual, idIglesia, navigate, location.pathname]);
 
-  if (authLoading) {
+  if (!isHydrated || authLoading || isInitializing || (!isClaimsReady && !authError)) {
+    return <GlobalLoader show={true} message="Cargando..." fullScreen={false} />
+  }
+
+  if (authError) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+      <AuthRecovery
+        title="Se detecto un problema de autenticacion"
+        description="Tu sesion no se pudo hidratar correctamente. Cierra sesion para reintentar."
+      />
+    )
   }
 
   return <Outlet />;

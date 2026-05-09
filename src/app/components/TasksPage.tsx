@@ -513,9 +513,9 @@ export function TasksPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <FieldLabel>Fecha Límite</FieldLabel>
+                        <FieldLabel>Fecha y Hora Límite</FieldLabel>
                         <Input 
-                          type="date"
+                          type="datetime-local"
                           value={editForm.fechaLimite} 
                           onChange={e => setEditForm(p => ({ ...p, fechaLimite: e.target.value }))}
                           className="h-10 bg-background/50 border-white/10"
@@ -795,8 +795,8 @@ export function TasksPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <FieldLabel>Fecha Límite</FieldLabel>
-                <Input type="date" value={createForm.fechaLimite} onChange={e => setCreateForm(p => ({ ...p, fechaLimite: e.target.value }))} className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+                <FieldLabel>Fecha y Hora Límite</FieldLabel>
+                <Input type="datetime-local" value={createForm.fechaLimite} onChange={e => setCreateForm(p => ({ ...p, fechaLimite: e.target.value }))} className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
               </div>
               <div>
                 <FieldLabel>Prioridad</FieldLabel>
@@ -813,18 +813,6 @@ export function TasksPage() {
               </div>
             </div>
 
-            {/* Priority preview */}
-            <div className="grid grid-cols-4 gap-2 pt-1">
-              {(["baja", "media", "alta", "urgente"] as const).map(p => (
-                <button
-                  key={p}
-                  onClick={() => setCreateForm(prev => ({ ...prev, prioridad: p }))}
-                  className={`h-8 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${createForm.prioridad === p ? `${prioridadConfig[p].color} border-current scale-105` : "bg-background/30 border-white/5 text-muted-foreground hover:text-foreground"}`}
-                >
-                  {prioridadConfig[p].label}
-                </button>
-              ))}
-            </div>
           </div>
 
           <DialogFooter className="border-t border-border/50 pt-4 mt-2">

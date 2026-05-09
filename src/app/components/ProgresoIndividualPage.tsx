@@ -31,7 +31,8 @@ import { ComentariosActividad } from './ComentariosSistema'
 export function ProgresoIndividualPage() {
   const { idUsuario, idCurso } = useParams<{ idUsuario: string, idCurso: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, iglesiaActual } = useAuth()
+  const aulaBasePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}/aula` : '/app'
 
   // Verificar permisos - solo líderes pueden ver progreso de otros
   const isLider = user?.id !== parseInt(idUsuario!)
@@ -178,7 +179,7 @@ export function ProgresoIndividualPage() {
           <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">Acceso denegado</h3>
           <p className="text-muted-foreground mb-4">Solo puedes ver tu propio progreso.</p>
-          <Button onClick={() => navigate('/app/aula')}>
+          <Button onClick={() => navigate(aulaBasePath)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Ir a Mi Aula
           </Button>

@@ -35,7 +35,8 @@ import { ModulosNavegacion } from './ModulosNavegacion'
 export function CursoDetallePage() {
   const { idCurso } = useParams<{ idCurso: string }>()
   const navigate = useNavigate()
-  const { user, rolActual } = useAuth()
+  const { user, rolActual, iglesiaActual } = useAuth()
+  const aulaBasePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}/aula` : '/app'
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
   const [showAgregarPersonas, setShowAgregarPersonas] = useState(false)
 
@@ -47,7 +48,7 @@ export function CursoDetallePage() {
 
   // OPTIMIZATION: Use comprehensive aula loading to prevent N+1 queries
   // TODO: Replace with useAulaCursoCompleto hook when RPC is available
-  const { data: curso } = useQuery({
+  const { data: curso, isLoading } = useQuery({
     queryKey: ['curso-detalle-lider', idCurso],
     queryFn: async () => {
       if (!idCurso) return null
@@ -146,7 +147,7 @@ export function CursoDetallePage() {
            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
            <h3 className="text-lg font-semibold mb-2">Acceso denegado</h3>
            <p className="text-muted-foreground mb-4">No tienes permisos para ver este curso.</p>
-           <Button onClick={() => navigate('/app/aula')}>
+           <Button onClick={() => navigate(aulaBasePath)}>
              <ArrowLeft className="h-4 w-4 mr-2" />
              Volver al Aula
            </Button>
@@ -198,6 +199,17 @@ export function CursoDetallePage() {
         )
       : 0
 
+  if (isLoading || !curso) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Cargando curso...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
@@ -206,7 +218,7 @@ export function CursoDetallePage() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => navigate('/app/aula')}
+            onClick={() => navigate(aulaBasePath)}
             className="rounded-xl border-white/20 bg-background/50 h-10 px-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -447,7 +459,7 @@ function ServidoresCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
                 <div
                   key={servidor.idUsuario}
                   className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => navigate(`/app/aula/curso/${idCurso}/servidor/${servidor.idUsuario}`)}
+                  onClick={() => navigate(`${aulaBasePath}/curso/${idCurso}/servidor/${servidor.idUsuario}`)}
                 >
                   <div>
                     <p className="font-medium">{servidor.nombre}</p>
@@ -479,7 +491,7 @@ function ServidoresCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
               <div
                 key={servidor.idUsuario}
                 className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
-                onClick={() => navigate(`/app/aula/curso/${idCurso}/servidor/${servidor.idUsuario}`)}
+                onClick={() => navigate(`${aulaBasePath}/curso/${idCurso}/servidor/${servidor.idUsuario}`)}
               >
                 <div>
                   <p className="font-medium">{servidor.nombre}</p>

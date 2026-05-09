@@ -369,16 +369,6 @@ export async function assignAdminSede(data: {
   idIglesia: number
 }): Promise<{ success: boolean; message: string; idAdminSedeAsignacion?: number }> {
   try {
-    // Get ID_ROL for 'Administrador de Sede'
-    const { data: rolData, error: rolError } = await supabase
-      .from('rol')
-      .select('id_rol')
-      .eq('nombre', 'Administrador de Sede')
-      .single()
-
-    if (rolError) throw new Error('No se encontró el rol Administrador de Sede')
-    if (!rolData) throw new Error('Rol no encontrado')
-
     // Insert into usuario_rol_sede
     const { data: result, error } = await supabase
       .from('usuario_rol_sede')
@@ -386,7 +376,7 @@ export async function assignAdminSede(data: {
         id_usuario: data.idUsuario,
         id_sede: data.idSede,
         id_iglesia: data.idIglesia,
-        id_rol: rolData.id_rol,
+        id_rol: ROLE_IDS.ADMIN_SEDE,
         fecha_inicio: new Date().toISOString().split('T')[0],
         fecha_fin: null,
       })

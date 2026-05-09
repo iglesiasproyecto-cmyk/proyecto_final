@@ -37,7 +37,9 @@ export function ChurchDetailPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
   const navigate = useNavigate();
   const { rolActual, iglesiaActual } = useApp();
-  const id = Number(idIglesia);
+  const id = Number(idIglesia) || iglesiaActual?.id || 0;
+  const isGlobalView = !!idIglesia;
+  const backPath = isGlobalView ? "/app/global/iglesias" : `/app/${iglesiaActual?.id ?? ""}`;
 
   // Estado para edición
   const [editDialog, setEditDialog] = useState(false);
@@ -83,8 +85,6 @@ export function ChurchDetailPage() {
       {
         onSuccess: () => {
           setEditDialog(false);
-          // Refrescar datos
-          window.location.reload();
         }
       }
     );
@@ -107,7 +107,7 @@ export function ChurchDetailPage() {
         <Building2 className="w-16 h-16 text-muted-foreground/30" />
         <h2 className="text-xl font-semibold text-foreground">Iglesia no encontrada</h2>
         <p className="text-sm text-muted-foreground">La iglesia que buscas no existe o fue eliminada.</p>
-        <Button onClick={() => navigate("/app/iglesias")} variant="outline" className="rounded-full">
+        <Button onClick={() => navigate(backPath)} variant="outline" className="rounded-full">
           <ArrowLeft className="w-4 h-4 mr-2" /> Volver al listado
         </Button>
       </div>
@@ -125,7 +125,7 @@ export function ChurchDetailPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate("/app/iglesias")}
+          onClick={() => navigate(backPath)}
           className="mb-4 text-muted-foreground hover:text-foreground -ml-2"
         >
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Volver al listado

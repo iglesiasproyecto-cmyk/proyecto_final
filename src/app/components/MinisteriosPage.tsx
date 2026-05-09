@@ -57,34 +57,34 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
     });
   };
 
-  return (
-    <div className="space-y-4 max-w-6xl mx-auto motion-preset-fade">
+return (
+    <div className="space-y-4 max-w-6xl mx-auto motion-preset-fade px-4 md:px-0">
       {/* Header Compacto tipo Tarjeta */}
-      <div className="bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
+      <div className="bg-card/40 backdrop-blur-xl border border-border/50 p-4 sm:p-5 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -z-10 pointer-events-none" />
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
            <button onClick={onBack} className="w-10 h-10 rounded-xl bg-background/50 border border-white/5 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors hover:-translate-x-1 shrink-0">
              &larr;
            </button>
            <div className="flex items-center gap-3">
-             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-                <Users className="w-6 h-6 text-white" />
+             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
              </div>
              <div>
-                <h1 className="text-xl font-bold tracking-tight leading-none mb-1">{min.nombre}</h1>
-                <p className="text-muted-foreground text-xs">{min.descripcion}</p>
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight leading-none mb-1">{min.nombre}</h1>
+                <p className="text-muted-foreground text-xs hidden sm:block">{min.descripcion}</p>
              </div>
            </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-           <Badge variant={min.estado === "activo" ? "default" : "secondary"} className={`px-3 py-1 text-[10px] uppercase font-bold tracking-widest ${min.estado === 'activo' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200' : ''}`}>{min.estado === "activo" ? "Activo" : "Inactivo"}</Badge>
+           <Badge variant={min.estado === "activo" ? "default" : "secondary"} className={`px-2 sm:px-3 py-1 text-[10px] uppercase font-bold tracking-widest ${min.estado === 'activo' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200' : ''}`}>{min.estado === "activo" ? "Activo" : "Inactivo"}</Badge>
         </div>
       </div>
 
       <Tabs defaultValue="miembros" className="w-full">
-        <TabsList className="bg-card/40 backdrop-blur-md border border-border/50 p-1 rounded-xl mb-4 w-fit mx-auto md:mx-0 flex">
-          <TabsTrigger value="miembros" className="rounded-lg text-xs font-medium px-4"><UsersRound className="w-4 h-4 mr-2" /> Directorio ({minMembers.length})</TabsTrigger>
-          <TabsTrigger value="config" className="rounded-lg text-xs font-medium px-4"><UserCog className="w-4 h-4 mr-2" /> Configuración</TabsTrigger>
+        <TabsList className="bg-card/40 backdrop-blur-md border border-border/50 p-1 rounded-xl mb-4 w-fit mx-auto sm:mx-0 flex">
+          <TabsTrigger value="miembros" className="rounded-lg text-xs font-medium px-3 sm:px-4"><UsersRound className="w-4 h-4 mr-1.5 sm:mr-2" /> <span className="hidden sm:inline">Directorio</span><span className="sm:hidden">Team</span> ({minMembers.length})</TabsTrigger>
+          <TabsTrigger value="config" className="rounded-lg text-xs font-medium px-3 sm:px-4"><UserCog className="w-4 h-4 mr-1.5 sm:mr-2" /> <span className="hidden sm:inline">Config</span></TabsTrigger>
         </TabsList>
         <TabsContent value="miembros" className="outline-none">
           <Card className="bg-card/40 backdrop-blur-xl border border-border/50 p-0 overflow-hidden shadow-sm rounded-2xl">

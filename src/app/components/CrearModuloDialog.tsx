@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/app/components/ui/button'
 import {
   Dialog,
@@ -19,11 +20,9 @@ import {
 } from '@/app/components/ui/form'
 import { Input } from '@/app/components/ui/input'
 import { Textarea } from '@/app/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
 import { useForm } from 'react-hook-form'
 import { supabase } from '@/lib/supabaseClient'
 import { toast } from 'sonner'
-import React from 'react'
 
 interface CrearModuloDialogProps {
   open: boolean
@@ -39,6 +38,7 @@ interface FormData {
 
 export function CrearModuloDialog({ open, onOpenChange, idCurso }: CrearModuloDialogProps) {
   const [loading, setLoading] = useState(false)
+  const queryClient = useQueryClient()
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -52,34 +52,43 @@ export function CrearModuloDialog({ open, onOpenChange, idCurso }: CrearModuloDi
     setLoading(true)
     try {
       // Obtener el orden del último módulo
-      const { data: ultimoModulo } = await supabase
-        .from('aula_modulo')
+      const { data: ultimoModulo, error: ultimoModuloError } = await supabase
+        .from('aula_modulo' as any)
         .select('orden')
         .eq('id_aula_curso', idCurso)
         .order('orden', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
 
-      const nuevoOrden = (ultimoModulo?.orden || 0) + 1
+      if (ultimoModuloError) throw ultimoModuloError
+
+      const nuevoOrden = (((ultimoModulo as any)?.orden as number | undefined) ?? 0) + 1
 
       const { error } = await supabase
-        .from('aula_modulo')
+        .from('aula_modulo' as any)
         .insert({
           titulo: data.titulo,
           descripcion: data.descripcion,
+          contenido_md: data.contenido_md || null,
           id_aula_curso: idCurso,
           orden: nuevoOrden,
           publicado: false,
-        })
+        } as any)
 
       if (error) throw error
 
       toast.success('Módulo creado exitosamente')
+      queryClient.invalidateQueries({ queryKey: ['curso-detalle-lider', idCurso] })
+      queryClient.invalidateQueries({ queryKey: ['curso-detalle-lider'] })
       form.reset()
       onOpenChange(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating module:', error)
-      toast.error('Error al crear el módulo')
+      if (error?.code === '42501') {
+        toast.error('No tienes permisos para crear modulos en este curso')
+      } else {
+        toast.error('Error al crear el modulo')
+      }
     } finally {
       setLoading(false)
     }

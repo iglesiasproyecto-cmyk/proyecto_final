@@ -57,7 +57,8 @@ export function ForgotPasswordPage() {
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: email.toLowerCase().trim(),
         options: {
-          emailRedirectTo: `${window.location.origin}/app`,
+          emailRedirectTo: `${window.location.origin}/auth/set-password`,
+          shouldCreateUser: false,
         },
       })
 

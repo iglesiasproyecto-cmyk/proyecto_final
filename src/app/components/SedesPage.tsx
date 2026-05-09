@@ -188,126 +188,128 @@ export function SedesPage() {
   });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+    <div className="space-y-6 max-w-7xl mx-auto pb-10 px-4 md:px-0">
       {/* HEADER: Diferencia clara de títulos y subtítulos por color/tamaño */}
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <MapPin className="w-6 h-6 text-white" />
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-0.5">Estructura</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground leading-tight">Gestión de Sedes</h1>
+            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-0.5 hidden sm:block">Estructura</p>
+            <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-foreground leading-tight">Gestión de Sedes</h1>
           </div>
         </div>
-        <Button onClick={openAdd} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20">
-          <Plus className="w-4 h-4 mr-2" /> Nueva Sede
+        <Button onClick={openAdd} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-4 sm:px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20 text-sm">
+          <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Nueva Sede</span>
+          <span className="sm:hidden">Nueva</span>
         </Button>
 
-        <div className="flex flex-col sm:flex-row gap-3 border-t border-border/30 pt-3 md:pt-0 md:border-t-0">
-          <div className="relative flex-1 md:max-w-md">
+        <div className="flex flex-col sm:flex-row gap-3 border-t border-border/30 pt-3 sm:pt-0">
+          <div className="relative flex-1 sm:max-w-xs">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
             <Input 
-              placeholder="Buscar sedes por nombre..." 
+              placeholder="Buscar sedes..." 
               value={search} 
               onChange={e => setSearch(e.target.value)} 
               className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
             />
           </div>
           <Select value={filterIglesia} onValueChange={setFilterIglesia}>
-            <SelectTrigger className="w-full md:w-56 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-[#4682b4]/20">
+            <SelectTrigger className="w-full sm:w-40 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-[#4682b4]/20">
               <SelectValue placeholder="Iglesia" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas las Iglesias</SelectItem>
+              <SelectItem value="all">Todas</SelectItem>
               {iglesias.map(i => <SelectItem key={i.idIglesia} value={String(i.idIglesia)}>{i.nombre}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterEstado} onValueChange={setFilterEstado}>
-            <SelectTrigger className="w-full md:w-48 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-[#4682b4]/20">
+            <SelectTrigger className="w-full sm:w-36 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-[#4682b4]/20">
               <SelectValue placeholder="Estado" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los Estados</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="activa">Activa</SelectItem>
               <SelectItem value="inactiva">Inactiva</SelectItem>
               <SelectItem value="en_construccion">En Construcción</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="ghost" className="h-10 rounded-xl text-xs" onClick={() => { setSearch(""); setFilterIglesia("all"); setFilterEstado("all"); }}>
-            Limpiar filtros
+          <Button variant="ghost" className="h-10 rounded-xl text-xs whitespace-nowrap" onClick={() => { setSearch(""); setFilterIglesia("all"); setFilterEstado("all"); }}>
+            <span className="hidden sm:inline">Limpiar</span>
+            <span className="sm:hidden">Limpiar</span>
           </Button>
         </div>
       </motion.div>
 
       {/* KPI Stats Row (Bento style) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <AnimatedCard index={0} className="p-5">
-           <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
-                 <Building2 className="w-5 h-5" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <AnimatedCard index={0} className="p-3 sm:p-5">
+           <div className="flex justify-between items-start mb-2 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
+                 <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-0">Total</Badge>
            </div>
-           <p className="text-3xl font-light tracking-tight text-foreground">{sedes.length}</p>
-           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Sedes Registradas</p>
+           <p className="text-2xl sm:text-3xl font-light tracking-tight text-foreground">{sedes.length}</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Sedes</p>
         </AnimatedCard>
-        <AnimatedCard index={1} className="p-5">
-           <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
-                 <Power className="w-5 h-5" />
+        <AnimatedCard index={1} className="p-3 sm:p-5">
+           <div className="flex justify-between items-start mb-2 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
+                 <Power className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-0">OK</Badge>
            </div>
-           <p className="text-3xl font-light tracking-tight text-foreground">{sedes.filter(s => s.estado === 'activa').length}</p>
-           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Sedes Activas</p>
+           <p className="text-2xl sm:text-3xl font-light tracking-tight text-foreground">{sedes.filter(s => s.estado === 'activa').length}</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Activas</p>
         </AnimatedCard>
-        <AnimatedCard index={2} className="p-5">
-           <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
-                 <Globe className="w-5 h-5" />
+        <AnimatedCard index={2} className="p-3 sm:p-5">
+           <div className="flex justify-between items-start mb-2 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
+                 <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-0">Geografía</Badge>
+              <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-0">Geo</Badge>
            </div>
-           <p className="text-3xl font-light tracking-tight text-foreground">{new Set(sedes.map(s => s.idCiudad)).size}</p>
-           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Ciudades Cubiertas</p>
+           <p className="text-2xl sm:text-3xl font-light tracking-tight text-foreground">{new Set(sedes.map(s => s.idCiudad)).size}</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Ciudades</p>
         </AnimatedCard>
-        <AnimatedCard index={3} className="p-5">
-           <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
-                 <Users className="w-5 h-5" />
+        <AnimatedCard index={3} className="p-3 sm:p-5">
+           <div className="flex justify-between items-start mb-2 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-lg">
+                 <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-0">Staff</Badge>
            </div>
-           <p className="text-3xl font-light tracking-tight text-foreground">{sedes.reduce((acc, s) => acc + (s.cantidadMinisterios || 0), 0)}</p>
-           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Min. Operativos</p>
+           <p className="text-2xl sm:text-3xl font-light tracking-tight text-foreground">{sedes.reduce((acc, s) => acc + (s.cantidadMinisterios || 0), 0)}</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Min.</p>
         </AnimatedCard>
       </div>
 
       {/* GRID PRINCIPAL de Sedes (Bento Cards) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {filtered.map((s, idx) => (
           <AnimatedCard 
             key={s.idSede} 
             index={idx} 
-            className={`group p-6 flex flex-col justify-between ${s.estado !== 'activa' ? 'opacity-80 grayscale-[0.3]' : ''}`}
+            className={`group p-4 sm:p-6 flex flex-col justify-between ${s.estado !== 'activa' ? 'opacity-80 grayscale-[0.3]' : ''}`}
           >
             <div>
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 rounded-[20px] bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
-                  <Building2 className={`w-6 h-6 ${s.estado === 'activa' ? 'text-[#4682b4]' : 'text-muted-foreground'}`} />
+              <div className="flex justify-between items-start mb-3 sm:mb-4 gap-2">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[20px] bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
+                  <Building2 className={`w-5 h-5 sm:w-6 sm:h-6 ${s.estado === 'activa' ? 'text-[#4682b4]' : 'text-muted-foreground'}`} />
                 </div>
-                <Badge variant="outline" className={`text-[9px] font-black uppercase tracking-widest border-0 py-1 px-3 rounded-lg shadow-sm ${estadoColor(s.estado)}`}>
+                <Badge variant="outline" className={`text-[9px] font-black uppercase tracking-widest border-0 py-1 px-2 sm:px-3 rounded-lg shadow-sm ${estadoColor(s.estado)}`}>
                   {estadoLabel(s.estado)}
                 </Badge>
               </div>
 
               <div className="space-y-1">
-                <h3 className="text-xl font-bold tracking-tight text-foreground group-hover:text-[#4682b4] transition-colors line-clamp-1 uppercase italic leading-none">{s.nombre}</h3>
+                <h3 className="text-lg sm:text-xl font-bold tracking-tight text-foreground group-hover:text-[#4682b4] transition-colors line-clamp-1 uppercase italic leading-none">{s.nombre}</h3>
                 <p className="text-[11px] font-bold text-[#4682b4]/70 uppercase tracking-widest truncate">{lookupIglesia(s.idIglesia)}</p>
               </div>
 
-              <div className="mt-5 space-y-3 pt-4 border-t border-white/5">
+              <div className="mt-4 sm:mt-5 space-y-3 pt-3 sm:pt-4 border-t border-white/5">
                 <div className="flex items-center gap-3 text-[13px] text-muted-foreground/80 font-medium">
                   <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
                     <MapPin className="w-3.5 h-3.5" />
@@ -408,22 +410,22 @@ export function SedesPage() {
         const pastor = pastorLink ? pastores.find(p => p.idPastor === pastorLink.idPastor) : null;
         return (
           <Dialog open={!!selectedSede} onOpenChange={() => setSelectedSede(null)}>
-            <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
-              <div className="px-6 py-4 bg-gradient-to-r from-[#4682b4] to-[#709dbd] border-b border-white/10">
+            <DialogContent className="sm:max-w-md max-h-[90vh] rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
+              <div className="px-4 sm:px-6 py-4 bg-gradient-to-r from-[#4682b4] to-[#709dbd] border-b border-white/10">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-white">
                     <Building2 className="w-5 h-5" /> 
-                    Detalle de Sede
+                    Detalle
                   </DialogTitle>
                 </DialogHeader>
               </div>
-              <div className="px-6 py-5 space-y-5">
+              <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 overflow-y-auto max-h-[60vh]">
                 <div className="text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#4682b4]/20 to-[#709dbd]/10 border border-[#4682b4]/20 flex items-center justify-center mx-auto mb-3">
-                    <MapPin className="w-8 h-8 text-[#4682b4]" />
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#4682b4]/20 to-[#709dbd]/10 border border-[#4682b4]/20 flex items-center justify-center mx-auto mb-3">
+                    <MapPin className="w-6 h-6 sm:w-8 sm:h-8 text-[#4682b4]" />
                   </div>
-                  <h3 className="text-xl font-bold text-foreground uppercase italic">{sedeDetail.nombre}</h3>
-                  <Badge variant="outline" className={`mt-2 text-[9px] font-black uppercase tracking-widest border-0 py-1 px-3 rounded-lg shadow-sm ${estadoColor(sedeDetail.estado)}`}>
+                  <h3 className="text-lg sm:text-xl font-bold text-foreground uppercase italic">{sedeDetail.nombre}</h3>
+                  <Badge variant="outline" className={`mt-2 text-[9px] font-black uppercase tracking-widest border-0 py-1 px-2 sm:px-3 rounded-lg shadow-sm ${estadoColor(sedeDetail.estado)}`}>
                     {estadoLabel(sedeDetail.estado)}
                   </Badge>
                 </div>
@@ -485,29 +487,29 @@ export function SedesPage() {
 
       {/* MODAL (Diálogo de Creación / Edición) */}
       <Dialog open={dialog} onOpenChange={setDialog}>
-        <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
-          <div className="px-6 py-4 bg-muted/30 border-b border-border/40">
+        <DialogContent className="sm:max-w-md max-h-[90vh] rounded-2xl overflow-hidden p-0 border border-white/20 shadow-2xl">
+          <div className="px-4 sm:px-6 py-4 bg-muted/30 border-b border-border/40">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
                 {editing ? <Pencil className="w-5 h-5 text-[#4682b4]" /> : <Plus className="w-5 h-5 text-[#4682b4]" />}
-                {editing ? "Gestionar Sede" : "Registrar Nueva Sede"}
+                {editing ? "Editar Sede" : "Nueva Sede"}
               </DialogTitle>
             </DialogHeader>
           </div>
           
-          <div className="px-6 py-5 space-y-4">
+          <div className="px-4 sm:px-6 py-4 space-y-4 overflow-y-auto max-h-[60vh]">
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nombre de la Sede <span className="text-destructive">*</span></label>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nombre <span className="text-destructive">*</span></label>
               <Input value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" />
             </div>
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Dirección Física</label>
-              <Input value={form.direccion} onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" placeholder="Ej. Calle 123 #45-67" />
+              <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Dirección</label>
+              <Input value={form.direccion} onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))} className="bg-input-background focus-visible:ring-[#4682b4]/30" placeholder="Ej. Calle 123" />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Iglesia Asignada <span className="text-destructive">*</span></label>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Iglesia <span className="text-destructive">*</span></label>
                 <Select value={form.idIglesia ? String(form.idIglesia) : ""} onValueChange={v => setForm(f => ({ ...f, idIglesia: Number(v) }))}>
                   <SelectTrigger className="bg-input-background focus:ring-[#4682b4]/30"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                   <SelectContent>{iglesias.map(i => <SelectItem key={i.idIglesia} value={String(i.idIglesia)}>{i.nombre}</SelectItem>)}</SelectContent>
@@ -648,9 +650,9 @@ export function SedesPage() {
             )}
           </div>
 
-          <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setDialog(false)} className="rounded-full px-5"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
-            <Button onClick={handleSubmit} disabled={!form.nombre.trim() || !form.idCiudad || !form.idIglesia || !form.idPais || !form.idDepartamento} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
+          <div className="px-4 sm:px-6 py-4 bg-muted/20 border-t border-border/40 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+            <Button variant="ghost" onClick={() => setDialog(false)} className="rounded-full px-5 w-full sm:w-auto"><X className="w-4 h-4 mr-1.5" /> Cancelar</Button>
+            <Button onClick={handleSubmit} disabled={!form.nombre.trim() || !form.idCiudad || !form.idIglesia || !form.idPais || !form.idDepartamento} className="rounded-full px-5 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20 w-full sm:w-auto"><Save className="w-4 h-4 mr-1.5" /> Guardar</Button>
           </div>
         </DialogContent>
       </Dialog>
