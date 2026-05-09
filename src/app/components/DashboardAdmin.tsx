@@ -5,6 +5,8 @@ import { Badge } from '@/app/components/ui/badge'
 import { Progress } from '@/app/components/ui/progress'
 import { motion } from 'motion/react'
 import { BookOpen, Users, Award, TrendingUp, CheckCircle2, FileEdit } from 'lucide-react'
+import { Skeleton } from '@/app/components/ui/skeleton';
+import { CardSkeleton } from './loading/skeletons';
 
 interface DashboardAdminProps {
   idIglesia: number
@@ -67,8 +69,8 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-48">
-        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      <div className="space-y-4">
+        <CardSkeleton items={4} columns={4} />
       </div>
     )
   }

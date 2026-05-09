@@ -130,12 +130,12 @@ export function CursoDetallePage() {
 
     if (checkingAccess) {
       return (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <h3 className="text-lg font-semibold mb-2">Verificando permisos...</h3>
-            <p className="text-muted-foreground">Comprobando acceso al curso</p>
+        <div className="space-y-6 max-w-6xl mx-auto px-4">
+          <div className="flex items-center gap-4 p-4">
+            <Skeleton className="h-10 w-10 rounded-lg" />
+            <Skeleton className="h-8 w-32" />
           </div>
+          <CardSkeleton items={4} columns={2} showActions />
         </div>
       )
     }

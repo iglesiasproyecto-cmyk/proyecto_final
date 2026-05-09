@@ -6,6 +6,8 @@ import { Alert, AlertDescription } from '@/app/components/ui/alert'
 import { GraduationCap, Sparkles } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useMemo } from 'react'
+import { Skeleton } from '@/app/components/ui/skeleton';
+import { AulaSkeleton } from './loading/skeletons';
 
 export function AulaPage() {
   const { user, rolActual, isHydrated, isClaimsReady } = useAuth()
@@ -17,10 +19,16 @@ export function AulaPage() {
 
   if (!isHydrated || (!isClaimsReady && !user)) {
     return (
-      <div className="container mx-auto py-12 px-4">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-48" />
-          <div className="h-4 bg-muted rounded w-64" />
+      <div className="container mx-auto py-6 px-4">
+        <div className="space-y-6 max-w-6xl mx-auto">
+          <div className="flex items-center gap-4 p-4">
+            <Skeleton className="h-12 w-12 rounded-2xl" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+          </div>
+          <AulaSkeleton courses={3} columns={3} />
         </div>
       </div>
     )
