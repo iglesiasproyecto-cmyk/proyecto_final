@@ -207,8 +207,20 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
   // ── Render ────────────────────────────────────────────────────────────────
   if (cargando) {
     return (
-      <div className="flex items-center justify-center py-16 text-muted-foreground text-sm gap-2">
-        <Loader2 className="w-4 h-4 animate-spin" /> Cargando módulo...
+      <div className="space-y-4 p-4">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-6 w-full" />
+        </div>
+        <Skeleton className="h-64 w-full rounded-lg" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20" />
+        </div>
       </div>
     )
   }
