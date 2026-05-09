@@ -12,6 +12,8 @@ import { motion } from 'motion/react'
 import { CrearModuloDialog } from './CrearModuloDialog'
 import { toast } from 'sonner'
 import { ConfirmDialog } from './ui/ConfirmDialog'
+import { Skeleton } from '@/app/components/ui/skeleton';
+import { AulaSkeleton } from '@/app/components/loading/skeletons';
 
 export function CursosLiderList() {
   const { user } = useAuth()
@@ -87,7 +89,18 @@ export function CursosLiderList() {
   }
 
   if (isLoading) {
-    return <div>Cargando cursos...</div>
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-4 p-4">
+          <Skeleton className="h-12 w-12 rounded-2xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+        <AulaSkeleton courses={3} columns={3} />
+      </div>
+    )
   }
 
   if (!cursos || cursos.length === 0) {

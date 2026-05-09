@@ -14,6 +14,8 @@ import {
   ThumbsUp,
   AlertTriangle
 } from 'lucide-react'
+import { Skeleton } from '@/app/components/ui/skeleton';
+import { ListSkeleton } from '@/app/components/loading/skeletons';
 import { useAuth } from '@/app/store/AppContext'
 import { useComentariosActividad, useCrearComentarioLider, useEliminarComentarioLider } from '@/hooks/useComentariosLider'
 import { supabase } from '@/lib/supabaseClient'
@@ -39,6 +41,22 @@ export function ComentariosActividad({
   const { data: comentarios, isLoading } = useComentariosActividad(idActividad)
   const crearComentario = useCrearComentarioLider()
   const eliminarComentario = useEliminarComentarioLider()
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Skeleton className="h-5 w-5 mr-2" />
+            <Skeleton className="h-6 w-48" />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ListSkeleton items={4} />
+        </CardContent>
+      </Card>
+    )
+  }
 
   const handleEnviarComentario = async () => {
     if (!nuevoComentario.trim() || !usuarioActual?.idUsuario) return

@@ -12,6 +12,7 @@ import {
   Building2, ArrowLeft, MapPin, Calendar, Globe, Church,
   Users, Mail, Phone, MapPinned, Loader2, ShieldCheck
 } from "lucide-react";
+import { Skeleton } from "./ui/skeleton";
 
 const estadoLabels: Record<string, string> = {
   activa: "Activa",
@@ -92,10 +93,37 @@ export function ChurchDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-muted-foreground text-sm font-medium">Cargando detalles...</p>
+      <div className="space-y-6 max-w-5xl mx-auto px-4">
+        <div className="flex items-center gap-4 p-4">
+          <Skeleton className="h-12 w-12 rounded-2xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border bg-card p-6 space-y-4">
+                <Skeleton className="h-5 w-32" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-4">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border bg-card p-6 space-y-4">
+                <Skeleton className="h-5 w-24" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

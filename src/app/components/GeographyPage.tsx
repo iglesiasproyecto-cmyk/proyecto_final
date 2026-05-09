@@ -17,6 +17,8 @@ import {
 } from "./ui/alert-dialog";
 import { Globe, MapPin, Building, Plus, Pencil, Trash2, ChevronRight, ChevronDown, Search, X, Layers, Flag } from "lucide-react";
 import { motion } from "motion/react";
+import { Skeleton } from "./ui/skeleton";
+import { TableSkeleton } from "./loading/skeletons";
 
 export function GeographyPage() {
   const { data: paises = [], isLoading: paisesLoading } = usePaises();
@@ -47,11 +49,15 @@ export function GeographyPage() {
   const deleteCiudadMutation = useDeleteCiudad();
 
   if (isLoading) return (
-    <div className="max-w-7xl mx-auto flex items-center justify-center p-12">
-      <div className="animate-pulse flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-        <p className="text-muted-foreground text-sm font-medium">Cargando geografía...</p>
+    <div className="space-y-6 max-w-5xl mx-auto px-4">
+      <div className="flex items-center gap-4 p-4">
+        <Skeleton className="h-12 w-12 rounded-2xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
       </div>
+      <TableSkeleton rows={8} columns={4} />
     </div>
   );
 

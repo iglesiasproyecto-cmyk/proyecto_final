@@ -4,7 +4,8 @@ import { useAccesoModulos } from '@/hooks/useAccesoModulos'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
-import { Lock, Unlock, CheckCircle, BookOpen } from 'lucide-react'
+import { Skeleton } from '@/app/components/ui/skeleton';
+import { ModuleSkeleton } from '@/app/components/loading/skeletons';
 import { ModuloEditorPanel } from './ModuloEditorPanel'
 import { getInternalUserId } from '@/lib/userHelpers'
 
@@ -28,7 +29,7 @@ export function ModulosNavegacion({ idCurso }: ModulosNavegacionProps) {
   }, [user?.id])
 
   if (isLoading) {
-    return <div>Cargando módulos...</div>
+    return <ModuleSkeleton modules={5} />
   }
 
   if (!modulos || modulos.length === 0) {

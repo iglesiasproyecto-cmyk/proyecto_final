@@ -10,6 +10,8 @@ import { Plus, BookOpen, TrendingUp, GraduationCap, ShieldCheck, Sparkles, Users
 import { BarraProgreso } from './BarraProgreso'
 import { motion } from 'motion/react'
 import { useNavigate } from 'react-router'
+import { Skeleton } from '@/app/components/ui/skeleton';
+import { AulaSkeleton } from '@/app/components/loading/skeletons';
 
 export function CursosServidorList() {
   const { user } = useAuth()
@@ -87,10 +89,15 @@ export function CursosServidorList() {
 
   if (isLoading) {
     return (
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-[280px] rounded-3xl bg-muted/50 animate-pulse border border-border/50" />
-        ))}
+      <div className="space-y-4">
+        <div className="flex items-center gap-4 p-4">
+          <Skeleton className="h-12 w-12 rounded-2xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+        <AulaSkeleton courses={3} columns={3} />
       </div>
     )
   }

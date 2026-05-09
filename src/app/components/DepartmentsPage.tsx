@@ -16,6 +16,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
 import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2, Settings } from "lucide-react";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
+import { Skeleton } from "./ui/skeleton";
+import { CardSkeleton } from "./loading/skeletons";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-700", servidor: "bg-gray-100 text-gray-700" };
@@ -244,7 +246,18 @@ export function DepartmentsPage() {
   }
   const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idSede: "" });
 
-  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+  if (isLoading) return (
+    <div className="space-y-6 max-w-6xl mx-auto px-4">
+      <div className="flex items-center gap-4 p-4">
+        <Skeleton className="h-12 w-12 rounded-2xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+      <CardSkeleton items={6} columns={3} showActions />
+    </div>
+  );
 
   const filtered = ministerios.filter((m) => m.nombre.toLowerCase().includes(search.toLowerCase()));
   const min = selectedMin ? ministerios.find((m) => m.idMinisterio === selectedMin) : null;

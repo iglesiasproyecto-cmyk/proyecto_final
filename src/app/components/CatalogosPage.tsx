@@ -2,11 +2,24 @@ import { useRoles } from "@/hooks/useUsuarios";
 import { Badge } from "./ui/badge";
 import { Card } from "./ui/card";
 import { Settings2, ShieldCheck } from "lucide-react";
+import { Skeleton } from "./ui/skeleton";
+import { CardSkeleton } from "./loading/skeletons";
 
 export function CatalogosPage() {
   const { data: roles = [], isLoading } = useRoles();
 
-  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+  if (isLoading) return (
+    <div className="space-y-6 max-w-6xl mx-auto px-4">
+      <div className="flex items-center gap-4 p-4">
+        <Skeleton className="h-14 w-14 rounded-3xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+      <CardSkeleton items={6} columns={3} showActions />
+    </div>
+  );
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-10">

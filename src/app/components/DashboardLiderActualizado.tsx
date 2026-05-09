@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
 import { Progress } from '@/app/components/ui/progress'
+import { Skeleton } from '@/app/components/ui/skeleton';
+import { CardSkeleton } from './loading/skeletons';
 import { Users, BookOpen, TrendingUp, Award, UserCheck, AlertCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useQuery } from '@tanstack/react-query'
@@ -100,7 +102,11 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
   // Progreso del grupo para un curso específico
   const { data: progresoGrupo } = useProgresoGrupoCurso(idCurso)
 
-  if (!stats) return <div>Cargando estadísticas...</div>
+  if (!stats) return (
+    <div className="space-y-6">
+      <CardSkeleton items={4} columns={4} />
+    </div>
+  )
 
   // Calcular estadísticas del grupo
   const miembrosActivos = progresoGrupo?.filter(p => p.porcentaje > 0).length || 0

@@ -201,11 +201,15 @@ export function CursoDetallePage() {
 
   if (isLoading || !curso) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Cargando curso...</p>
+      <div className="space-y-6 max-w-6xl mx-auto px-4">
+        <div className="flex items-center gap-4 p-4">
+          <Skeleton className="h-12 w-12 rounded-2xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-32" />
+          </div>
         </div>
+        <CardSkeleton items={4} columns={2} showActions />
       </div>
     )
   }

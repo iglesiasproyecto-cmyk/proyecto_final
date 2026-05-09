@@ -96,7 +96,19 @@ export function NotificacionesAula() {
   const notificacionesNoLeidas = notificaciones?.filter(n => !n.leida) || []
 
   if (isLoading) {
-    return <div>Cargando notificaciones...</div>
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-5 w-5 rounded" />
+            <Skeleton className="h-6 w-48" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <NotificationSkeleton items={5} />
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
