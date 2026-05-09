@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
 import { Award, Download, Calendar, FileText } from 'lucide-react'
+import { Skeleton } from '@/app/components/ui/skeleton';
+import { ListSkeleton } from '@/app/components/loading/skeletons';
 import { Dialog, DialogContent, DialogTrigger } from '@/app/components/ui/dialog'
 import { Separator } from '@/app/components/ui/separator'
 
@@ -151,7 +153,19 @@ export function CertificadosServidor() {
   const { data: certificados, isLoading } = useCertificadosUsuario(user?.id)
 
   if (isLoading) {
-    return <div>Cargando certificados...</div>
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-5 rounded" />
+            <Skeleton className="h-6 w-32" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <ListSkeleton items={4} />
+        </CardContent>
+      </Card>
+    )
   }
 
   if (!certificados || certificados.length === 0) {

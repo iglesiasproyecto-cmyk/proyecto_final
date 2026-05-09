@@ -16,6 +16,8 @@ import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, 
 import { toast } from "sonner";
 import { HojaDeVidaModal } from "./hojaDeVida/HojaDeVidaModal";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
+import { TableSkeleton } from "./loading/skeletons";
+import { Skeleton } from "./ui/skeleton";
 
 export function UsuariosPage() {
   const qc = useQueryClient();
@@ -67,7 +69,18 @@ export function UsuariosPage() {
   });
   const resetAssignForm = () => setAssignForm({ idRol: 0, idIglesia: iglesiaActual?.id ?? 0 });
 
-  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+  if (isLoading) return (
+    <div className="space-y-6 max-w-7xl mx-auto px-4">
+      <div className="flex items-center gap-4 p-4">
+        <Skeleton className="h-12 w-12 rounded-2xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+      <TableSkeleton rows={8} columns={6} showPagination />
+    </div>
+  );
 
   const filtered = enriched.filter(u => {
     if (search) {

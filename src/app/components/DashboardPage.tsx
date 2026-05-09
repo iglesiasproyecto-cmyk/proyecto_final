@@ -11,6 +11,7 @@ import { useCursos } from "@/hooks/useCursos";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
 import { usePaises, useDepartamentos, useCiudades } from "@/hooks/useGeografia";
 import { CARD_COLORS } from "@/app/constants/cardColors";
+import { Skeleton } from "./ui/skeleton";
 
 import { Badge } from "./ui/badge";
 import { motion } from "motion/react";
@@ -84,8 +85,34 @@ export function DashboardPage() {
   
   if (!isHydrated || !isClaimsReady) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="space-y-6 max-w-7xl mx-auto px-4">
+        <div className="flex items-center gap-4 p-4">
+          <Skeleton className="h-12 w-12 rounded-2xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border bg-card p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-10 rounded-full" />
+              </div>
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-3 w-32" />
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 rounded-2xl border bg-card p-6">
+            <Skeleton className="h-48 w-full" />
+          </div>
+          <div className="rounded-2xl border bg-card p-6">
+            <Skeleton className="h-48 w-full" />
+          </div>
+        </div>
       </div>
     );
   }

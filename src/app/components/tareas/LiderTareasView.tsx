@@ -18,6 +18,8 @@ import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle,
   Calendar, Inbox, Trash2, UserPlus, X, Paperclip,
 } from "lucide-react"
+import { Skeleton } from "@/app/components/ui/skeleton";
+import { TableSkeleton } from "@/app/components/loading/skeletons";
 import { CrearTareaDialog } from "./CrearTareaDialog"
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog"
 
@@ -75,11 +77,15 @@ export function LiderTareasView() {
   const enRevisionCount = tasksByStatus("en_revision").length
 
   if (isLoading) return (
-    <div className="flex items-center justify-center h-48">
-      <div className="flex flex-col items-center gap-3 text-muted-foreground">
-        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        <span className="text-sm">Cargando tareas...</span>
+    <div className="space-y-6 max-w-7xl mx-auto px-4">
+      <div className="flex items-center gap-4 p-4">
+        <Skeleton className="h-12 w-12 rounded-2xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
       </div>
+      <TableSkeleton rows={8} columns={5} />
     </div>
   )
 

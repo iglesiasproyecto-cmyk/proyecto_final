@@ -10,6 +10,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { CalendarDays, ListTodo, Info, AlertTriangle, BookOpen, CheckCheck, Check, Inbox, X } from "lucide-react";
 
 import { Bell } from "lucide-react";
+import { Skeleton } from "./ui/skeleton";
+import { NotificationSkeleton } from "./loading/skeletons";
 
 const typeConfig: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   evento: { label: "Evento", color: "text-[#4682b4] dark:text-[#709dbd]", bg: "bg-[#4682b4]/10", icon: <CalendarDays className="w-5 h-5" /> },
@@ -28,7 +30,18 @@ export function NotificationsPage() {
   const markReadMutation = useMarkNotificacionRead();
   const markAllReadMutation = useMarkAllNotificacionesRead();
 
-  if (isLoading) return <div className="p-8 text-muted-foreground">Cargando...</div>;
+  if (isLoading) return (
+    <div className="space-y-6 max-w-4xl mx-auto px-4">
+      <div className="flex items-center gap-4 p-4">
+        <Skeleton className="h-12 w-12 rounded-2xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+      <NotificationSkeleton items={6} />
+    </div>
+  );
 
   const unreadCount = notificaciones.filter((n) => !n.leida).length;
 

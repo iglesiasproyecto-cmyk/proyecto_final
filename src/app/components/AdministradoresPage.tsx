@@ -194,8 +194,15 @@ export function AdministradoresPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="space-y-4">
+          <div className="flex items-center gap-4 p-4">
+            <Skeleton className="h-12 w-12 rounded-2xl" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+          </div>
+          <CardSkeleton items={6} columns={3} showActions />
         </div>
       ) : iglesias.length === 0 ? (
         <div className="rounded-lg border bg-card p-8 text-center text-muted-foreground">

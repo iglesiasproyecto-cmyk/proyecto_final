@@ -27,6 +27,8 @@ import { useAuth } from '@/app/store/AppContext'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabaseClient'
 import { ComentariosActividad } from './ComentariosSistema'
+import { Skeleton } from '@/app/components/ui/skeleton';
+import { ProfileSkeleton } from './loading/skeletons';
 
 export function ProgresoIndividualPage() {
   const { idUsuario, idCurso } = useParams<{ idUsuario: string, idCurso: string }>()
@@ -159,15 +161,12 @@ export function ProgresoIndividualPage() {
 
   if (!servidor || !curso) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">Cargando información...</h3>
-          <Button onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
-          </Button>
+      <div className="space-y-6 max-w-4xl mx-auto px-4">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-10 w-10 rounded-lg" />
+          <Skeleton className="h-8 w-32" />
         </div>
+        <ProfileSkeleton showTabs showSections />
       </div>
     )
   }
