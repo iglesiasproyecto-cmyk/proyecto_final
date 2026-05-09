@@ -7,11 +7,10 @@ import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-
-import { Building2, Plus, Pencil, Search, Power, PowerOff, Trash2, MapPin, X, Save, Globe, Users, Eye, Church, UserCheck, User, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";
-import { AnimatedCard } from "./ui/AnimatedCard";
 import { toast } from "sonner";
+import { Skeleton } from "./ui/skeleton";
+import { CardSkeleton } from "./loading/skeletons";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 
 export function SedesPage() {
@@ -55,11 +54,15 @@ export function SedesPage() {
   const createPastorMutation = useCreatePastor();
 
   if (isLoading) return (
-    <div className="max-w-7xl mx-auto flex items-center justify-center p-12">
-      <div className="animate-pulse flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-        <p className="text-muted-foreground text-sm font-medium">Cargando sedes...</p>
+    <div className="space-y-6 max-w-7xl mx-auto px-4">
+      <div className="flex items-center gap-4 p-4">
+        <Skeleton className="h-12 w-12 rounded-2xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
       </div>
+      <CardSkeleton items={6} columns={3} showImage showActions />
     </div>
   );
 

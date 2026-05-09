@@ -9,6 +9,12 @@ export function IndexRedirect() {
   const location = useLocation();
 
   useEffect(() => {
+    console.log('[IndexRedirect] run:', {
+      isHydrated, isClaimsReady, authLoading,
+      usuarioActual: !!usuarioActual,
+      rolActual, iglesiaActual: !!iglesiaActual,
+      path: location.pathname,
+    })
     if (!isHydrated || !isClaimsReady) return;
     if (!usuarioActual) {
       if (location.pathname !== "/login") {
@@ -22,9 +28,9 @@ export function IndexRedirect() {
     } else if (iglesiaActual?.id != null) {
       navigate(`/app/${iglesiaActual.id}`, { replace: true });
     } else {
-      navigate("/login", { replace: true });
+      navigate("/app/sin-iglesia", { replace: true });
     }
-  }, [isHydrated, usuarioActual, rolActual, iglesiaActual, navigate, location.pathname]);
+  }, [isHydrated, isClaimsReady, authLoading, usuarioActual, rolActual, iglesiaActual, navigate, location.pathname]);
 
   if (!isHydrated || authLoading || !isClaimsReady) {
     return (

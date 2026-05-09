@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion, AnimatePresence } from "motion/react";
+import { Skeleton } from "./ui/skeleton";
 import {
   CalendarDays, Plus, MapPin, Clock, Globe, Users, Pencil, Trash2, Eye,
   CheckCircle2, XCircle, PlayCircle, BookMarked, Church,
@@ -184,10 +185,38 @@ export function EventsPage() {
   );
 
   if (isLoading) return (
-    <div className="flex items-center justify-center h-48">
-      <div className="flex flex-col items-center gap-3 text-muted-foreground">
-        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        <span className="text-sm">Cargando eventos...</span>
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-12 w-12 rounded-2xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-2xl border bg-card p-4 space-y-2">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-8 w-12" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="rounded-2xl border bg-card p-5 space-y-3">
+            <div className="flex items-start gap-3">
+              <Skeleton className="h-10 w-10 rounded-lg" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -31,6 +31,7 @@ import { GeographyPage } from "./components/GeographyPage";
 import { UsuariosPage } from "./components/UsuariosPage";
 import { CatalogosPage } from "./components/CatalogosPage";
 import { SitemapPage } from "./components/SitemapPage";
+import { NoChurchAssignedPage } from "./components/NoChurchAssignedPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
 
 export const router = createBrowserRouter([
@@ -50,6 +51,7 @@ export const router = createBrowserRouter([
         ErrorBoundary: ErrorPage,
         children: [
           { index: true, Component: IndexRedirect, ErrorBoundary: ErrorPage },
+          { path: "sin-iglesia", Component: NoChurchAssignedPage, ErrorBoundary: ErrorPage },
 
           // ── Rutas globales (solo super_admin) ──
           {

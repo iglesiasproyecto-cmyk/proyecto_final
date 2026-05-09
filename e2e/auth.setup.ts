@@ -38,7 +38,7 @@ const roles: RoleCredentials[] = [
     email: process.env.TEST_SERVIDOR_EMAIL!,
     password: process.env.TEST_SERVIDOR_PASSWORD!,
     authFile: '.auth/servidor.json',
-    expectedUrlPattern: /\/app\/\d+/,
+    expectedUrlPattern: /\/app\/(\d+|sin-iglesia)/,
   },
 ]
 
