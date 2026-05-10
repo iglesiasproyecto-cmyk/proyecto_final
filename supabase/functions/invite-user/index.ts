@@ -83,12 +83,6 @@ async function findAuthUserByEmail(
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin')
-
-  // Handle CORS preflight first — before any auth or origin checks
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: resolveCorsHeaders(origin) })
-  }
-
   const isBrowserRequest = Boolean(origin)
 
   // Permitir desarrollo local automáticamente
@@ -98,6 +92,10 @@ Deno.serve(async (req) => {
     origin === 'http://127.0.0.1' ||
     origin === 'http://localhost'
   )
+
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: resolveCorsHeaders(origin) })
+  }
 
   if (isBrowserRequest && !isLocalDev && !allowedOrigins.includes(origin!)) {
     return jsonResponse(origin, { message: 'Origin not allowed' }, 403)
