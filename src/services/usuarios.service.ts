@@ -274,7 +274,21 @@ export async function inviteUser(data: {
       },
     })
 
-    if (error) throw error
+    if (error) {
+      // Extract the actual message from the edge function response body
+      try {
+        const errData = await (error as any).context?.json?.()
+        if (errData?.message) {
+          console.error('[inviteUser] Edge function error:', errData)
+          throw new Error(errData.message)
+        }
+      } catch (parseErr) {
+        if ((parseErr as Error)?.message && !(parseErr as Error).message.includes('parse')) {
+          throw parseErr
+        }
+      }
+      throw error
+    }
     if (!result?.success) throw new Error(result?.message ?? 'No se pudo invitar usuario')
 
     console.log('[inviteUser] Invitation result:', result)
