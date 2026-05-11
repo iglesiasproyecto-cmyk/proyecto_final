@@ -4,24 +4,27 @@ import { useNavigate, useLocation } from "react-router";
 import { useApp } from "../store/AppContext";
 
 export function IndexRedirect() {
-  const { rolActual, iglesiaActual, authLoading, usuarioActual, isHydrated, isClaimsReady } = useApp();
+  const { rolActual, iglesiaActual, authLoading, usuarioActual, isHydrated, authReady } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
+  const authResolved = isHydrated && !authLoading;
 
   useEffect(() => {
     console.log('[IndexRedirect] run:', {
-      isHydrated, isClaimsReady, authLoading,
+      isHydrated, authReady, authLoading,
       usuarioActual: !!usuarioActual,
       rolActual, iglesiaActual: !!iglesiaActual,
       path: location.pathname,
     })
-    if (!isHydrated || !isClaimsReady) return;
+    if (!authResolved) return;
     if (!usuarioActual) {
       if (location.pathname !== "/login") {
         navigate("/login", { replace: true });
       }
       return;
     }
+
+    if (!authReady) return;
 
     if (rolActual === "super_admin") {
       navigate("/app/global", { replace: true });
@@ -30,9 +33,9 @@ export function IndexRedirect() {
     } else {
       navigate("/app/sin-iglesia", { replace: true });
     }
-  }, [isHydrated, isClaimsReady, authLoading, usuarioActual, rolActual, iglesiaActual, navigate, location.pathname]);
+  }, [authResolved, authReady, usuarioActual, rolActual, iglesiaActual, navigate, location.pathname]);
 
-  if (!isHydrated || authLoading || !isClaimsReady) {
+  if (!authResolved) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />

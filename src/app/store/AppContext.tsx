@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
+import { queryClient } from '@/lib/queryClient'
 import type { Usuario } from '@/types/app.types'
 
 
@@ -12,6 +13,7 @@ interface AppState {
   authLoading: boolean
   isHydrated: boolean
   isClaimsReady: boolean
+  authReady: boolean
   authError: string | null
   isInitializing: boolean
   iglesiaActual: { id: number; nombre: string } | null
@@ -275,6 +277,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const hydratingUserIdRef = useRef<string | null>(null)
   const hydratedUserIdRef = useRef<string | null>(null)
   const hydratedTokenRef = useRef<string | null>(null)
+  const authCycleRef = useRef(0)
+  const logoutInProgressRef = useRef(false)
+  const authReadyRef = useRef(false)
+  const claimsRefreshInFlightRef = useRef(false)
+  const reloadQueuedRef = useRef(false)
 
   // Development check for user synchronization issues - DISABLED
   // This was causing 403 errors when trying to use Admin API from frontend with anon key
@@ -312,8 +319,107 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('sei-dark-mode', String(darkMode))
   }, [darkMode])
 
+  const clearAuthStorage = useCallback(() => {
+    if (typeof window === 'undefined') return
+    const shouldRemoveKey = (key: string) =>
+      key.startsWith('sb-') ||
+      key.startsWith('supabase.auth') ||
+      key.includes('supabase-auth-token')
+
+    Object.keys(localStorage).forEach((key) => {
+      if (shouldRemoveKey(key)) {
+        localStorage.removeItem(key)
+      }
+    })
+
+    Object.keys(sessionStorage).forEach((key) => {
+      if (shouldRemoveKey(key)) {
+        sessionStorage.removeItem(key)
+      }
+    })
+  }, [])
+
+  const cleanupRealtime = useCallback(() => {
+    try {
+      if (typeof supabase.removeAllChannels === 'function') {
+        supabase.removeAllChannels()
+        return
+      }
+    } catch {
+      // Fall through to manual cleanup
+    }
+
+    const channels = typeof supabase.getChannels === 'function' ? supabase.getChannels() : []
+    channels.forEach((channel) => {
+      try {
+        supabase.removeChannel(channel)
+      } catch {
+        // Ignore cleanup errors
+      }
+    })
+  }, [])
+
+  const resetClientState = useCallback((reason: string) => {
+    authCycleRef.current += 1
+    isHydratingRef.current = false
+    hydratingUserIdRef.current = null
+    hydratedUserIdRef.current = null
+    hydratedTokenRef.current = null
+    lastHandledTokenRef.current = null
+    claimsRefreshInFlightRef.current = false
+
+    setSession(null)
+    setUsuarioActual(null)
+    setNotificacionesCount(0)
+    setIglesiaActual(null)
+    setIglesiasDelUsuario([])
+    setSedesDelUsuario([])
+    setRolActual('')
+    setIsClaimsReady(false)
+    setAuthError(null)
+    setAuthLoading(false)
+    setIsHydrated(true)
+    setIsInitializing(false)
+
+    try {
+      queryClient.cancelQueries()
+      queryClient.clear()
+    } catch {
+      // Ignore cache cleanup errors
+    }
+
+    cleanupRealtime()
+    clearAuthStorage()
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('post_login_reload')
+    }
+    console.log('[AUTH] Reset client state:', reason)
+  }, [cleanupRealtime, clearAuthStorage])
+
+  const authReady = isHydrated && !authLoading && !!usuarioActual && isClaimsReady && !authError
+
   useEffect(() => {
-    let callCounter = 0
+    authReadyRef.current = authReady
+  }, [authReady])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const flag = sessionStorage.getItem('post_login_reload')
+    if (flag === 'pending') {
+      sessionStorage.setItem('post_login_reload', 'done')
+      reloadQueuedRef.current = true
+      return
+    }
+    if (flag === 'done') {
+      reloadQueuedRef.current = true
+    }
+    const logoutFlag = sessionStorage.getItem('post_logout_reload')
+    if (logoutFlag === 'pending') {
+      sessionStorage.setItem('post_logout_reload', 'done')
+    }
+  }, [])
+
+  useEffect(() => {
     let loadingResolved = false
 
     const resolveLoading = () => {
@@ -325,6 +431,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    const beginHydration = () => {
+      setAuthLoading(true)
+      setIsHydrated(false)
+      setIsInitializing(true)
+      setIsClaimsReady(false)
+      setAuthError(null)
+    }
+
     // Safety timeout: 8 seconds absolute max
     const safetyTimeout = setTimeout(() => {
       if (!loadingResolved) {
@@ -333,199 +447,200 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     }, 8000)
 
-    const handleAuthSession = async (session: Session | null, callId: number) => {
+    const hydrateSession = async (session: Session, cycleId: number) => {
+      if (isHydratingRef.current && hydratingUserIdRef.current === session.user.id) {
+        setSession(session)
+        return
+      }
+
+      isHydratingRef.current = true
+      hydratingUserIdRef.current = session.user.id
+      const token = session.access_token
+      const authUserId = session.user.id
       setSession(session)
-      setAuthError(null)
+      console.log('[AUTH] Loading profile for:', session.user.email, authUserId)
 
-      if (session) {
-        if (isHydratingRef.current) return
-        isHydratingRef.current = true
-        hydratingUserIdRef.current = session.user.id
-        const token = session.access_token
-        const authUserId = session.user.id
-        console.log('[AUTH] Loading profile for:', session.user.email, authUserId)
-
-        // Check if JWT claims are stale and refresh if needed
-        const jwtClaimsAt = session.user.app_metadata?.claims_at as number | undefined
-        if (jwtClaimsAt) {
-          const dbPermissionsAt = await fetchPermissionsUpdatedAt(token)
-          if (dbPermissionsAt && dbPermissionsAt > jwtClaimsAt) {
-            console.warn('[AUTH] Claims stale — refreshing...')
+      try {
+        if (!claimsRefreshInFlightRef.current) {
+          claimsRefreshInFlightRef.current = true
+          const jwtClaimsAt = session.user.app_metadata?.claims_at as number | undefined
+          if (jwtClaimsAt) {
+            const dbPermissionsAt = await fetchPermissionsUpdatedAt(token)
+            if (dbPermissionsAt && dbPermissionsAt > jwtClaimsAt) {
+              console.warn('[AUTH] Claims stale — refreshing...')
+              await refreshTenantClaims(token)
+              const { data: refreshData } = await supabase.auth.refreshSession()
+              if (refreshData.session) {
+                setSession(refreshData.session)
+              }
+            }
+          } else {
             await refreshTenantClaims(token)
             const { data: refreshData } = await supabase.auth.refreshSession()
             if (refreshData.session) {
               setSession(refreshData.session)
             }
           }
-        } else {
-          // First login — populate JWT claims
-          await refreshTenantClaims(token)
-          const { data: refreshData } = await supabase.auth.refreshSession()
-          if (refreshData.session) {
-            setSession(refreshData.session)
-          }
         }
+      } finally {
+        claimsRefreshInFlightRef.current = false
+      }
 
-        try {
-          setIsClaimsReady(false)
-          const data = await fetchUsuarioRaw(token, authUserId)
-          if (callId !== callCounter) return
-
-          if (data === 'UNAUTHORIZED') {
-            console.warn('[AUTH] ❌ Token inválido o expirado — forzando logout')
-            await supabase.auth.signOut()
-            setUsuarioActual(null)
-            setSession(null)
-            setAuthError('Token invalido o expirado')
-            hydratedUserIdRef.current = null
-            hydratedTokenRef.current = null
-            setIsClaimsReady(false)
-            resolveLoading()
-            return
-          }
-
-          if (!data) {
-            console.error('[AUTH] ❌ CRITICAL: Auth user exists but no corresponding usuario record found')
-            console.error('[AUTH] This indicates a desynchronization between auth.users and usuario table')
-            console.error('[AUTH] authUserId:', authUserId, 'email:', session.user.email)
-            console.error('[AUTH] User will be logged out for data consistency')
-
-            // Force logout to prevent inconsistent state
-            await supabase.auth.signOut()
-            setUsuarioActual(null)
-            setSession(null)
-            setAuthError('Usuario no sincronizado con auth')
-            hydratedUserIdRef.current = null
-            hydratedTokenRef.current = null
-            setIsClaimsReady(false)
-            resolveLoading()
-            return
-          }
-
-          console.log('[AUTH] ✅ Profile loaded:', data.nombres, data.apellidos)
-          setUsuarioActual({
-            idUsuario: data.id_usuario,
-            nombres: data.nombres,
-            apellidos: data.apellidos,
-            correo: data.correo,
-            contrasenaHash: data.contrasena_hash,
-            telefono: data.telefono,
-            fechaNacimiento: data.fecha_nacimiento,
-            activo: data.activo,
-            ultimoAcceso: data.ultimo_acceso,
-            authUserId: data.auth_user_id ?? null,
-            creadoEn: data.creado_en,
-            actualizadoEn: data.updated_at,
-          })
-
-          // Load notifications + roles in parallel (non-blocking)
-          const [notifCount, roles] = await Promise.all([
-            fetchNotifCountRaw(token),
-            fetchRolesRaw(token),
-          ])
-          if (callId !== callCounter) return
-
-          setNotificacionesCount(notifCount)
-
-          // Derive highest role
-          const roleNames = roles.map((r: any) => String(r.rol_nombre ?? ''))
-          const derivedRol = normalizeAppRole(roleNames)
-          setRolActual(derivedRol)
-
-          // Build iglesias
-          const iglesiasMap = new Map<number, string>()
-          roles.forEach((r: any) => {
-            if (r.iglesia_id) iglesiasMap.set(r.iglesia_id, r.iglesia_nombre)
-          })
-          const iglesias = Array.from(iglesiasMap.entries()).map(([id, nombre]) => ({ id, nombre }))
-          setIglesiasDelUsuario(iglesias)
-          if (iglesias.length >= 1) setIglesiaActual(iglesias[0])
-          else setIglesiaActual(null)
-
-          // Build sedes
-          const sedesMap = new Map<number, string>()
-          roles.forEach((r: any) => {
-            if (r.sede_id) sedesMap.set(r.sede_id, r.sede_nombre || '')
-          })
-          const sedes = Array.from(sedesMap.entries()).map(([id, nombre]) => ({ id, nombre }))
-          setSedesDelUsuario(sedes)
-
-          console.log('[AUTH] ✅ Fully loaded — role:', derivedRol, '— iglesias:', iglesias.length)
-          hydratedUserIdRef.current = authUserId
-          hydratedTokenRef.current = token
-          setIsClaimsReady(true)
-        } catch (err) {
-          console.error('[AUTH] Error loading user data:', err)
-          setAuthError('Error cargando el perfil')
-        } finally {
-          isHydratingRef.current = false
-          hydratingUserIdRef.current = null
-        }
-      } else {
-        if (callId !== callCounter) return
-        setUsuarioActual(null)
-        setNotificacionesCount(0)
-        setIglesiaActual(null)
-        setIglesiasDelUsuario([])
-        setSedesDelUsuario([])
-        setRolActual('')
+      try {
         setIsClaimsReady(false)
-        setAuthError(null)
-        hydratedUserIdRef.current = null
-        hydratedTokenRef.current = null
+        const data = await fetchUsuarioRaw(token, authUserId)
+        if (cycleId !== authCycleRef.current) return
+
+        if (data === 'UNAUTHORIZED') {
+          console.warn('[AUTH] ❌ Token invalido o expirado — forzando logout')
+          resetClientState('unauthorized')
+          await supabase.auth.signOut({ scope: 'local' })
+          return
+        }
+
+        if (!data) {
+          console.error('[AUTH] ❌ CRITICAL: Auth user exists but no corresponding usuario record found')
+          console.error('[AUTH] authUserId:', authUserId, 'email:', session.user.email)
+          resetClientState('missing-usuario')
+          await supabase.auth.signOut({ scope: 'local' })
+          return
+        }
+
+        console.log('[AUTH] ✅ Profile loaded:', data.nombres, data.apellidos)
+        setUsuarioActual({
+          idUsuario: data.id_usuario,
+          nombres: data.nombres,
+          apellidos: data.apellidos,
+          correo: data.correo,
+          contrasenaHash: data.contrasena_hash,
+          telefono: data.telefono,
+          fechaNacimiento: data.fecha_nacimiento,
+          activo: data.activo,
+          ultimoAcceso: data.ultimo_acceso,
+          authUserId: data.auth_user_id ?? null,
+          creadoEn: data.creado_en,
+          actualizadoEn: data.updated_at,
+        })
+
+        const [notifCount, roles] = await Promise.all([
+          fetchNotifCountRaw(token),
+          fetchRolesRaw(token),
+        ])
+        if (cycleId !== authCycleRef.current) return
+
+        setNotificacionesCount(notifCount)
+
+        const roleNames = roles.map((r: any) => String(r.rol_nombre ?? ''))
+        const derivedRol = normalizeAppRole(roleNames)
+        setRolActual(derivedRol)
+
+        const iglesiasMap = new Map<number, string>()
+        roles.forEach((r: any) => {
+          if (r.iglesia_id) iglesiasMap.set(r.iglesia_id, r.iglesia_nombre)
+        })
+        const iglesias = Array.from(iglesiasMap.entries()).map(([id, nombre]) => ({ id, nombre }))
+        setIglesiasDelUsuario(iglesias)
+        if (iglesias.length >= 1) setIglesiaActual(iglesias[0])
+        else setIglesiaActual(null)
+
+        const sedesMap = new Map<number, string>()
+        roles.forEach((r: any) => {
+          if (r.sede_id) sedesMap.set(r.sede_id, r.sede_nombre || '')
+        })
+        const sedes = Array.from(sedesMap.entries()).map(([id, nombre]) => ({ id, nombre }))
+        setSedesDelUsuario(sedes)
+
+        console.log('[AUTH] ✅ Fully loaded — role:', derivedRol, '— iglesias:', iglesias.length)
+        hydratedUserIdRef.current = authUserId
+        hydratedTokenRef.current = token
+        setIsClaimsReady(true)
+        if (typeof window !== 'undefined') {
+          const reloadFlag = sessionStorage.getItem('post_login_reload')
+          if (!reloadQueuedRef.current && reloadFlag !== 'pending' && reloadFlag !== 'done') {
+            reloadQueuedRef.current = true
+            sessionStorage.setItem('post_login_reload', 'done')
+            setTimeout(() => {
+              window.location.reload()
+            }, 0)
+            return
+          }
+        }
+        resolveLoading()
+      } catch (err) {
+        console.error('[AUTH] Error loading user data:', err)
+        setAuthError('Error cargando el perfil')
+        resolveLoading()
+      } finally {
         isHydratingRef.current = false
         hydratingUserIdRef.current = null
       }
-      resolveLoading()
+    }
+
+    const handleSessionEvent = async (event: string, session: Session | null) => {
+      console.log('[AUTH] onAuthStateChange:', event, !!session)
+
+      if (logoutInProgressRef.current && event !== 'SIGNED_OUT') {
+        return
+      }
+
+      if (session && isHydratingRef.current && hydratingUserIdRef.current === session.user.id) {
+        setSession(session)
+        return
+      }
+
+      if (session && hydratedUserIdRef.current === session.user.id) {
+        hydratedTokenRef.current = session.access_token
+        setSession(session)
+        resolveLoading()
+        return
+      }
+
+      if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        if (session) {
+          hydratedTokenRef.current = session.access_token
+          setSession(session)
+        }
+        return
+      }
+
+      if (event === 'SIGNED_OUT' || !session) {
+        resetClientState('signed-out-event')
+        return
+      }
+
+      if (event === 'SIGNED_IN' && session.access_token === lastHandledTokenRef.current) {
+        return
+      }
+
+      if (session?.access_token) {
+        lastHandledTokenRef.current = session.access_token
+      }
+
+      if (authReadyRef.current && hydratedUserIdRef.current === session.user.id) {
+        hydratedTokenRef.current = session.access_token
+        setSession(session)
+        resolveLoading()
+        return
+      }
+
+      beginHydration()
+      const cycleId = ++authCycleRef.current
+      await hydrateSession(session, cycleId)
     }
 
     console.log('[AUTH] Setting up onAuthStateChange listener')
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('[AUTH] onAuthStateChange:', _event, !!session)
-
-      if (session) {
-        const authUserId = session.user.id
-        const token = session.access_token
-
-        if (isHydratingRef.current && hydratingUserIdRef.current === authUserId) {
-          setSession(session)
-          return
-        }
-
-        if (hydratedUserIdRef.current === authUserId) {
-          hydratedTokenRef.current = token
-          setSession(session)
-          return
-        }
-      }
-
-      // Supabase puede emitir SIGNED_IN repetido con la misma sesion.
-      // Evitamos recargar perfil si el access token no cambio.
-      if (_event === 'SIGNED_IN' && session?.access_token && session.access_token === lastHandledTokenRef.current) {
-        return
-      }
-
-      if (session?.access_token) {
-        lastHandledTokenRef.current = session.access_token
-      } else if (!session) {
-        lastHandledTokenRef.current = null
-      }
-
-      const callId = ++callCounter
-      await handleAuthSession(session, callId)
-    })
+    } = supabase.auth.onAuthStateChange(handleSessionEvent)
 
     // Fallback: if onAuthStateChange doesn't fire within 2s
     const fallbackTimeout = setTimeout(() => {
-      if (callCounter === 0) {
+      if (authCycleRef.current === 0) {
         console.log('[AUTH] Fallback: getSession after 2s')
         supabase.auth.getSession().then(({ data: { session } }) => {
-          if (callCounter === 0) {
-            const callId = ++callCounter
-            handleAuthSession(session, callId)
+          if (authCycleRef.current === 0) {
+            handleSessionEvent('INITIAL_SESSION', session)
           }
         }).catch(() => resolveLoading())
       }
@@ -536,28 +651,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(safetyTimeout)
       clearTimeout(fallbackTimeout)
     }
-  }, [])
+  }, [resetClientState])
 
   const logout = async () => {
+    logoutInProgressRef.current = true
     setIsMockMode(false)
-    setIsHydrated(false)
-    setIsInitializing(true)
-    setUsuarioActual(null)
-    setRolActual('')
-    setIglesiaActual(null)
-    setIglesiasDelUsuario([])
-    setSedesDelUsuario([])
-    setNotificacionesCount(0)
-    setAuthLoading(true)
-    setIsClaimsReady(false)
-    setAuthError(null)
-    lastHandledTokenRef.current = null
-    hydratedUserIdRef.current = null
-    hydratedTokenRef.current = null
-    isHydratingRef.current = false
-    hydratingUserIdRef.current = null
-    await supabase.auth.signOut()
-    setIsInitializing(false)
+    resetClientState('logout')
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('post_logout_reload', 'pending')
+      }
+      await supabase.auth.signOut({ scope: 'local' })
+    } finally {
+      logoutInProgressRef.current = false
+      if (typeof window !== 'undefined') {
+        window.location.reload()
+      }
+    }
   }
 
   const refreshClaims = async () => {
@@ -602,6 +712,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isHydrated,
         isInitializing,
         isClaimsReady,
+        authReady,
         authError,
         iglesiaActual,
         setIglesiaActual,

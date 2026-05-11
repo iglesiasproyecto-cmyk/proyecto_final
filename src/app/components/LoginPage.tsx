@@ -15,7 +15,7 @@ import {
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { session, usuarioActual, authLoading, isHydrated, rolActual, iglesiaActual, isClaimsReady } = useApp()
+  const { session, usuarioActual, authLoading, rolActual, iglesiaActual, authReady } = useApp()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -36,16 +36,17 @@ export function LoginPage() {
   }, [navigate, rolActual, iglesiaActual])
 
   useEffect(() => {
-    if (session && usuarioActual && isClaimsReady && rolActual) {
+    if (authReady) {
+      setShowTransitionLoader(false)
       handleLoginSuccess()
     }
-  }, [session, usuarioActual, isClaimsReady, rolActual, handleLoginSuccess])
+  }, [authReady, handleLoginSuccess])
 
   if (showTransitionLoader) {
     return <GlobalLoader show={true} message="Preparando tu experiencia..." fullScreen={true} />
   }
 
-  if (authLoading && (session || usuarioActual)) {
+  if ((session || usuarioActual) && !authReady) {
     return <GlobalLoader show={true} message="Cargando..." fullScreen={true} />
   }
 
