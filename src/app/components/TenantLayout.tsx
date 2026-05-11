@@ -7,12 +7,13 @@ import { AuthRecovery } from "./AuthRecovery";
 
 export function TenantLayout() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
-  const { rolActual, iglesiaActual, authLoading, usuarioActual, isHydrated, isInitializing, isClaimsReady, authError } = useApp();
+  const { rolActual, iglesiaActual, authLoading, usuarioActual, isHydrated, isInitializing, authError, authReady } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
+  const authResolved = isHydrated && !authLoading;
 
   useEffect(() => {
-    if (!isHydrated || authLoading || !isClaimsReady) return;
+    if (!authResolved) return;
 
     if (!usuarioActual) {
       if (location.pathname !== "/login") {
@@ -36,9 +37,9 @@ export function TenantLayout() {
         navigate("/app", { replace: true });
       }
     }
-  }, [isHydrated, authLoading, usuarioActual, rolActual, iglesiaActual, idIglesia, navigate, location.pathname]);
+  }, [authResolved, usuarioActual, rolActual, iglesiaActual, idIglesia, navigate, location.pathname]);
 
-  if (!isHydrated || authLoading || isInitializing || (!isClaimsReady && !authError)) {
+  if (!authResolved || isInitializing) {
     return <GlobalLoader show={true} message="Cargando..." fullScreen={false} />
   }
 
@@ -49,6 +50,14 @@ export function TenantLayout() {
         description="Tu sesion no se pudo hidratar correctamente. Cierra sesion para reintentar."
       />
     )
+  }
+
+  if (!usuarioActual) {
+    return null;
+  }
+
+  if (!authReady) {
+    return <GlobalLoader show={true} message="Cargando..." fullScreen={false} />
   }
 
   return <Outlet />;

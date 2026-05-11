@@ -160,20 +160,19 @@ function groupBySection(items: NavItem[]) {
 }
 
 export function AppLayout() {
-  const { usuarioActual, logout, notificacionesCount, sidebarOpen, toggleSidebar, darkMode, toggleDarkMode, authLoading, iglesiaActual, setIglesiaActual, iglesiasDelUsuario, rolActual, isHydrated, isInitializing, isClaimsReady, authError } = useApp();
+  const { usuarioActual, logout, notificacionesCount, sidebarOpen, toggleSidebar, darkMode, toggleDarkMode, authLoading, iglesiaActual, setIglesiaActual, iglesiasDelUsuario, rolActual, isHydrated, isInitializing, authError, authReady } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [showChurchSelector, setShowChurchSelector] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const authResolved = isHydrated && !authLoading;
 
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!authResolved) return;
     if (!usuarioActual && location.pathname !== "/login") {
       navigate("/login", { replace: true });
     }
-  }, [isHydrated, usuarioActual, navigate, location.pathname]);
-
-  const isLoading = !isHydrated || authLoading || !usuarioActual || (!isClaimsReady && !authError);
+  }, [authResolved, usuarioActual, navigate, location.pathname]);
 
   useEffect(() => {
     const title = pageTitles[location.pathname] ?? getDynamicPageTitle(location.pathname);
@@ -189,7 +188,15 @@ export function AppLayout() {
     )
   }
 
-  if (isLoading || isInitializing) {
+  if (!authResolved || isInitializing) {
+    return <GlobalLoader show={true} message="Cargando aplicación..." fullScreen={true} />
+  }
+
+  if (!usuarioActual) {
+    return null
+  }
+
+  if (!authReady) {
     return <GlobalLoader show={true} message="Cargando aplicación..." fullScreen={true} />
   }
 
