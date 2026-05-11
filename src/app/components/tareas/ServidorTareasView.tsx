@@ -53,7 +53,11 @@ type TabKey = typeof STATUS_TABS[number]["key"]
 
 export function ServidorTareasView() {
   const { usuarioActual } = useApp()
-  const { data: todasTareas = [], isLoading } = useTareasEnriquecidas()
+  const { data: todasTareas = [], isLoading } = useTareasEnriquecidas(
+    undefined,
+    undefined,
+    usuarioActual?.idUsuario
+  )
   const updateEstado = useUpdateTareaEstado()
   const createEvidencia = useCreateTareaEvidencia()
 
@@ -61,9 +65,7 @@ export function ServidorTareasView() {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
   const [evidenceUploading, setEvidenceUploading] = useState(false)
 
-  const misTareas = useMemo(() => {
-    return todasTareas.filter(t => t.asignados?.some(a => a.idUsuario === usuarioActual?.idUsuario))
-  }, [todasTareas, usuarioActual?.idUsuario])
+  const misTareas = useMemo(() => todasTareas, [todasTareas])
 
   const filteredTareas = useMemo(() => {
     if (activeTab === "todas") return misTareas

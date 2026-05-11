@@ -139,7 +139,7 @@ export function ProgresoIndividualPage() {
         .order('iniciado_en', { ascending: false })
 
       return {
-        procesoAsignado: { id_detalle_proceso_curso: proceso.id_aula_inscripcion, fecha_inscripcion: proceso.inscrito_en },
+        procesoAsignado: { idAulaInscripcion: proceso.id_aula_inscripcion, fecha_inscripcion: proceso.inscrito_en },
         avancesModulos: [], // TODO: calculate from completed activities
         progresoActividades: progresoActividades?.map(pa => ({
           id_actividad: pa.id_aula_actividad,

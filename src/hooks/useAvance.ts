@@ -7,11 +7,11 @@ import {
   finalizarCicloCurso,
 } from '@/services/avance.service'
 
-export function useAvancesDetalle(idDetalle: number | null | undefined) {
+export function useAvancesDetalle(idAulaInscripcion: number | null | undefined) {
   return useQuery({
-    queryKey: ['avance-detalle', idDetalle],
-    queryFn: () => getAvancesDeDetalle(idDetalle as number),
-    enabled: !!idDetalle,
+    queryKey: ['avance-detalle', idAulaInscripcion],
+    queryFn: () => getAvancesDeDetalle(idAulaInscripcion as number),
+    enabled: !!idAulaInscripcion,
     staleTime: 30 * 1000,
   })
 }
@@ -31,7 +31,7 @@ export function useMarcarModuloCompletado() {
     mutationFn: marcarModuloCompletado,
     onSuccess: async (_d, vars) => {
       await Promise.all([
-        qc.invalidateQueries({ queryKey: ['avance-detalle', vars.idDetalleProcesoCurso] }),
+        qc.invalidateQueries({ queryKey: ['avance-detalle', vars.idAulaInscripcion] }),
         qc.invalidateQueries({ queryKey: ['avance-curso', vars.idUsuario] }),
         qc.invalidateQueries({ queryKey: ['mis-inscripciones'] }),
       ])
@@ -42,11 +42,11 @@ export function useMarcarModuloCompletado() {
 export function useDesmarcarModuloCompletado() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (vars: { idAvance: number; idDetalleProcesoCurso: number; idUsuario: number }) =>
+    mutationFn: (vars: { idAvance: number; idAulaInscripcion: number; idUsuario: number }) =>
       desmarcarModuloCompletado(vars.idAvance),
     onSuccess: async (_d, vars) => {
       await Promise.all([
-        qc.invalidateQueries({ queryKey: ['avance-detalle', vars.idDetalleProcesoCurso] }),
+        qc.invalidateQueries({ queryKey: ['avance-detalle', vars.idAulaInscripcion] }),
         qc.invalidateQueries({ queryKey: ['avance-curso', vars.idUsuario] }),
         qc.invalidateQueries({ queryKey: ['mis-inscripciones'] }),
       ])

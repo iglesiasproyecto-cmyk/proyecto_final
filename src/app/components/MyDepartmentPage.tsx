@@ -373,25 +373,26 @@ function ServidorAulaSection({ ministerio }: { ministerio: any }) {
 
       // Obtener cursos del ministerio donde el usuario está inscrito
       const { data, error } = await supabase
-        .from('detalle_proceso_curso')
+        .from('aula_inscripcion')
         .select(`
-          estado,
-          proceso_asignado_curso:proceso_asignado_curso(
-            curso:curso(
-              id_curso,
-              nombre,
-              descripcion
-            )
+          activo,
+          aula_curso:aula_curso(
+            id_aula_curso,
+            titulo,
+            descripcion,
+            id_ministerio
           )
         `)
         .eq('id_usuario', usuarioActual.idUsuario)
-        .eq('estado', 'inscrito')
-        .eq('proceso_asignado_curso.curso.id_ministerio', ministerio.idMinisterio);
+        .eq('activo', true)
+        .eq('aula_curso.id_ministerio', ministerio.idMinisterio);
 
       if (!error && data) {
         const cursos = data.map(item => ({
-          ...item.proceso_asignado_curso.curso,
-          estado_inscripcion: item.estado
+          id_curso: item.aula_curso?.id_aula_curso,
+          nombre: item.aula_curso?.titulo,
+          descripcion: item.aula_curso?.descripcion,
+          estado_inscripcion: item.activo ? 'inscrito' : 'inactivo',
         }));
         setCursosInscritos(cursos);
       }
