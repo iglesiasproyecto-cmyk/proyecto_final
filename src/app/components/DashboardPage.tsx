@@ -123,6 +123,7 @@ export function DashboardPage() {
   switch (stableRole) {
     case "super_admin": return <SuperAdminDashboard />;
     case "admin_iglesia": return <AdminIglesiaDashboard />;
+    case "admin_sede": return <AdminIglesiaDashboard />;
     case "lider": return <LiderDashboard />;
     case "servidor": return <ServidorDashboard />;
     default: return null;
