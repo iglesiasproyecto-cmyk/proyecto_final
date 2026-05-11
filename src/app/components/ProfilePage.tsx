@@ -425,7 +425,7 @@ export function ProfilePage() {
                         const completado = porcentajeModulos === 100;
 
                         return (
-                          <div key={avance.idDetalleProcesoCurso} className="group p-6 rounded-3xl bg-gradient-to-r from-white/5 to-white/[0.02] border border-white/10 hover:border-[#4682b4]/40 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/10">
+                          <div key={avance.idAulaInscripcion} className="group p-6 rounded-3xl bg-gradient-to-r from-white/5 to-white/[0.02] border border-white/10 hover:border-[#4682b4]/40 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/10">
                             <div className="flex items-center justify-between mb-4">
                               <div className="flex items-center gap-3 flex-1">
                                 {completado && <Star className="w-5 h-5 text-yellow-400 animate-pulse" />}

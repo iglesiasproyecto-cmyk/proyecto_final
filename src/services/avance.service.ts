@@ -1,19 +1,17 @@
-// TODO: Este archivo usa tablas del esquema viejo (avance_modulo, detalle_proceso_curso)
-// que no existen en el nuevo esquema de aula. Necesita una revisión completa
-// para usar aula_progreso_actividad y aula_inscripcion en su lugar.
+// TODO: Consolidar el progreso con aula_progreso_actividad y aula_inscripcion.
+// Nota: algunas columnas en aula_* mantienen nombres legacy (id_detalle_proceso_curso).
 import { supabase } from '@/lib/supabaseClient'
 
 export interface AvanceModuloRow {
   idAvance: number
   idUsuario: number
   idModulo: number
-  idDetalleProcesoCurso: number
+  idAulaInscripcion: number
   completadoEn: string
 }
 
 export interface AvanceCursoDetalle {
-  idDetalleProcesoCurso: number
-  idProcesoAsignadoCurso: number
+  idAulaInscripcion: number
   idUsuario: number
   idCurso: number
   modulosPublicados: number
@@ -23,7 +21,7 @@ export interface AvanceCursoDetalle {
 export async function marcarModuloCompletado(params: {
   idUsuario: number
   idModulo: number
-  idDetalleProcesoCurso: number
+  idAulaInscripcion: number
 }): Promise<AvanceModuloRow> {
   // Module completion is calculated dynamically, no table to insert
   // Return dummy data
@@ -31,7 +29,7 @@ export async function marcarModuloCompletado(params: {
     idAvance: 0,
     idUsuario: params.idUsuario,
     idModulo: params.idModulo,
-    idDetalleProcesoCurso: params.idDetalleProcesoCurso,
+    idAulaInscripcion: params.idAulaInscripcion,
     completadoEn: new Date().toISOString(),
   }
 }
@@ -40,7 +38,7 @@ export async function desmarcarModuloCompletado(idAvance: number): Promise<void>
   // No table to delete from
 }
 
-export async function getAvancesDeDetalle(idDetalle: number): Promise<AvanceModuloRow[]> {
+export async function getAvancesDeDetalle(idAulaInscripcion: number): Promise<AvanceModuloRow[]> {
   // Calculate completed modules for the inscription
   // For now, return empty
   return []
@@ -63,8 +61,7 @@ export async function getAvanceCursoByUsuario(idUsuario: number): Promise<Avance
   if (error) throw error
 
   return (inscriptions ?? []).map((inscription) => ({
-    idDetalleProcesoCurso: inscription.id_aula_inscripcion,
-    idProcesoAsignadoCurso: 0, // not used
+    idAulaInscripcion: inscription.id_aula_inscripcion,
     idUsuario: idUsuario,
     idCurso: inscription.id_aula_curso,
     modulosPublicados: Array.isArray(inscription.aula_curso?.aula_modulo) ? inscription.aula_curso.aula_modulo[0]?.count ?? 0 : 0,

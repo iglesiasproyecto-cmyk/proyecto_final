@@ -72,7 +72,7 @@ export async function crearNotificacionNuevoContenido(
         usuario:usuario(correo, nombres, apellidos)
       `)
       .eq('activo', true)
-      .eq('proceso_asignado_curso.curso.id_curso', idCurso)
+      .eq('id_aula_curso', idCurso)
 
     if (error) throw error
 

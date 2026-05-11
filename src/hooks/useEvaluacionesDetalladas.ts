@@ -109,12 +109,12 @@ export function useActualizarIntentoEvaluacion() {
 }
 
 // Función auxiliar para verificar y marcar módulo completo
-async function verificarYMarcarModuloCompleto(idDetalleProcesoCurso: number, idUsuario: number) {
+async function verificarYMarcarModuloCompleto(idAulaInscripcion: number, idUsuario: number) {
   // Obtener el módulo de la evaluación
   const { data: intento } = await supabase
     .from('aula_intento_evaluacion')
     .select('id_aula_evaluacion')
-    .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
+    .eq('id_detalle_proceso_curso', idAulaInscripcion)
     .eq('id_usuario', idUsuario)
     .single()
 
@@ -148,14 +148,14 @@ async function verificarYMarcarModuloCompleto(idDetalleProcesoCurso: number, idU
   const { data: actividadesCompletadas } = await supabase
     .from('aula_progreso_actividad')
     .select('id_aula_progreso_actividad')
-    .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
+    .eq('id_detalle_proceso_curso', idAulaInscripcion)
     .in('id_aula_actividad', actividades?.map(a => a.id_aula_actividad) || [])
     .not('completada_en', 'is', null)
 
   const { data: evaluacionesAprobadas } = await supabase
     .from('aula_intento_evaluacion')
     .select('id_aula_intento_evaluacion')
-    .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
+    .eq('id_detalle_proceso_curso', idAulaInscripcion)
     .eq('estado', 'aprobado')
 
   const elementosCompletados = (actividadesCompletadas?.length || 0) + (evaluacionesAprobadas?.length || 0)

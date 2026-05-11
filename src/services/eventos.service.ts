@@ -204,19 +204,28 @@ export async function getEventosEnriquecidos(idIglesia?: number): Promise<Evento
   }))
 }
 
-export async function getTareasEnriquecidas(idEvento?: number, idIglesia?: number): Promise<TareaEnriquecida[]> {
+export async function getTareasEnriquecidas(
+  idEvento?: number,
+  idIglesia?: number,
+  idUsuario?: number
+): Promise<TareaEnriquecida[]> {
+  const asignadaSelect = idUsuario !== undefined
+    ? 'tarea_asignada!inner(*, usuario(nombres, apellidos))'
+    : 'tarea_asignada(*, usuario(nombres, apellidos))'
+
   let q = supabase
     .from('tarea')
     .select(`
       *,
       ministerio!inner(nombre, sede!inner(id_iglesia)),
       evento(nombre),
-      tarea_asignada(*, usuario(nombres, apellidos))
+      ${asignadaSelect}
     `)
     .order('creado_en', { ascending: false })
 
   if (idEvento !== undefined) q = q.eq('id_evento', idEvento)
   if (idIglesia !== undefined) q = q.eq('ministerio.sede.id_iglesia', idIglesia)
+  if (idUsuario !== undefined) q = q.eq('tarea_asignada.id_usuario', idUsuario)
 
   const { data, error } = await q
   if (error) {

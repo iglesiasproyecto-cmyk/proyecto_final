@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import * as hojaDeVidaService from '@/services/hojaDeVida.service';
-import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 
 export interface UseHojaDeVidaState {
@@ -20,8 +19,6 @@ export function useHojaDeVida() {
     error: null,
     isUpdating: false,
   });
-
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   // Fetch hoja de vida actual
   const fetchHojaDeVida = useCallback(async () => {
@@ -52,31 +49,30 @@ export function useHojaDeVida() {
   useEffect(() => {
     fetchHojaDeVida();
 
-    // Subscribe to realtime updates
+    const currentId = state.hoja?.id_usuario;
+    if (!currentId) return;
+
+    // Subscribe to realtime updates scoped to the current user
     const newChannel = supabase
-      .channel('hoja_de_vida_changes')
+      .channel(`hoja_de_vida_usuario_${currentId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'hoja_de_vida',
+          filter: `id_usuario=eq.${currentId}`,
         },
-        (payload) => {
-          // Refetch when changes occur
+        () => {
           fetchHojaDeVida();
         }
       )
       .subscribe();
 
-    setChannel(newChannel);
-
     return () => {
-      if (newChannel) {
-        supabase.removeChannel(newChannel);
-      }
+      supabase.removeChannel(newChannel);
     };
-  }, [fetchHojaDeVida]);
+  }, [fetchHojaDeVida, state.hoja?.id_usuario]);
 
   // Update hoja de vida
   const actualizarHoja = useCallback(

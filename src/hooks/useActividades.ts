@@ -25,11 +25,11 @@ export function useActividadesModulo(idModulo: number | null | undefined) {
 }
 
 // Hook para obtener progreso de actividades de un usuario en un detalle proceso curso
-export function useProgresoActividades(idDetalleProcesoCurso: number | null | undefined) {
+export function useProgresoActividades(idAulaInscripcion: number | null | undefined) {
   return useQuery({
-    queryKey: ['progreso-actividades', idDetalleProcesoCurso],
+    queryKey: ['progreso-actividades', idAulaInscripcion],
     queryFn: async () => {
-      if (!idDetalleProcesoCurso) return []
+      if (!idAulaInscripcion) return []
 
       const { data, error } = await supabase
         .from('aula_progreso_actividad')
@@ -37,12 +37,12 @@ export function useProgresoActividades(idDetalleProcesoCurso: number | null | un
           *,
           actividad:aula_actividad(*)
         `)
-        .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
+        .eq('id_detalle_proceso_curso', idAulaInscripcion)
 
       if (error) throw error
       return data
     },
-    enabled: !!idDetalleProcesoCurso,
+    enabled: !!idAulaInscripcion,
     staleTime: 30 * 1000,
   })
 }
@@ -53,14 +53,14 @@ export function useMarcarActividadVista() {
   return useMutation({
     mutationFn: async (vars: {
       idActividad: number
-      idDetalleProcesoCurso: number
+      idAulaInscripcion: number
       idUsuario: number
     }) => {
       const { data, error } = await supabase
         .from('aula_progreso_actividad')
         .upsert({
           id_aula_actividad: vars.idActividad,
-          id_detalle_proceso_curso: vars.idDetalleProcesoCurso,
+          id_detalle_proceso_curso: vars.idAulaInscripcion,
           id_usuario: vars.idUsuario,
           completada_en: new Date().toISOString(), // Note: aula system uses completada_en for completion
         })
@@ -71,8 +71,8 @@ export function useMarcarActividadVista() {
       return data
     },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['progreso-actividades', vars.idDetalleProcesoCurso] })
-      qc.invalidateQueries({ queryKey: ['avance-detalle', vars.idDetalleProcesoCurso] })
+      qc.invalidateQueries({ queryKey: ['progreso-actividades', vars.idAulaInscripcion] })
+      qc.invalidateQueries({ queryKey: ['avance-detalle', vars.idAulaInscripcion] })
     },
   })
 }
@@ -83,14 +83,14 @@ export function useMarcarActividadCompletada() {
   return useMutation({
     mutationFn: async (vars: {
       idActividad: number
-      idDetalleProcesoCurso: number
+      idAulaInscripcion: number
       idUsuario: number
     }) => {
       const { data, error } = await supabase
         .from('aula_progreso_actividad')
         .upsert({
           id_aula_actividad: vars.idActividad,
-          id_detalle_proceso_curso: vars.idDetalleProcesoCurso,
+          id_detalle_proceso_curso: vars.idAulaInscripcion,
           id_usuario: vars.idUsuario,
           completada_en: new Date().toISOString(),
         })
@@ -101,14 +101,14 @@ export function useMarcarActividadCompletada() {
       return data
     },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['progreso-actividades', vars.idDetalleProcesoCurso] })
-      qc.invalidateQueries({ queryKey: ['avance-detalle', vars.idDetalleProcesoCurso] })
+      qc.invalidateQueries({ queryKey: ['progreso-actividades', vars.idAulaInscripcion] })
+      qc.invalidateQueries({ queryKey: ['avance-detalle', vars.idAulaInscripcion] })
     },
   })
 }
 
 // Función auxiliar para verificar y marcar módulo completo
-async function verificarYMarcarModuloCompleto(idDetalleProcesoCurso: number, idUsuario: number) {
+async function verificarYMarcarModuloCompleto(idAulaInscripcion: number, idUsuario: number) {
   // Obtener el módulo de la actividad
   const { data: actividad } = await supabase
     .from('aula_progreso_actividad')
@@ -118,7 +118,7 @@ async function verificarYMarcarModuloCompleto(idDetalleProcesoCurso: number, idU
         modulo:aula_modulo(id_aula_modulo)
       )
     `)
-    .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
+    .eq('id_detalle_proceso_curso', idAulaInscripcion)
     .eq('id_usuario', idUsuario)
     .single()
 
@@ -143,14 +143,14 @@ async function verificarYMarcarModuloCompleto(idDetalleProcesoCurso: number, idU
   const { data: actividadesCompletadas } = await supabase
     .from('aula_progreso_actividad')
     .select('id_aula_progreso_actividad')
-    .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
+    .eq('id_detalle_proceso_curso', idAulaInscripcion)
     .in('id_aula_actividad', actividades?.map(a => a.id_aula_actividad) || [])
     .not('completada_en', 'is', null)
 
   const { data: evaluacionesAprobadas } = await supabase
     .from('aula_intento_evaluacion')
     .select('id_aula_intento_evaluacion')
-    .eq('id_detalle_proceso_curso', idDetalleProcesoCurso)
+    .eq('id_detalle_proceso_curso', idAulaInscripcion)
     .eq('estado', 'aprobado')
 
   const elementosCompletados = (actividadesCompletadas?.length || 0) + (evaluacionesAprobadas?.length || 0)
