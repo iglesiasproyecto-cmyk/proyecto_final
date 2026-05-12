@@ -33,8 +33,9 @@ export function GeographyPage() {
   const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: number; name: string } | null>(null);
   const [formNombre, setFormNombre] = useState("");
   const [formDepartamentoId, setFormDepartamentoId] = useState<number>(0);
+  const [formPaisId, setFormPaisId] = useState<number>(0);
 
-  const { data: departamentosEnhanced = [] } = useDepartamentosEnhanced();
+  const { data: departamentosEnhanced = [] } = useDepartamentosEnhanced(formPaisId || undefined);
   const departamentoSeleccionado = departamentosEnhanced.find(d => d.idDepartamentoGeo === formDepartamentoId);
   const { data: ciudadesEnhanced = [] } = useCiudadesEnhanced(formDepartamentoId || undefined, departamentoSeleccionado?.nombre);
 
@@ -72,11 +73,19 @@ export function GeographyPage() {
         const ciudad = ciudades.find(c => c.idCiudad === id);
         setFormNombre(ciudad?.nombre || "");
         setFormDepartamentoId(ciudad?.idDepartamentoGeo || 0);
+        const dep = departamentosGeo.find(d => d.idDepartamentoGeo === ciudad?.idDepartamentoGeo);
+        setFormPaisId(dep?.idPais || 0);
       }
     } else {
       setFormNombre("");
-      if (type === "ciudad" && parentId) setFormDepartamentoId(parentId);
-      else setFormDepartamentoId(0);
+      if (type === "ciudad" && parentId) {
+        setFormDepartamentoId(parentId);
+        const dep = departamentosGeo.find(d => d.idDepartamentoGeo === parentId);
+        setFormPaisId(dep?.idPais || 0);
+      } else {
+        setFormDepartamentoId(0);
+        setFormPaisId(0);
+      }
     }
     setDialog({ type, mode, id, parentId });
   };
@@ -287,8 +296,23 @@ export function GeographyPage() {
           <div className="px-6 py-5 space-y-4">
             {dialog?.type === "ciudad" && (
               <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">País <span className="text-destructive">*</span></label>
+                <Select value={formPaisId ? String(formPaisId) : ""} onValueChange={v => { setFormPaisId(Number(v)); setFormDepartamentoId(0); }}>
+                  <SelectTrigger className="bg-input-background focus-visible:ring-[#4682b4]/30 h-11">
+                    <SelectValue placeholder="Seleccionar país" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paises.map(p => (
+                      <SelectItem key={p.idPais} value={String(p.idPais)}>{p.nombre}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {dialog?.type === "ciudad" && (
+              <div>
                 <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Departamento <span className="text-destructive">*</span></label>
-                <Select value={formDepartamentoId ? String(formDepartamentoId) : ""} onValueChange={v => setFormDepartamentoId(Number(v))}>
+                <Select value={formDepartamentoId ? String(formDepartamentoId) : ""} onValueChange={v => setFormDepartamentoId(Number(v))} disabled={!formPaisId}>
                   <SelectTrigger className="bg-input-background focus-visible:ring-[#4682b4]/30 h-11">
                     <SelectValue placeholder="Seleccionar departamento" />
                   </SelectTrigger>
