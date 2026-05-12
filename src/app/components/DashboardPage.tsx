@@ -142,12 +142,12 @@ function SuperAdminDashboard() {
       {/* Header unificado */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/10 shrink-0 text-white" style={{ backgroundImage: `linear-gradient(135deg, ${CARD_COLORS[0].from}, ${CARD_COLORS[0].to})` }}>
-            <Sparkles className="w-6 h-6" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/10 shrink-0 text-white" style={{ backgroundImage: `linear-gradient(135deg, ${CARD_COLORS[0].from}, ${CARD_COLORS[0].to})` }}>
+            <Sparkles className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">S.E.I.</p>
-            <h1 className="text-3xl font-light tracking-tight leading-none">Panel de Control</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">S.E.I.</p>
+            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Panel de Control</h1>
           </div>
         </div>
       </motion.div>
@@ -350,12 +350,12 @@ function AdminIglesiaDashboard() {
       {/* Header unificado */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0">
-            <UserCheck className="w-6 h-6 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0">
+            <UserCheck className="w-8 h-8 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Bienvenido de vuelta</p>
-            <h1 className="text-3xl font-light tracking-tight leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Administrador{iglesiaActual ? ` — ${iglesiaActual.nombre}` : ""}</p>
+            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>
@@ -501,12 +501,12 @@ function LiderDashboard() {
       {/* Header unificado */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
-            <Users className="w-6 h-6" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
+            <Users className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Líder &mdash; {min?.nombre}</p>
-            <h1 className="text-3xl font-light tracking-tight leading-none">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Líder de Ministerio{min ? ` — ${min.nombre}` : ""}</p>
+            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>
@@ -645,12 +645,12 @@ function ServidorDashboard() {
       {/* Header unificado */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
-            <UserCheck className="w-6 h-6" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
+            <UserCheck className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Servidor &mdash; {min?.nombre}</p>
-            <h1 className="text-3xl font-light tracking-tight leading-none">{usuarioActual.nombres}</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Servidor &mdash; {min?.nombre}</p>
+            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">{usuarioActual.nombres}</h1>
           </div>
         </div>
       </motion.div>

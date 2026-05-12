@@ -124,12 +124,12 @@ export function GeographyPage() {
       {/* HEADER */}
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#4a9eff] to-[#1a7fa8] shadow-blue-900/20 shrink-0 flex items-center justify-center">
-            <Globe className="w-6 h-6 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] shadow-blue-900/20 shrink-0 flex items-center justify-center shadow-lg">
+            <Globe className="w-8 h-8 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Catálogos</p>
-            <h1 className="text-3xl font-light tracking-tight">Gestión Geográfica</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-1">Catálogos</p>
+            <h1 className="text-4xl font-light tracking-tight">Gestión Geográfica</h1>
           </div>
         </div>
         <Button onClick={() => openDialog("pais", "add")} className="shrink-0 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-lg shadow-blue-900/20"><Plus className="w-4 h-4 mr-2" /> Nuevo País</Button>

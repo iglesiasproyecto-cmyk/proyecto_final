@@ -212,12 +212,12 @@ Por favor, revise y apruebe esta solicitud desde la página de gestión de pasto
       {/* HEADER */}
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <UserCheck className="w-6 h-6 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <UserCheck className="w-8 h-8 text-white" />
           </div>
           <div>
-            <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest pl-1">Estructura</p>
-            <h1 className="text-3xl font-light tracking-tight leading-tight">Gestión de Pastores</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Estructura</p>
+            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Gestión de Pastores</h1>
           </div>
         </div>
       </motion.div>
