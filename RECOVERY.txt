@@ -151,3 +151,169 @@ Next Phase: 2B.2 - Create Missing Tables
   Risk Level: LOW - Tables are idempotent, can be re-created without data loss
 
 ===============================================================================
+PHASE 2C.1 Findings: RLS Policy Audit
+===============================================================================
+
+Assessment Date: 2026-05-12
+Assessment Method: Migration-based policy analysis + grep pattern matching
+Database Project: heibyjbvfiokmduwwawm (Supabase)
+
+SUMMARY:
+- Total tables with RLS Policies: 40
+- Tables WITHOUT RLS: 15 (mostly new academic/aula tables added in Phase 1)
+- Permissive "true" policies (SECURITY RISK): 2 (both mitigated/commented)
+- Tables needing hardening in Phase 2C.2: ~17 (non-geographic domain tables)
+
+### Tables WITH RLS Policies (40 total):
+
+Geography Domain:
+  - pais (HARDENED - is_super_admin() required)
+  - departamento (HARDENED - is_super_admin() required)
+  - ciudad (HARDENED - is_super_admin() required)
+
+Church/Leadership Domain:
+  - iglesia
+  - sede
+  - pastor
+  - iglesia_pastor
+
+Ministries Domain:
+  - ministerio
+  - miembro_ministerio
+  - evento
+  - evento_ministerio
+  - tipo_evento
+
+Users/Roles Domain:
+  - usuario
+  - usuario_rol
+  - usuario_rol_sede
+  - rol
+  - notificacion
+
+Academic/Aula Domain:
+  - curso
+  - modulo
+  - evaluacion
+  - evaluacion_intento
+  - pregunta
+  - respuesta_evaluacion
+  - proceso_asignado_curso
+  - detalle_proceso_curso
+  - avance_modulo
+  - aula_curso
+  - aula_modulo
+  - aula_evaluacion
+  - aula_inscripcion
+  - aula_progreso_actividad
+  - aula_modulo_archivo
+  - aula_modulo_enlace
+  - aula_actividad
+
+Events/Tasks Domain:
+  - tarea
+  - tarea_asignada
+  - tarea_aprobacion
+  - tarea_checklist
+  - tarea_comentario
+  - tarea_evidencia
+  - tarea_historial
+
+### Tables WITHOUT RLS (15 total - HIGH PRIORITY):
+
+NEW/Recently Added Tables (Phase 1 - missing RLS):
+  - aula_certificado (NEW - Phase 1)
+  - aula_intento_evaluacion (NEW - Phase 1)
+  - aula_opcion (NEW - Phase 1)
+  - aula_pregunta (NEW - Phase 1)
+  - aula_respuesta (NEW - Phase 1)
+  - aula_retroalimentacion (NEW - Phase 1)
+
+RPC Functions / Views (not table RLS, but need access control):
+  - aula_recursos_modulo_id_from_name
+  - avance_modulo_sync_detalle_del
+  - avance_modulo_sync_detalle_ins
+  - [and 8 other utility functions]
+
+### Permissive "true" Policies (SECURITY RISK):
+
+FOUND: 2 instances of permissive 'true' conditions
+
+1. tipo_evento (SELECT policy):
+   - Location: 20260509000000_eventos_tareas_production_fix.sql
+   - Status: COMMENTED OUT (prefixed with "-- SKIP")
+   - Policy: "Tipo evento select" FOR SELECT USING (true)
+   - Risk Level: LOW (commented, SELECT only, public reference data)
+
+2. tarea_checklist (INSERT/UPDATE policy):
+   - Location: 20260511_fase1_eventos_tareas_backend.sql
+   - Status: ACTIVE but scoped
+   - Policy: "TareaChecklist insert/update" WITH CHECK (true)
+   - Condition: Complex role-based check in USING clause before the WITH CHECK
+   - Risk Level: MEDIUM (role-based guards exist but WITH CHECK lacks verification)
+
+### Geographic Tables Status (pais, departamento, ciudad):
+
+PREVIOUSLY RISKY: Migration 20260416120000 had permissive mutations
+FIXED BY: Migration 20260506100000_sp1_fix_rls_geo_super_admin.sql
+CURRENT STATUS: HARDENED - All mutations require is_super_admin()
+
+Hardened Policies (per table):
+  - pais_super_admin_mutations (INSERT)
+  - pais_super_admin_update (UPDATE)
+  - pais_super_admin_delete (DELETE)
+  - [Same pattern for departamento and ciudad]
+
+### Domain-Specific Hardening Status:
+
+HARDENED (Phase completed):
+  ✓ Geography: pais, departamento, ciudad (SP1 - 20260506100000)
+
+PARTIALLY HARDENED (Phase in progress):
+  ⚠ Churches: iglesia (has scope policies), sede (has scope policies)
+  ⚠ Ministries: ministerio (has role-based checks), miembro_ministerio
+  ⚠ Events/Tasks: evento, tarea (have complex role-based policies)
+  ⚠ Academic: curso, modulo (have role-based policies)
+  ⚠ Aula System: aula_curso, aula_modulo, etc. (have admin_sede scope - SP9)
+
+NOT YET HARDENED:
+  ✗ New aula tables: aula_certificado, aula_intento_evaluacion, aula_opcion, aula_pregunta, aula_respuesta, aula_retroalimentacao
+  ✗ Some junction tables: evento_ministerio, tarea_checklist (needs WITH CHECK tightening)
+
+### Analysis:
+
+Key Finding: The project has EVOLVED from "permissive everything" baseline to a more controlled state with role-based scoping. However, hardening is incomplete.
+
+1. Geographic tables (pais/departamento/ciudad): SUCCESSFULLY HARDENED in SP1
+2. Church/Ministry/Academic tables: Have role-based guards but NOT all-or-nothing admin checks
+3. New aula tables: Created without explicit RLS (should add in Phase 2C.2)
+4. tarea_checklist: Has role-based USING clause but WITH CHECK (true) bypasses verification
+
+### Recommendations for Phase 2C.2:
+
+Priority 1 (CRITICAL):
+  1. Fix tarea_checklist WITH CHECK (true) → WITH CHECK (can_manage_tarea())
+  2. Add RLS to aula_certificado, aula_intento_evaluacion
+  3. Add RLS to aula_opcion, aula_pregunta, aula_respuesta, aula_retroalimentacion
+
+Priority 2 (HIGH):
+  4. Uncomment and evaluate tipo_evento SELECT policy
+  5. Audit non-geographic tables for role-based WITH CHECK conditions
+  6. Add RLS to remaining utility tables if they store user data
+
+Priority 3 (MEDIUM):
+  7. Verify all role-based policies use consistent permission functions
+  8. Add comprehensive RLS testing for edge cases
+
+### Migration Files Involved:
+
+Active Hardening Migrations:
+  - 20260506100000_sp1_fix_rls_geo_super_admin.sql (Geographic - COMPLETE)
+  - 20260509090000_sp9_admin_sede_aula_hardening.sql (Aula admin_sede scoping)
+  - 20260512011457_fix_aula_curso_rls_allow_creator.sql (Creator permissions)
+
+Migrations Needing Updates:
+  - 20260509000000_eventos_tareas_production_fix.sql (tipo_evento policy)
+  - 20260511_fase1_eventos_tareas_backend.sql (tarea_checklist WITH CHECK)
+
+===============================================================================
