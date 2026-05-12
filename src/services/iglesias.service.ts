@@ -554,7 +554,7 @@ export async function deleteIglesia(id: number): Promise<{ type: 'soft' | 'hard'
 export async function deleteSede(id: number): Promise<void> {
   const { error } = await supabase
     .from('sede')
-    .update({ deleted_at: new Date().toISOString() })
+    .update({ estado: 'inactiva' })
     .eq('id_sede', id)
   if (error) throw error
 }

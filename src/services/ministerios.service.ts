@@ -232,7 +232,7 @@ export async function createMiembroMinisterio(
 export async function deleteMinisterio(id: number): Promise<void> {
   const { error } = await supabase
     .from('ministerio')
-    .update({ deleted_at: new Date().toISOString() })
+    .update({ estado: 'inactivo' })
     .eq('id_ministerio', id)
   if (error) throw error
 }
