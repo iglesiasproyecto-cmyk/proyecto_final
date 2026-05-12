@@ -1,0 +1,104 @@
+===============================================================================
+SUPABASE AUTH RECOVERY DIAGNOSTIC LOG
+===============================================================================
+Date Created: 2026-05-12
+Status: BASELINE AUDIT - Auth Linkage Damage Assessment
+Recovery Phase: Phase 0 (Diagnosis)
+
+===============================================================================
+INCIDENT CONTEXT
+===============================================================================
+Incident: Accidental deletion of usuario.auth_user_id linkage
+Severity Level: TBD (pending diagnostic results)
+Impact Scope: Unknown - to be determined by queries below
+
+===============================================================================
+DIAGNOSTIC QUERIES EXECUTED
+===============================================================================
+
+QUERY 1: Auth Linkage Damage Assessment
+Location: Supabase SQL Editor > New Query
+URL: https://supabase.com/dashboard/project/heibyjbvfiokmduwwawm/sql/new
+
+SQL:
+---
+SELECT
+  (SELECT COUNT(*) FROM usuario) as total_usuarios,
+  (SELECT COUNT(*) FROM usuario WHERE auth_user_id IS NOT NULL) as usuarios_with_auth_link,
+  (SELECT COUNT(*) FROM auth.users) as total_auth_users,
+  (SELECT COUNT(*) FROM usuario_rol WHERE fecha_fin IS NULL) as active_role_assignments,
+  (SELECT COUNT(*) FROM rol) as total_roles;
+---
+
+RESULTS:
+  total_usuarios: [USER_MUST_FILL_IN]
+  usuarios_with_auth_link: [USER_MUST_FILL_IN]
+  total_auth_users: [USER_MUST_FILL_IN]
+  active_role_assignments: [USER_MUST_FILL_IN]
+  total_roles: [USER_MUST_FILL_IN]
+
+Analysis:
+  - Unlinked Users: total_usuarios - usuarios_with_auth_link = [CALCULATE]
+  - Orphaned Auth Accounts: total_auth_users - usuarios_with_auth_link = [CALCULATE]
+  - Severity Assessment: [USER_MUST_DETERMINE]
+
+
+QUERY 2: Role Definition Check
+Location: Supabase SQL Editor > New Query
+
+SQL:
+---
+SELECT id_rol, nombre FROM rol
+WHERE nombre IN ('Super Administrador', 'Administrador de Iglesia', 'Administrador de Sede', 'Lider', 'Servidor')
+ORDER BY nombre;
+---
+
+RESULTS:
+  Role Definitions Found: [USER_MUST_FILL_IN]
+  Format: id_rol | nombre
+  --------+--------------------
+  [USER_MUST_FILL_IN_ROWS]
+
+Analysis:
+  - Critical Roles Present: [USER_MUST_VERIFY]
+  - Role Integrity: [USER_MUST_ASSESS]
+
+===============================================================================
+DAMAGE ASSESSMENT SUMMARY
+===============================================================================
+
+Total Unlinked Usuario Records: [CALCULATE FROM QUERY 1]
+Orphaned Auth Accounts: [CALCULATE FROM QUERY 1]
+Active Role Assignments at Risk: [FROM QUERY 1]
+Role Definitions Intact: [YES/NO from QUERY 2]
+
+Severity Level: [MINOR / MODERATE / SEVERE]
+- MINOR: <5% of users affected
+- MODERATE: 5-25% of users affected
+- SEVERE: >25% of users affected
+
+===============================================================================
+NEXT STEPS (Based on Results)
+===============================================================================
+
+[PENDING DIAGNOSTIC RESULTS - Will determine recovery strategy]
+
+Potential paths forward:
+1. Direct ID Recovery (if auth_user_id can be recovered from auth.users)
+2. Bulk Re-linkage Script (if email matching is viable)
+3. Individual Manual Recovery (if scope is small)
+4. User Re-registration (worst case)
+
+===============================================================================
+COMPLETION CHECKLIST
+===============================================================================
+
+[ ] Query 1 executed in Supabase SQL Editor
+[ ] Query 1 results documented above
+[ ] Query 2 executed in Supabase SQL Editor
+[ ] Query 2 results documented above
+[ ] Damage assessment completed
+[ ] Severity level determined
+[ ] Next steps identified (Phase 1 planning)
+
+===============================================================================
