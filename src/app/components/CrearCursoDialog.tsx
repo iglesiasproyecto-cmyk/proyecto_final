@@ -107,7 +107,7 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
     }
   }
 
-  const isAdminIglesia = appUser?.rol === 'admin_iglesia'
+  const isAdminIglesia = appUser?.rol === 'admin_iglesia' || appUser?.rol === 'super_admin'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
