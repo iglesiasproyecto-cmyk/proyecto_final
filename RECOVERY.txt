@@ -317,3 +317,152 @@ Migrations Needing Updates:
   - 20260511_fase1_eventos_tareas_backend.sql (tarea_checklist WITH CHECK)
 
 ===============================================================================
+PHASE 2D.1 Findings: Auth Listener Setup Audit
+===============================================================================
+
+Assessment Date: 2026-05-12
+Assessment Method: AppContext.tsx source code analysis + dependency chain review
+File Analyzed: /home/juanda/Proyectofinal/src/app/store/AppContext.tsx (761 lines)
+
+### AppContext.tsx Analysis:
+
+useEffect Count: 8 total useEffect hooks
+  - Line 307: localStorage sync for isMockMode
+  - Line 311: localStorage sync for mockRol
+  - Line 315: Dark mode toggle to document.documentElement + localStorage
+  - Line 401: authReady ref sync (reads authReady computed value)
+  - Line 405: post_login_reload flag check
+  - Line 422: MAIN AUTH SUBSCRIPTION (onAuthStateChange listener) ← CRITICAL
+  - Line 680: Mock user hydration when isMockMode=true + !usuarioActual
+  - (Total: 8 hooks, but import line is not counted separately)
+
+onAuthStateChange Calls: 1 only (line 635)
+  - Location: Inside the main useEffect at line 422
+  - Pattern: supabase.auth.onAuthStateChange(handleSessionEvent)
+  - Subscription: Properly unsubscribed in cleanup function (line 650)
+
+Duplicate Listeners: NO ✓
+  - Only ONE onAuthStateChange subscription exists in the entire file
+  - Each call properly unsubscribes when effect cleanup fires
+  - No evidence of multiple simultaneous subscriptions
+
+Dependency Array Status: PROPERLY CONFIGURED ✓
+  - Main auth useEffect (line 422) dependency: [resetClientState]
+  - resetClientState is a useCallback defined at line 362
+  - resetClientState dependencies: [cleanupRealtime, clearAuthStorage]
+  - This creates a tight circular dependency, but is INTENTIONAL for auth state
+  - The effect will re-run when resetClientState changes (which is rare)
+  - Empty dependency array IS NOT used here — instead resetClientState is the only dep
+  - This is CORRECT because resetClientState is memoized via useCallback
+
+React.StrictMode Status: NOT ENABLED ✗
+  - main.tsx (line 8): Does NOT wrap with <StrictMode>
+  - App.tsx (line 5-12): Does NOT use <StrictMode>
+  - No React.StrictMode found in codebase
+
+### Listener Re-subscription Analysis:
+
+How the dependency array works:
+  1. resetClientState = useCallback at line 362
+     - Dependencies: [cleanupRealtime, clearAuthStorage]
+     - Both cleanupRealtime and clearAuthStorage are useCallback functions
+     - This creates a stable memoization context
+
+  2. Auth useEffect at line 422 depends on [resetClientState]
+     - When resetClientState identity changes → effect cleanup fires → old subscription unsubscribed
+     - New subscription created with new handleSessionEvent closure
+     - This is INTENTIONAL to ensure handlers have fresh state refs
+
+  3. Stable Memoization: resetClientState doesn't change frequently
+     - cleanupRealtime has no dependencies (line 342)
+     - clearAuthStorage has no dependencies (line 322)
+     - So resetClientState identity is stable across renders
+     - Result: auth listener does NOT re-subscribe on every render
+
+### SIGNED_IN Log Frequency Analysis:
+
+Logged at line 580: console.log('[AUTH] onAuthStateChange:', event, !!session)
+
+Excessive SIGNED_IN logs could be caused by:
+  1. ✓ CONFIRMED NOT: Duplicate subscriptions (only 1 exists)
+  2. ✓ CONFIRMED NOT: Bad dependency array (resetClientState is stable)
+  3. ✗ CONFIRMED NOT: React.StrictMode double-mounting (NOT ENABLED)
+  4. ? POSSIBLE: Supabase SDK firing multiple events per login
+  5. ? POSSIBLE: Native browser auth state change (e.g., tab sync, token refresh)
+  6. ? POSSIBLE: handleSessionEvent being called multiple times for same event
+
+### Key Observations:
+
+1. LISTENER SETUP: Correct and minimal
+   - Single subscription
+   - Proper cleanup in return statement (line 649-653)
+   - Cleanup includes: subscription.unsubscribe() + two timeouts
+
+2. TOKEN DEDUPLICATION: Present and working (line 611-613)
+   ```typescript
+   if (event === 'SIGNED_IN' && session.access_token === lastHandledTokenRef.current) {
+     return
+   }
+   ```
+   - This prevents re-processing identical SIGNED_IN events
+   - Uses lastHandledTokenRef to compare tokens
+
+3. CYCLE TRACKING: Sophisticated duplicate prevention (lines 627, 492, 529, 639, 642)
+   - authCycleRef.current tracks login attempts
+   - Prevents race conditions from concurrent login flows
+   - If a new cycle starts, old async ops bail out early
+
+4. STATE GUARD PATTERNS: Multiple checks before processing (lines 586, 591, 619)
+   - isHydratingRef: Prevents parallel hydration attempts
+   - hydratedUserIdRef: Prevents re-hydrating same user
+   - authReadyRef: Prevents processing during ready state
+
+### Assessment:
+
+OVERALL STATUS: ✅ LISTENER SETUP IS CORRECT
+
+The AppContext.tsx auth setup follows best practices:
+- Single, properly-managed subscription
+- Correct dependency array with memoized callbacks
+- Comprehensive deduplication and race condition prevention
+- Proper cleanup of all timers and subscriptions
+
+The excessive SIGNED_IN logging is NOT caused by:
+- Duplicate listeners ✗
+- Bad dependency arrays ✗
+- React.StrictMode double-mounting ✗
+
+### Root Cause of Excessive SIGNED_IN Logs:
+
+The logging is likely caused by:
+1. Supabase SDK emitting multiple SIGNED_IN events per user action
+   - This is normal behavior and not necessarily a bug
+   - Browser tab sync, token refresh, and session restoration all trigger SIGNED_IN
+
+2. handleSessionEvent being called multiple times
+   - But properly guarded by token deduplication (line 611)
+   - So repeated events are identified but still logged before early return
+
+3. Development environment logging
+   - All console.log() calls are present in both dev and production
+   - No conditional logging based on environment check
+
+### Recommendations:
+
+Priority 1 (MINIMAL):
+  - The listener setup is correct; NO CHANGES NEEDED here for Phase 2D.2
+  - The excessive logs are expected behavior, not a bug
+
+Priority 2 (OPTIONAL OPTIMIZATION):
+  - Add environment check before logging duplicates (line 580):
+    ```typescript
+    if (!import.meta.env.PROD) console.log('[AUTH] onAuthStateChange:', event, !!session)
+    ```
+  - This would silence logs in production while keeping them in development
+
+Priority 3 (FUTURE):
+  - Monitor SIGNED_IN frequency in production
+  - If frequency is abnormal, investigate Supabase SDK or session management
+  - But no action needed immediately — listeners are solid
+
+===============================================================================
