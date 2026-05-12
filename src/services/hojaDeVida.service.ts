@@ -37,9 +37,7 @@ export interface FormacionAcademica {
  */
 export async function getHojaDeVidaActual(): Promise<HojaDeVidaCompleta | null> {
   try {
-    const { data, error } = await supabase.rpc('get_hoja_de_vida_completa', {
-      p_id_usuario: null, // Will use current user from RLS
-    });
+    const { data, error } = await supabase.rpc('get_hoja_de_vida_completa');
 
     if (error) throw error;
     return data?.[0] || null;

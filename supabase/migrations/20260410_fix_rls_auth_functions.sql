@@ -49,22 +49,34 @@ AS $$
       WHEN r.nombre = 'Super Administrador' THEN NULL
       ELSE i.nombre
     END AS iglesia_nombre,
-    CASE
-      WHEN r.nombre = 'Super Administrador' THEN NULL
-      ELSE s.id_sede
-    END AS sede_id,
-    CASE
-      WHEN r.nombre = 'Super Administrador' THEN NULL
-      ELSE s.nombre
-    END AS sede_nombre
+    NULL::bigint AS sede_id,
+    NULL::text AS sede_nombre
   FROM public.usuario_rol ur
   JOIN public.rol r ON r.id_rol = ur.id_rol
   LEFT JOIN public.iglesia i ON i.id_iglesia = ur.id_iglesia
-  LEFT JOIN public.sede s ON s.id_sede = ur.id_sede
   WHERE ur.id_usuario = (
     SELECT id_usuario FROM public.usuario WHERE auth_user_id = auth.uid() LIMIT 1
   )
-  AND ur.fecha_fin IS NULL;
+  AND ur.fecha_fin IS NULL
+
+  UNION ALL
+
+  SELECT
+    urs.id_rol,
+    urs.fecha_fin,
+    r.nombre AS rol_nombre,
+    i.id_iglesia AS iglesia_id,
+    i.nombre AS iglesia_nombre,
+    s.id_sede AS sede_id,
+    s.nombre AS sede_nombre
+  FROM public.usuario_rol_sede urs
+  JOIN public.rol r ON r.id_rol = urs.id_rol
+  LEFT JOIN public.iglesia i ON i.id_iglesia = urs.id_iglesia
+  LEFT JOIN public.sede s ON s.id_sede = urs.id_sede
+  WHERE urs.id_usuario = (
+    SELECT id_usuario FROM public.usuario WHERE auth_user_id = auth.uid() LIMIT 1
+  )
+  AND urs.fecha_fin IS NULL;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_my_roles() TO authenticated;

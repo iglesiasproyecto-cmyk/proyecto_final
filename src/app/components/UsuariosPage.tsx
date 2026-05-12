@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUsuarioRoles, useUpdateUsuario, useDeleteUsuarioAsSuperAdmin } from "@/hooks/useUsuarios";
-import { useIglesias } from "@/hooks/useIglesias";
+import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUpdateUsuario, useDeleteUsuarioAsSuperAdmin } from "@/hooks/useUsuarios";
+import { useIglesias, useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { useApp } from "@/app/store/AppContext";
-import { supabase } from "@/lib/supabaseClient";
+import { ROLE_IDS } from "@/app/constants/roles";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -20,7 +19,6 @@ import { TableSkeleton } from "./loading/skeletons";
 import { Skeleton } from "./ui/skeleton";
 
 export function UsuariosPage() {
-  const qc = useQueryClient();
   const { iglesiaActual, rolActual, iglesiasDelUsuario } = useApp();
 
   const isSuperAdmin = rolActual === "super_admin";
@@ -43,7 +41,7 @@ export function UsuariosPage() {
   const [editForm, setEditForm] = useState({ nombres: "", apellidos: "", telefono: "" });
   const [deleteUser, setDeleteUser] = useState<number | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [confirmRemoveRol, setConfirmRemoveRol] = useState<{ isOpen: boolean; idUsuarioRol: number; rolNombre: string }>({ isOpen: false, idUsuarioRol: 0, rolNombre: "" });
+  const [confirmRemoveRol, setConfirmRemoveRol] = useState<{ isOpen: boolean; idUsuarioRol: number; rolNombre: string; source: "usuario_rol" | "usuario_rol_sede" }>({ isOpen: false, idUsuarioRol: 0, rolNombre: "", source: "usuario_rol" });
 
   const toggleActivoMutation = useToggleUsuarioActivo();
   const inviteMutation = useInviteUser();
@@ -59,15 +57,22 @@ export function UsuariosPage() {
     apellidos: "",
     idIglesia: iglesiaActual?.id ?? 0,
     idRol: 0,
+    idSede: 0,
   });
-  const resetInviteForm = () => setInviteForm({ correo: "", nombres: "", apellidos: "", idIglesia: iglesiaActual?.id ?? 0, idRol: 0 });
+  const resetInviteForm = () => setInviteForm({ correo: "", nombres: "", apellidos: "", idIglesia: iglesiaActual?.id ?? 0, idRol: 0, idSede: 0 });
 
   // Assign role form state
   const [assignForm, setAssignForm] = useState({
     idRol: 0,
     idIglesia: iglesiaActual?.id ?? 0,
+    idSede: 0,
   });
-  const resetAssignForm = () => setAssignForm({ idRol: 0, idIglesia: iglesiaActual?.id ?? 0 });
+  const resetAssignForm = () => setAssignForm({ idRol: 0, idIglesia: iglesiaActual?.id ?? 0, idSede: 0 });
+
+  const { data: sedesInvite = [] } = useSedesEnriquecidas(inviteForm.idIglesia || undefined);
+  const { data: sedesAssign = [] } = useSedesEnriquecidas(assignForm.idIglesia || undefined);
+
+  const roleNeedsSede = (idRol: number) => [ROLE_IDS.ADMIN_SEDE, ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR].includes(idRol);
 
   if (isLoading) return (
     <div className="space-y-6 max-w-7xl mx-auto px-4">
@@ -121,6 +126,10 @@ export function UsuariosPage() {
       toast.error("Completa todos los campos obligatorios");
       return;
     }
+    if (roleNeedsSede(inviteForm.idRol) && !inviteForm.idSede) {
+      toast.error("Debes seleccionar una sede para este rol");
+      return;
+    }
     inviteMutation.mutate(
       {
         correo: inviteForm.correo.trim(),
@@ -128,6 +137,7 @@ export function UsuariosPage() {
         apellidos: inviteForm.apellidos.trim(),
         idIglesia: inviteForm.idIglesia,
         idRol: inviteForm.idRol,
+        idSede: inviteForm.idSede || null,
       },
       {
         onSuccess: (result) => {
@@ -152,11 +162,16 @@ export function UsuariosPage() {
       toast.error("Selecciona rol e iglesia");
       return;
     }
+    if (roleNeedsSede(assignForm.idRol) && !assignForm.idSede) {
+      toast.error("Debes seleccionar una sede para este rol");
+      return;
+    }
     assignRolMutation.mutate(
       {
         idUsuario: showAssignRol,
         idRol: assignForm.idRol,
         idIglesia: assignForm.idIglesia,
+        idSede: assignForm.idSede || null,
       },
       {
         onSuccess: () => {
@@ -168,15 +183,15 @@ export function UsuariosPage() {
     );
   };
 
-  const handleRemoveRol = (idUsuarioRol: number, rolNombre: string) => {
-    setConfirmRemoveRol({ isOpen: true, idUsuarioRol, rolNombre });
+  const handleRemoveRol = (idUsuarioRol: number, rolNombre: string, source: "usuario_rol" | "usuario_rol_sede") => {
+    setConfirmRemoveRol({ isOpen: true, idUsuarioRol, rolNombre, source });
   };
 
   const executeRemoveRol = () => {
-    removeRolMutation.mutate(confirmRemoveRol.idUsuarioRol, {
+    removeRolMutation.mutate({ idUsuarioRol: confirmRemoveRol.idUsuarioRol, source: confirmRemoveRol.source }, {
       onSuccess: () => {
         toast.success(`Rol "${confirmRemoveRol.rolNombre}" removido`);
-        setConfirmRemoveRol({ isOpen: false, idUsuarioRol: 0, rolNombre: "" });
+        setConfirmRemoveRol({ isOpen: false, idUsuarioRol: 0, rolNombre: "", source: "usuario_rol" });
       },
     });
   };
@@ -312,7 +327,9 @@ export function UsuariosPage() {
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {u.roleNames.length > 0 ? u.roleNames.map((rn, i) => (
-                      <Badge key={i} variant="secondary" className="text-xs">{rn.rolNombre}</Badge>
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {rn.rolNombre}{rn.sedeNombre ? ` · ${rn.sedeNombre}` : ""}
+                      </Badge>
                     )) : <span className="text-xs text-muted-foreground">—</span>}
                   </div>
                 </TableCell>
@@ -403,7 +420,7 @@ export function UsuariosPage() {
                 {detailUser.roleNames.length > 0 ? detailUser.roleNames.map((rn, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm ml-6 py-0.5">
                     <Badge variant="secondary">{rn.rolNombre}</Badge>
-                    <span className="text-muted-foreground text-xs">en {rn.iglesiaNombre}</span>
+                    <span className="text-muted-foreground text-xs">en {rn.iglesiaNombre}{rn.sedeNombre ? ` · ${rn.sedeNombre}` : ""}</span>
                   </div>
                 )) : <p className="text-xs text-muted-foreground ml-6">Sin roles asignados</p>}
               </div>
@@ -462,7 +479,7 @@ export function UsuariosPage() {
               <label className="text-sm text-muted-foreground mb-1 block">Iglesia *</label>
               <Select
                 value={inviteForm.idIglesia ? String(inviteForm.idIglesia) : ""}
-                onValueChange={v => setInviteForm(p => ({ ...p, idIglesia: Number(v) }))}
+                onValueChange={v => setInviteForm(p => ({ ...p, idIglesia: Number(v), idSede: 0 }))}
               >
                 <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar iglesia..." /></SelectTrigger>
                 <SelectContent>
@@ -476,7 +493,7 @@ export function UsuariosPage() {
               <label className="text-sm text-muted-foreground mb-1 block">Rol inicial *</label>
               <Select
                 value={inviteForm.idRol ? String(inviteForm.idRol) : ""}
-                onValueChange={v => setInviteForm(p => ({ ...p, idRol: Number(v) }))}
+                onValueChange={v => setInviteForm(p => ({ ...p, idRol: Number(v), idSede: 0 }))}
               >
                 <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar rol..." /></SelectTrigger>
                 <SelectContent>
@@ -493,6 +510,25 @@ export function UsuariosPage() {
                 </SelectContent>
               </Select>
             </div>
+            {roleNeedsSede(inviteForm.idRol) && (
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Sede *</label>
+                <Select
+                  value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
+                  onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v) }))}
+                >
+                  <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
+                  <SelectContent>
+                    {sedesInvite.map(sd => (
+                      <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Para Lider/Servidor la persona debe pertenecer a un ministerio de la sede.
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowInvite(false); resetInviteForm(); }}>Cancelar</Button>
@@ -519,11 +555,11 @@ export function UsuariosPage() {
                     {assignUser.roleNames.map((rn, i) => (
                       <RoleRow
                         key={rn.idUsuarioRol || `${rn.idRol}-${rn.idIglesia}-${i}`}
+                        idUsuarioRol={rn.idUsuarioRol}
+                        source={rn.source}
                         rolNombre={rn.rolNombre}
                         iglesiaNombre={rn.iglesiaNombre}
-                        idRol={rn.idRol}
-                        idIglesia={rn.idIglesia}
-                        idUsuario={assignUser.idUsuario}
+                        sedeNombre={rn.sedeNombre}
                         onRemove={handleRemoveRol}
                         isRemoving={removeRolMutation.isPending}
                       />
@@ -542,7 +578,7 @@ export function UsuariosPage() {
                     <label className="text-xs text-muted-foreground mb-1 block">Rol *</label>
                     <Select
                       value={assignForm.idRol ? String(assignForm.idRol) : ""}
-                      onValueChange={v => setAssignForm(p => ({ ...p, idRol: Number(v) }))}
+                      onValueChange={v => setAssignForm(p => ({ ...p, idRol: Number(v), idSede: 0 }))}
                     >
                       <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                       <SelectContent>
@@ -563,7 +599,7 @@ export function UsuariosPage() {
                     <label className="text-xs text-muted-foreground mb-1 block">Iglesia *</label>
                     <Select
                       value={assignForm.idIglesia ? String(assignForm.idIglesia) : ""}
-                      onValueChange={v => setAssignForm(p => ({ ...p, idIglesia: Number(v) }))}
+                      onValueChange={v => setAssignForm(p => ({ ...p, idIglesia: Number(v), idSede: 0 }))}
                     >
                       <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                       <SelectContent>
@@ -574,6 +610,25 @@ export function UsuariosPage() {
                     </Select>
                   </div>
                 </div>
+                {roleNeedsSede(assignForm.idRol) && (
+                  <div className="mt-3">
+                    <label className="text-xs text-muted-foreground mb-1 block">Sede *</label>
+                    <Select
+                      value={assignForm.idSede ? String(assignForm.idSede) : ""}
+                      onValueChange={v => setAssignForm(p => ({ ...p, idSede: Number(v) }))}
+                    >
+                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
+                      <SelectContent>
+                        {sedesAssign.map(sd => (
+                          <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Para Lider/Servidor la persona debe pertenecer a un ministerio de la sede.
+                    </p>
+                  </div>
+                )}
                 <Button className="w-full mt-3" onClick={handleAssignRol} disabled={assignRolMutation.isPending || !assignForm.idRol || !assignForm.idIglesia}>
                   {assignRolMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Asignando...</> : <><ShieldPlus className="w-4 h-4 mr-2" /> Asignar Rol</>}
                 </Button>
@@ -683,7 +738,7 @@ export function UsuariosPage() {
 
       <ConfirmDialog
         isOpen={confirmRemoveRol.isOpen}
-        onClose={() => setConfirmRemoveRol({ isOpen: false, idUsuarioRol: 0, rolNombre: "" })}
+        onClose={() => setConfirmRemoveRol({ isOpen: false, idUsuarioRol: 0, rolNombre: "", source: "usuario_rol" })}
         onConfirm={executeRemoveRol}
         title="¿Remover Rol?"
         description={`¿Estás seguro de que quieres remover el rol "${confirmRemoveRol.rolNombre}"? El usuario perderá los permisos asociados.`}
@@ -693,74 +748,27 @@ export function UsuariosPage() {
 }
 
 /* ── Helper component for the role row with remove button ── */
-function RoleRow({ rolNombre, iglesiaNombre, idRol, idIglesia, idUsuario, onRemove, isRemoving }: {
+function RoleRow({ idUsuarioRol, source, rolNombre, iglesiaNombre, sedeNombre, onRemove, isRemoving }: {
+  idUsuarioRol: number
+  source: "usuario_rol" | "usuario_rol_sede"
   rolNombre: string
   iglesiaNombre: string
-  idRol: number
-  idIglesia: number
-  idUsuario: number
-  onRemove: (idUsuarioRol: number, rolNombre: string) => void
+  sedeNombre?: string
+  onRemove: (idUsuarioRol: number, rolNombre: string, source: "usuario_rol" | "usuario_rol_sede") => void
   isRemoving: boolean
 }) {
-  const { rolActual } = useApp();
-  const { data: userRoles = [] } = useUsuarioRoles(idUsuario);
-  const matchingRol = userRoles.find(ur => {
-    return ur.fechaFin === null && ur.idRol === idRol && ur.idIglesia === idIglesia;
-  });
-
-  // Para Super Admin, siempre mostrar el botón para quitar roles
-  // Si no puede ver el rol específico, intentará quitarlo de todas formas
-  const isSuperAdmin = rolActual === 'super_admin';
-  const canRemove = !!matchingRol || isSuperAdmin;
-  const [confirmSuperRemove, setConfirmSuperRemove] = useState(false);
-
-  const executeSuperRemove = async () => {
-    try {
-      const { error } = await supabase
-        .from('usuario_rol')
-        .update({ fecha_fin: new Date().toISOString().split('T')[0] })
-        .eq('id_usuario', idUsuario)
-        .eq('id_rol', idRol)
-        .eq('id_iglesia', idIglesia)
-        .is('fecha_fin', null);
-
-      if (error) {
-        console.error('Error removing role:', error);
-        toast.error('Error al remover el rol: ' + error.message);
-      } else {
-        toast.success(`Rol "${rolNombre}" removido`);
-        // Refresh data
-        qc.invalidateQueries({ queryKey: ['usuario-rol', idUsuario] });
-        qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] });
-      }
-    } catch (err) {
-      console.error('Unexpected error:', err);
-      toast.error('Error inesperado al remover el rol');
-    } finally {
-      setConfirmSuperRemove(false);
-    }
-  };
+  const canRemove = !!idUsuarioRol;
 
   const handleRemoveClick = async () => {
-    if (matchingRol) {
-      // Si puede ver el rol, quitar normalmente usando la función inyectada
-      onRemove(matchingRol.idUsuarioRol, rolNombre);
-    } else if (isSuperAdmin) {
-      // Si es Super Admin pero no ve el rol, pedir confirmación
-      setConfirmSuperRemove(true);
-    }
+    if (!idUsuarioRol) return;
+    onRemove(idUsuarioRol, rolNombre, source);
   };
 
   return (
     <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-accent/30">
       <div className="flex items-center gap-2">
         <Badge variant="secondary" className="text-xs">{rolNombre}</Badge>
-        <span className="text-xs text-muted-foreground">en {iglesiaNombre}</span>
-        {!matchingRol && isSuperAdmin && (
-          <Badge variant="outline" className="text-xs text-blue-600 border-blue-200">
-            Super Admin puede quitar
-          </Badge>
-        )}
+        <span className="text-xs text-muted-foreground">en {iglesiaNombre}{sedeNombre ? ` · ${sedeNombre}` : ""}</span>
       </div>
       {canRemove && (
         <Button
@@ -773,14 +781,6 @@ function RoleRow({ rolNombre, iglesiaNombre, idRol, idIglesia, idUsuario, onRemo
           <X className="w-3.5 h-3.5" />
         </Button>
       )}
-
-      <ConfirmDialog
-        isOpen={confirmSuperRemove}
-        onClose={() => setConfirmSuperRemove(false)}
-        onConfirm={executeSuperRemove}
-        title="¿Remover Rol Forzadamente?"
-        description={`¿Estás seguro de que quieres remover el rol "${rolNombre}" de este usuario? Perderá los permisos asociados. (Acción de SuperAdmin)`}
-      />
     </div>
   );
 }

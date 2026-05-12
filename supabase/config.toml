@@ -28,3 +28,15 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/send-email/deno.json"
 entrypoint = "./functions/send-email/index.ts"
+
+[functions.validate-invite-token]
+enabled = true
+verify_jwt = false
+import_map = "./functions/validate-invite-token/deno.json"
+entrypoint = "./functions/validate-invite-token/index.ts"
+
+[functions.complete-invite]
+enabled = true
+verify_jwt = false
+import_map = "./functions/complete-invite/deno.json"
+entrypoint = "./functions/complete-invite/index.ts"

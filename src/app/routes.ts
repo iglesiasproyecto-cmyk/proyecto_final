@@ -9,7 +9,7 @@ import { LandingPage } from "./components/LandingPage";
 import { LoginPage } from "./components/LoginPage";
 import { ForgotPasswordPage } from "./components/ForgotPasswordPage";
 import { SetPasswordPage } from "./components/SetPasswordPage";
-import { AuthCallbackPage } from "./components/AuthCallbackPage";
+import { AcceptInvitePage } from "./components/AcceptInvitePage";
 import { DashboardPage } from "./components/DashboardPage";
 import { ChurchesPage } from "./components/ChurchesPage";
 import { ChurchDetailPage } from "./components/ChurchDetailPage";
@@ -45,6 +45,7 @@ export const router = createBrowserRouter([
       { path: "forgot-password", Component: ForgotPasswordPage, ErrorBoundary: ErrorPage },
       { path: "set-password", Component: SetPasswordPage, ErrorBoundary: ErrorPage },
       { path: "auth/callback", Component: AuthCallbackPage, ErrorBoundary: ErrorPage },
+      { path: "auth/accept-invite", Component: AcceptInvitePage, ErrorBoundary: ErrorPage },
       {
         path: "app",
         Component: AppLayout,
