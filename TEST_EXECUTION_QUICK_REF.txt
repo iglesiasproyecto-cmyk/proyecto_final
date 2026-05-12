@@ -1,0 +1,146 @@
+================================================================================
+TASK 2D.3: Integration Test - QUICK REFERENCE CARD
+================================================================================
+
+CREDENTIALS
+───────────────────────────────────────────────────────────────────────────
+Email:    test-admin@local.test
+Password: Test123!@#
+Role:     Super Administrador
+
+URLS
+───────────────────────────────────────────────────────────────────────────
+Frontend:         http://localhost:5173
+Auth Dashboard:   https://supabase.com/dashboard/project/heibyjbvfiokmduwwawm/auth/users
+SQL Editor:       https://supabase.com/dashboard/project/heibyjbvfiokmduwwawm/sql/new
+Project ID:       heibyjbvfiokmduwwawm
+
+COMMAND REFERENCE
+───────────────────────────────────────────────────────────────────────────
+Start dev server:
+  npm run dev
+
+Commit test results:
+  git commit --allow-empty -m "test(recovery): full auth flow verification [PASS/FAIL]"
+
+SQL COMMANDS
+───────────────────────────────────────────────────────────────────────────
+
+# Assign Super Admin Role
+INSERT INTO usuario_rol (id_usuario, id_rol, fecha_inicio)
+VALUES (
+  (SELECT id_usuario FROM usuario WHERE correo = 'test-admin@local.test'),
+  (SELECT id_rol FROM rol WHERE nombre = 'Super Administrador'),
+  NOW()::date
+);
+
+# Verify Role Assignment
+SELECT ur.id_usuario_rol, u.correo, r.nombre, ur.fecha_inicio
+FROM usuario_rol ur
+JOIN rol r ON ur.id_rol = r.id_rol
+JOIN usuario u ON ur.id_usuario = u.id_usuario
+WHERE u.correo = 'test-admin@local.test'
+  AND ur.fecha_fin IS NULL;
+
+# Check City Exists
+SELECT id_ciudad, nombre FROM ciudad LIMIT 1;
+
+TEST STEPS (8 total, ~45 minutes)
+───────────────────────────────────────────────────────────────────────────
+1. Create auth user in Supabase Auth UI
+2. Assign role via SQL
+3. Verify city exists via SQL
+4. Login to frontend
+5. Create iglesia record
+6. Create departamento record
+7. Document results
+8. Commit to git
+
+SUCCESS CRITERIA (all must pass)
+───────────────────────────────────────────────────────────────────────────
+✅ Test user created in auth.users
+✅ Role assigned to usuario_rol
+✅ Frontend login succeeds
+✅ iglesia creation succeeds (HTTP 201)
+✅ departamento creation succeeds (HTTP 201)
+✅ Git commit created
+
+COMMON ERRORS & FIXES
+───────────────────────────────────────────────────────────────────────────
+
+Login fails (401):
+  ❌ usuario.auth_user_id is NULL
+  ✅ Fix: Check Phase 2A trigger exists, verify handle_new_user() function
+
+iglesia fails (403 - RLS denied):
+  ❌ is_admin_iglesia() returned false
+  ✅ Fix: Check usuario_rol has Super Administrador role, fecha_fin IS NULL
+
+departamento fails (403 - RLS denied):
+  ❌ is_super_admin() required (Phase 2C hardening)
+  ✅ Fix: Verify usuario_rol exists, check is_super_admin() function
+
+Blank page after login:
+  ❌ React error
+  ✅ Fix: Open DevTools (F12) → Console tab, check error message
+
+BROWSER DEVTOOLS CHECKS (F12)
+───────────────────────────────────────────────────────────────────────────
+Console:      Check for red errors or RLS violations
+Network:      POST /rest/v1/iglesia should return 201
+Application:  localStorage should have sb-...-auth-token
+Storage:      Verify session persisted
+
+TROUBLESHOOTING REFERENCE
+───────────────────────────────────────────────────────────────────────────
+Detailed guide: /home/juanda/Proyectofinal/docs/TEST_EXECUTION_GUIDE_2D3.md
+Recovery log:   /home/juanda/Proyectofinal/RECOVERY.txt
+
+KEY FILES
+───────────────────────────────────────────────────────────────────────────
+RECOVERY.txt                                    - Main test log
+docs/TEST_EXECUTION_GUIDE_2D3.md                - Full execution guide
+supabase/migrations/20260512_phase2a_*.sql      - Auth linkage
+supabase/migrations/20260512_phase2b_*.sql      - Missing tables
+supabase/migrations/20260512_phase2c_*.sql      - RLS hardening
+
+WHAT'S BEEN PREPARED FOR YOU
+───────────────────────────────────────────────────────────────────────────
+✅ All Phase 2A/2B/2C migrations in place
+✅ Detailed 8-step test plan documented
+✅ SQL commands ready to copy-paste
+✅ Expected outcomes documented
+✅ Troubleshooting guide created
+✅ Success/failure criteria clear
+
+WHAT YOU NEED TO DO
+───────────────────────────────────────────────────────────────────────────
+⬜ Execute STEP 1-8 (manual browser interaction)
+⬜ Document results in RECOVERY.txt
+⬜ Commit results to git
+⬜ Declare recovery complete or partial
+
+EXPECTED OUTCOME
+───────────────────────────────────────────────────────────────────────────
+If ALL steps pass:
+  ✅ Recovery is complete
+  ✅ System is stabilized
+  ✅ Ready for Phase 2E (Monitoring)
+
+If SOME steps fail:
+  ⚠️  Document which ones
+  ⚠️  Use troubleshooting guide
+  ⚠️  Plan fixes
+  ⚠️  Proceed to Phase 2E.1 (Investigation)
+
+NEXT STEPS AFTER TEST
+───────────────────────────────────────────────────────────────────────────
+PASS:  Move to Phase 2E (Monitoring & Observability)
+FAIL:  Move to Phase 2E.1 (Debug specific failures)
+BOTH:  Document findings in RECOVERY.txt
+
+================================================================================
+Status: Ready for manual test execution
+Date: 2026-05-12
+Estimated Duration: 30-45 minutes
+================================================================================
