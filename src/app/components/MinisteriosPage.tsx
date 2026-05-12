@@ -324,17 +324,17 @@ export function MinisteriosPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Encabezado Principal y Controles Acoplados */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/40 backdrop-blur-xl border border-border/50 p-5 rounded-3xl shadow-sm relative overflow-hidden">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
         
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <Settings className="w-6 h-6 text-white" />
+        <div className="flex items-center gap-6">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <Settings className="w-8 h-8 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Ministerios</h1>
-            <p className="text-foreground font-bold text-xs sm:text-sm mt-1">Gestiona la estructura organizativa de la iglesia</p>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-1">Estructura</p>
+            <h1 className="text-3xl sm:text-4xl font-light tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Ministerios</h1>
+            <p className="text-foreground font-normal text-xs sm:text-sm mt-1">Gestiona la estructura organizativa de la iglesia</p>
           </div>
         </div>
 

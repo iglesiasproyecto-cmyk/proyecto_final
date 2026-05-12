@@ -62,7 +62,7 @@ export function ProfilePage() {
 
   if (!usuarioActual) return null;
   const fullName = `${usuarioActual.nombres} ${usuarioActual.apellidos}`;
-  const initials = `${usuarioActual.nombres.charAt(0)}${usuarioActual.apellidos.charAt(0)}`;
+  const initials = `${(nombres || usuarioActual.nombres).charAt(0)}${(apellidos || usuarioActual.apellidos).charAt(0)}`;
   const rol = rolActual;
   const gradient = roleGradients[rol] || "from-gray-500 to-gray-600";
 
@@ -126,7 +126,9 @@ export function ProfilePage() {
           <div className="flex-1 z-10 text-center md:text-left space-y-4">
             <div>
               <p className="text-[#4682b4] font-black uppercase tracking-[0.4em] text-[11px] mb-3 opacity-90">Expediente de Usuario</p>
-              <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground uppercase italic leading-[0.9] drop-shadow-sm">{fullName}</h1>
+              <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground uppercase italic leading-[0.9] drop-shadow-sm">
+                {nombres || usuarioActual?.nombres} {apellidos || usuarioActual?.apellidos}
+              </h1>
             </div>
             
             <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 pt-4">
