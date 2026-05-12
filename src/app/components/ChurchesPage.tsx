@@ -92,6 +92,17 @@ export function ChurchesPage() {
   const toggleEstadoMutation = useToggleIglesiaEstado();
   const deleteIglesiaMutation = useDeleteIglesia();
 
+  useEffect(() => {
+    if (!editingIglesia || !editingIglesia.idCiudad) return;
+    const loc = resolveLocationFromCityId(editingIglesia.idCiudad);
+    if (!loc.idDepartamento || !loc.idPais) return;
+    setForm((prev) => ({
+      ...prev,
+      idPais: loc.idPais,
+      idDepartamento: loc.idDepartamento,
+      idCiudad: editingIglesia.idCiudad || 0,
+    }));
+  }, [editingIglesia, ciudadesAll, departamentosAll]);
 
   if (isLoading) return (
     <div className="max-w-7xl mx-auto px-4 space-y-6">
@@ -137,18 +148,6 @@ export function ChurchesPage() {
     const dept = departamentosAll.find((d) => d.idDepartamentoGeo === city.idDepartamentoGeo);
     return { idDepartamento: city.idDepartamentoGeo, idPais: dept?.idPais ?? 0 };
   };
-
-  useEffect(() => {
-    if (!editingIglesia || !editingIglesia.idCiudad) return;
-    const loc = resolveLocationFromCityId(editingIglesia.idCiudad);
-    if (!loc.idDepartamento || !loc.idPais) return;
-    setForm((prev) => ({
-      ...prev,
-      idPais: loc.idPais,
-      idDepartamento: loc.idDepartamento,
-      idCiudad: editingIglesia.idCiudad || 0,
-    }));
-  }, [editingIglesia, ciudadesAll, departamentosAll]);
 
   const validateForm = (): boolean => {
     const errors: Partial<Record<keyof IglesiaFormData, string>> = {};

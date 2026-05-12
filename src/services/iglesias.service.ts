@@ -257,7 +257,7 @@ export async function getPastoresEnriquecidos(): Promise<PastorEnriquecido[]> {
   }))
 }
 
-export async function getSedesEnriquecidas(idIglesia?: number): Promise<SedeEnriquecida[]> {
+export async function getSedesEnriquecidas(idIglesia?: number, includeInactive = false): Promise<SedeEnriquecida[]> {
   let q = supabase
     .from('sede')
     .select(`
@@ -272,8 +272,11 @@ export async function getSedesEnriquecidas(idIglesia?: number): Promise<SedeEnri
         )
       )
     `)
-    .eq('estado', 'activa')
     .order('nombre')
+
+  if (!includeInactive) {
+    q = q.eq('estado', 'activa')
+  }
 
   if (idIglesia !== undefined) {
     q = q.eq('id_iglesia', idIglesia)
@@ -335,8 +338,8 @@ export async function getSedes(idIglesia?: number): Promise<Sede[]> {
 
 export async function createIglesia(
   data: { nombre: string; fechaFundacion: string | null; idCiudad: number | null; estado: Iglesia['estado']; direccion?: string | null; telefono?: string | null; descripcion?: string | null; sitioWeb?: string | null }
-): Promise<void> {
-  const { error } = await supabase
+): Promise<Iglesia> {
+  const { data: result, error } = await supabase
     .from('iglesia')
     .insert([{
       nombre: data.nombre,
@@ -348,7 +351,10 @@ export async function createIglesia(
       descripcion: data.descripcion || null,
       sitio_web: data.sitioWeb || null
     }])
+    .select()
+    .single()
   if (error) throw error
+  return mapIglesia(result)
 }
 
 export async function updateIglesia(
