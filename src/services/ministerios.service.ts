@@ -108,7 +108,7 @@ export async function getMiembrosMinisterioEnriquecidos(idMinisterio?: number): 
 }
 
 export async function getMinisterios(idIglesia?: number): Promise<Ministerio[]> {
-  let q = supabase.from('ministerio').select('*').is('deleted_at', null).order('nombre')
+  let q = supabase.from('ministerio').select('*').eq('estado', 'activo').order('nombre')
 
   if (idIglesia !== undefined) {
     const { data: sedesData } = await supabase
