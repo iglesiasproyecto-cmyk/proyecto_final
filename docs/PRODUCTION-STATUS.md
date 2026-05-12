@@ -145,9 +145,14 @@
 
 ## 🚀 PRÓXIMOS PASOS
 
+### 🚨 CRÍTICO (Primero - Debe hacerse antes que nada):
+1. [ ] Aplicar migración: `npx supabase db push`
+   - Esto enlaza el UUID de auth del admin_sede a la tabla usuario
+   - SIN ESTO: El login de admin_sede se queda en timeout
+
 ### Ahora (Verificación):
 1. [ ] Ejecutar `npm run build` y verificar que compila
-2. [ ] Testear login con admin_sede@test.dev
+2. [ ] Testear login con admin_sede@test.dev (después de aplicar migración)
 3. [ ] Verificar que admin_sede ve su dashboard correcto
 4. [ ] Verificar RLS - admin_sede solo debe ver su sede
 
@@ -174,6 +179,20 @@
 **Cambios pendientes en Frontend:** Ninguno (cambios aplicados)
 
 **Errores conocidos:** Ninguno reportado después de fixes
+
+---
+
+## 🔧 ISSUE FOUND & FIXED (2026-05-12 Session 2)
+
+**Issue:** admin_sede login profile timeout
+- Root cause: `auth_user_id` not linked in usuario table
+- Symptom: Profile loading timeout (8s safety timeout triggers)
+- Solution: Migration created to link auth UUID to usuario record
+
+**Fix Applied:**
+- Created migration: `20260512_fix_admin_sede_auth_user_id.sql`
+- Links: UUID `6763a324-4b68-4393-98fe-107390b8bdd3` → usuario id 26
+- Apply with: `npx supabase db push`
 
 ---
 
