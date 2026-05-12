@@ -27,7 +27,7 @@ export function UsuariosPage() {
 
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
-  const { data: allIglesias = [] } = useIglesias();
+  const { data: allIglesias = [] } = useIglesias({ includeInactive: true });
   const iglesias = canManageUsers && !isSuperAdmin ? iglesiasDelUsuario : allIglesias;
   const [search, setSearch] = useState("");
   const [filterEstado, setFilterEstado] = useState("all");
@@ -484,7 +484,9 @@ export function UsuariosPage() {
                 <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar iglesia..." /></SelectTrigger>
                 <SelectContent>
                   {iglesias.map(ig => (
-                    <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>
+                    <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>
+                      {ig.nombre}{ig.estado !== 'activa' ? ' (Inactiva)' : ''}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -604,7 +606,9 @@ export function UsuariosPage() {
                       <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                       <SelectContent>
                         {iglesias.map(ig => (
-                          <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>
+                          <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>
+                            {ig.nombre}{ig.estado !== 'activa' ? ' (Inactiva)' : ''}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

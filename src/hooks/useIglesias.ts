@@ -9,8 +9,13 @@ import {
   checkPastorCorreoExists, checkPastorUsuarioExists,
 } from '@/services/iglesias.service'
 
-export function useIglesias() {
-  return useQuery({ queryKey: ['iglesias'], queryFn: getIglesias, staleTime: 5 * 60 * 1000 })
+export function useIglesias(options?: { includeInactive?: boolean }) {
+  const includeInactive = options?.includeInactive ?? false
+  return useQuery({
+    queryKey: ['iglesias', includeInactive],
+    queryFn: () => getIglesias(includeInactive),
+    staleTime: 5 * 60 * 1000,
+  })
 }
 
 export function usePastores() {

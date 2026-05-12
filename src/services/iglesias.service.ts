@@ -297,12 +297,13 @@ export async function getSedesEnriquecidas(idIglesia?: number): Promise<SedeEnri
   }))
 }
 
-export async function getIglesias(): Promise<Iglesia[]> {
-  const { data, error } = await supabase
+export async function getIglesias(includeInactive = false): Promise<Iglesia[]> {
+  let q = supabase
     .from('iglesia')
     .select('*')
-    .eq('estado', 'activa')
     .order('nombre')
+  if (!includeInactive) q = q.eq('estado', 'activa')
+  const { data, error } = await q
   if (error) throw error
   return data.map(mapIglesia)
 }
