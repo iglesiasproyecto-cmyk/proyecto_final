@@ -149,10 +149,10 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
       miembro_ministerio(
         rol_en_ministerio,
         fecha_salida,
-        id_ministerio
+        id_ministerio,
+        ministerio(nombre)
       )
     `)
-    .eq('activo', true)
     .order('apellidos')
 
   if (error) throw error
@@ -190,7 +190,7 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
     minNames: (r.miembro_ministerio || [])
       .filter((mm: any) => mm.fecha_salida === null)
       .map((mm: any) => ({
-        nombre: `Ministerio #${mm.id_ministerio}`,
+        nombre: mm.ministerio?.nombre ?? `Ministerio #${mm.id_ministerio}`,
         rol: mm.rol_en_ministerio ?? '',
       })),
   }))
