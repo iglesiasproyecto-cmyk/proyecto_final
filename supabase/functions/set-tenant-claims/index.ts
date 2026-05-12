@@ -59,17 +59,25 @@ Deno.serve(async (req) => {
 
     let role = 'servidor'
     let tenantId: number | null = null
+    let sedeId: number | null = null
     let ministerioIds: number[] = []
 
     if (roleNames.includes('super administrador')) {
       role = 'super_admin'
       tenantId = null
-    } else if (roleNames.some((n) => n.includes('administrador'))) {
+    } else if (roleNames.some((n) => n.includes('administrador de iglesia'))) {
       role = 'admin_iglesia'
       const iglesiaRole = activeRoles.find((r: any) =>
-        String(r.rol_nombre ?? '').toLowerCase().includes('administrador') && r.iglesia_id
+        String(r.rol_nombre ?? '').toLowerCase().includes('administrador de iglesia') && r.iglesia_id
       )
       tenantId = iglesiaRole?.iglesia_id ? Number(iglesiaRole.iglesia_id) : null
+    } else if (roleNames.some((n) => n.includes('administrador de sede'))) {
+      role = 'admin_sede'
+      const sedeRole = activeRoles.find((r: any) =>
+        String(r.rol_nombre ?? '').toLowerCase().includes('administrador de sede') && r.sede_id
+      )
+      tenantId = sedeRole?.iglesia_id ? Number(sedeRole.iglesia_id) : null
+      sedeId = sedeRole?.sede_id ? Number(sedeRole.sede_id) : null
     } else if (roleNames.some((n) => n.includes('lider'))) {
       role = 'lider'
       const liderRole = activeRoles.find((r: any) => r.iglesia_id)
@@ -106,6 +114,7 @@ Deno.serve(async (req) => {
     const claimsAt = Math.floor(Date.now() / 1000)
     const appMetadata: Record<string, unknown> = { role, claims_at: claimsAt }
     if (tenantId !== null) appMetadata.tenant_id = tenantId
+    if (sedeId !== null) appMetadata.sede_id = sedeId
     if (ministerioIds.length > 0) appMetadata.ministerio_ids = ministerioIds
 
     const updateRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {

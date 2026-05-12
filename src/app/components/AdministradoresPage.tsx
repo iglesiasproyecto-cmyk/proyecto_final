@@ -3,10 +3,11 @@ import { useState } from "react";
 import { useIglesiasEnriquecidas } from "@/hooks/useIglesias";
 import { useUsuariosEnriquecidos, useAssignRol, useRemoveRol } from "@/hooks/useUsuarios";
 import { useRoles } from "@/hooks/useUsuarios";
+import { ROLE_IDS } from "@/app/constants/roles";
 import { useQueryClient } from "@tanstack/react-query";
 import type { UsuarioEnriquecido } from "@/services/usuarios.service";
 
-const ID_ROL_ADMIN_IGLESIA = 26;
+const ID_ROL_ADMIN_IGLESIA = ROLE_IDS.ADMIN_IGLESIA;
 
 interface AdminEntry {
   idUsuarioRol: number;
@@ -156,7 +157,7 @@ export function AdministradoresPage() {
   };
 
   const handleRemove = (idUsuarioRol: number) => {
-    removeRol.mutate(idUsuarioRol, {
+    removeRol.mutate({ idUsuarioRol, source: 'usuario_rol' }, {
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: ["iglesias-enriquecidas"] });
         qc.invalidateQueries({ queryKey: ["admins-por-iglesia"] });

@@ -86,7 +86,7 @@ export function useAssignRol() {
 export function useRemoveRol() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (idUsuarioRol: number) => removeRol(idUsuarioRol),
+    mutationFn: (params: Parameters<typeof removeRol>[0]) => removeRol(params),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['usuarios'] })
       qc.invalidateQueries({ queryKey: ['usuarios-enriquecidos'] })

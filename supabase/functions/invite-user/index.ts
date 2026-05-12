@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       return jsonResponse(origin, { message: 'Unauthorized' }, 401)
     }
 
-    const { correo, nombres, apellidos, idIglesia, idRol } = await req.json()
+    const { correo, nombres, apellidos, idIglesia, idRol, idSede } = await req.json()
 
     if (!correo || !nombres || !apellidos || !idIglesia || !idRol) {
       return jsonResponse(origin, { message: 'Missing required fields' }, 400)
@@ -181,6 +181,15 @@ Deno.serve(async (req) => {
       return jsonResponse(origin, { message: 'No autorizado para asignar ese rol' }, 403)
     }
 
+    const sedeRequiredRoles = new Set(['Administrador de Sede', 'Líder', 'Servidor'])
+    const isSedeRole = sedeRequiredRoles.has(targetRole.nombre)
+    const requiresMinisterio = targetRole.nombre === 'Líder' || targetRole.nombre === 'Servidor'
+    const sedeId = Number(idSede)
+
+    if (isSedeRole && (!sedeId || Number.isNaN(sedeId))) {
+      return jsonResponse(origin, { message: 'Debes seleccionar una sede para este rol' }, 400)
+    }
+
     // First, check if the app profile already exists to keep this flow idempotent.
     const { data: existingUsuario, error: existingUsuarioError } = await supabaseAdmin
       .from('usuario')
@@ -194,106 +203,100 @@ Deno.serve(async (req) => {
     let profileReconciled = false
 
     if (!usuarioId) {
-      // Invite user via Supabase Auth Admin API.
-      // NOTE: The handle_new_user trigger should create the usuario record.
-      const inviteOptions = {
-        data: { nombres, apellidos },
-        redirectTo: `${configuredSiteUrl}/auth/callback?next=/auth/set-password`,
+      // Generar token custom para invitación
+      const crypto = await import('https://deno.land/std@0.208.0/crypto/mod.ts')
+      const token = crypto.getRandomValues(new Uint8Array(32))
+      const tokenString = Array.from(token, byte => byte.toString(16).padStart(2, '0')).join('')
+
+      // Insertar token en invite_tokens
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 días
+      const { data: inviteToken, error: tokenError } = await supabaseAdmin
+        .from('invite_tokens')
+        .insert({
+          token: tokenString,
+          email: normalizedEmail,
+          nombres: nombres,
+          apellidos: apellidos,
+          id_iglesia: idIglesia,
+          id_rol: idRol,
+          id_sede: isSedeRole ? sedeId : null,
+          expires_at: expiresAt.toISOString(),
+        })
+        .select('id_invite_token')
+        .single()
+
+      if (tokenError) {
+        console.error('Error creating invite token:', tokenError)
+        return jsonResponse(origin, { message: 'Error creando token de invitación' }, 500)
       }
 
-      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-        normalizedEmail,
-        inviteOptions
-      )
+      // Enviar email con enlace custom
+      const inviteUrl = `${configuredSiteUrl}/auth/accept-invite?token=${tokenString}`
+      const emailSubject = `Invitación a IGLESIABD - ${nombres} ${apellidos}`
+      const emailBody = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1a7fa8;">Invitación a IGLESIABD</h2>
+          <p>Hola ${nombres} ${apellidos},</p>
+          <p>Has sido invitado a unirte a IGLESIABD como ${targetRole.nombre}.</p>
+          <p>Para completar tu registro, haz clic en el siguiente enlace:</p>
+          <p style="text-align: center; margin: 30px 0;">
+            <a href="${inviteUrl}" style="background-color: #1a7fa8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              Aceptar Invitación
+            </a>
+          </p>
+          <p>Este enlace expirará en 7 días.</p>
+          <p>Si no esperabas esta invitación, puedes ignorar este mensaje.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">
+            IGLESIABD - Sistema de Gestión Eclesiástica
+          </p>
+        </div>
+      `
 
-      if (inviteError) {
-        const msg = inviteError.message?.toLowerCase() ?? ''
-        const duplicateLike = msg.includes('duplicate') || msg.includes('already') || msg.includes('exists')
-        if (!duplicateLike) throw inviteError
+      // Usar la función send-email para enviar el email
+      const { error: emailError } = await supabaseAdmin.functions.invoke('send-email', {
+        body: {
+          to: normalizedEmail,
+          subject: emailSubject,
+          html: emailBody,
+        },
+      })
 
-        // In race conditions / previous partial attempts, profile may already exist.
-        const { data: dupUsuario, error: dupUsuarioError } = await supabaseAdmin
-          .from('usuario')
-          .select('id_usuario')
-          .eq('correo', normalizedEmail)
-          .maybeSingle()
-        if (dupUsuarioError) throw dupUsuarioError
-        if (dupUsuario) {
-          usuarioId = dupUsuario.id_usuario
-        } else {
-          // User exists in Auth but is missing in public.usuario. Reconcile it here.
-          const authUser = await findAuthUserByEmail(supabaseAdmin, normalizedEmail)
-          if (!authUser) throw inviteError
-
-          const fallbackNombres = String(nombres).trim() || 'Usuario'
-          const fallbackApellidos = String(apellidos).trim() || 'Invitado'
-
-          const { data: insertedUsuario, error: insertedUsuarioError } = await supabaseAdmin
-            .from('usuario')
-            .insert({
-              auth_user_id: authUser.id,
-              nombres: fallbackNombres,
-              apellidos: fallbackApellidos,
-              correo: normalizedEmail,
-              activo: true,
-            })
-            .select('id_usuario')
-            .single()
-
-          if (insertedUsuarioError) {
-            const retry = await supabaseAdmin
-              .from('usuario')
-              .select('id_usuario')
-              .eq('correo', normalizedEmail)
-              .maybeSingle()
-            if (retry.error) throw retry.error
-            if (!retry.data) throw insertedUsuarioError
-            usuarioId = retry.data.id_usuario
-          } else {
-            usuarioId = insertedUsuario.id_usuario
-            profileReconciled = true
-          }
-        }
-      } else {
-        inviteSent = true
-        const authUserId = inviteData.user.id
-
-        // Poll up to 5 seconds for the trigger to create the usuario record.
-        for (let attempt = 0; attempt < 10; attempt++) {
-          await new Promise((resolve) => setTimeout(resolve, 500))
-          const { data: rows } = await supabaseAdmin
-            .from('usuario')
-            .select('id_usuario')
-            .eq('auth_user_id', authUserId)
-            .limit(1)
-          if (rows && rows.length > 0) {
-            usuarioId = rows[0].id_usuario
-            break
-          }
-        }
-
-        if (!usuarioId) {
-          const { data: fallbackUsuario, error: fallbackUsuarioError } = await supabaseAdmin
-            .from('usuario')
-            .select('id_usuario')
-            .eq('correo', normalizedEmail)
-            .maybeSingle()
-          if (fallbackUsuarioError) throw fallbackUsuarioError
-          if (!fallbackUsuario) {
-            throw new Error('No se pudo resolver el perfil de usuario invitado')
-          }
-          usuarioId = fallbackUsuario.id_usuario
-        }
+      if (emailError) {
+        console.error('Error sending email:', emailError)
+        // Limpiar token si falló el email
+        await supabaseAdmin.from('invite_tokens').delete().eq('id_invite_token', inviteToken.id_invite_token)
+        return jsonResponse(origin, { message: 'Error enviando email de invitación' }, 500)
       }
+
+      inviteSent = true
     }
 
     if (!usuarioId) {
       throw new Error('No se pudo resolver el usuario objetivo')
     }
 
+    if (requiresMinisterio) {
+      const { data: membership, error: membershipError } = await supabaseAdmin
+        .from('miembro_ministerio')
+        .select('id_miembro_ministerio, ministerio!inner(id_sede)')
+        .eq('id_usuario', usuarioId)
+        .is('fecha_salida', null)
+        .eq('ministerio.id_sede', sedeId)
+        .limit(1)
+
+      if (membershipError) throw membershipError
+      if (!membership || membership.length === 0) {
+        return jsonResponse(origin, { message: 'El usuario debe pertenecer a un ministerio de la sede para este rol' }, 400)
+      }
+    }
+
+    const assignmentTable = isSedeRole ? 'usuario_rol_sede' : 'usuario_rol'
+    const assignmentIdColumn = isSedeRole ? 'id_usuario_rol_sede' : 'id_usuario_rol'
+
     const { data: existingAssignment, error: assignmentCheckError } = await supabaseAdmin
-      .from('usuario_rol')
-      .select('id_usuario_rol')
+      .from(assignmentTable)
+      .select(assignmentIdColumn)
       .eq('id_usuario', usuarioId)
       .eq('id_rol', idRol)
       .eq('id_iglesia', idIglesia)
@@ -305,11 +308,12 @@ Deno.serve(async (req) => {
     let roleAssigned = false
     if (!existingAssignment) {
       const { error: rolError } = await supabaseAdmin
-        .from('usuario_rol')
+        .from(assignmentTable)
         .insert({
           id_usuario: usuarioId,
           id_rol: idRol,
           id_iglesia: idIglesia,
+          id_sede: isSedeRole ? sedeId : null,
           fecha_inicio: new Date().toISOString().split('T')[0],
         })
       if (rolError) throw rolError

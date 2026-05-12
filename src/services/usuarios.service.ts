@@ -6,6 +6,9 @@ import type { Database } from '@/types/database.types'
 type RolRow = Database['public']['Tables']['rol']['Row']
 type UsuarioRow = Database['public']['Tables']['usuario']['Row']
 type UsuarioRolRow = Database['public']['Tables']['usuario_rol']['Row']
+type UsuarioRolSedeRow = Database['public']['Tables']['usuario_rol_sede']['Row']
+
+type UsuarioRolSource = 'usuario_rol' | 'usuario_rol_sede'
 
 function mapRol(r: RolRow): Rol {
   return {
@@ -48,6 +51,20 @@ function mapUsuarioRol(r: UsuarioRolRow): UsuarioRol {
   }
 }
 
+function mapUsuarioRolSede(r: UsuarioRolSedeRow): UsuarioRol {
+  return {
+    idUsuarioRol: r.id_usuario_rol_sede,
+    idUsuario: r.id_usuario,
+    idRol: r.id_rol,
+    idIglesia: r.id_iglesia,
+    idSede: r.id_sede,
+    fechaInicio: r.fecha_inicio,
+    fechaFin: r.fecha_fin,
+    creadoEn: r.creado_en,
+    actualizadoEn: r.updated_at,
+  }
+}
+
 export async function getRoles(): Promise<Rol[]> {
   const { data, error } = await supabase.from('rol').select('*').order('nombre')
   if (error) throw error
@@ -64,26 +81,29 @@ export async function getUsuarios(): Promise<Usuario[]> {
 }
 
 export async function getUsuarioRoles(idUsuario: number): Promise<UsuarioRol[]> {
-  // Para Super Admin, intentar obtener todos los roles posibles
-  // Esto es una solución temporal hasta que las políticas RLS funcionen correctamente
-  const { data: userData } = await supabase.auth.getUser()
-  const isSuperAdmin = userData.user?.user_metadata?.role === 'super_admin' ||
-                      userData.user?.user_metadata?.highest_role === 'Super Administrador'
-
-  // Consulta directa primero
-  const { data, error } = await supabase
+  const { data: rolesLegacy, error: errorLegacy } = await supabase
     .from('usuario_rol')
     .select('*')
     .eq('id_usuario', idUsuario)
     .is('fecha_fin', null)
 
-  if (error) {
-    console.warn('Error fetching user roles:', error)
-    // Si hay error, devolver array vacío
+  if (errorLegacy) {
+    console.warn('Error fetching usuario_rol:', errorLegacy)
     return []
   }
 
-  return data.map(mapUsuarioRol)
+  const { data: rolesSede, error: errorSede } = await supabase
+    .from('usuario_rol_sede')
+    .select('*')
+    .eq('id_usuario', idUsuario)
+    .is('fecha_fin', null)
+
+  if (errorSede) {
+    console.warn('Error fetching usuario_rol_sede:', errorSede)
+    return []
+  }
+
+  return [...(rolesLegacy ?? []).map(mapUsuarioRol), ...(rolesSede ?? []).map(mapUsuarioRolSede)]
 }
 
 export interface UsuarioEnriquecido extends Usuario {
@@ -91,9 +111,12 @@ export interface UsuarioEnriquecido extends Usuario {
     idUsuarioRol: number
     idRol: number
     idIglesia: number
+    idSede?: number | null
     rolNombre: string
     iglesiaNombre: string
+    sedeNombre?: string
     fechaFin: string | null
+    source: UsuarioRolSource
   }[]
   minNames: { nombre: string; rol: string }[]
 }
@@ -107,9 +130,21 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
         id_usuario_rol,
         id_rol,
         id_iglesia,
+        id_sede,
         fecha_fin,
         rol:rol(nombre),
-        iglesia:iglesia(nombre)
+        iglesia:iglesia(nombre),
+        sede:sede(nombre)
+      ),
+      usuario_rol_sede(
+        id_usuario_rol_sede,
+        id_rol,
+        id_iglesia,
+        id_sede,
+        fecha_fin,
+        rol:rol(nombre),
+        iglesia:iglesia(nombre),
+        sede:sede(nombre)
       ),
       miembro_ministerio(
         rol_en_ministerio,
@@ -130,10 +165,28 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
         idUsuarioRol: ur.id_usuario_rol,
         idRol: ur.id_rol,
         idIglesia: ur.id_iglesia,
+        idSede: ur.id_sede ?? null,
         rolNombre: ur.rol?.nombre ?? '',
         iglesiaNombre: ur.iglesia?.nombre ?? '',
+        sedeNombre: ur.sede?.nombre ?? '',
         fechaFin: ur.fecha_fin,
-      })),
+        source: 'usuario_rol',
+      }))
+      .concat(
+        (r.usuario_rol_sede || [])
+          .filter((urs: any) => urs.fecha_fin === null)
+          .map((urs: any) => ({
+            idUsuarioRol: urs.id_usuario_rol_sede,
+            idRol: urs.id_rol,
+            idIglesia: urs.id_iglesia,
+            idSede: urs.id_sede ?? null,
+            rolNombre: urs.rol?.nombre ?? '',
+            iglesiaNombre: urs.iglesia?.nombre ?? '',
+            sedeNombre: urs.sede?.nombre ?? '',
+            fechaFin: urs.fecha_fin,
+            source: 'usuario_rol_sede',
+          }))
+      ),
     minNames: (r.miembro_ministerio || [])
       .filter((mm: any) => mm.fecha_salida === null)
       .map((mm: any) => ({
@@ -165,9 +218,12 @@ export async function getUsuariosByIglesia(idIglesia: number): Promise<UsuarioEn
       idUsuarioRol: rol.id_usuario_rol,
       idRol: rol.id_rol,
       idIglesia: rol.id_iglesia,
+      idSede: rol.id_sede ?? null,
       rolNombre: rol.rol_nombre ?? '',
       iglesiaNombre: rol.iglesia_nombre ?? '',
+      sedeNombre: rol.sede_nombre ?? '',
       fechaFin: rol.fecha_fin,
+      source: rol.source ?? 'usuario_rol',
     })),
     minNames: (r.ministerios ?? []).map((mm: any) => ({
       nombre: mm.ministerio_nombre ?? '',
@@ -209,9 +265,16 @@ export async function assignRol(data: {
   idSede?: number | null
 }): Promise<{ success: boolean; message: string; id_usuario_rol?: number }> {
   try {
-    // Insert directly into usuario_rol table
+    const isSedeRole = [ROLE_IDS.ADMIN_SEDE, ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR].includes(data.idRol)
+
+    if (isSedeRole && !data.idSede) {
+      throw new Error('Debes seleccionar una sede para este rol')
+    }
+
+    const targetTable = isSedeRole ? 'usuario_rol_sede' : 'usuario_rol'
+
     const { data: result, error } = await supabase
-      .from('usuario_rol')
+      .from(targetTable)
       .insert({
         id_usuario: data.idUsuario,
         id_rol: data.idRol,
@@ -231,7 +294,7 @@ export async function assignRol(data: {
     return {
       success: true,
       message: 'Rol asignado correctamente',
-      id_usuario_rol: result.id_usuario_rol
+      id_usuario_rol: result.id_usuario_rol ?? result.id_usuario_rol_sede
     }
   } catch (error) {
     console.error('Error in assignRol:', error)
@@ -242,11 +305,13 @@ export async function assignRol(data: {
   }
 }
 
-export async function removeRol(idUsuarioRol: number): Promise<void> {
+export async function removeRol(params: { idUsuarioRol: number; source: UsuarioRolSource }): Promise<void> {
+  const table = params.source === 'usuario_rol_sede' ? 'usuario_rol_sede' : 'usuario_rol'
+  const idColumn = params.source === 'usuario_rol_sede' ? 'id_usuario_rol_sede' : 'id_usuario_rol'
   const { error } = await supabase
-    .from('usuario_rol')
+    .from(table)
     .update({ fecha_fin: new Date().toISOString().split('T')[0] })
-    .eq('id_usuario_rol', idUsuarioRol)
+    .eq(idColumn, params.idUsuarioRol)
   if (error) throw error
 }
 
@@ -256,6 +321,7 @@ export async function inviteUser(data: {
   apellidos: string
   idIglesia: number
   idRol: number
+  idSede?: number | null
 }): Promise<{ success: boolean; message: string }> {
   try {
     console.log('[inviteUser] Starting invitation process for:', data.correo)
