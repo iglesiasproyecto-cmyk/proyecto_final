@@ -102,3 +102,52 @@ COMPLETION CHECKLIST
 [ ] Next steps identified (Phase 1 planning)
 
 ===============================================================================
+PHASE 2B.1 Findings: Missing Tables & RPC Functions
+===============================================================================
+
+Assessment Date: 2026-05-12
+Assessment Method: REST API table existence check via Supabase public schema
+
+Tables Checked:
+- aula_certificado: MISSING ✗
+  Status: "Could not find the table 'public.aula_certificado' in the schema cache"
+  Expected Location: Migration 20260427100000_update_schema_to_aula_tables.sql
+  Impact: HIGH - Users cannot earn or store course certificates
+
+- aula_inscripcion: MISSING ✗
+  Status: "Could not find the table 'public.aula_inscripcion' in the schema cache"
+  Expected Location: Migration 20260427100000_update_schema_to_aula_tables.sql
+  Impact: HIGH - Users cannot enroll in courses, breaking course/aula feature
+
+- hoja_de_vida: MISSING ✗
+  Status: "Could not find the table 'public.hoja_de_vida' in the schema cache"
+  Expected Location: Migration 20260505_create_hoja_de_vida_table.sql
+  Impact: MEDIUM - Users cannot create professional profiles/CVs
+
+- RPC get_hoja_de_vida_completa(): MISSING ✗
+  Status: Function was defined in 20260505_create_hoja_de_vida_table.sql but not applied
+  Expected Parameters: p_id_usuario INTEGER
+  Impact: MEDIUM - API cannot fetch complete CV data with certificates
+
+Tables to Create: ALL THREE + RPC function
+  1. aula_certificado (bigint PK, references usuario + aula_curso)
+  2. aula_inscripcion (bigint PK, references usuario + aula_curso)
+  3. hoja_de_vida (bigint PK, references usuario)
+  4. get_hoja_de_vida_completa() RPC function
+
+Migration File References:
+  - Table definitions: /home/juanda/Proyectofinal/supabase/migrations/20260427100000_update_schema_to_aula_tables.sql
+  - RPC definition: /home/juanda/Proyectofinal/supabase/migrations/20260505_create_hoja_de_vida_table.sql
+
+Root Cause Analysis:
+  The incident that deleted usuario.auth_user_id also appears to have removed these
+  three critical tables from the public schema. They exist in migration history but
+  were not present in the running Supabase database when tested.
+
+Next Phase: 2B.2 - Create Missing Tables
+  Task: Execute migration to restore all three tables + RPC function
+  Dependencies: Phase 2A (auth linkage) must be complete first
+  Estimated Time: ~15 minutes
+  Risk Level: LOW - Tables are idempotent, can be re-created without data loss
+
+===============================================================================
