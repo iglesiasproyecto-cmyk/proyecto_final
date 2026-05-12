@@ -211,35 +211,37 @@ export function SedesPage() {
   });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10 px-4 md:px-0">
-      {/* HEADER: Diferencia clara de títulos y subtítulos por color/tamaño */}
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col gap-6">
+        {/* Logo + Título + Botón Nueva Sede */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+              <MapPin className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Estructura</p>
+              <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Gestión de Sedes</h1>
+            </div>
           </div>
-          <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-0.5 hidden sm:block">Estructura</p>
-            <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-foreground leading-tight">Gestión de Sedes</h1>
-          </div>
+          <Button onClick={openAdd} className="shrink-0 shadow-md shadow-[#4682b4]/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 text-white h-11">
+            <Plus className="w-4 h-4 mr-2" /> Nueva Sede
+          </Button>
         </div>
-        <Button onClick={openAdd} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-4 sm:px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20 text-sm">
-          <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Nueva Sede</span>
-          <span className="sm:hidden">Nueva</span>
-        </Button>
 
-        <div className="flex flex-col sm:flex-row gap-3 border-t border-border/30 pt-3 sm:pt-0">
-          <div className="relative flex-1 sm:max-w-xs">
+        {/* Búsqueda y Filtros */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
             <Input 
               placeholder="Buscar sedes..." 
               value={search} 
               onChange={e => setSearch(e.target.value)} 
-              className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
+              className="pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" 
             />
           </div>
           <Select value={filterIglesia} onValueChange={setFilterIglesia}>
-            <SelectTrigger className="w-full sm:w-40 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-[#4682b4]/20">
+            <SelectTrigger className="w-56 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm">
               <SelectValue placeholder="Iglesia" />
             </SelectTrigger>
             <SelectContent>
@@ -248,7 +250,7 @@ export function SedesPage() {
             </SelectContent>
           </Select>
           <Select value={filterEstado} onValueChange={setFilterEstado}>
-            <SelectTrigger className="w-full sm:w-36 bg-white/50 dark:bg-black/20 border-transparent h-11 rounded-xl focus:ring-[#4682b4]/20">
+            <SelectTrigger className="w-48 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm">
               <SelectValue placeholder="Estado" />
             </SelectTrigger>
             <SelectContent>
