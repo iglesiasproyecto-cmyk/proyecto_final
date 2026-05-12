@@ -61,7 +61,6 @@ export function CursosServidorList() {
         .eq('id_usuario', internalUserId)
         .eq('activo', true)
         .eq('aula_curso.estado', 'activo')
-        .is('aula_curso.deleted_at', null)
 
       if (error) throw error
       return data?.map(item => ({

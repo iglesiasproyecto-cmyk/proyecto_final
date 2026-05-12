@@ -326,8 +326,8 @@ export function UsuariosPage() {
                 <TableCell className="text-xs text-muted-foreground">{u.correo}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {u.roleNames.length > 0 ? u.roleNames.map((rn, i) => (
-                      <Badge key={i} variant="secondary" className="text-xs">
+                    {u.roleNames.length > 0 ? u.roleNames.map((rn) => (
+                      <Badge key={`${rn.idRol}-${rn.idIglesia}-${rn.sedeNombre || ''}`} variant="secondary" className="text-xs">
                         {rn.rolNombre}{rn.sedeNombre ? ` · ${rn.sedeNombre}` : ""}
                       </Badge>
                     )) : <span className="text-xs text-muted-foreground">—</span>}
@@ -335,8 +335,8 @@ export function UsuariosPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {u.minNames.length > 0 ? u.minNames.slice(0, 2).map((mn, i) => (
-                      <Badge key={i} variant="outline" className="text-xs">{mn.nombre}</Badge>
+                    {u.minNames.length > 0 ? u.minNames.slice(0, 2).map((mn) => (
+                      <Badge key={mn.nombre} variant="outline" className="text-xs">{mn.nombre}</Badge>
                     )) : <span className="text-xs text-muted-foreground">—</span>}
                     {u.minNames.length > 2 && <Badge variant="outline" className="text-xs">+{u.minNames.length - 2}</Badge>}
                   </div>
@@ -417,8 +417,8 @@ export function UsuariosPage() {
               </div>
               <div>
                 <p className="text-sm flex items-center gap-1 mb-2"><ShieldCheck className="w-4 h-4" /> Roles asignados:</p>
-                {detailUser.roleNames.length > 0 ? detailUser.roleNames.map((rn, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm ml-6 py-0.5">
+                {detailUser.roleNames.length > 0 ? detailUser.roleNames.map((rn) => (
+                  <div key={`${rn.idRol}-${rn.idIglesia}-${rn.sedeNombre || ''}`} className="flex items-center gap-2 text-sm ml-6 py-0.5">
                     <Badge variant="secondary">{rn.rolNombre}</Badge>
                     <span className="text-muted-foreground text-xs">en {rn.iglesiaNombre}{rn.sedeNombre ? ` · ${rn.sedeNombre}` : ""}</span>
                   </div>
@@ -426,8 +426,8 @@ export function UsuariosPage() {
               </div>
               <div>
                 <p className="text-sm mb-2">Ministerios:</p>
-                {detailUser.minNames.length > 0 ? detailUser.minNames.map((mn, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm ml-6 py-0.5">
+                {detailUser.minNames.length > 0 ? detailUser.minNames.map((mn) => (
+                  <div key={mn.nombre} className="flex items-center gap-2 text-sm ml-6 py-0.5">
                     <Badge variant="outline">{mn.nombre}</Badge>
                     <span className="text-muted-foreground text-xs">({mn.rol})</span>
                   </div>

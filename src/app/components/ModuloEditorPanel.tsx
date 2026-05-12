@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { Input } from './ui/input'
+import { Skeleton } from './ui/skeleton'
 import {
   Save, Loader2, Paperclip, Trash2, FileText,
   FileImage, File, ExternalLink, X, Link2, Plus,

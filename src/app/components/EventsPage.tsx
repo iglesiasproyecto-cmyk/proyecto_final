@@ -419,7 +419,7 @@ export function EventsPage() {
             </TabsTrigger>
           </TabsList>
 
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {["todos", "global", "ministerio"].map((tab) => (
               <TabsContent key={tab} value={tab} className="outline-none space-y-6 mt-0">
                 {renderEventsGrid(

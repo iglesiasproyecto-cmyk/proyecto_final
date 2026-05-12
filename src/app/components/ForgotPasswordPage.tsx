@@ -158,7 +158,7 @@ export function ForgotPasswordPage() {
           </div>
 
           {/* PASO 1: Solicitud de Email */}
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {step === 'email' && (
               <motion.form
                 key="email-form"
@@ -234,7 +234,7 @@ export function ForgotPasswordPage() {
           </AnimatePresence>
 
           {/* PASO 2: Confirmación de envío */}
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {step === 'verification' && (
               <motion.div
                 key="verification-message"
