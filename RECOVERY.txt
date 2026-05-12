@@ -466,3 +466,346 @@ Priority 3 (FUTURE):
   - But no action needed immediately — listeners are solid
 
 ===============================================================================
+
+===============================================================================
+PHASE 2D.3 INTEGRATION TEST - Full Auth Flow Verification
+===============================================================================
+
+Test Execution Date: 2026-05-12
+Test Coordinator: Claude Code Agent
+Supabase Project: heibyjbvfiokmduwwawm
+Frontend URL: http://localhost:5173
+
+===============================================================================
+TEST PREREQUISITES VERIFICATION
+===============================================================================
+
+✓ Phase 2A Migration (20260512_phase2a_restore_auth_linkage.sql)
+  - Status: EXISTS
+  - Content: handle_new_user trigger, role definitions, helper functions
+  - Purpose: Auto-link usuario to auth.users.id when users register
+
+✓ Phase 2B Migration (20260512_phase2b_restore_missing_tables.sql)
+  - Status: EXISTS
+  - Content: aula_inscripcion, aula_certificado, hoja_de_vida + RPC
+  - Purpose: Restore missing academic tracking tables
+
+✓ Phase 2C Migration (20260512_phase2c_harden_rls_policies.sql)
+  - Status: EXISTS
+  - Content: Role-based RLS for pais, departamento, ciudad
+  - Purpose: Harden data access with is_super_admin() checks
+
+Frontend Dependencies:
+  - React Router v7 (AppContext with Supabase auth listener)
+  - Supabase JS client (@supabase/supabase-js)
+  - Auth flow: Login → JWT → AppContext sync → Dashboard
+
+===============================================================================
+TEST EXECUTION STEPS (Manual Browser Interaction Required)
+===============================================================================
+
+STEP 1: Create Test User in Supabase Auth
+───────────────────────────────────────────────────────────────────────────
+Instruction: Create auth user to link with usuario table
+
+URL: https://supabase.com/dashboard/project/heibyjbvfiokmduwwawm/auth/users
+Action: Click "Add user" button
+Form Fields:
+  - Email: test-admin@local.test
+  - Password: Test123!@#
+  - (Optional) Auto confirm email: [checked]
+
+Expected Result: User appears in auth.users table
+
+Status: MANUAL - Requires human interaction
+User Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 2: Assign Super Admin Role via SQL
+───────────────────────────────────────────────────────────────────────────
+Instruction: Assign 'Super Administrador' role to test user
+
+URL: https://supabase.com/dashboard/project/heibyjbvfiokmduwwawm/sql/new
+Query to Execute:
+
+  INSERT INTO usuario_rol (id_usuario, id_rol, fecha_inicio)
+  VALUES (
+    (SELECT id_usuario FROM usuario WHERE correo = 'test-admin@local.test'),
+    (SELECT id_rol FROM rol WHERE nombre = 'Super Administrador'),
+    NOW()::date
+  );
+
+Expected Result: INSERT returns "1 row affected"
+Verification Query:
+  
+  SELECT ur.id_usuario_rol, ur.id_usuario, r.nombre, ur.fecha_inicio
+  FROM usuario_rol ur
+  JOIN rol r ON ur.id_rol = r.id_rol
+  JOIN usuario u ON ur.id_usuario = u.id_usuario
+  WHERE u.correo = 'test-admin@local.test'
+    AND ur.fecha_fin IS NULL;
+
+Expected Verification Result: 1 row with role = 'Super Administrador'
+
+Status: MANUAL - Requires human interaction
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 3: Verify Test Data Exists
+───────────────────────────────────────────────────────────────────────────
+Instruction: Check that at least one city exists (needed for iglesia creation)
+
+URL: https://supabase.com/dashboard/project/heibyjbvfiokmduwwawm/sql/new
+Query:
+
+  SELECT id_ciudad, nombre FROM ciudad LIMIT 1;
+
+Expected Result: At least 1 row with city data
+If empty: May need to manually insert test city
+
+Status: MANUAL - Requires human interaction
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 4: Test Frontend Login Flow
+───────────────────────────────────────────────────────────────────────────
+Instruction: Verify that frontend authentication works end-to-end
+
+Prerequisites:
+  1. Frontend dev server running: npm run dev
+  2. Terminal ready to monitor logs
+
+Browser Action Steps:
+  1. Open: http://localhost:5173 in browser
+  2. Observe: Landing page loads (with Login button visible)
+  3. Click: Login button (navigate to login page)
+  4. Enter Credentials:
+     - Email: test-admin@local.test
+     - Password: Test123!@#
+  5. Click: "Sign In" button
+  6. Observe: Loading state appears (spinner/skeleton)
+  7. Wait: For authentication to complete (5-10 seconds typical)
+  8. Expected: Page redirects to dashboard (AppLayout loads)
+  9. Verify: Sidebar visible + main content loads + no 401/403 errors
+
+Expected Behavior:
+  ✓ Login form submits without validation errors
+  ✓ Supabase auth.signInWithPassword() succeeds
+  ✓ JWT token obtained successfully
+  ✓ AppContext receives session event (auth.onAuthStateChange)
+  ✓ usuarioActual hydrated with test user data
+  ✓ Roles loaded and rendered in sidebar
+  ✓ Dashboard content appears
+
+Troubleshooting:
+  ❌ 401 Unauthorized: usuario table not linked to auth.users
+  ❌ RLS policy violation: usuario.auth_user_id NULL or incorrect
+  ❌ Redirect to login: Session not persisted in localStorage
+  ❌ Console errors: Check browser DevTools (F12) Console tab
+  ❌ Blank page: React render error, check Network tab for API responses
+
+Status: MANUAL - Requires human interaction + browser observation
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 5: Test iglesia Creation
+───────────────────────────────────────────────────────────────────────────
+Instruction: Verify that authenticated user can create a church record
+
+Prerequisites:
+  - User logged in to dashboard (Step 4 passed)
+
+Browser Action Steps:
+  1. Locate: "Iglesias" link in sidebar (or similar church management menu)
+  2. Click: Navigate to iglesia list page
+  3. Find: "Create" or "New Iglesia" button
+  4. Click: Button to open creation form
+  5. Fill Form:
+     - Nombre (Name): "Test Iglesia Recovery"
+     - Ciudad (City): Select from dropdown (use city from Step 3)
+     - Estado (Status): Select "activa" (active)
+     - (Optional other fields): Fill as visible
+  6. Click: "Create" or "Submit" button
+  7. Observe: Loading state (spinner/disabled button)
+  8. Expected: Success message appears + form clears + record appears in list
+
+Expected POST Request:
+  URL: https://heibyjbvfiokmduwwawm.supabase.co/rest/v1/iglesia
+  Method: POST
+  Status: 201 Created (or 200 OK depending on response)
+  Headers: Authorization: Bearer [JWT]
+  Body: { nombre: "Test Iglesia Recovery", id_ciudad: [city_id], estado: "activa", ... }
+
+RLS Validation:
+  ✓ Policy checked: "is_admin_iglesia()" OR "is_super_admin()"
+  ✓ User has "Super Administrador" role → ALLOW
+  ✓ INSERT succeeds
+
+Troubleshooting iglesia Failure:
+  ❌ HTTP 400 Bad Request: Missing required field (e.g., id_ciudad)
+  ❌ HTTP 403 Forbidden: RLS denied (is_admin_iglesia() returned false)
+     → Verify usuario_rol row exists with 'Super Administrador' role
+     → Verify usuario.auth_user_id is set and matches JWT sub
+  ❌ HTTP 500 Internal Server Error: Database error (check Supabase logs)
+  ❌ Form validation error: Client-side validation failed (missing field)
+
+Status: MANUAL - Requires human interaction + browser observation
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 6: Test departamento Creation
+───────────────────────────────────────────────────────────────────────────
+Instruction: Verify that super_admin can create a geographic department
+
+Prerequisites:
+  - User logged in to dashboard (Step 4 passed)
+
+Browser Action Steps:
+  1. Locate: "Configuración" or "Admin" menu (geographic/catalog management)
+  2. Find: "Departamentos" or "Departments" section
+  3. Click: Navigate to departamento list page
+  4. Find: "Create" or "New Departamento" button
+  5. Click: Button to open creation form
+  6. Fill Form:
+     - Nombre (Name): "Test Departamento Recovery"
+     - País (Country): Select from dropdown (e.g., Colombia)
+     - (Optional): Other visible fields
+  7. Click: "Create" or "Submit" button
+  8. Observe: Loading state + expected success
+
+Expected POST Request:
+  URL: https://heibyjbvfiokmduwwawm.supabase.co/rest/v1/departamento
+  Method: POST
+  Status: 201 Created
+  Headers: Authorization: Bearer [JWT]
+  Body: { nombre: "Test Departamento Recovery", id_pais: [country_id], ... }
+
+RLS Validation:
+  ✓ Policy checked (Phase 2C hardening): "super_admin insert departamento"
+  ✓ Requires: is_super_admin() = true
+  ✓ User has role "Super Administrador" → ALLOW
+  ✓ INSERT succeeds
+
+Troubleshooting departamento Failure:
+  ❌ HTTP 403 Forbidden: Phase 2C hardening issue
+     → Verify is_super_admin() function exists and evaluates correctly
+     → Verify usuario_rol row exists and fecha_fin IS NULL
+     → Check Supabase SQL Editor: SELECT is_super_admin(); as authenticated user
+  ❌ HTTP 400 Bad Request: Missing required field (id_pais)
+  ❌ HTTP 500 Internal Server Error: Function error (check Supabase logs)
+
+Status: MANUAL - Requires human interaction + browser observation
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 7: Document Test Results
+───────────────────────────────────────────────────────────────────────────
+Instruction: Consolidate findings into test summary
+
+Checklist:
+  [ ] STEP 1 Result: Test user created? YES / NO / ERROR
+  [ ] STEP 2 Result: Role assigned? YES / NO / ERROR
+  [ ] STEP 3 Result: City exists? YES / NO
+  [ ] STEP 4 Result: Login succeeded? YES / NO / ERROR
+  [ ] STEP 5 Result: iglesia creation? SUCCESS / HTTP_400 / HTTP_403 / HTTP_500 / ERROR
+  [ ] STEP 6 Result: departamento creation? SUCCESS / HTTP_400 / HTTP_403 / HTTP_500 / ERROR
+
+Test Outcome:
+  [ ] ALL PASSED ✅ - Recovery is working end-to-end
+  [ ] PARTIAL PASS ⚠️ - Some features working, document issues
+  [ ] FAILED ❌ - Critical issue, detailed troubleshooting needed
+
+Summary:
+  Total Steps: 7
+  Steps Passed: [_] / 7
+  Steps Failed: [_] / 7
+  Critical Blockers: [list any HTTP 403/500 errors]
+  Recommendation: [next action if not fully passing]
+
+Status: MANUAL - Requires user summary
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 8: Commit Test Results to Git
+───────────────────────────────────────────────────────────────────────────
+Instruction: Document the test in git history (even if partial pass/fail)
+
+Command to Execute:
+
+  cd /home/juanda/Proyectofinal
+  git commit --allow-empty -m "test(recovery): full auth flow verification [PASS/FAIL]"
+
+Alternative if you want to include this file in the commit:
+
+  git add RECOVERY.txt
+  git commit -m "test(recovery): full auth flow verification - documented results"
+
+Expected Result:
+  ✓ Commit created with SHA hash
+  ✓ RECOVERY.txt updated with test results
+  ✓ git log shows: "test(recovery): full auth flow verification"
+
+Status: AUTOMATED - Can be executed after manual test steps
+Result: [PENDING - execute after steps 1-7 complete]
+
+===============================================================================
+INTEGRATION TEST SUCCESS CRITERIA
+===============================================================================
+
+To declare recovery COMPLETE, ALL of the following must be TRUE:
+
+✅ CRITERIA 1: Test User Created in Supabase Auth
+   - Condition: auth.users table contains row with email='test-admin@local.test'
+   - Verification: SELECT * FROM auth.users WHERE email = 'test-admin@local.test';
+   - Expected Result: 1 row found
+   - Status: [PASS / FAIL]
+
+✅ CRITERIA 2: Test User Assigned Super Admin Role
+   - Condition: usuario_rol row exists linking test user to 'Super Administrador'
+   - Verification: SELECT COUNT(*) FROM usuario_rol ur
+                   JOIN rol r ON ur.id_rol = r.id_rol
+                   WHERE r.nombre = 'Super Administrador'
+                     AND ur.fecha_fin IS NULL
+     (Filtered to test user)
+   - Expected Result: 1 row found
+   - Status: [PASS / FAIL]
+
+✅ CRITERIA 3: Frontend Login Succeeds
+   - Condition: User can authenticate via http://localhost:5173 login form
+   - Expected Behavior: Form submission → JWT obtained → Dashboard rendered
+   - HTTP Status: 200 OK
+   - App State: usuarioActual !== null, rol !== null
+   - Status: [PASS / FAIL]
+
+✅ CRITERIA 4: iglesia Creation Succeeds (POST /rest/v1/iglesia)
+   - Condition: Authenticated user can INSERT new iglesia record
+   - Expected HTTP Status: 201 Created
+   - Expected RLS Result: is_admin_iglesia() OR is_super_admin() → true
+   - Verification: Record appears in iglesia list
+   - Status: [PASS / FAIL]
+
+✅ CRITERIA 5: departamento Creation Succeeds (POST /rest/v1/departamento)
+   - Condition: Super admin user can INSERT new departamento record
+   - Expected HTTP Status: 201 Created
+   - Expected RLS Result: is_super_admin() → true (Phase 2C hardening)
+   - Verification: Record appears in departamento list
+   - Status: [PASS / FAIL]
+
+✅ CRITERIA 6: Git Commit Created
+   - Condition: git log shows test commit
+   - Expected Message: "test(recovery): full auth flow verification [PASS/FAIL]"
+   - Status: [PASS / FAIL]
+
+Overall Test Verdict:
+  ✅ ALL 6 CRITERIA PASSED: Recovery is complete, system is stabilized
+  ⚠️  PARTIAL PASS (4-5 criteria): Assess which functions failing, document for Phase 2E
+  ❌ MAJOR FAILURES (0-3 criteria): Root cause analysis needed, see troubleshooting
+
+===============================================================================
