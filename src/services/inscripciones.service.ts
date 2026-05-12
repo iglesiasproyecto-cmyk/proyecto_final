@@ -79,7 +79,7 @@ export async function getCandidatosInscripcionCurso(idAulaCurso: number) {
     .from('aula_curso')
     .select('id_aula_curso, id_ministerio')
     .eq('id_aula_curso', idAulaCurso)
-    .is('deleted_at', null)
+    .eq('estado', 'activo')
     .single()
 
   if (cursoError) throw cursoError
