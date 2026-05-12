@@ -249,6 +249,7 @@ export function MinisteriosPage() {
   const toggleEstadoMutation = useToggleMinisterioEstado();
   const createMinisterioMutation = useCreateMinisterio();
   const deleteMinisterioMutation = useDeleteMinisterio();
+  const canManageMinisterios = rolActual === "super_admin" || rolActual === "admin_iglesia";
 
   function handleDeleteMinisterio(id: number, nombre: string) {
     if (!confirm(`¿Eliminar ministerio "${nombre}"? Esta acción no se puede deshacer.`)) return;
@@ -277,6 +278,10 @@ export function MinisteriosPage() {
   }
 
   const handleCreateMinisterio = () => {
+    if (!canManageMinisterios) {
+      alert("No tienes permisos para crear ministerios");
+      return;
+    }
     if (!createForm.nombre.trim() || !createForm.idSede) return;
 
     // Verificar si ya existe un ministerio con el mismo nombre en la misma sede
@@ -343,9 +348,11 @@ export function MinisteriosPage() {
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
             <Input placeholder="Buscar ministerio..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" />
           </div>
-          <Button onClick={() => setShowCreate(true)} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all">
+          {canManageMinisterios && (
+            <Button onClick={() => setShowCreate(true)} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all">
             <Plus className="w-4 h-4 mr-2" /> Nuevo
-          </Button>
+            </Button>
+          )}
         </div>
       </motion.div>
 
@@ -383,6 +390,8 @@ export function MinisteriosPage() {
 
                <div className="relative z-10 mt-3 flex gap-2 w-full pt-1">
                   <Button variant="secondary" size="sm" className="flex-1 h-8 text-[11px] bg-background/50 hover:bg-primary/10 hover:text-primary border border-white/5 transition-colors font-medium shadow-none" onClick={(e) => { e.stopPropagation(); }}><BookOpen className="w-3.5 h-3.5 mr-1" /> Aula</Button>
+                  {canManageMinisterios && (
+                    <>
                   <Button 
                     variant="ghost" 
                     size="icon" 
@@ -395,6 +404,8 @@ export function MinisteriosPage() {
                   <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/50 hover:bg-red-500/10 hover:text-red-500 border border-white/5 text-muted-foreground shrink-0" disabled={deleteMinisterioMutation.isPending} onClick={(e) => { e.stopPropagation(); handleDeleteMinisterio(m.idMinisterio, m.nombre); }}>
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
+                    </>
+                  )}
                </div>
             </Card>
           </motion.div>

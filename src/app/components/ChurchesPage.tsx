@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useIglesiasEnriquecidas, useCreateIglesia, useUpdateIglesia, useToggleIglesiaEstado, useDeleteIglesia } from "@/hooks/useIglesias";
+import { usePaisesEnhanced, useDepartamentosEnhanced, useCiudadesEnhanced } from "@/hooks/useGeografiaEnhanced";
+import { useCiudades } from "@/hooks/useGeografia";
 
 import type { IglesiaEnriquecida } from "@/services/iglesias.service";
 import { Button } from "./ui/button";
@@ -29,6 +31,9 @@ interface IglesiaFormData {
   telefono: string;
   descripcion: string;
   sitioWeb: string;
+  idPais: number;
+  idDepartamento: number;
+  idCiudad: number;
 }
 
 // Componente Glass para las tarjetas de iglesias al estilo Dashboard
@@ -61,8 +66,26 @@ export function ChurchesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [editingIglesia, setEditingIglesia] = useState<IglesiaEnriquecida | null>(null);
   const [deletingIglesia, setDeletingIglesia] = useState<IglesiaEnriquecida | null>(null);
-  const [form, setForm] = useState<IglesiaFormData>({ nombre: "", fechaFundacion: "", direccion: "", telefono: "", descripcion: "", sitioWeb: "" });
+  const [form, setForm] = useState<IglesiaFormData>({
+    nombre: "",
+    fechaFundacion: "",
+    direccion: "",
+    telefono: "",
+    descripcion: "",
+    sitioWeb: "",
+    idPais: 0,
+    idDepartamento: 0,
+    idCiudad: 0,
+  });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof IglesiaFormData, string>>>({});
+
+  const { data: paises = [] } = usePaisesEnhanced();
+  const { data: departamentosAll = [] } = useDepartamentosEnhanced();
+  const departamentos = form.idPais
+    ? departamentosAll.filter((d) => d.idPais === form.idPais)
+    : [];
+  const { data: ciudades = [] } = useCiudadesEnhanced(form.idDepartamento || undefined);
+  const { data: ciudadesAll = [] } = useCiudades();
 
   const createIglesiaMutation = useCreateIglesia();
   const updateIglesiaMutation = useUpdateIglesia();
@@ -103,14 +126,34 @@ export function ChurchesPage() {
     </div>
   );
 
-  const updateField = (field: keyof IglesiaFormData, value: string) => {
+  const updateField = (field: keyof IglesiaFormData, value: string | number) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) setFormErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
+  const resolveLocationFromCityId = (cityId: number) => {
+    const city = ciudadesAll.find((c) => c.idCiudad === cityId);
+    if (!city) return { idDepartamento: 0, idPais: 0 };
+    const dept = departamentosAll.find((d) => d.idDepartamentoGeo === city.idDepartamentoGeo);
+    return { idDepartamento: city.idDepartamentoGeo, idPais: dept?.idPais ?? 0 };
+  };
+
+  useEffect(() => {
+    if (!editingIglesia || !editingIglesia.idCiudad) return;
+    const loc = resolveLocationFromCityId(editingIglesia.idCiudad);
+    if (!loc.idDepartamento || !loc.idPais) return;
+    setForm((prev) => ({
+      ...prev,
+      idPais: loc.idPais,
+      idDepartamento: loc.idDepartamento,
+      idCiudad: editingIglesia.idCiudad || 0,
+    }));
+  }, [editingIglesia, ciudadesAll, departamentosAll]);
+
   const validateForm = (): boolean => {
     const errors: Partial<Record<keyof IglesiaFormData, string>> = {};
     if (!form.nombre.trim()) errors.nombre = "El nombre es requerido";
+    if (!form.idCiudad) errors.idCiudad = "La ciudad es requerida";
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -127,7 +170,16 @@ export function ChurchesPage() {
   const handleCreate = () => {
     if (!validateForm()) return;
     createIglesiaMutation.mutate(
-      { nombre: form.nombre.trim(), fechaFundacion: form.fechaFundacion || null, estado: "activa", direccion: form.direccion.trim() || null, telefono: form.telefono.trim() || null, descripcion: form.descripcion.trim() || null, sitioWeb: form.sitioWeb.trim() || null },
+      {
+        nombre: form.nombre.trim(),
+        fechaFundacion: form.fechaFundacion || null,
+        estado: "activa",
+        idCiudad: form.idCiudad || null,
+        direccion: form.direccion.trim() || null,
+        telefono: form.telefono.trim() || null,
+        descripcion: form.descripcion.trim() || null,
+        sitioWeb: form.sitioWeb.trim() || null,
+      },
       { onSuccess: () => setShowCreate(false) }
     );
   };
@@ -161,6 +213,60 @@ export function ChurchesPage() {
         <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">Nombre <span className="text-destructive">*</span></label>
         <Input value={form.nombre} onChange={(e) => updateField("nombre", e.target.value)} placeholder="Ej. Iglesia Central" className={`bg-input-background transition-all ${formErrors.nombre ? "border-destructive ring-destructive/20" : "focus-visible:ring-primary/20"}`} />
         {formErrors.nombre && <p className="text-destructive text-[11px] font-medium mt-1">{formErrors.nombre}</p>}
+      </div>
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">País <span className="text-destructive">*</span></label>
+        <Select
+          value={form.idPais ? String(form.idPais) : ""}
+          onValueChange={(v) => {
+            updateField("idPais", Number(v));
+            updateField("idDepartamento", 0);
+            updateField("idCiudad", 0);
+          }}
+        >
+          <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar país..." /></SelectTrigger>
+          <SelectContent>
+            {paises.map((p) => (
+              <SelectItem key={p.idPais} value={String(p.idPais)}>{p.nombre}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">Departamento <span className="text-destructive">*</span></label>
+        <Select
+          value={form.idDepartamento ? String(form.idDepartamento) : ""}
+          onValueChange={(v) => {
+            updateField("idDepartamento", Number(v));
+            updateField("idCiudad", 0);
+          }}
+          disabled={!form.idPais}
+        >
+          <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar departamento..." /></SelectTrigger>
+          <SelectContent>
+            {departamentos.map((d) => (
+              <SelectItem key={d.idDepartamentoGeo} value={String(d.idDepartamentoGeo)}>{d.nombre}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">Ciudad <span className="text-destructive">*</span></label>
+        <Select
+          value={form.idCiudad ? String(form.idCiudad) : ""}
+          onValueChange={(v) => updateField("idCiudad", Number(v))}
+          disabled={!form.idDepartamento}
+        >
+          <SelectTrigger className={`bg-input-background ${formErrors.idCiudad ? "border-destructive ring-destructive/20" : ""}`}>
+            <SelectValue placeholder="Seleccionar ciudad..." />
+          </SelectTrigger>
+          <SelectContent>
+            {ciudades.map((c) => (
+              <SelectItem key={c.idCiudad} value={String(c.idCiudad)}>{c.nombre}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {formErrors.idCiudad && <p className="text-destructive text-[11px] font-medium mt-1">{formErrors.idCiudad}</p>}
       </div>
       <div>
         <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 block">Fecha de Fundación</label>
@@ -198,7 +304,7 @@ export function ChurchesPage() {
           </div>
         </div>
         {rolActual === "super_admin" && (
-          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", direccion: "", telefono: "", descripcion: "", sitioWeb: "" }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20 text-sm">
+          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", direccion: "", telefono: "", descripcion: "", sitioWeb: "", idPais: 0, idDepartamento: 0, idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20 text-sm">
             <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Nueva Iglesia</span>
             <span className="sm:hidden">Nueva</span>
           </Button>
@@ -287,7 +393,17 @@ export function ChurchesPage() {
                 <>
                    <Button variant="secondary" size="sm" className="flex-1 rounded-xl bg-white/50 hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10 transition-colors text-xs sm:text-sm" onClick={() => {
                       setFormErrors({});
-                      setForm({ nombre: ig.nombre, fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "", direccion: ig.direccion || "", telefono: ig.telefono || "", descripcion: ig.descripcion || "", sitioWeb: ig.sitioWeb || "" });
+                      setForm({
+                        nombre: ig.nombre,
+                        fechaFundacion: ig.fechaFundacion ? ig.fechaFundacion.split("T")[0] : "",
+                        direccion: ig.direccion || "",
+                        telefono: ig.telefono || "",
+                        descripcion: ig.descripcion || "",
+                        sitioWeb: ig.sitioWeb || "",
+                        idPais: 0,
+                        idDepartamento: 0,
+                        idCiudad: ig.idCiudad || 0,
+                      });
                       setEditingIglesia(ig);
                     }}>
                      <Pencil className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Editar</span>

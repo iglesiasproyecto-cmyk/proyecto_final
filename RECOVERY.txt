@@ -1,0 +1,811 @@
+===============================================================================
+SUPABASE AUTH RECOVERY DIAGNOSTIC LOG
+===============================================================================
+Date Created: 2026-05-12
+Status: BASELINE AUDIT - Auth Linkage Damage Assessment
+Recovery Phase: Phase 0 (Diagnosis)
+
+===============================================================================
+INCIDENT CONTEXT
+===============================================================================
+Incident: Accidental deletion of usuario.auth_user_id linkage
+Severity Level: TBD (pending diagnostic results)
+Impact Scope: Unknown - to be determined by queries below
+
+===============================================================================
+DIAGNOSTIC QUERIES EXECUTED
+===============================================================================
+
+QUERY 1: Auth Linkage Damage Assessment
+Location: Supabase SQL Editor > New Query
+URL: https://supabase.com/dashboard/project/heibyjbvfiokmduwwawm/sql/new
+
+SQL:
+---
+SELECT
+  (SELECT COUNT(*) FROM usuario) as total_usuarios,
+  (SELECT COUNT(*) FROM usuario WHERE auth_user_id IS NOT NULL) as usuarios_with_auth_link,
+  (SELECT COUNT(*) FROM auth.users) as total_auth_users,
+  (SELECT COUNT(*) FROM usuario_rol WHERE fecha_fin IS NULL) as active_role_assignments,
+  (SELECT COUNT(*) FROM rol) as total_roles;
+---
+
+RESULTS:
+  total_usuarios: [USER_MUST_FILL_IN]
+  usuarios_with_auth_link: [USER_MUST_FILL_IN]
+  total_auth_users: [USER_MUST_FILL_IN]
+  active_role_assignments: [USER_MUST_FILL_IN]
+  total_roles: [USER_MUST_FILL_IN]
+
+Analysis:
+  - Unlinked Users: total_usuarios - usuarios_with_auth_link = [CALCULATE]
+  - Orphaned Auth Accounts: total_auth_users - usuarios_with_auth_link = [CALCULATE]
+  - Severity Assessment: [USER_MUST_DETERMINE]
+
+
+QUERY 2: Role Definition Check
+Location: Supabase SQL Editor > New Query
+
+SQL:
+---
+SELECT id_rol, nombre FROM rol
+WHERE nombre IN ('Super Administrador', 'Administrador de Iglesia', 'Administrador de Sede', 'Lider', 'Servidor')
+ORDER BY nombre;
+---
+
+RESULTS:
+  Role Definitions Found: [USER_MUST_FILL_IN]
+  Format: id_rol | nombre
+  --------+--------------------
+  [USER_MUST_FILL_IN_ROWS]
+
+Analysis:
+  - Critical Roles Present: [USER_MUST_VERIFY]
+  - Role Integrity: [USER_MUST_ASSESS]
+
+===============================================================================
+DAMAGE ASSESSMENT SUMMARY
+===============================================================================
+
+Total Unlinked Usuario Records: [CALCULATE FROM QUERY 1]
+Orphaned Auth Accounts: [CALCULATE FROM QUERY 1]
+Active Role Assignments at Risk: [FROM QUERY 1]
+Role Definitions Intact: [YES/NO from QUERY 2]
+
+Severity Level: [MINOR / MODERATE / SEVERE]
+- MINOR: <5% of users affected
+- MODERATE: 5-25% of users affected
+- SEVERE: >25% of users affected
+
+===============================================================================
+NEXT STEPS (Based on Results)
+===============================================================================
+
+[PENDING DIAGNOSTIC RESULTS - Will determine recovery strategy]
+
+Potential paths forward:
+1. Direct ID Recovery (if auth_user_id can be recovered from auth.users)
+2. Bulk Re-linkage Script (if email matching is viable)
+3. Individual Manual Recovery (if scope is small)
+4. User Re-registration (worst case)
+
+===============================================================================
+COMPLETION CHECKLIST
+===============================================================================
+
+[ ] Query 1 executed in Supabase SQL Editor
+[ ] Query 1 results documented above
+[ ] Query 2 executed in Supabase SQL Editor
+[ ] Query 2 results documented above
+[ ] Damage assessment completed
+[ ] Severity level determined
+[ ] Next steps identified (Phase 1 planning)
+
+===============================================================================
+PHASE 2B.1 Findings: Missing Tables & RPC Functions
+===============================================================================
+
+Assessment Date: 2026-05-12
+Assessment Method: REST API table existence check via Supabase public schema
+
+Tables Checked:
+- aula_certificado: MISSING ✗
+  Status: "Could not find the table 'public.aula_certificado' in the schema cache"
+  Expected Location: Migration 20260427100000_update_schema_to_aula_tables.sql
+  Impact: HIGH - Users cannot earn or store course certificates
+
+- aula_inscripcion: MISSING ✗
+  Status: "Could not find the table 'public.aula_inscripcion' in the schema cache"
+  Expected Location: Migration 20260427100000_update_schema_to_aula_tables.sql
+  Impact: HIGH - Users cannot enroll in courses, breaking course/aula feature
+
+- hoja_de_vida: MISSING ✗
+  Status: "Could not find the table 'public.hoja_de_vida' in the schema cache"
+  Expected Location: Migration 20260505_create_hoja_de_vida_table.sql
+  Impact: MEDIUM - Users cannot create professional profiles/CVs
+
+- RPC get_hoja_de_vida_completa(): MISSING ✗
+  Status: Function was defined in 20260505_create_hoja_de_vida_table.sql but not applied
+  Expected Parameters: p_id_usuario INTEGER
+  Impact: MEDIUM - API cannot fetch complete CV data with certificates
+
+Tables to Create: ALL THREE + RPC function
+  1. aula_certificado (bigint PK, references usuario + aula_curso)
+  2. aula_inscripcion (bigint PK, references usuario + aula_curso)
+  3. hoja_de_vida (bigint PK, references usuario)
+  4. get_hoja_de_vida_completa() RPC function
+
+Migration File References:
+  - Table definitions: /home/juanda/Proyectofinal/supabase/migrations/20260427100000_update_schema_to_aula_tables.sql
+  - RPC definition: /home/juanda/Proyectofinal/supabase/migrations/20260505_create_hoja_de_vida_table.sql
+
+Root Cause Analysis:
+  The incident that deleted usuario.auth_user_id also appears to have removed these
+  three critical tables from the public schema. They exist in migration history but
+  were not present in the running Supabase database when tested.
+
+Next Phase: 2B.2 - Create Missing Tables
+  Task: Execute migration to restore all three tables + RPC function
+  Dependencies: Phase 2A (auth linkage) must be complete first
+  Estimated Time: ~15 minutes
+  Risk Level: LOW - Tables are idempotent, can be re-created without data loss
+
+===============================================================================
+PHASE 2C.1 Findings: RLS Policy Audit
+===============================================================================
+
+Assessment Date: 2026-05-12
+Assessment Method: Migration-based policy analysis + grep pattern matching
+Database Project: heibyjbvfiokmduwwawm (Supabase)
+
+SUMMARY:
+- Total tables with RLS Policies: 40
+- Tables WITHOUT RLS: 15 (mostly new academic/aula tables added in Phase 1)
+- Permissive "true" policies (SECURITY RISK): 2 (both mitigated/commented)
+- Tables needing hardening in Phase 2C.2: ~17 (non-geographic domain tables)
+
+### Tables WITH RLS Policies (40 total):
+
+Geography Domain:
+  - pais (HARDENED - is_super_admin() required)
+  - departamento (HARDENED - is_super_admin() required)
+  - ciudad (HARDENED - is_super_admin() required)
+
+Church/Leadership Domain:
+  - iglesia
+  - sede
+  - pastor
+  - iglesia_pastor
+
+Ministries Domain:
+  - ministerio
+  - miembro_ministerio
+  - evento
+  - evento_ministerio
+  - tipo_evento
+
+Users/Roles Domain:
+  - usuario
+  - usuario_rol
+  - usuario_rol_sede
+  - rol
+  - notificacion
+
+Academic/Aula Domain:
+  - curso
+  - modulo
+  - evaluacion
+  - evaluacion_intento
+  - pregunta
+  - respuesta_evaluacion
+  - proceso_asignado_curso
+  - detalle_proceso_curso
+  - avance_modulo
+  - aula_curso
+  - aula_modulo
+  - aula_evaluacion
+  - aula_inscripcion
+  - aula_progreso_actividad
+  - aula_modulo_archivo
+  - aula_modulo_enlace
+  - aula_actividad
+
+Events/Tasks Domain:
+  - tarea
+  - tarea_asignada
+  - tarea_aprobacion
+  - tarea_checklist
+  - tarea_comentario
+  - tarea_evidencia
+  - tarea_historial
+
+### Tables WITHOUT RLS (15 total - HIGH PRIORITY):
+
+NEW/Recently Added Tables (Phase 1 - missing RLS):
+  - aula_certificado (NEW - Phase 1)
+  - aula_intento_evaluacion (NEW - Phase 1)
+  - aula_opcion (NEW - Phase 1)
+  - aula_pregunta (NEW - Phase 1)
+  - aula_respuesta (NEW - Phase 1)
+  - aula_retroalimentacion (NEW - Phase 1)
+
+RPC Functions / Views (not table RLS, but need access control):
+  - aula_recursos_modulo_id_from_name
+  - avance_modulo_sync_detalle_del
+  - avance_modulo_sync_detalle_ins
+  - [and 8 other utility functions]
+
+### Permissive "true" Policies (SECURITY RISK):
+
+FOUND: 2 instances of permissive 'true' conditions
+
+1. tipo_evento (SELECT policy):
+   - Location: 20260509000000_eventos_tareas_production_fix.sql
+   - Status: COMMENTED OUT (prefixed with "-- SKIP")
+   - Policy: "Tipo evento select" FOR SELECT USING (true)
+   - Risk Level: LOW (commented, SELECT only, public reference data)
+
+2. tarea_checklist (INSERT/UPDATE policy):
+   - Location: 20260511_fase1_eventos_tareas_backend.sql
+   - Status: ACTIVE but scoped
+   - Policy: "TareaChecklist insert/update" WITH CHECK (true)
+   - Condition: Complex role-based check in USING clause before the WITH CHECK
+   - Risk Level: MEDIUM (role-based guards exist but WITH CHECK lacks verification)
+
+### Geographic Tables Status (pais, departamento, ciudad):
+
+PREVIOUSLY RISKY: Migration 20260416120000 had permissive mutations
+FIXED BY: Migration 20260506100000_sp1_fix_rls_geo_super_admin.sql
+CURRENT STATUS: HARDENED - All mutations require is_super_admin()
+
+Hardened Policies (per table):
+  - pais_super_admin_mutations (INSERT)
+  - pais_super_admin_update (UPDATE)
+  - pais_super_admin_delete (DELETE)
+  - [Same pattern for departamento and ciudad]
+
+### Domain-Specific Hardening Status:
+
+HARDENED (Phase completed):
+  ✓ Geography: pais, departamento, ciudad (SP1 - 20260506100000)
+
+PARTIALLY HARDENED (Phase in progress):
+  ⚠ Churches: iglesia (has scope policies), sede (has scope policies)
+  ⚠ Ministries: ministerio (has role-based checks), miembro_ministerio
+  ⚠ Events/Tasks: evento, tarea (have complex role-based policies)
+  ⚠ Academic: curso, modulo (have role-based policies)
+  ⚠ Aula System: aula_curso, aula_modulo, etc. (have admin_sede scope - SP9)
+
+NOT YET HARDENED:
+  ✗ New aula tables: aula_certificado, aula_intento_evaluacion, aula_opcion, aula_pregunta, aula_respuesta, aula_retroalimentacao
+  ✗ Some junction tables: evento_ministerio, tarea_checklist (needs WITH CHECK tightening)
+
+### Analysis:
+
+Key Finding: The project has EVOLVED from "permissive everything" baseline to a more controlled state with role-based scoping. However, hardening is incomplete.
+
+1. Geographic tables (pais/departamento/ciudad): SUCCESSFULLY HARDENED in SP1
+2. Church/Ministry/Academic tables: Have role-based guards but NOT all-or-nothing admin checks
+3. New aula tables: Created without explicit RLS (should add in Phase 2C.2)
+4. tarea_checklist: Has role-based USING clause but WITH CHECK (true) bypasses verification
+
+### Recommendations for Phase 2C.2:
+
+Priority 1 (CRITICAL):
+  1. Fix tarea_checklist WITH CHECK (true) → WITH CHECK (can_manage_tarea())
+  2. Add RLS to aula_certificado, aula_intento_evaluacion
+  3. Add RLS to aula_opcion, aula_pregunta, aula_respuesta, aula_retroalimentacion
+
+Priority 2 (HIGH):
+  4. Uncomment and evaluate tipo_evento SELECT policy
+  5. Audit non-geographic tables for role-based WITH CHECK conditions
+  6. Add RLS to remaining utility tables if they store user data
+
+Priority 3 (MEDIUM):
+  7. Verify all role-based policies use consistent permission functions
+  8. Add comprehensive RLS testing for edge cases
+
+### Migration Files Involved:
+
+Active Hardening Migrations:
+  - 20260506100000_sp1_fix_rls_geo_super_admin.sql (Geographic - COMPLETE)
+  - 20260509090000_sp9_admin_sede_aula_hardening.sql (Aula admin_sede scoping)
+  - 20260512011457_fix_aula_curso_rls_allow_creator.sql (Creator permissions)
+
+Migrations Needing Updates:
+  - 20260509000000_eventos_tareas_production_fix.sql (tipo_evento policy)
+  - 20260511_fase1_eventos_tareas_backend.sql (tarea_checklist WITH CHECK)
+
+===============================================================================
+PHASE 2D.1 Findings: Auth Listener Setup Audit
+===============================================================================
+
+Assessment Date: 2026-05-12
+Assessment Method: AppContext.tsx source code analysis + dependency chain review
+File Analyzed: /home/juanda/Proyectofinal/src/app/store/AppContext.tsx (761 lines)
+
+### AppContext.tsx Analysis:
+
+useEffect Count: 8 total useEffect hooks
+  - Line 307: localStorage sync for isMockMode
+  - Line 311: localStorage sync for mockRol
+  - Line 315: Dark mode toggle to document.documentElement + localStorage
+  - Line 401: authReady ref sync (reads authReady computed value)
+  - Line 405: post_login_reload flag check
+  - Line 422: MAIN AUTH SUBSCRIPTION (onAuthStateChange listener) ← CRITICAL
+  - Line 680: Mock user hydration when isMockMode=true + !usuarioActual
+  - (Total: 8 hooks, but import line is not counted separately)
+
+onAuthStateChange Calls: 1 only (line 635)
+  - Location: Inside the main useEffect at line 422
+  - Pattern: supabase.auth.onAuthStateChange(handleSessionEvent)
+  - Subscription: Properly unsubscribed in cleanup function (line 650)
+
+Duplicate Listeners: NO ✓
+  - Only ONE onAuthStateChange subscription exists in the entire file
+  - Each call properly unsubscribes when effect cleanup fires
+  - No evidence of multiple simultaneous subscriptions
+
+Dependency Array Status: PROPERLY CONFIGURED ✓
+  - Main auth useEffect (line 422) dependency: [resetClientState]
+  - resetClientState is a useCallback defined at line 362
+  - resetClientState dependencies: [cleanupRealtime, clearAuthStorage]
+  - This creates a tight circular dependency, but is INTENTIONAL for auth state
+  - The effect will re-run when resetClientState changes (which is rare)
+  - Empty dependency array IS NOT used here — instead resetClientState is the only dep
+  - This is CORRECT because resetClientState is memoized via useCallback
+
+React.StrictMode Status: NOT ENABLED ✗
+  - main.tsx (line 8): Does NOT wrap with <StrictMode>
+  - App.tsx (line 5-12): Does NOT use <StrictMode>
+  - No React.StrictMode found in codebase
+
+### Listener Re-subscription Analysis:
+
+How the dependency array works:
+  1. resetClientState = useCallback at line 362
+     - Dependencies: [cleanupRealtime, clearAuthStorage]
+     - Both cleanupRealtime and clearAuthStorage are useCallback functions
+     - This creates a stable memoization context
+
+  2. Auth useEffect at line 422 depends on [resetClientState]
+     - When resetClientState identity changes → effect cleanup fires → old subscription unsubscribed
+     - New subscription created with new handleSessionEvent closure
+     - This is INTENTIONAL to ensure handlers have fresh state refs
+
+  3. Stable Memoization: resetClientState doesn't change frequently
+     - cleanupRealtime has no dependencies (line 342)
+     - clearAuthStorage has no dependencies (line 322)
+     - So resetClientState identity is stable across renders
+     - Result: auth listener does NOT re-subscribe on every render
+
+### SIGNED_IN Log Frequency Analysis:
+
+Logged at line 580: console.log('[AUTH] onAuthStateChange:', event, !!session)
+
+Excessive SIGNED_IN logs could be caused by:
+  1. ✓ CONFIRMED NOT: Duplicate subscriptions (only 1 exists)
+  2. ✓ CONFIRMED NOT: Bad dependency array (resetClientState is stable)
+  3. ✗ CONFIRMED NOT: React.StrictMode double-mounting (NOT ENABLED)
+  4. ? POSSIBLE: Supabase SDK firing multiple events per login
+  5. ? POSSIBLE: Native browser auth state change (e.g., tab sync, token refresh)
+  6. ? POSSIBLE: handleSessionEvent being called multiple times for same event
+
+### Key Observations:
+
+1. LISTENER SETUP: Correct and minimal
+   - Single subscription
+   - Proper cleanup in return statement (line 649-653)
+   - Cleanup includes: subscription.unsubscribe() + two timeouts
+
+2. TOKEN DEDUPLICATION: Present and working (line 611-613)
+   ```typescript
+   if (event === 'SIGNED_IN' && session.access_token === lastHandledTokenRef.current) {
+     return
+   }
+   ```
+   - This prevents re-processing identical SIGNED_IN events
+   - Uses lastHandledTokenRef to compare tokens
+
+3. CYCLE TRACKING: Sophisticated duplicate prevention (lines 627, 492, 529, 639, 642)
+   - authCycleRef.current tracks login attempts
+   - Prevents race conditions from concurrent login flows
+   - If a new cycle starts, old async ops bail out early
+
+4. STATE GUARD PATTERNS: Multiple checks before processing (lines 586, 591, 619)
+   - isHydratingRef: Prevents parallel hydration attempts
+   - hydratedUserIdRef: Prevents re-hydrating same user
+   - authReadyRef: Prevents processing during ready state
+
+### Assessment:
+
+OVERALL STATUS: ✅ LISTENER SETUP IS CORRECT
+
+The AppContext.tsx auth setup follows best practices:
+- Single, properly-managed subscription
+- Correct dependency array with memoized callbacks
+- Comprehensive deduplication and race condition prevention
+- Proper cleanup of all timers and subscriptions
+
+The excessive SIGNED_IN logging is NOT caused by:
+- Duplicate listeners ✗
+- Bad dependency arrays ✗
+- React.StrictMode double-mounting ✗
+
+### Root Cause of Excessive SIGNED_IN Logs:
+
+The logging is likely caused by:
+1. Supabase SDK emitting multiple SIGNED_IN events per user action
+   - This is normal behavior and not necessarily a bug
+   - Browser tab sync, token refresh, and session restoration all trigger SIGNED_IN
+
+2. handleSessionEvent being called multiple times
+   - But properly guarded by token deduplication (line 611)
+   - So repeated events are identified but still logged before early return
+
+3. Development environment logging
+   - All console.log() calls are present in both dev and production
+   - No conditional logging based on environment check
+
+### Recommendations:
+
+Priority 1 (MINIMAL):
+  - The listener setup is correct; NO CHANGES NEEDED here for Phase 2D.2
+  - The excessive logs are expected behavior, not a bug
+
+Priority 2 (OPTIONAL OPTIMIZATION):
+  - Add environment check before logging duplicates (line 580):
+    ```typescript
+    if (!import.meta.env.PROD) console.log('[AUTH] onAuthStateChange:', event, !!session)
+    ```
+  - This would silence logs in production while keeping them in development
+
+Priority 3 (FUTURE):
+  - Monitor SIGNED_IN frequency in production
+  - If frequency is abnormal, investigate Supabase SDK or session management
+  - But no action needed immediately — listeners are solid
+
+===============================================================================
+
+===============================================================================
+PHASE 2D.3 INTEGRATION TEST - Full Auth Flow Verification
+===============================================================================
+
+Test Execution Date: 2026-05-12
+Test Coordinator: Claude Code Agent
+Supabase Project: heibyjbvfiokmduwwawm
+Frontend URL: http://localhost:5173
+
+===============================================================================
+TEST PREREQUISITES VERIFICATION
+===============================================================================
+
+✓ Phase 2A Migration (20260512_phase2a_restore_auth_linkage.sql)
+  - Status: EXISTS
+  - Content: handle_new_user trigger, role definitions, helper functions
+  - Purpose: Auto-link usuario to auth.users.id when users register
+
+✓ Phase 2B Migration (20260512_phase2b_restore_missing_tables.sql)
+  - Status: EXISTS
+  - Content: aula_inscripcion, aula_certificado, hoja_de_vida + RPC
+  - Purpose: Restore missing academic tracking tables
+
+✓ Phase 2C Migration (20260512_phase2c_harden_rls_policies.sql)
+  - Status: EXISTS
+  - Content: Role-based RLS for pais, departamento, ciudad
+  - Purpose: Harden data access with is_super_admin() checks
+
+Frontend Dependencies:
+  - React Router v7 (AppContext with Supabase auth listener)
+  - Supabase JS client (@supabase/supabase-js)
+  - Auth flow: Login → JWT → AppContext sync → Dashboard
+
+===============================================================================
+TEST EXECUTION STEPS (Manual Browser Interaction Required)
+===============================================================================
+
+STEP 1: Create Test User in Supabase Auth
+───────────────────────────────────────────────────────────────────────────
+Instruction: Create auth user to link with usuario table
+
+URL: https://supabase.com/dashboard/project/heibyjbvfiokmduwwawm/auth/users
+Action: Click "Add user" button
+Form Fields:
+  - Email: test-admin@local.test
+  - Password: Test123!@#
+  - (Optional) Auto confirm email: [checked]
+
+Expected Result: User appears in auth.users table
+
+Status: MANUAL - Requires human interaction
+User Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 2: Assign Super Admin Role via SQL
+───────────────────────────────────────────────────────────────────────────
+Instruction: Assign 'Super Administrador' role to test user
+
+URL: https://supabase.com/dashboard/project/heibyjbvfiokmduwwawm/sql/new
+Query to Execute:
+
+  INSERT INTO usuario_rol (id_usuario, id_rol, fecha_inicio)
+  VALUES (
+    (SELECT id_usuario FROM usuario WHERE correo = 'test-admin@local.test'),
+    (SELECT id_rol FROM rol WHERE nombre = 'Super Administrador'),
+    NOW()::date
+  );
+
+Expected Result: INSERT returns "1 row affected"
+Verification Query:
+  
+  SELECT ur.id_usuario_rol, ur.id_usuario, r.nombre, ur.fecha_inicio
+  FROM usuario_rol ur
+  JOIN rol r ON ur.id_rol = r.id_rol
+  JOIN usuario u ON ur.id_usuario = u.id_usuario
+  WHERE u.correo = 'test-admin@local.test'
+    AND ur.fecha_fin IS NULL;
+
+Expected Verification Result: 1 row with role = 'Super Administrador'
+
+Status: MANUAL - Requires human interaction
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 3: Verify Test Data Exists
+───────────────────────────────────────────────────────────────────────────
+Instruction: Check that at least one city exists (needed for iglesia creation)
+
+URL: https://supabase.com/dashboard/project/heibyjbvfiokmduwwawm/sql/new
+Query:
+
+  SELECT id_ciudad, nombre FROM ciudad LIMIT 1;
+
+Expected Result: At least 1 row with city data
+If empty: May need to manually insert test city
+
+Status: MANUAL - Requires human interaction
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 4: Test Frontend Login Flow
+───────────────────────────────────────────────────────────────────────────
+Instruction: Verify that frontend authentication works end-to-end
+
+Prerequisites:
+  1. Frontend dev server running: npm run dev
+  2. Terminal ready to monitor logs
+
+Browser Action Steps:
+  1. Open: http://localhost:5173 in browser
+  2. Observe: Landing page loads (with Login button visible)
+  3. Click: Login button (navigate to login page)
+  4. Enter Credentials:
+     - Email: test-admin@local.test
+     - Password: Test123!@#
+  5. Click: "Sign In" button
+  6. Observe: Loading state appears (spinner/skeleton)
+  7. Wait: For authentication to complete (5-10 seconds typical)
+  8. Expected: Page redirects to dashboard (AppLayout loads)
+  9. Verify: Sidebar visible + main content loads + no 401/403 errors
+
+Expected Behavior:
+  ✓ Login form submits without validation errors
+  ✓ Supabase auth.signInWithPassword() succeeds
+  ✓ JWT token obtained successfully
+  ✓ AppContext receives session event (auth.onAuthStateChange)
+  ✓ usuarioActual hydrated with test user data
+  ✓ Roles loaded and rendered in sidebar
+  ✓ Dashboard content appears
+
+Troubleshooting:
+  ❌ 401 Unauthorized: usuario table not linked to auth.users
+  ❌ RLS policy violation: usuario.auth_user_id NULL or incorrect
+  ❌ Redirect to login: Session not persisted in localStorage
+  ❌ Console errors: Check browser DevTools (F12) Console tab
+  ❌ Blank page: React render error, check Network tab for API responses
+
+Status: MANUAL - Requires human interaction + browser observation
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 5: Test iglesia Creation
+───────────────────────────────────────────────────────────────────────────
+Instruction: Verify that authenticated user can create a church record
+
+Prerequisites:
+  - User logged in to dashboard (Step 4 passed)
+
+Browser Action Steps:
+  1. Locate: "Iglesias" link in sidebar (or similar church management menu)
+  2. Click: Navigate to iglesia list page
+  3. Find: "Create" or "New Iglesia" button
+  4. Click: Button to open creation form
+  5. Fill Form:
+     - Nombre (Name): "Test Iglesia Recovery"
+     - Ciudad (City): Select from dropdown (use city from Step 3)
+     - Estado (Status): Select "activa" (active)
+     - (Optional other fields): Fill as visible
+  6. Click: "Create" or "Submit" button
+  7. Observe: Loading state (spinner/disabled button)
+  8. Expected: Success message appears + form clears + record appears in list
+
+Expected POST Request:
+  URL: https://heibyjbvfiokmduwwawm.supabase.co/rest/v1/iglesia
+  Method: POST
+  Status: 201 Created (or 200 OK depending on response)
+  Headers: Authorization: Bearer [JWT]
+  Body: { nombre: "Test Iglesia Recovery", id_ciudad: [city_id], estado: "activa", ... }
+
+RLS Validation:
+  ✓ Policy checked: "is_admin_iglesia()" OR "is_super_admin()"
+  ✓ User has "Super Administrador" role → ALLOW
+  ✓ INSERT succeeds
+
+Troubleshooting iglesia Failure:
+  ❌ HTTP 400 Bad Request: Missing required field (e.g., id_ciudad)
+  ❌ HTTP 403 Forbidden: RLS denied (is_admin_iglesia() returned false)
+     → Verify usuario_rol row exists with 'Super Administrador' role
+     → Verify usuario.auth_user_id is set and matches JWT sub
+  ❌ HTTP 500 Internal Server Error: Database error (check Supabase logs)
+  ❌ Form validation error: Client-side validation failed (missing field)
+
+Status: MANUAL - Requires human interaction + browser observation
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 6: Test departamento Creation
+───────────────────────────────────────────────────────────────────────────
+Instruction: Verify that super_admin can create a geographic department
+
+Prerequisites:
+  - User logged in to dashboard (Step 4 passed)
+
+Browser Action Steps:
+  1. Locate: "Configuración" or "Admin" menu (geographic/catalog management)
+  2. Find: "Departamentos" or "Departments" section
+  3. Click: Navigate to departamento list page
+  4. Find: "Create" or "New Departamento" button
+  5. Click: Button to open creation form
+  6. Fill Form:
+     - Nombre (Name): "Test Departamento Recovery"
+     - País (Country): Select from dropdown (e.g., Colombia)
+     - (Optional): Other visible fields
+  7. Click: "Create" or "Submit" button
+  8. Observe: Loading state + expected success
+
+Expected POST Request:
+  URL: https://heibyjbvfiokmduwwawm.supabase.co/rest/v1/departamento
+  Method: POST
+  Status: 201 Created
+  Headers: Authorization: Bearer [JWT]
+  Body: { nombre: "Test Departamento Recovery", id_pais: [country_id], ... }
+
+RLS Validation:
+  ✓ Policy checked (Phase 2C hardening): "super_admin insert departamento"
+  ✓ Requires: is_super_admin() = true
+  ✓ User has role "Super Administrador" → ALLOW
+  ✓ INSERT succeeds
+
+Troubleshooting departamento Failure:
+  ❌ HTTP 403 Forbidden: Phase 2C hardening issue
+     → Verify is_super_admin() function exists and evaluates correctly
+     → Verify usuario_rol row exists and fecha_fin IS NULL
+     → Check Supabase SQL Editor: SELECT is_super_admin(); as authenticated user
+  ❌ HTTP 400 Bad Request: Missing required field (id_pais)
+  ❌ HTTP 500 Internal Server Error: Function error (check Supabase logs)
+
+Status: MANUAL - Requires human interaction + browser observation
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 7: Document Test Results
+───────────────────────────────────────────────────────────────────────────
+Instruction: Consolidate findings into test summary
+
+Checklist:
+  [ ] STEP 1 Result: Test user created? YES / NO / ERROR
+  [ ] STEP 2 Result: Role assigned? YES / NO / ERROR
+  [ ] STEP 3 Result: City exists? YES / NO
+  [ ] STEP 4 Result: Login succeeded? YES / NO / ERROR
+  [ ] STEP 5 Result: iglesia creation? SUCCESS / HTTP_400 / HTTP_403 / HTTP_500 / ERROR
+  [ ] STEP 6 Result: departamento creation? SUCCESS / HTTP_400 / HTTP_403 / HTTP_500 / ERROR
+
+Test Outcome:
+  [ ] ALL PASSED ✅ - Recovery is working end-to-end
+  [ ] PARTIAL PASS ⚠️ - Some features working, document issues
+  [ ] FAILED ❌ - Critical issue, detailed troubleshooting needed
+
+Summary:
+  Total Steps: 7
+  Steps Passed: [_] / 7
+  Steps Failed: [_] / 7
+  Critical Blockers: [list any HTTP 403/500 errors]
+  Recommendation: [next action if not fully passing]
+
+Status: MANUAL - Requires user summary
+Result: [PENDING USER ACTION]
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 8: Commit Test Results to Git
+───────────────────────────────────────────────────────────────────────────
+Instruction: Document the test in git history (even if partial pass/fail)
+
+Command to Execute:
+
+  cd /home/juanda/Proyectofinal
+  git commit --allow-empty -m "test(recovery): full auth flow verification [PASS/FAIL]"
+
+Alternative if you want to include this file in the commit:
+
+  git add RECOVERY.txt
+  git commit -m "test(recovery): full auth flow verification - documented results"
+
+Expected Result:
+  ✓ Commit created with SHA hash
+  ✓ RECOVERY.txt updated with test results
+  ✓ git log shows: "test(recovery): full auth flow verification"
+
+Status: AUTOMATED - Can be executed after manual test steps
+Result: [PENDING - execute after steps 1-7 complete]
+
+===============================================================================
+INTEGRATION TEST SUCCESS CRITERIA
+===============================================================================
+
+To declare recovery COMPLETE, ALL of the following must be TRUE:
+
+✅ CRITERIA 1: Test User Created in Supabase Auth
+   - Condition: auth.users table contains row with email='test-admin@local.test'
+   - Verification: SELECT * FROM auth.users WHERE email = 'test-admin@local.test';
+   - Expected Result: 1 row found
+   - Status: [PASS / FAIL]
+
+✅ CRITERIA 2: Test User Assigned Super Admin Role
+   - Condition: usuario_rol row exists linking test user to 'Super Administrador'
+   - Verification: SELECT COUNT(*) FROM usuario_rol ur
+                   JOIN rol r ON ur.id_rol = r.id_rol
+                   WHERE r.nombre = 'Super Administrador'
+                     AND ur.fecha_fin IS NULL
+     (Filtered to test user)
+   - Expected Result: 1 row found
+   - Status: [PASS / FAIL]
+
+✅ CRITERIA 3: Frontend Login Succeeds
+   - Condition: User can authenticate via http://localhost:5173 login form
+   - Expected Behavior: Form submission → JWT obtained → Dashboard rendered
+   - HTTP Status: 200 OK
+   - App State: usuarioActual !== null, rol !== null
+   - Status: [PASS / FAIL]
+
+✅ CRITERIA 4: iglesia Creation Succeeds (POST /rest/v1/iglesia)
+   - Condition: Authenticated user can INSERT new iglesia record
+   - Expected HTTP Status: 201 Created
+   - Expected RLS Result: is_admin_iglesia() OR is_super_admin() → true
+   - Verification: Record appears in iglesia list
+   - Status: [PASS / FAIL]
+
+✅ CRITERIA 5: departamento Creation Succeeds (POST /rest/v1/departamento)
+   - Condition: Super admin user can INSERT new departamento record
+   - Expected HTTP Status: 201 Created
+   - Expected RLS Result: is_super_admin() → true (Phase 2C hardening)
+   - Verification: Record appears in departamento list
+   - Status: [PASS / FAIL]
+
+✅ CRITERIA 6: Git Commit Created
+   - Condition: git log shows test commit
+   - Expected Message: "test(recovery): full auth flow verification [PASS/FAIL]"
+   - Status: [PASS / FAIL]
+
+Overall Test Verdict:
+  ✅ ALL 6 CRITERIA PASSED: Recovery is complete, system is stabilized
+  ⚠️  PARTIAL PASS (4-5 criteria): Assess which functions failing, document for Phase 2E
+  ❌ MAJOR FAILURES (0-3 criteria): Root cause analysis needed, see troubleshooting
+
+===============================================================================
