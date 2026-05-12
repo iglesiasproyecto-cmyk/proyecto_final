@@ -7,6 +7,8 @@ import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
 import { Progress } from '@/app/components/ui/progress'
+import { Skeleton } from '@/app/components/ui/skeleton'
+import { CardSkeleton } from '@/app/components/ContentSkeletons'
 import {
   ArrowLeft,
   BookOpen,

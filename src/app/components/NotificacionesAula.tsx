@@ -8,6 +8,7 @@ import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
 import { Bell, Check, BookOpen } from 'lucide-react'
 import { toast } from 'sonner'
+import { Skeleton } from '@/app/components/ui/skeleton'
 
 export function NotificacionesAula() {
   const { user } = useAuth()

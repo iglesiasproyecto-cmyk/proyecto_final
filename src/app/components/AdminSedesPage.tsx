@@ -6,6 +6,8 @@ import { ROLE_IDS } from "@/app/constants/roles";
 import type { UsuarioEnriquecido } from "@/services/usuarios.service";
 import { Building2, MapPin, Users, Plus, X, Search, Crown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Skeleton } from "./ui/skeleton";
+import { CardSkeleton } from "./ContentSkeletons";
 
 interface AdminSedeEntry {
   idAdminSedeAsignacion: number;
@@ -96,7 +98,7 @@ function SedeAdminCard({
             </button>
           </div>
           
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {admins.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}
