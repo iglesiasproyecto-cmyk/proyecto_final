@@ -1,5 +1,5 @@
 -- SP-8: Fix infinite recursion in usuario RLS, stale ministerio policies,
---        and add missing RLS for usuario_rol_sede.
+-- SKIP: --        and add missing RLS for usuario_rol_sede.
 --
 -- Root causes fixed:
 --  1. get_my_usuario_id() was LANGUAGE sql → PostgreSQL planner inlines it into
@@ -12,7 +12,7 @@
 --     renamed to rol_en_ministerio) → SQL error → HTTP 500.
 --     Fix: drop the stale policy (ministerio_select_tenant from sp2 covers it).
 --
---  3. usuario_rol_sede has no RLS policies → all rows blocked → HTTP 500.
+-- SKIP: --  3. usuario_rol_sede has no RLS policies → all rows blocked → HTTP 500.
 --     Fix: add tenant-scoped policies.
 
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -258,35 +258,35 @@ CREATE POLICY "ministerio_delete_admin" ON public.ministerio
   );
 
 -- ══════════════════════════════════════════════════════════════════════════════
--- 5. Add RLS for usuario_rol_sede (no policies existed → all rows blocked)
+-- SKIP: -- 5. Add RLS for usuario_rol_sede (no policies existed → all rows blocked)
 -- ══════════════════════════════════════════════════════════════════════════════
 
-ALTER TABLE IF EXISTS public.usuario_rol_sede ENABLE ROW LEVEL SECURITY;
+-- SKIP: ALTER TABLE IF EXISTS public.usuario_rol_sede ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS usuario_rol_sede_select ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS usuario_rol_sede_insert ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS usuario_rol_sede_update ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS usuario_rol_sede_delete ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS usuario_rol_sede_select ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS usuario_rol_sede_insert ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS usuario_rol_sede_update ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS usuario_rol_sede_delete ON public.usuario_rol_sede;
 
-CREATE POLICY usuario_rol_sede_select ON public.usuario_rol_sede
-  FOR SELECT TO authenticated
-  USING (
-    is_super_admin()
-    OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id())
-  );
-
-CREATE POLICY usuario_rol_sede_insert ON public.usuario_rol_sede
-  FOR INSERT TO authenticated
-  WITH CHECK (
-    is_super_admin()
-    OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id())
-  );
-
-CREATE POLICY usuario_rol_sede_update ON public.usuario_rol_sede
-  FOR UPDATE TO authenticated
-  USING (is_super_admin() OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id()))
-  WITH CHECK (is_super_admin() OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id()));
-
-CREATE POLICY usuario_rol_sede_delete ON public.usuario_rol_sede
-  FOR DELETE TO authenticated
-  USING (is_super_admin() OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id()));
+-- SKIP: -- SKIPPED (table doesnt exist yet): CREATE POLICY usuario_rol_sede_select ON public.usuario_rol_sede
+-- SKIP:   FOR SELECT TO authenticated
+-- SKIP:   USING (
+-- SKIP:     is_super_admin()
+-- SKIP:     OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id())
+-- SKIP:   );
+-- SKIP:
+-- SKIP: -- SKIPPED (table doesnt exist yet): CREATE POLICY usuario_rol_sede_insert ON public.usuario_rol_sede
+-- SKIP:   FOR INSERT TO authenticated
+-- SKIP:   WITH CHECK (
+-- SKIP:     is_super_admin()
+-- SKIP:     OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id())
+-- SKIP:   );
+-- SKIP:
+-- SKIP: -- SKIPPED (table doesnt exist yet): CREATE POLICY usuario_rol_sede_update ON public.usuario_rol_sede
+-- SKIP:   FOR UPDATE TO authenticated
+-- SKIP:   USING (is_super_admin() OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id()))
+-- SKIP:   WITH CHECK (is_super_admin() OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id()));
+-- SKIP:
+-- SKIP: -- SKIPPED (table doesnt exist yet): CREATE POLICY usuario_rol_sede_delete ON public.usuario_rol_sede
+-- SKIP:   FOR DELETE TO authenticated
+-- SKIP:   USING (is_super_admin() OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id()));

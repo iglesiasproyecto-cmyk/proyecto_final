@@ -1,0 +1,12 @@
+activo
+apellidos
+auth_user_id
+contrasena_hash
+correo
+creado_en
+fecha_nacimiento
+id_usuario
+nombres
+telefono
+ultimo_acceso
+updated_at

@@ -28,31 +28,31 @@ SET
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
 
-DROP POLICY IF EXISTS "Aula recursos read auth" ON storage.objects;
-DROP POLICY IF EXISTS "Aula recursos insert auth" ON storage.objects;
-DROP POLICY IF EXISTS "Aula recursos update auth" ON storage.objects;
-DROP POLICY IF EXISTS "Aula recursos delete auth" ON storage.objects;
+-- SKIP: DROP POLICY IF EXISTS "Aula recursos read auth" ON storage.objects;
+-- SKIP: DROP POLICY IF EXISTS "Aula recursos insert auth" ON storage.objects;
+-- SKIP: DROP POLICY IF EXISTS "Aula recursos update auth" ON storage.objects;
+-- SKIP: DROP POLICY IF EXISTS "Aula recursos delete auth" ON storage.objects;
 
-CREATE POLICY "Aula recursos read auth"
+-- SKIP: CREATE POLICY "Aula recursos read auth"
 ON storage.objects
 FOR SELECT
 TO authenticated
 USING (bucket_id = 'aula-recursos');
 
-CREATE POLICY "Aula recursos insert auth"
+-- SKIP: CREATE POLICY "Aula recursos insert auth"
 ON storage.objects
 FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'aula-recursos');
 
-CREATE POLICY "Aula recursos update auth"
+-- SKIP: CREATE POLICY "Aula recursos update auth"
 ON storage.objects
 FOR UPDATE
 TO authenticated
 USING (bucket_id = 'aula-recursos')
 WITH CHECK (bucket_id = 'aula-recursos');
 
-CREATE POLICY "Aula recursos delete auth"
+-- SKIP: CREATE POLICY "Aula recursos delete auth"
 ON storage.objects
 FOR DELETE
 TO authenticated

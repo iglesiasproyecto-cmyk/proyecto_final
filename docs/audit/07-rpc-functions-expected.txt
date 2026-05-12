@@ -1,0 +1,9 @@
+=== RPC Functions Expected by Frontend ===
+=== RPC Functions Created in Migrations ===
+create_hoja_de_vida_on_new_user
+create_missing_hojas_de_vida
+get_hoja_de_vida_completa
+inscribir_usuarios_curso
+send_hoja_de_vida_reminder_notifications
+trigger_set_updated_at
+update_hoja_de_vida_timestamp

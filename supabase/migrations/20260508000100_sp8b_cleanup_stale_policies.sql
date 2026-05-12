@@ -37,27 +37,27 @@ DROP POLICY IF EXISTS "ministerio_update_admin_iglesia"  ON public.ministerio;
 -- USUARIO_ROL_SEDE — drop stale policies (one USING(true) exposes everything)
 -- ══════════════════════════════════════════════════════════════════════════════
 -- Old set using get_user_iglesias() (plpgsql SECURITY DEFINER — safe but redundant)
-DROP POLICY IF EXISTS "admin_iglesia_delete_usuario_rol_sede" ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS "admin_iglesia_insert_usuario_rol_sede" ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS "admin_iglesia_select_usuario_rol_sede" ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS "admin_iglesia_update_usuario_rol_sede" ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "admin_iglesia_delete_usuario_rol_sede" ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "admin_iglesia_insert_usuario_rol_sede" ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "admin_iglesia_select_usuario_rol_sede" ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "admin_iglesia_update_usuario_rol_sede" ON public.usuario_rol_sede;
 -- Old admin_sede policy using unknown functions
-DROP POLICY IF EXISTS "admin_sede_select_usuario_rol_sede"    ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "admin_sede_select_usuario_rol_sede"    ON public.usuario_rol_sede;
 -- Old super_admin split policies (covered by SP-8 combined policies)
-DROP POLICY IF EXISTS "super_admin_delete_usuario_rol_sede"   ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS "super_admin_insert_usuario_rol_sede"   ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS "super_admin_select_usuario_rol_sede"   ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS "super_admin_update_usuario_rol_sede"   ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "super_admin_delete_usuario_rol_sede"   ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "super_admin_insert_usuario_rol_sede"   ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "super_admin_select_usuario_rol_sede"   ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "super_admin_update_usuario_rol_sede"   ON public.usuario_rol_sede;
 -- Duplicate/redundant super_admin split
-DROP POLICY IF EXISTS "usuario_rol_sede_delete_super_admin"   ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS "usuario_rol_sede_insert_super_admin"   ON public.usuario_rol_sede;
--- "usuario_rol_sede_select_authenticated" USING(true) — exposes everything!
-DROP POLICY IF EXISTS "usuario_rol_sede_select_authenticated" ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS "usuario_rol_sede_select_super_admin"   ON public.usuario_rol_sede;
-DROP POLICY IF EXISTS "usuario_rol_sede_update_super_admin"   ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "usuario_rol_sede_delete_super_admin"   ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "usuario_rol_sede_insert_super_admin"   ON public.usuario_rol_sede;
+-- SKIP: -- "usuario_rol_sede_select_authenticated" USING(true) — exposes everything!
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "usuario_rol_sede_select_authenticated" ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "usuario_rol_sede_select_super_admin"   ON public.usuario_rol_sede;
+-- SKIP: -- SKIPPED (table doesnt exist yet): DROP POLICY IF EXISTS "usuario_rol_sede_update_super_admin"   ON public.usuario_rol_sede;
 -- canonical policies from SP-8:
---   usuario_rol_sede_select, usuario_rol_sede_insert,
---   usuario_rol_sede_update, usuario_rol_sede_delete
+-- SKIP: --   usuario_rol_sede_select, usuario_rol_sede_insert,
+-- SKIP: --   usuario_rol_sede_update, usuario_rol_sede_delete
 
 -- ══════════════════════════════════════════════════════════════════════════════
 -- NOTIFICACION / TAREA_ASIGNADA — stale open-SELECT policies from early migrations

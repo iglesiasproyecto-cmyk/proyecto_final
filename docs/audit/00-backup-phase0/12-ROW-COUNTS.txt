@@ -1,0 +1,10 @@
+curso: *
+evento: *
+iglesia: *
+ministerio: *
+modulo: *
+notificacion: *
+rol: *
+sede: *
+tarea: *
+usuario: *

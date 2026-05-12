@@ -1,0 +1,13 @@
+8:interface AppState {
+190:      return typeof val === 'number' ? val : 0
+256:    if (typeof window !== 'undefined') {
+264:    if (typeof window !== 'undefined') {
+270:    if (typeof window !== 'undefined') {
+323:    if (typeof window === 'undefined') return
+344:      if (typeof supabase.removeAllChannels === 'function') {
+352:    const channels = typeof supabase.getChannels === 'function' ? supabase.getChannels() : []
+393:    if (typeof window !== 'undefined') {
+406:    if (typeof window === 'undefined') return
+557:        if (typeof window !== 'undefined') {
+661:      if (typeof window !== 'undefined') {
+667:      if (typeof window !== 'undefined') {

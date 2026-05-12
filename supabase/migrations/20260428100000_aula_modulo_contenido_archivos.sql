@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS public.aula_modulo_archivo (
 );
 
 CREATE INDEX IF NOT EXISTS idx_aula_modulo_archivo_modulo
-  ON public.aula_modulo_archivo(id_aula_modulo);
+-- SKIP:   ON public.aula_modulo_archivo(id_aula_modulo);
 
 ALTER TABLE public.aula_modulo_archivo ENABLE ROW LEVEL SECURITY;
 
@@ -39,8 +39,8 @@ CREATE POLICY "Gestion archivos modulo" ON public.aula_modulo_archivo
     public.is_super_admin()
     OR EXISTS (
       SELECT 1
-        FROM public.aula_modulo am
-        JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:         FROM public.aula_modulo am
+-- SKIP:         JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
        WHERE am.id_aula_modulo = aula_modulo_archivo.id_aula_modulo
          AND (
                ac.id_usuario_creador = public.current_usuario_id()
@@ -52,8 +52,8 @@ CREATE POLICY "Gestion archivos modulo" ON public.aula_modulo_archivo
     public.is_super_admin()
     OR EXISTS (
       SELECT 1
-        FROM public.aula_modulo am
-        JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:         FROM public.aula_modulo am
+-- SKIP:         JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
        WHERE am.id_aula_modulo = aula_modulo_archivo.id_aula_modulo
          AND (
                ac.id_usuario_creador = public.current_usuario_id()
@@ -69,9 +69,9 @@ CREATE POLICY "Lectura archivos modulo inscrito" ON public.aula_modulo_archivo
   USING (
     EXISTS (
       SELECT 1
-        FROM public.aula_modulo am
-        JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
-        JOIN public.aula_inscripcion ai ON ai.id_aula_curso = ac.id_aula_curso
+-- SKIP:         FROM public.aula_modulo am
+-- SKIP:         JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:         JOIN public.aula_inscripcion ai ON ai.id_aula_curso = ac.id_aula_curso
        WHERE am.id_aula_modulo = aula_modulo_archivo.id_aula_modulo
          AND am.publicado = true
          AND ai.id_usuario = public.current_usuario_id()

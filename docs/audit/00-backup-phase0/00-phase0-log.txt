@@ -1,0 +1,22 @@
+=== FASE 0.1: Obtener Credenciales PostgreSQL ===
+Timestamp: Tue May 12 00:12:08 -05 2026
+
+[1] Intentando obtener credenciales con Management API...
+
+[✓] Información del proyecto obtenida
+[2] Intentando obtener credenciales de BD...
+
+  Probando endpoint: /v1/projects/heibyjbvfiokmduwwawm/db-password
+    ✗ No disponible: {"message":"Cannot GET /v1/projects/heibyjbvfiokmduwwawm/db-password"}
+
+  Probando endpoint: /v1/projects/heibyjbvfiokmduwwawm/database
+    ✗ No disponible: {"message":"Cannot GET /v1/projects/heibyjbvfiokmduwwawm/database"}
+
+  Probando endpoint: /v1/projects/heibyjbvfiokmduwwawm/database/credentials
+    ✗ No disponible: {"message":"Cannot GET /v1/projects/heibyjbvfiokmduwwawm/database/credentials"}
+
+  Probando endpoint: /v1/projects/heibyjbvfiokmduwwawm/database/password
+    ✗ No disponible: {"message":"Cannot GET /v1/projects/heibyjbvfiokmduwwawm/database/password"}
+
+[⚠] Las credenciales de BD no están disponibles vía API
+[!] Necesitaremos que proporciones la contraseña de PostgreSQL

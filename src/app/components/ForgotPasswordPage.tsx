@@ -16,12 +16,8 @@ export function ForgotPasswordPage() {
   const { session, authLoading } = useApp()
 
   // Estados
-  const [step, setStep] = useState<'email' | 'verification' | 'reset'>('email')
+  const [step, setStep] = useState<'email' | 'verification'>('email')
   const [email, setEmail] = useState('')
-  const [code, setCode] = useState(['', '', '', '', '', ''])
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -54,121 +50,24 @@ export function ForgotPasswordPage() {
 
     setIsLoading(true)
     try {
-      const { error: authError } = await supabase.auth.signInWithOtp({
-        email: email.toLowerCase().trim(),
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/set-password`,
-          shouldCreateUser: false,
-        },
+      const { data, error } = await supabase.functions.invoke('reset-password-request', {
+        body: { email: email.toLowerCase().trim() }
       })
 
-      if (authError) {
-        setError(authError.message || 'Error al enviar el código.')
+      if (error) {
+        setError(error.message || 'Error al enviar el enlace de recuperación.')
         setIsLoading(false)
         return
       }
 
-      setStep('verification')
-      toast.success('Código de verificación enviado a tu correo.')
+      if (data.success) {
+        setStep('verification')
+        toast.success('Enlace de recuperación enviado a tu correo.')
+      } else {
+        setError(data.message || 'Error al enviar el enlace de recuperación.')
+      }
     } catch (err) {
       setError('Error en el servidor. Intenta más tarde.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Manejar cambios en los campos de código
-  const handleCodeChange = (value: string, index: number) => {
-    if (!/^\d*$/.test(value)) return
-
-    const newCode = [...code]
-    newCode[index] = value
-    setCode(newCode)
-
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`code-${index + 1}`)
-      nextInput?.focus()
-    }
-  }
-
-  // Manejar retroceso
-  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
-    if (e.key === 'Backspace' && !code[index] && index > 0) {
-      const prevInput = document.getElementById(`code-${index - 1}`)
-      prevInput?.focus()
-    }
-  }
-
-  // Paso 2: Verificar código y pasar a reset
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-
-    const fullCode = code.join('')
-    if (fullCode.length !== 6) {
-      setError('Por favor ingresa los 6 dígitos.')
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        email: email.toLowerCase().trim(),
-        token: fullCode,
-        type: 'email',
-      })
-
-      if (verifyError) {
-        setError('Código inválido o expirado.')
-        setIsLoading(false)
-        return
-      }
-
-      setStep('reset')
-      toast.success('Código verificado. Ahora establece tu nueva contraseña.')
-    } catch (err) {
-      setError('Error al verificar el código.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Paso 3: Cambiar contraseña
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-
-    if (!newPassword || !confirmPassword) {
-      setError('Por favor completa ambos campos de contraseña.')
-      return
-    }
-
-    if (newPassword.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.')
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError('Las contraseñas no coinciden.')
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      })
-
-      if (updateError) {
-        setError(updateError.message || 'Error al cambiar la contraseña.')
-        setIsLoading(false)
-        return
-      }
-
-      toast.success('¡Contraseña actualizada exitosamente!')
-      setTimeout(() => navigate('/login'), 1500)
-    } catch (err) {
-      setError('Error al actualizar la contraseña.')
     } finally {
       setIsLoading(false)
     }
@@ -178,10 +77,6 @@ export function ForgotPasswordPage() {
   const handleBack = () => {
     if (step === 'verification') {
       setStep('email')
-      setCode(['', '', '', '', '', ''])
-      setError('')
-    } else if (step === 'reset') {
-      setStep('verification')
       setError('')
     }
   }
@@ -253,14 +148,12 @@ export function ForgotPasswordPage() {
               <Shield className="w-8 h-8 text-[#1a7fa8]" />
               <h1 className="text-4xl font-black text-[#0c2340]">
                 {step === 'email' && 'Recuperar Contraseña'}
-                {step === 'verification' && 'Verificar Código'}
-                {step === 'reset' && 'Nueva Contraseña'}
+                {step === 'verification' && 'Enlace Enviado'}
               </h1>
             </div>
             <p className="text-base text-slate-600">
               {step === 'email' && 'Ingresa tu correo para comenzar el proceso de recuperación'}
-              {step === 'verification' && 'Ingresa el código enviado a tu correo'}
-              {step === 'reset' && 'Establece una nueva contraseña segura'}
+              {step === 'verification' && 'Revisa tu correo y haz clic en el enlace de recuperación'}
             </p>
           </div>
 
@@ -340,43 +233,39 @@ export function ForgotPasswordPage() {
             )}
           </AnimatePresence>
 
-          {/* PASO 2: Verificación de Código */}
+          {/* PASO 2: Confirmación de envío */}
           <AnimatePresence mode="wait">
             {step === 'verification' && (
-              <motion.form
-                key="verification-form"
+              <motion.div
+                key="verification-message"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                onSubmit={handleVerifyCode}
                 className="space-y-6"
               >
-                
+
                 {/* Mostrar Email Verificando */}
                 <div className="p-4 rounded-lg bg-[#1a7fa8]/10 border-2 border-[#1a7fa8]/30">
-                  <p className="text-sm text-slate-600 font-medium">Código enviado a:</p>
+                  <p className="text-sm text-slate-600 font-medium">Enlace enviado a:</p>
                   <p className="text-lg font-bold text-[#0c2340] mt-1">{email}</p>
                 </div>
 
-                {/* Campos de Código */}
-                <div className="space-y-5">
-                  <p className="text-sm text-slate-600 font-semibold uppercase tracking-widest">Ingresa los 6 dígitos</p>
-                  <div className="flex gap-3 justify-center">
-                    {code.map((digit, index) => (
-                      <input
-                        key={index}
-                        id={`code-${index}`}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleCodeChange(e.target.value, index)}
-                        onKeyDown={(e) => handleKeyDown(e, index)}
-                        className="w-16 h-16 rounded-lg border-2 border-slate-300 bg-white text-center text-2xl font-bold text-[#0c2340] focus:border-[#1a7fa8] focus:bg-slate-50 transition-all duration-200 outline-none"
-                      />
-                    ))}
+                {/* Mensaje de instrucciones */}
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3 p-4 rounded-lg bg-green-100 border border-green-300">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-green-700 font-medium">¡Enlace enviado exitosamente!</p>
+                      <p className="text-sm text-green-700 mt-1">
+                        Revisa tu bandeja de entrada y haz clic en el enlace "Restablecer Contraseña" para continuar.
+                      </p>
+                    </div>
                   </div>
+
+                  <p className="text-sm text-slate-600 leading-relaxed">
+                    Si no encuentras el correo, revisa tu carpeta de spam o correo no deseado.
+                  </p>
                 </div>
 
                 {/* Error Message */}
@@ -394,132 +283,25 @@ export function ForgotPasswordPage() {
                   )}
                 </AnimatePresence>
 
-                {/* Botón Verificar */}
+                {/* Botón Reenviar */}
                 <Button
-                  type="submit"
-                  disabled={isLoading || code.join('').length !== 6}
-                  className="w-full h-14 bg-[#1a7fa8] hover:bg-[#2596be] text-white font-bold uppercase tracking-wider rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
+                  onClick={() => setStep('email')}
+                  className="w-full h-14 bg-[#1a7fa8] hover:bg-[#2596be] text-white font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center justify-center gap-2 text-lg"
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Verificando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-5 h-5" />
-                      Verificar Código
-                    </>
-                  )}
+                  <Mail className="w-5 h-5" />
+                  Enviar Nuevo Enlace
                 </Button>
 
                 {/* Link para Volver */}
                 <button
                   type="button"
-                  onClick={handleBack}
+                  onClick={() => navigate('/login')}
                   className="w-full text-sm text-[#1a7fa8] hover:text-[#0c2340] transition-colors duration-300 font-medium flex items-center justify-center gap-2"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Usar otro correo
+                  Volver a Login
                 </button>
-              </motion.form>
-            )}
-          </AnimatePresence>
-
-          {/* PASO 3: Reset de Contraseña */}
-          <AnimatePresence mode="wait">
-            {step === 'reset' && (
-              <motion.form
-                key="reset-form"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                onSubmit={handleResetPassword}
-                className="space-y-5"
-              >
-                
-                {/* Nueva Contraseña */}
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#1a7fa8]/0 via-[#1a7fa8]/10 to-[#1a7fa8]/0 rounded-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-300" />
-                  <div className="relative flex items-center gap-3 px-4 py-4 rounded-lg border-2 border-slate-300 bg-white focus-within:border-[#1a7fa8] focus-within:bg-slate-50 transition-all duration-300">
-                    <Lock className="w-6 h-6 text-[#1a7fa8]" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Nueva contraseña (mínimo 8 caracteres)"
-                      className="flex-1 bg-transparent outline-none text-[#0c2340] placeholder:text-slate-400 text-lg font-medium"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="text-slate-500 hover:text-[#1a7fa8] transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirmar Contraseña */}
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#1a7fa8]/0 via-[#1a7fa8]/10 to-[#1a7fa8]/0 rounded-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-300" />
-                  <div className="relative flex items-center gap-3 px-4 py-4 rounded-lg border-2 border-slate-300 bg-white focus-within:border-[#1a7fa8] focus-within:bg-slate-50 transition-all duration-300">
-                    <Lock className="w-6 h-6 text-[#1a7fa8]" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirma tu nueva contraseña"
-                      className="flex-1 bg-transparent outline-none text-[#0c2340] placeholder:text-slate-400 text-lg font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* Error Message */}
-                <AnimatePresence>
-                  {error && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="flex items-start gap-2 p-4 rounded-lg bg-red-100 border border-red-300"
-                    >
-                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-red-700 font-medium">{error}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Botón Reset */}
-                <Button
-                  type="submit"
-                  disabled={isLoading || !newPassword || !confirmPassword}
-                  className="w-full h-14 bg-[#1a7fa8] hover:bg-[#2596be] text-white font-bold uppercase tracking-wider rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Actualizando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-5 h-5" />
-                      Actualizar Contraseña
-                    </>
-                  )}
-                </Button>
-
-                {/* Link para Volver */}
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="w-full text-sm text-[#1a7fa8] hover:text-[#0c2340] transition-colors duration-300 font-medium flex items-center justify-center gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Volver a verificación
-                </button>
-              </motion.form>
+              </motion.div>
             )}
           </AnimatePresence>
 

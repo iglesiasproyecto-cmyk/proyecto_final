@@ -107,76 +107,7 @@ CREATE POLICY "Lectura modulo por gestion o inscripcion"
     OR public.can_read_modulo_as_student(id_modulo)
   );
 
--- recurso
-DROP POLICY IF EXISTS "Lider puede insertar recurso" ON public.recurso;
-DROP POLICY IF EXISTS "Lider puede actualizar recurso" ON public.recurso;
-DROP POLICY IF EXISTS "Admin puede borrar recurso" ON public.recurso;
-DROP POLICY IF EXISTS "Lectura autenticada" ON public.recurso;
-DROP POLICY IF EXISTS "Scoped insert recurso" ON public.recurso;
-DROP POLICY IF EXISTS "Scoped update recurso" ON public.recurso;
-DROP POLICY IF EXISTS "Scoped delete recurso" ON public.recurso;
-DROP POLICY IF EXISTS "Lectura recurso por gestion o inscripcion" ON public.recurso;
-
-CREATE POLICY "Scoped insert recurso"
-  ON public.recurso FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1
-      FROM public.modulo m
-      WHERE m.id_modulo = recurso.id_modulo
-        AND public.can_manage_curso_scope(m.id_curso)
-    )
-  );
-
-CREATE POLICY "Scoped update recurso"
-  ON public.recurso FOR UPDATE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM public.modulo m
-      WHERE m.id_modulo = recurso.id_modulo
-        AND public.can_manage_curso_scope(m.id_curso)
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1
-      FROM public.modulo m
-      WHERE m.id_modulo = recurso.id_modulo
-        AND public.can_manage_curso_scope(m.id_curso)
-    )
-  );
-
-CREATE POLICY "Scoped delete recurso"
-  ON public.recurso FOR DELETE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM public.modulo m
-      WHERE m.id_modulo = recurso.id_modulo
-        AND public.can_manage_curso_scope(m.id_curso)
-    )
-  );
-
-CREATE POLICY "Lectura recurso por gestion o inscripcion"
-  ON public.recurso FOR SELECT
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM public.modulo m
-      WHERE m.id_modulo = recurso.id_modulo
-        AND (
-          public.can_manage_curso_scope(m.id_curso)
-          OR public.can_read_modulo_as_student(m.id_modulo)
-        )
-    )
-  );
-
--- evaluacion
+--evaluacion
 DROP POLICY IF EXISTS "Lider puede insertar evaluacion" ON public.evaluacion;
 DROP POLICY IF EXISTS "Lider puede actualizar evaluacion" ON public.evaluacion;
 DROP POLICY IF EXISTS "Admin puede borrar evaluacion" ON public.evaluacion;

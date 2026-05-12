@@ -1,0 +1,5 @@
+creado_en
+descripcion
+id_rol
+nombre
+updated_at

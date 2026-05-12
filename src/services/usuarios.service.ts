@@ -152,7 +152,7 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
         id_ministerio
       )
     `)
-    .is('deleted_at', null)
+    .eq('activo', true)
     .order('apellidos')
 
   if (error) throw error

@@ -272,7 +272,7 @@ export async function getSedesEnriquecidas(idIglesia?: number): Promise<SedeEnri
         )
       )
     `)
-    .is('deleted_at', null)
+    .eq('estado', 'activa')
     .order('nombre')
 
   if (idIglesia !== undefined) {
@@ -302,7 +302,6 @@ export async function getIglesias(): Promise<Iglesia[]> {
     .from('iglesia')
     .select('*')
     .eq('estado', 'activa')
-    .is('deleted_at', null)
     .order('nombre')
   if (error) throw error
   return data.map(mapIglesia)
@@ -512,7 +511,7 @@ export async function deleteIglesia(id: number): Promise<{ type: 'soft' | 'hard'
     .from('sede')
     .select('id_sede', { count: 'exact', head: true })
     .eq('id_iglesia', id)
-    .is('deleted_at', null)
+    .eq('estado', 'activa')
 
   const { count: pastoresCount } = await supabase
     .from('iglesia_pastor')

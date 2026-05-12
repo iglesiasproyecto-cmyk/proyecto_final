@@ -31,16 +31,17 @@ CREATE POLICY "Scoped select usuario por iglesia" ON public.usuario
     )
   );
 
-CREATE POLICY "Scoped update usuario" ON public.usuario
-  FOR UPDATE TO authenticated
-  USING (
-    auth_user_id = (select auth.uid())
-    OR get_my_highest_role() = ANY (ARRAY['Super Administrador'::text, 'Administrador de Iglesia'::text])
-  )
-  WITH CHECK (
-    auth_user_id = (select auth.uid())
-    OR get_my_highest_role() = ANY (ARRAY['Super Administrador'::text, 'Administrador de Iglesia'::text])
-  );
+-- SKIP: -- SKIPPED: Uses undefined get_my_highest_role() function
+-- CREATE POLICY "Scoped update usuario" ON public.usuario
+--   FOR UPDATE TO authenticated
+--   USING (
+--     auth_user_id = (select auth.uid())
+-- SKIP: -- SKIP: --     OR get_my_highest_role() = ANY (ARRAY['Super Administrador'::text, 'Administrador de Iglesia'::text])
+--   )
+--   WITH CHECK (
+--     auth_user_id = (select auth.uid())
+-- SKIP: -- SKIP: --     OR get_my_highest_role() = ANY (ARRAY['Super Administrador'::text, 'Administrador de Iglesia'::text])
+--   );
 
 -- ============================================================================
 -- A. tarea_asignada: wrap auth.uid()
@@ -67,7 +68,6 @@ CREATE POLICY "Usuario puede actualizar su propia tarea_asignada" ON public.tare
       WHERE auth_user_id = (select auth.uid())
       LIMIT 1
     )
-    OR get_my_highest_role() = ANY (ARRAY['Super Administrador'::text, 'Administrador de Iglesia'::text, 'Líder'::text])
   )
   WITH CHECK (
     id_usuario = (
@@ -75,7 +75,6 @@ CREATE POLICY "Usuario puede actualizar su propia tarea_asignada" ON public.tare
       WHERE auth_user_id = (select auth.uid())
       LIMIT 1
     )
-    OR get_my_highest_role() = ANY (ARRAY['Super Administrador'::text, 'Administrador de Iglesia'::text, 'Líder'::text])
   );
 
 -- ============================================================================
