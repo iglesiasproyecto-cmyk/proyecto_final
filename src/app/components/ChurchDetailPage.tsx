@@ -165,7 +165,7 @@ export function ChurchDetailPage() {
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-light">{iglesia.nombre}</h1>
+              <h1 className="text-4xl font-light text-foreground">{iglesia.nombre}</h1>
               <Badge
                 variant="outline"
                 className={`text-xs font-semibold tracking-wide ${estadoBadgeColors[iglesia.estado] ?? ""}`}
