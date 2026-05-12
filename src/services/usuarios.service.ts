@@ -122,77 +122,27 @@ export interface UsuarioEnriquecido extends Usuario {
 }
 
 export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
-  const { data, error } = await supabase
-    .from('usuario')
-    .select(`
-      *,
-      usuario_rol(
-        id_usuario_rol,
-        id_rol,
-        id_iglesia,
-        id_sede,
-        fecha_fin,
-        rol:rol(nombre),
-        iglesia:iglesia(nombre),
-        sede:sede(nombre)
-      ),
-      usuario_rol_sede(
-        id_usuario_rol_sede,
-        id_rol,
-        id_iglesia,
-        id_sede,
-        fecha_fin,
-        rol:rol(nombre),
-        iglesia:iglesia(nombre),
-        sede:sede(nombre)
-      ),
-      miembro_ministerio(
-        rol_en_ministerio,
-        fecha_salida,
-        id_ministerio,
-        ministerio(nombre)
-      )
-    `)
-    .order('apellidos')
-
+  // Use RPC that bypasses RLS for admin users
+  const { data, error } = await supabase.rpc('get_all_usuarios_enriquecidos')
   if (error) throw error
 
-  return (data as any[]).map(r => ({
+  return (data ?? []).map((r: any) => ({
     ...mapUsuario(r),
-    roleNames: (r.usuario_rol || [])
-      .filter((ur: any) => ur.fecha_fin === null)
-      .map((ur: any) => ({
-        idUsuarioRol: ur.id_usuario_rol,
-        idRol: ur.id_rol,
-        idIglesia: ur.id_iglesia,
-        idSede: ur.id_sede ?? null,
-        rolNombre: ur.rol?.nombre ?? '',
-        iglesiaNombre: ur.iglesia?.nombre ?? '',
-        sedeNombre: ur.sede?.nombre ?? '',
-        fechaFin: ur.fecha_fin,
-        source: 'usuario_rol',
-      }))
-      .concat(
-        (r.usuario_rol_sede || [])
-          .filter((urs: any) => urs.fecha_fin === null)
-          .map((urs: any) => ({
-            idUsuarioRol: urs.id_usuario_rol_sede,
-            idRol: urs.id_rol,
-            idIglesia: urs.id_iglesia,
-            idSede: urs.id_sede ?? null,
-            rolNombre: urs.rol?.nombre ?? '',
-            iglesiaNombre: urs.iglesia?.nombre ?? '',
-            sedeNombre: urs.sede?.nombre ?? '',
-            fechaFin: urs.fecha_fin,
-            source: 'usuario_rol_sede',
-          }))
-      ),
-    minNames: (r.miembro_ministerio || [])
-      .filter((mm: any) => mm.fecha_salida === null)
-      .map((mm: any) => ({
-        nombre: mm.ministerio?.nombre ?? `Ministerio #${mm.id_ministerio}`,
-        rol: mm.rol_en_ministerio ?? '',
-      })),
+    roleNames: (r.roles ?? []).map((rol: any) => ({
+      idUsuarioRol: rol.id_usuario_rol,
+      idRol: rol.id_rol,
+      idIglesia: rol.id_iglesia,
+      idSede: rol.id_sede ?? null,
+      rolNombre: rol.rol_nombre ?? '',
+      iglesiaNombre: rol.iglesia_nombre ?? '',
+      sedeNombre: rol.sede_nombre ?? '',
+      fechaFin: rol.fecha_fin,
+      source: rol.source ?? 'usuario_rol',
+    })),
+    minNames: (r.ministerios ?? []).map((min: any) => ({
+      nombre: min.nombre ?? `Ministerio #${min.id_ministerio}`,
+      rol: min.rol ?? '',
+    })),
   }))
 }
 
