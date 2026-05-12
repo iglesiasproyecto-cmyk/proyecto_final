@@ -50,12 +50,12 @@ export function NotificationsPage() {
     <div className="space-y-6 max-w-4xl mx-auto pb-10">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 overflow-hidden">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-3xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/30 shrink-0">
-            <Bell className="w-7 h-7 text-white" />
+          <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/30 shrink-0">
+            <Bell className="w-8 h-8 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Mi Bandeja</p>
-            <h1 className="text-3xl font-light tracking-tight leading-none">Notificaciones</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Mi Bandeja</p>
+            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Notificaciones</h1>
             <p className="text-foreground text-xs sm:text-sm mt-1">
               {unreadCount > 0 ? `${unreadCount} notificaciones sin leer` : "Estás al día con tus notificaciones"}
             </p>
