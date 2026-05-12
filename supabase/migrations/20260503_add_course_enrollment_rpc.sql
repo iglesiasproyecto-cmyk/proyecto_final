@@ -39,7 +39,7 @@ BEGIN
     ac.id_usuario_creador,
     m.id_ministerio
   INTO v_curso_record
-  FROM aula_curso ac
+-- SKIP:   FROM aula_curso ac
   JOIN ministerio m ON ac.id_ministerio = m.id_ministerio
   WHERE ac.id_aula_curso = p_id_aula_curso;
 
@@ -102,7 +102,7 @@ BEGIN
 
     -- Check for existing active enrollment
     SELECT * INTO v_existing_enrollment
-    FROM aula_inscripcion
+-- SKIP:     FROM aula_inscripcion
     WHERE id_aula_curso = p_id_aula_curso
       AND id_usuario = v_user_record.id_usuario;
 

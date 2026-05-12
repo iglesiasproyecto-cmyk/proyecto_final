@@ -51,7 +51,7 @@ export async function getMinisteriosEnriquecidos(idIglesia?: number): Promise<Mi
   let q = supabase
     .from('ministerio')
     .select('*, sede(nombre), miembro_ministerio(rol_en_ministerio, fecha_salida, usuario(nombres, apellidos))')
-    .is('deleted_at', null)
+    .eq('estado', 'activo')
     .order('nombre')
 
   if (idIglesia !== undefined) {

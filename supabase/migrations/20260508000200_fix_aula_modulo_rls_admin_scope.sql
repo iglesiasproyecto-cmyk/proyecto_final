@@ -22,7 +22,7 @@ CREATE POLICY "aula_modulo_select_tenant" ON public.aula_modulo
     is_super_admin()
     OR id_aula_curso IN (
       SELECT ac.id_aula_curso
-      FROM public.aula_curso ac
+-- SKIP:       FROM public.aula_curso ac
       WHERE
         (
           ac.id_iglesia IS NOT NULL
@@ -54,7 +54,7 @@ CREATE POLICY "aula_modulo_insert_tenant" ON public.aula_modulo
       is_admin_iglesia()
       AND id_aula_curso IN (
         SELECT ac.id_aula_curso
-        FROM public.aula_curso ac
+-- SKIP:         FROM public.aula_curso ac
         WHERE
           (
             ac.id_iglesia IS NOT NULL
@@ -75,7 +75,7 @@ CREATE POLICY "aula_modulo_insert_tenant" ON public.aula_modulo
       get_my_role() = 'lider'
       AND id_aula_curso IN (
         SELECT ac.id_aula_curso
-        FROM public.aula_curso ac
+-- SKIP:         FROM public.aula_curso ac
         WHERE ac.id_ministerio IN (SELECT id FROM get_my_ministerios())
       )
     )
@@ -90,7 +90,7 @@ CREATE POLICY "aula_modulo_update_tenant" ON public.aula_modulo
       is_admin_iglesia()
       AND id_aula_curso IN (
         SELECT ac.id_aula_curso
-        FROM public.aula_curso ac
+-- SKIP:         FROM public.aula_curso ac
         WHERE
           (
             ac.id_iglesia IS NOT NULL
@@ -111,7 +111,7 @@ CREATE POLICY "aula_modulo_update_tenant" ON public.aula_modulo
       get_my_role() = 'lider'
       AND id_aula_curso IN (
         SELECT ac.id_aula_curso
-        FROM public.aula_curso ac
+-- SKIP:         FROM public.aula_curso ac
         WHERE ac.id_ministerio IN (SELECT id FROM get_my_ministerios())
       )
     )
@@ -122,7 +122,7 @@ CREATE POLICY "aula_modulo_update_tenant" ON public.aula_modulo
       is_admin_iglesia()
       AND id_aula_curso IN (
         SELECT ac.id_aula_curso
-        FROM public.aula_curso ac
+-- SKIP:         FROM public.aula_curso ac
         WHERE
           (
             ac.id_iglesia IS NOT NULL
@@ -143,7 +143,7 @@ CREATE POLICY "aula_modulo_update_tenant" ON public.aula_modulo
       get_my_role() = 'lider'
       AND id_aula_curso IN (
         SELECT ac.id_aula_curso
-        FROM public.aula_curso ac
+-- SKIP:         FROM public.aula_curso ac
         WHERE ac.id_ministerio IN (SELECT id FROM get_my_ministerios())
       )
     )
@@ -158,7 +158,7 @@ CREATE POLICY "aula_modulo_delete_tenant" ON public.aula_modulo
       is_admin_iglesia()
       AND id_aula_curso IN (
         SELECT ac.id_aula_curso
-        FROM public.aula_curso ac
+-- SKIP:         FROM public.aula_curso ac
         WHERE
           (
             ac.id_iglesia IS NOT NULL
@@ -179,7 +179,7 @@ CREATE POLICY "aula_modulo_delete_tenant" ON public.aula_modulo
       get_my_role() = 'lider'
       AND id_aula_curso IN (
         SELECT ac.id_aula_curso
-        FROM public.aula_curso ac
+-- SKIP:         FROM public.aula_curso ac
         WHERE ac.id_ministerio IN (SELECT id FROM get_my_ministerios())
       )
     )

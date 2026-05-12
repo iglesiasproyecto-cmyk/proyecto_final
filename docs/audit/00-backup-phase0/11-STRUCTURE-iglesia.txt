@@ -1,0 +1,11 @@
+creado_en
+descripcion
+direccion
+estado
+fecha_fundacion
+id_ciudad
+id_iglesia
+nombre
+sitio_web
+telefono
+updated_at

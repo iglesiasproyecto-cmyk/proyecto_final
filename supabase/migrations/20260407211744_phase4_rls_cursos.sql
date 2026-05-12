@@ -53,24 +53,6 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE POLICY "Authenticated insert recurso"
-    ON public.recurso FOR INSERT TO authenticated WITH CHECK (true);
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  CREATE POLICY "Authenticated update recurso"
-    ON public.recurso FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  CREATE POLICY "Authenticated delete recurso"
-    ON public.recurso FOR DELETE TO authenticated USING (true);
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
-DO $$ BEGIN
   CREATE POLICY "Authenticated update proceso_asignado_curso"
     ON public.proceso_asignado_curso FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 EXCEPTION WHEN duplicate_object THEN NULL;

@@ -1,0 +1,13 @@
+creado_en
+descripcion
+estado
+fecha_fin
+fecha_inicio
+id_evento
+id_iglesia
+id_ministerio
+id_sede
+id_tipo_evento
+nombre
+tipo_evento_texto
+updated_at

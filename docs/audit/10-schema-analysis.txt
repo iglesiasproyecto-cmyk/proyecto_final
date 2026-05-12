@@ -1,0 +1,23 @@
+=== BASE SCHEMA ANALYSIS ===
+Tables created: 23
+Tables expected by frontend: (analyzing...)
+src/types/app.types.ts:export interface Pais {
+src/types/app.types.ts:export interface DepartamentoGeo {
+src/types/app.types.ts:export interface Ciudad {
+src/types/app.types.ts:export interface Iglesia {
+src/types/app.types.ts:export interface Pastor {
+src/types/app.types.ts:export interface IglesiaPastor {
+src/types/app.types.ts:export interface SedePastor {
+src/types/app.types.ts:export interface Sede {
+src/types/app.types.ts:export interface Ministerio {
+src/types/app.types.ts:export interface MiembroMinisterio {
+src/types/app.types.ts:export interface Rol {
+src/types/app.types.ts:export interface Usuario {
+src/types/app.types.ts:export interface UsuarioRol {
+src/types/app.types.ts:export interface AdminSedeAsignacion {
+src/types/app.types.ts:export interface Notificacion {
+src/types/app.types.ts:export interface Evento {
+src/types/app.types.ts:export interface Tarea {
+src/types/app.types.ts:export interface TareaAsignada {
+src/types/app.types.ts:export interface TareaEvidencia {
+src/types/app.types.ts:export interface AulaCurso {

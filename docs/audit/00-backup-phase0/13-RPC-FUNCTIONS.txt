@@ -1,0 +1,11 @@
+=== FUNCIONES ENCONTRADAS ===
+✓ get_my_roles
+✓ get_my_unread_notifications_count
+✓ get_my_usuario
+✓ get_user_iglesias
+✓ get_user_ministerios
+
+=== FUNCIONES FALTANTES ===
+✗ enroll_users
+✗ get_my_usuario_id
+✗ invite_user_rpc

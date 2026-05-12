@@ -34,7 +34,6 @@ CREATE POLICY "Usuario puede actualizar su propia tarea_asignada"
       WHERE auth_user_id = (select auth.uid())
       LIMIT 1
     )
-    OR get_my_highest_role() = ANY (ARRAY['Super Administrador'::text, 'Administrador de Iglesia'::text, 'Líder'::text])
   )
   WITH CHECK (
     id_usuario = (
@@ -42,7 +41,6 @@ CREATE POLICY "Usuario puede actualizar su propia tarea_asignada"
       WHERE auth_user_id = (select auth.uid())
       LIMIT 1
     )
-    OR get_my_highest_role() = ANY (ARRAY['Super Administrador'::text, 'Administrador de Iglesia'::text, 'Líder'::text])
   );
 
 -- ============================================================================

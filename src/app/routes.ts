@@ -8,7 +8,9 @@ import { IndexRedirect } from "./components/IndexRedirect";
 import { LandingPage } from "./components/LandingPage";
 import { LoginPage } from "./components/LoginPage";
 import { ForgotPasswordPage } from "./components/ForgotPasswordPage";
+import { ResetPasswordPage } from "./components/ResetPasswordPage";
 import { SetPasswordPage } from "./components/SetPasswordPage";
+import { AuthCallbackPage } from "./components/AuthCallbackPage";
 import { AcceptInvitePage } from "./components/AcceptInvitePage";
 import { DashboardPage } from "./components/DashboardPage";
 import { ChurchesPage } from "./components/ChurchesPage";
@@ -43,6 +45,7 @@ export const router = createBrowserRouter([
       { index: true, Component: LandingPage },
       { path: "login", Component: LoginPage, ErrorBoundary: ErrorPage },
       { path: "forgot-password", Component: ForgotPasswordPage, ErrorBoundary: ErrorPage },
+      { path: "auth/reset-password", Component: ResetPasswordPage, ErrorBoundary: ErrorPage },
       { path: "set-password", Component: SetPasswordPage, ErrorBoundary: ErrorPage },
       { path: "auth/callback", Component: AuthCallbackPage, ErrorBoundary: ErrorPage },
       { path: "auth/accept-invite", Component: AcceptInvitePage, ErrorBoundary: ErrorPage },

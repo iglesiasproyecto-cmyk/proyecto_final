@@ -5,167 +5,167 @@
 -- Helper functions (SECURITY DEFINER with fixed search_path)
 -- -------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION public.is_super_admin()
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.usuario_rol ur
-    JOIN public.rol r ON r.id_rol = ur.id_rol
-    WHERE ur.id_usuario = (
-      SELECT id_usuario
-      FROM public.usuario
-      WHERE auth_user_id = (SELECT auth.uid())
-      LIMIT 1
-    )
-    AND ur.fecha_fin IS NULL
-    AND r.nombre = 'Super Administrador'
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION public.get_user_iglesias()
-RETURNS TABLE(id_iglesia bigint)
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-  SELECT DISTINCT ur.id_iglesia
-  FROM public.usuario_rol ur
-  JOIN public.rol r ON r.id_rol = ur.id_rol
-  WHERE ur.id_usuario = (
-    SELECT id_usuario
-    FROM public.usuario
-    WHERE auth_user_id = (SELECT auth.uid())
-    LIMIT 1
-  )
-  AND ur.fecha_fin IS NULL
-  AND r.nombre IN ('Super Administrador', 'Administrador de Iglesia');
-$$;
-
-CREATE OR REPLACE FUNCTION public.is_admin_of_iglesia(target_iglesia_id bigint)
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-  SELECT
-    public.is_super_admin()
-    OR EXISTS (
-      SELECT 1
-      FROM public.get_user_iglesias() g
-      WHERE g.id_iglesia = target_iglesia_id
-    );
-$$;
-
-CREATE OR REPLACE FUNCTION public.is_super_admin_role(target_role_id bigint)
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.rol r
-    WHERE r.id_rol = target_role_id
-      AND r.nombre = 'Super Administrador'
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION public.can_assign_role(target_role_id bigint)
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-  SELECT
-    public.is_super_admin()
-    OR NOT public.is_super_admin_role(target_role_id);
-$$;
-
-GRANT EXECUTE ON FUNCTION public.is_super_admin() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_user_iglesias() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.is_admin_of_iglesia(bigint) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.is_super_admin_role(bigint) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.can_assign_role(bigint) TO authenticated;
-
--- -------------------------------------------------------------------
--- usuario policies
--- -------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Authenticated update usuario" ON public.usuario;
-
-CREATE POLICY "Scoped update usuario"
-  ON public.usuario FOR UPDATE
-  TO authenticated
-  USING (
-    (SELECT auth.uid()) IS NOT NULL
-    AND (
-      auth_user_id = (SELECT auth.uid())
-      OR public.is_super_admin()
-      OR EXISTS (
-        SELECT 1
-        FROM public.usuario_rol ur_target
-        WHERE ur_target.id_usuario = usuario.id_usuario
-          AND ur_target.fecha_fin IS NULL
-          AND public.is_admin_of_iglesia(ur_target.id_iglesia)
-      )
-    )
-  )
-  WITH CHECK (
-    (SELECT auth.uid()) IS NOT NULL
-    AND (
-      auth_user_id = (SELECT auth.uid())
-      OR public.is_super_admin()
-      OR EXISTS (
-        SELECT 1
-        FROM public.usuario_rol ur_target
-        WHERE ur_target.id_usuario = usuario.id_usuario
-          AND ur_target.fecha_fin IS NULL
-          AND public.is_admin_of_iglesia(ur_target.id_iglesia)
-      )
-    )
-  );
-
--- -------------------------------------------------------------------
--- usuario_rol policies
--- -------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Authenticated insert usuario_rol" ON public.usuario_rol;
-DROP POLICY IF EXISTS "Authenticated update usuario_rol" ON public.usuario_rol;
-DROP POLICY IF EXISTS "Authenticated delete usuario_rol" ON public.usuario_rol;
-
-CREATE POLICY "Scoped insert usuario_rol"
-  ON public.usuario_rol FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    public.is_admin_of_iglesia(id_iglesia)
-    AND public.can_assign_role(id_rol)
-  );
-
-CREATE POLICY "Scoped update usuario_rol"
-  ON public.usuario_rol FOR UPDATE
-  TO authenticated
-  USING (
-    public.is_admin_of_iglesia(id_iglesia)
-    AND public.can_assign_role(id_rol)
-  )
-  WITH CHECK (
-    public.is_admin_of_iglesia(id_iglesia)
-    AND public.can_assign_role(id_rol)
-  );
-
-CREATE POLICY "Scoped delete usuario_rol"
-  ON public.usuario_rol FOR DELETE
-  TO authenticated
-  USING (
-    public.is_admin_of_iglesia(id_iglesia)
-    AND public.can_assign_role(id_rol)
-  );
+-- SKIP (defined in 20260415000000): CREATE OR REPLACE FUNCTION public.is_super_admin()
+-- SKIP (defined in 20260415000000): RETURNS boolean
+-- SKIP (defined in 20260415000000): LANGUAGE sql
+-- SKIP (defined in 20260415000000): SECURITY DEFINER
+-- SKIP (defined in 20260415000000): STABLE
+-- SKIP (defined in 20260415000000): SET search_path = public
+-- SKIP (defined in 20260415000000): AS $$
+-- SKIP (defined in 20260415000000):   SELECT EXISTS (
+-- SKIP (defined in 20260415000000):     SELECT 1
+-- SKIP (defined in 20260415000000):     FROM public.usuario_rol ur
+-- SKIP (defined in 20260415000000):     JOIN public.rol r ON r.id_rol = ur.id_rol
+-- SKIP (defined in 20260415000000):     WHERE ur.id_usuario = (
+-- SKIP (defined in 20260415000000):       SELECT id_usuario
+-- SKIP (defined in 20260415000000):       FROM public.usuario
+-- SKIP (defined in 20260415000000):       WHERE auth_user_id = (SELECT auth.uid())
+-- SKIP (defined in 20260415000000):       LIMIT 1
+-- SKIP (defined in 20260415000000):     )
+-- SKIP (defined in 20260415000000):     AND ur.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000):     AND r.nombre = 'Super Administrador'
+-- SKIP (defined in 20260415000000):   );
+-- SKIP (defined in 20260415000000): $$;
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): CREATE OR REPLACE FUNCTION public.get_user_iglesias()
+-- SKIP (defined in 20260415000000): RETURNS TABLE(id_iglesia bigint)
+-- SKIP (defined in 20260415000000): LANGUAGE sql
+-- SKIP (defined in 20260415000000): SECURITY DEFINER
+-- SKIP (defined in 20260415000000): STABLE
+-- SKIP (defined in 20260415000000): SET search_path = public
+-- SKIP (defined in 20260415000000): AS $$
+-- SKIP (defined in 20260415000000):   SELECT DISTINCT ur.id_iglesia
+-- SKIP (defined in 20260415000000):   FROM public.usuario_rol ur
+-- SKIP (defined in 20260415000000):   JOIN public.rol r ON r.id_rol = ur.id_rol
+-- SKIP (defined in 20260415000000):   WHERE ur.id_usuario = (
+-- SKIP (defined in 20260415000000):     SELECT id_usuario
+-- SKIP (defined in 20260415000000):     FROM public.usuario
+-- SKIP (defined in 20260415000000):     WHERE auth_user_id = (SELECT auth.uid())
+-- SKIP (defined in 20260415000000):     LIMIT 1
+-- SKIP (defined in 20260415000000):   )
+-- SKIP (defined in 20260415000000):   AND ur.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000):   AND r.nombre IN ('Super Administrador', 'Administrador de Iglesia');
+-- SKIP (defined in 20260415000000): $$;
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): CREATE OR REPLACE FUNCTION public.is_admin_of_iglesia(target_iglesia_id bigint)
+-- SKIP (defined in 20260415000000): RETURNS boolean
+-- SKIP (defined in 20260415000000): LANGUAGE sql
+-- SKIP (defined in 20260415000000): SECURITY DEFINER
+-- SKIP (defined in 20260415000000): STABLE
+-- SKIP (defined in 20260415000000): SET search_path = public
+-- SKIP (defined in 20260415000000): AS $$
+-- SKIP (defined in 20260415000000):   SELECT
+-- SKIP (defined in 20260415000000):     public.is_super_admin()
+-- SKIP (defined in 20260415000000):     OR EXISTS (
+-- SKIP (defined in 20260415000000):       SELECT 1
+-- SKIP (defined in 20260415000000):       FROM public.get_user_iglesias() g
+-- SKIP (defined in 20260415000000):       WHERE g.id_iglesia = target_iglesia_id
+-- SKIP (defined in 20260415000000):     );
+-- SKIP (defined in 20260415000000): $$;
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): CREATE OR REPLACE FUNCTION public.is_super_admin_role(target_role_id bigint)
+-- SKIP (defined in 20260415000000): RETURNS boolean
+-- SKIP (defined in 20260415000000): LANGUAGE sql
+-- SKIP (defined in 20260415000000): SECURITY DEFINER
+-- SKIP (defined in 20260415000000): STABLE
+-- SKIP (defined in 20260415000000): SET search_path = public
+-- SKIP (defined in 20260415000000): AS $$
+-- SKIP (defined in 20260415000000):   SELECT EXISTS (
+-- SKIP (defined in 20260415000000):     SELECT 1
+-- SKIP (defined in 20260415000000):     FROM public.rol r
+-- SKIP (defined in 20260415000000):     WHERE r.id_rol = target_role_id
+-- SKIP (defined in 20260415000000):       AND r.nombre = 'Super Administrador'
+-- SKIP (defined in 20260415000000):   );
+-- SKIP (defined in 20260415000000): $$;
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): CREATE OR REPLACE FUNCTION public.can_assign_role(target_role_id bigint)
+-- SKIP (defined in 20260415000000): RETURNS boolean
+-- SKIP (defined in 20260415000000): LANGUAGE sql
+-- SKIP (defined in 20260415000000): SECURITY DEFINER
+-- SKIP (defined in 20260415000000): STABLE
+-- SKIP (defined in 20260415000000): SET search_path = public
+-- SKIP (defined in 20260415000000): AS $$
+-- SKIP (defined in 20260415000000):   SELECT
+-- SKIP (defined in 20260415000000):     public.is_super_admin()
+-- SKIP (defined in 20260415000000):     OR NOT public.is_super_admin_role(target_role_id);
+-- SKIP (defined in 20260415000000): $$;
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): GRANT EXECUTE ON FUNCTION public.is_super_admin() TO authenticated;
+-- SKIP (defined in 20260415000000): GRANT EXECUTE ON FUNCTION public.get_user_iglesias() TO authenticated;
+-- SKIP (defined in 20260415000000): GRANT EXECUTE ON FUNCTION public.is_admin_of_iglesia(bigint) TO authenticated;
+-- SKIP (defined in 20260415000000): GRANT EXECUTE ON FUNCTION public.is_super_admin_role(bigint) TO authenticated;
+-- SKIP (defined in 20260415000000): GRANT EXECUTE ON FUNCTION public.can_assign_role(bigint) TO authenticated;
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- -------------------------------------------------------------------
+-- SKIP (defined in 20260415000000): -- usuario policies
+-- SKIP (defined in 20260415000000): -- -------------------------------------------------------------------
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): DROP POLICY IF EXISTS "Authenticated update usuario" ON public.usuario;
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): CREATE POLICY "Scoped update usuario"
+-- SKIP (defined in 20260415000000):   ON public.usuario FOR UPDATE
+-- SKIP (defined in 20260415000000):   TO authenticated
+-- SKIP (defined in 20260415000000):   USING (
+-- SKIP (defined in 20260415000000):     (SELECT auth.uid()) IS NOT NULL
+-- SKIP (defined in 20260415000000):     AND (
+-- SKIP (defined in 20260415000000):       auth_user_id = (SELECT auth.uid())
+-- SKIP (defined in 20260415000000):       OR public.is_super_admin()
+-- SKIP (defined in 20260415000000):       OR EXISTS (
+-- SKIP (defined in 20260415000000):         SELECT 1
+-- SKIP (defined in 20260415000000):         FROM public.usuario_rol ur_target
+-- SKIP (defined in 20260415000000):         WHERE ur_target.id_usuario = usuario.id_usuario
+-- SKIP (defined in 20260415000000):           AND ur_target.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000):           AND public.is_admin_of_iglesia(ur_target.id_iglesia)
+-- SKIP (defined in 20260415000000):       )
+-- SKIP (defined in 20260415000000):     )
+-- SKIP (defined in 20260415000000):   )
+-- SKIP (defined in 20260415000000):   WITH CHECK (
+-- SKIP (defined in 20260415000000):     (SELECT auth.uid()) IS NOT NULL
+-- SKIP (defined in 20260415000000):     AND (
+-- SKIP (defined in 20260415000000):       auth_user_id = (SELECT auth.uid())
+-- SKIP (defined in 20260415000000):       OR public.is_super_admin()
+-- SKIP (defined in 20260415000000):       OR EXISTS (
+-- SKIP (defined in 20260415000000):         SELECT 1
+-- SKIP (defined in 20260415000000):         FROM public.usuario_rol ur_target
+-- SKIP (defined in 20260415000000):         WHERE ur_target.id_usuario = usuario.id_usuario
+-- SKIP (defined in 20260415000000):           AND ur_target.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000):           AND public.is_admin_of_iglesia(ur_target.id_iglesia)
+-- SKIP (defined in 20260415000000):       )
+-- SKIP (defined in 20260415000000):     )
+-- SKIP (defined in 20260415000000):   );
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- -------------------------------------------------------------------
+-- SKIP (defined in 20260415000000): -- usuario_rol policies
+-- SKIP (defined in 20260415000000): -- -------------------------------------------------------------------
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): DROP POLICY IF EXISTS "Authenticated insert usuario_rol" ON public.usuario_rol;
+-- SKIP (defined in 20260415000000): DROP POLICY IF EXISTS "Authenticated update usuario_rol" ON public.usuario_rol;
+-- SKIP (defined in 20260415000000): DROP POLICY IF EXISTS "Authenticated delete usuario_rol" ON public.usuario_rol;
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): CREATE POLICY "Scoped insert usuario_rol"
+-- SKIP (defined in 20260415000000):   ON public.usuario_rol FOR INSERT
+-- SKIP (defined in 20260415000000):   TO authenticated
+-- SKIP (defined in 20260415000000):   WITH CHECK (
+-- SKIP (defined in 20260415000000):     public.is_admin_of_iglesia(id_iglesia)
+-- SKIP (defined in 20260415000000):     AND public.can_assign_role(id_rol)
+-- SKIP (defined in 20260415000000):   );
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): CREATE POLICY "Scoped update usuario_rol"
+-- SKIP (defined in 20260415000000):   ON public.usuario_rol FOR UPDATE
+-- SKIP (defined in 20260415000000):   TO authenticated
+-- SKIP (defined in 20260415000000):   USING (
+-- SKIP (defined in 20260415000000):     public.is_admin_of_iglesia(id_iglesia)
+-- SKIP (defined in 20260415000000):     AND public.can_assign_role(id_rol)
+-- SKIP (defined in 20260415000000):   )
+-- SKIP (defined in 20260415000000):   WITH CHECK (
+-- SKIP (defined in 20260415000000):     public.is_admin_of_iglesia(id_iglesia)
+-- SKIP (defined in 20260415000000):     AND public.can_assign_role(id_rol)
+-- SKIP (defined in 20260415000000):   );
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): CREATE POLICY "Scoped delete usuario_rol"
+-- SKIP (defined in 20260415000000):   ON public.usuario_rol FOR DELETE
+-- SKIP (defined in 20260415000000):   TO authenticated
+-- SKIP (defined in 20260415000000):   USING (
+-- SKIP (defined in 20260415000000):     public.is_admin_of_iglesia(id_iglesia)
+-- SKIP (defined in 20260415000000):     AND public.can_assign_role(id_rol)
+-- SKIP (defined in 20260415000000):   );

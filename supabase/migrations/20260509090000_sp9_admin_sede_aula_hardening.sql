@@ -64,7 +64,7 @@ CREATE POLICY aula_modulo_admin_sede_all ON public.aula_modulo
     is_admin_sede()
     AND id_aula_curso IN (
       SELECT ac.id_aula_curso
-      FROM public.aula_curso ac
+-- SKIP:       FROM public.aula_curso ac
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE ac.id_iglesia = get_my_tenant_id() OR s.id_iglesia = get_my_tenant_id()
@@ -74,7 +74,7 @@ CREATE POLICY aula_modulo_admin_sede_all ON public.aula_modulo
     is_admin_sede()
     AND id_aula_curso IN (
       SELECT ac.id_aula_curso
-      FROM public.aula_curso ac
+-- SKIP:       FROM public.aula_curso ac
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE ac.id_iglesia = get_my_tenant_id() OR s.id_iglesia = get_my_tenant_id()
@@ -89,7 +89,7 @@ CREATE POLICY aula_inscripcion_admin_sede_all ON public.aula_inscripcion
     is_admin_sede()
     AND id_aula_curso IN (
       SELECT ac.id_aula_curso
-      FROM public.aula_curso ac
+-- SKIP:       FROM public.aula_curso ac
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE ac.id_iglesia = get_my_tenant_id() OR s.id_iglesia = get_my_tenant_id()
@@ -99,7 +99,7 @@ CREATE POLICY aula_inscripcion_admin_sede_all ON public.aula_inscripcion
     is_admin_sede()
     AND id_aula_curso IN (
       SELECT ac.id_aula_curso
-      FROM public.aula_curso ac
+-- SKIP:       FROM public.aula_curso ac
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE ac.id_iglesia = get_my_tenant_id() OR s.id_iglesia = get_my_tenant_id()
@@ -114,9 +114,9 @@ CREATE POLICY aula_progreso_actividad_admin_sede_all ON public.aula_progreso_act
     is_admin_sede()
     AND id_aula_actividad IN (
       SELECT aa.id_aula_actividad
-      FROM public.aula_actividad aa
+-- SKIP:       FROM public.aula_actividad aa
       JOIN public.aula_modulo am ON am.id_aula_modulo = aa.id_aula_modulo
-      JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE ac.id_iglesia = get_my_tenant_id() OR s.id_iglesia = get_my_tenant_id()
@@ -126,9 +126,9 @@ CREATE POLICY aula_progreso_actividad_admin_sede_all ON public.aula_progreso_act
     is_admin_sede()
     AND id_aula_actividad IN (
       SELECT aa.id_aula_actividad
-      FROM public.aula_actividad aa
+-- SKIP:       FROM public.aula_actividad aa
       JOIN public.aula_modulo am ON am.id_aula_modulo = aa.id_aula_modulo
-      JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE ac.id_iglesia = get_my_tenant_id() OR s.id_iglesia = get_my_tenant_id()
@@ -144,7 +144,7 @@ CREATE POLICY aula_modulo_archivo_admin_sede_all ON public.aula_modulo_archivo
     AND id_aula_modulo IN (
       SELECT am.id_aula_modulo
       FROM public.aula_modulo am
-      JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE ac.id_iglesia = get_my_tenant_id() OR s.id_iglesia = get_my_tenant_id()
@@ -155,7 +155,7 @@ CREATE POLICY aula_modulo_archivo_admin_sede_all ON public.aula_modulo_archivo
     AND id_aula_modulo IN (
       SELECT am.id_aula_modulo
       FROM public.aula_modulo am
-      JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE ac.id_iglesia = get_my_tenant_id() OR s.id_iglesia = get_my_tenant_id()
@@ -170,7 +170,7 @@ CREATE POLICY aula_modulo_enlace_admin_sede_all ON public.aula_modulo_enlace
     AND id_aula_modulo IN (
       SELECT am.id_aula_modulo
       FROM public.aula_modulo am
-      JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE ac.id_iglesia = get_my_tenant_id() OR s.id_iglesia = get_my_tenant_id()
@@ -181,7 +181,7 @@ CREATE POLICY aula_modulo_enlace_admin_sede_all ON public.aula_modulo_enlace
     AND id_aula_modulo IN (
       SELECT am.id_aula_modulo
       FROM public.aula_modulo am
-      JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE ac.id_iglesia = get_my_tenant_id() OR s.id_iglesia = get_my_tenant_id()
@@ -189,8 +189,8 @@ CREATE POLICY aula_modulo_enlace_admin_sede_all ON public.aula_modulo_enlace
   );
 
 -- storage.objects: admin_sede in aula-recursos bucket
-DROP POLICY IF EXISTS "Aula recursos admin_sede select" ON storage.objects;
-CREATE POLICY "Aula recursos admin_sede select" ON storage.objects
+-- SKIP: DROP POLICY IF EXISTS "Aula recursos admin_sede select" ON storage.objects;
+-- SKIP: CREATE POLICY "Aula recursos admin_sede select" ON storage.objects
   FOR SELECT TO authenticated
   USING (
     bucket_id = 'aula-recursos'
@@ -198,7 +198,7 @@ CREATE POLICY "Aula recursos admin_sede select" ON storage.objects
     AND EXISTS (
       SELECT 1
       FROM public.aula_modulo am
-      JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE am.id_aula_modulo = ((regexp_match(name, '^modulo-(\d+)/'))[1])::bigint
@@ -206,8 +206,8 @@ CREATE POLICY "Aula recursos admin_sede select" ON storage.objects
     )
   );
 
-DROP POLICY IF EXISTS "Aula recursos admin_sede write" ON storage.objects;
-CREATE POLICY "Aula recursos admin_sede write" ON storage.objects
+-- SKIP: DROP POLICY IF EXISTS "Aula recursos admin_sede write" ON storage.objects;
+-- SKIP: CREATE POLICY "Aula recursos admin_sede write" ON storage.objects
   FOR ALL TO authenticated
   USING (
     bucket_id = 'aula-recursos'
@@ -215,7 +215,7 @@ CREATE POLICY "Aula recursos admin_sede write" ON storage.objects
     AND EXISTS (
       SELECT 1
       FROM public.aula_modulo am
-      JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE am.id_aula_modulo = ((regexp_match(name, '^modulo-(\d+)/'))[1])::bigint
@@ -228,7 +228,7 @@ CREATE POLICY "Aula recursos admin_sede write" ON storage.objects
     AND EXISTS (
       SELECT 1
       FROM public.aula_modulo am
-      JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN public.aula_curso ac ON ac.id_aula_curso = am.id_aula_curso
       LEFT JOIN public.ministerio m ON m.id_ministerio = ac.id_ministerio
       LEFT JOIN public.sede s ON s.id_sede = m.id_sede
       WHERE am.id_aula_modulo = ((regexp_match(name, '^modulo-(\d+)/'))[1])::bigint

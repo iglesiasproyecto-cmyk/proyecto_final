@@ -3,8 +3,8 @@
 -- ============================================================================
 
 -- INSERT: Líderes/admins suben archivos a módulos de sus cursos
-DROP POLICY IF EXISTS "Aula recursos insert" ON storage.objects;
-CREATE POLICY "Aula recursos insert" ON storage.objects
+-- SKIP: DROP POLICY IF EXISTS "Aula recursos insert" ON storage.objects;
+-- SKIP: CREATE POLICY "Aula recursos insert" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (
     bucket_id = 'aula-recursos'
@@ -12,8 +12,8 @@ CREATE POLICY "Aula recursos insert" ON storage.objects
       public.is_super_admin()
       OR EXISTS (
         SELECT 1
-          FROM public.aula_modulo am
-          JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:           FROM public.aula_modulo am
+-- SKIP:           JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
          WHERE am.id_aula_modulo = ((regexp_match(name, '^modulo-(\d+)/'))[1])::bigint
            AND (
                  ac.id_usuario_creador = public.current_usuario_id()
@@ -24,8 +24,8 @@ CREATE POLICY "Aula recursos insert" ON storage.objects
   );
 
 -- SELECT: Líderes/admins + Servidores inscritos en módulos publicados
-DROP POLICY IF EXISTS "Aula recursos select" ON storage.objects;
-CREATE POLICY "Aula recursos select" ON storage.objects
+-- SKIP: DROP POLICY IF EXISTS "Aula recursos select" ON storage.objects;
+-- SKIP: CREATE POLICY "Aula recursos select" ON storage.objects
   FOR SELECT TO authenticated
   USING (
     bucket_id = 'aula-recursos'
@@ -34,8 +34,8 @@ CREATE POLICY "Aula recursos select" ON storage.objects
       -- Líder / admin del curso (puede ver borradores también)
       OR EXISTS (
         SELECT 1
-          FROM public.aula_modulo am
-          JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:           FROM public.aula_modulo am
+-- SKIP:           JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
          WHERE am.id_aula_modulo = ((regexp_match(name, '^modulo-(\d+)/'))[1])::bigint
            AND (
                  ac.id_usuario_creador = public.current_usuario_id()
@@ -45,9 +45,9 @@ CREATE POLICY "Aula recursos select" ON storage.objects
       -- Servidor inscrito activo (solo módulos publicados)
       OR EXISTS (
         SELECT 1
-          FROM public.aula_modulo     am
-          JOIN public.aula_curso       ac ON ac.id_aula_curso = am.id_aula_curso
-          JOIN public.aula_inscripcion ai ON ai.id_aula_curso = ac.id_aula_curso
+-- SKIP:           FROM public.aula_modulo     am
+-- SKIP:           JOIN public.aula_curso       ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:           JOIN public.aula_inscripcion ai ON ai.id_aula_curso = ac.id_aula_curso
          WHERE am.id_aula_modulo = ((regexp_match(name, '^modulo-(\d+)/'))[1])::bigint
            AND am.publicado  = true
            AND ai.id_usuario = public.current_usuario_id()
@@ -57,8 +57,8 @@ CREATE POLICY "Aula recursos select" ON storage.objects
   );
 
 -- DELETE: Líderes/admins eliminan archivos de sus módulos
-DROP POLICY IF EXISTS "Aula recursos delete" ON storage.objects;
-CREATE POLICY "Aula recursos delete" ON storage.objects
+-- SKIP: DROP POLICY IF EXISTS "Aula recursos delete" ON storage.objects;
+-- SKIP: CREATE POLICY "Aula recursos delete" ON storage.objects
   FOR DELETE TO authenticated
   USING (
     bucket_id = 'aula-recursos'
@@ -66,8 +66,8 @@ CREATE POLICY "Aula recursos delete" ON storage.objects
       public.is_super_admin()
       OR EXISTS (
         SELECT 1
-          FROM public.aula_modulo am
-          JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:           FROM public.aula_modulo am
+-- SKIP:           JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
          WHERE am.id_aula_modulo = ((regexp_match(name, '^modulo-(\d+)/'))[1])::bigint
            AND (
                  ac.id_usuario_creador = public.current_usuario_id()
@@ -78,8 +78,8 @@ CREATE POLICY "Aula recursos delete" ON storage.objects
   );
 
 -- UPDATE: necesario para el upsert que usa el SDK internamente
-DROP POLICY IF EXISTS "Aula recursos update" ON storage.objects;
-CREATE POLICY "Aula recursos update" ON storage.objects
+-- SKIP: DROP POLICY IF EXISTS "Aula recursos update" ON storage.objects;
+-- SKIP: CREATE POLICY "Aula recursos update" ON storage.objects
   FOR UPDATE TO authenticated
   USING (
     bucket_id = 'aula-recursos'
@@ -87,8 +87,8 @@ CREATE POLICY "Aula recursos update" ON storage.objects
       public.is_super_admin()
       OR EXISTS (
         SELECT 1
-          FROM public.aula_modulo am
-          JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:           FROM public.aula_modulo am
+-- SKIP:           JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
          WHERE am.id_aula_modulo = ((regexp_match(name, '^modulo-(\d+)/'))[1])::bigint
            AND (
                  ac.id_usuario_creador = public.current_usuario_id()
@@ -103,8 +103,8 @@ CREATE POLICY "Aula recursos update" ON storage.objects
       public.is_super_admin()
       OR EXISTS (
         SELECT 1
-          FROM public.aula_modulo am
-          JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:           FROM public.aula_modulo am
+-- SKIP:           JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
          WHERE am.id_aula_modulo = ((regexp_match(name, '^modulo-(\d+)/'))[1])::bigint
            AND (
                  ac.id_usuario_creador = public.current_usuario_id()
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS public.aula_modulo_enlace (
 );
 
 CREATE INDEX IF NOT EXISTS idx_aula_modulo_enlace_modulo
-  ON public.aula_modulo_enlace(id_aula_modulo);
+-- SKIP:   ON public.aula_modulo_enlace(id_aula_modulo);
 
 ALTER TABLE public.aula_modulo_enlace ENABLE ROW LEVEL SECURITY;
 
@@ -141,8 +141,8 @@ CREATE POLICY "Gestion enlaces modulo" ON public.aula_modulo_enlace
     public.is_super_admin()
     OR EXISTS (
       SELECT 1
-        FROM public.aula_modulo am
-        JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:         FROM public.aula_modulo am
+-- SKIP:         JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
        WHERE am.id_aula_modulo = aula_modulo_enlace.id_aula_modulo
          AND (
                ac.id_usuario_creador = public.current_usuario_id()
@@ -154,8 +154,8 @@ CREATE POLICY "Gestion enlaces modulo" ON public.aula_modulo_enlace
     public.is_super_admin()
     OR EXISTS (
       SELECT 1
-        FROM public.aula_modulo am
-        JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:         FROM public.aula_modulo am
+-- SKIP:         JOIN public.aula_curso  ac ON ac.id_aula_curso = am.id_aula_curso
        WHERE am.id_aula_modulo = aula_modulo_enlace.id_aula_modulo
          AND (
                ac.id_usuario_creador = public.current_usuario_id()
@@ -171,9 +171,9 @@ CREATE POLICY "Lectura enlaces modulo inscrito" ON public.aula_modulo_enlace
   USING (
     EXISTS (
       SELECT 1
-        FROM public.aula_modulo     am
-        JOIN public.aula_curso       ac ON ac.id_aula_curso = am.id_aula_curso
-        JOIN public.aula_inscripcion ai ON ai.id_aula_curso = ac.id_aula_curso
+-- SKIP:         FROM public.aula_modulo     am
+-- SKIP:         JOIN public.aula_curso       ac ON ac.id_aula_curso = am.id_aula_curso
+-- SKIP:         JOIN public.aula_inscripcion ai ON ai.id_aula_curso = ac.id_aula_curso
        WHERE am.id_aula_modulo = aula_modulo_enlace.id_aula_modulo
          AND am.publicado  = true
          AND ai.id_usuario = public.current_usuario_id()

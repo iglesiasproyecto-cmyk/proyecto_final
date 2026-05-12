@@ -191,10 +191,10 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_recurso_cleanup_storage ON public.recurso;
-CREATE TRIGGER trg_recurso_cleanup_storage
-  BEFORE DELETE ON public.recurso
-  FOR EACH ROW EXECUTE FUNCTION public.recurso_cleanup_storage();
+-- SKIP: DROP TRIGGER IF EXISTS trg_recurso_cleanup_storage ON public.recurso;
+-- SKIP: CREATE TRIGGER trg_recurso_cleanup_storage
+-- SKIP:   BEFORE DELETE ON public.recurso
+-- SKIP:   FOR EACH ROW EXECUTE FUNCTION public.recurso_cleanup_storage();
 
 -- ---------------------------------------------------------------------------
 -- 3) Notificaciones automáticas

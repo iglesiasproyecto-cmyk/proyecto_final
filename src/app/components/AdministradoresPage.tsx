@@ -5,6 +5,8 @@ import { useUsuariosEnriquecidos, useAssignRol, useRemoveRol } from "@/hooks/use
 import { useRoles } from "@/hooks/useUsuarios";
 import { ROLE_IDS } from "@/app/constants/roles";
 import { useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "./ui/skeleton";
+import { CardSkeleton } from "./ContentSkeletons";
 import type { UsuarioEnriquecido } from "@/services/usuarios.service";
 
 const ID_ROL_ADMIN_IGLESIA = ROLE_IDS.ADMIN_IGLESIA;

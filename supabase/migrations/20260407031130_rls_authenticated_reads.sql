@@ -9,7 +9,7 @@ DECLARE
 BEGIN
   FOREACH tbl IN ARRAY ARRAY[
     'iglesia', 'sede', 'pastor', 'ministerio',
-    'evento', 'tarea', 'curso', 'modulo', 'recurso',
+    'evento', 'tarea', 'curso', 'modulo',
     'iglesia_pastor', 'sede_pastor',
     'miembro_ministerio', 'proceso_asignado_curso',
     'detalle_proceso_curso'

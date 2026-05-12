@@ -123,7 +123,7 @@ export function DashboardPage() {
   switch (stableRole) {
     case "super_admin": return <SuperAdminDashboard />;
     case "admin_iglesia": return <AdminIglesiaDashboard />;
-    case "admin_sede": return <AdminIglesiaDashboard />;
+    case "admin_sede": return <AdminSedeDashboard />;
     case "lider": return <LiderDashboard />;
     case "servidor": return <ServidorDashboard />;
     default: return null;
@@ -507,6 +507,113 @@ function AdminIglesiaDashboard() {
               </div>
             ))}
           </div>
+        </AnimatedCard>
+      </div>
+    </div>
+  );
+}
+
+/* ======== ADMIN SEDE ======== */
+function AdminSedeDashboard() {
+  const { usuarioActual, notificacionesCount, iglesiaActual } = useApp();
+  const navigate = useNavigate();
+  const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : '/app';
+  const { data: ministerios = [] } = useMinisterios(iglesiaActual?.id);
+  const { data: eventos = [] } = useEventos(iglesiaActual?.id);
+  const { data: notificaciones = [] } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
+
+  if (!usuarioActual) return null;
+
+  const activeMins = ministerios.filter((m) => m.estado === "activo");
+  const globalEvents = eventos.filter((e) => !e.idMinisterio);
+  const unread = notificacionesCount;
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto px-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Bienvenido de vuelta, {usuarioActual.nombres}</h1>
+          <p className="text-muted-foreground mt-1">Administrador de Sede • {iglesiaActual?.nombre}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(`${basePath}/notificaciones`)} className="relative p-2 hover:bg-muted rounded-lg transition-colors">
+            <Bell className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+            {unread > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <AnimatedCard index={0} className="p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Ministerios</p>
+              <p className="text-2xl font-bold mt-2">{activeMins.length}</p>
+            </div>
+            <Settings2 className="w-5 h-5 text-muted-foreground/50" />
+          </div>
+        </AnimatedCard>
+
+        <AnimatedCard index={1} className="p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Eventos</p>
+              <p className="text-2xl font-bold mt-2">{globalEvents.length}</p>
+            </div>
+            <CalendarDays className="w-5 h-5 text-muted-foreground/50" />
+          </div>
+        </AnimatedCard>
+
+        <AnimatedCard index={2} className="p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Tareas</p>
+              <p className="text-2xl font-bold mt-2">-</p>
+            </div>
+            <ListTodo className="w-5 h-5 text-muted-foreground/50" />
+          </div>
+        </AnimatedCard>
+
+        <AnimatedCard index={3} className="p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Notificaciones</p>
+              <p className="text-2xl font-bold mt-2">{unread}</p>
+            </div>
+            <Bell className="w-5 h-5 text-muted-foreground/50" />
+          </div>
+        </AnimatedCard>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <AnimatedCard index={4} className="lg:col-span-2 p-6">
+          <SectionHeader icon={<TrendingUp className="w-4 h-4" />} title="Accesos Rápidos" />
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "Ministerios", path: `${basePath}/ministerios`, icon: <Settings2 className="w-5 h-5" /> },
+              { label: "Eventos", path: `${basePath}/eventos`, icon: <CalendarDays className="w-5 h-5" /> },
+              { label: "Tareas", path: `${basePath}/tareas`, icon: <ListTodo className="w-5 h-5" /> },
+              { label: "Aula", path: `${basePath}/aula`, icon: <BookOpen className="w-5 h-5" /> },
+            ].map((q) => (
+              <button
+                key={q.path}
+                onClick={() => navigate(q.path)}
+                className="flex items-center gap-3 p-3 rounded-2xl bg-muted/50 hover:bg-muted transition-all group"
+              >
+                <span className="text-[#4682b4]/60 group-hover:text-[#4682b4]">{q.icon}</span>
+                <span className="text-sm font-medium group-hover:text-[#4682b4]">{q.label}</span>
+              </button>
+            ))}
+          </div>
+        </AnimatedCard>
+
+        <AnimatedCard index={5} className="p-6">
+          <SectionHeader icon={<Bell className="w-4 h-4" />} title="Notificaciones" />
+          {notificaciones.slice(0, 3).map((n) => (
+            <div key={n.idNotificacion} className="p-2 text-xs border-b last:border-b-0 text-muted-foreground">
+              {n.mensaje}
+            </div>
+          ))}
         </AnimatedCard>
       </div>
     </div>

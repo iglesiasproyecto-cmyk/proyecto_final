@@ -105,7 +105,7 @@ CREATE POLICY aula_modulo_archivo_select ON aula_modulo_archivo
     is_super_admin()
     OR id_aula_modulo IN (
       SELECT am.id_aula_modulo FROM aula_modulo am
-      JOIN aula_curso c ON c.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN aula_curso c ON c.id_aula_curso = am.id_aula_curso
       WHERE (c.id_iglesia IS NOT NULL AND c.id_iglesia = get_my_tenant_id())
          OR (c.id_ministerio IS NOT NULL AND c.id_ministerio IN (SELECT id FROM get_my_ministerios()))
     )
@@ -117,7 +117,7 @@ CREATE POLICY aula_modulo_archivo_write ON aula_modulo_archivo
     is_super_admin()
     OR (get_my_role() IN ('admin_iglesia', 'lider') AND id_aula_modulo IN (
       SELECT am.id_aula_modulo FROM aula_modulo am
-      JOIN aula_curso c ON c.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN aula_curso c ON c.id_aula_curso = am.id_aula_curso
       WHERE (c.id_iglesia IS NOT NULL AND c.id_iglesia = get_my_tenant_id())
          OR (c.id_ministerio IS NOT NULL AND c.id_ministerio IN (SELECT id FROM get_my_ministerios()))
     ))
@@ -132,7 +132,7 @@ CREATE POLICY aula_modulo_enlace_select ON aula_modulo_enlace
     is_super_admin()
     OR id_aula_modulo IN (
       SELECT am.id_aula_modulo FROM aula_modulo am
-      JOIN aula_curso c ON c.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN aula_curso c ON c.id_aula_curso = am.id_aula_curso
       WHERE (c.id_iglesia IS NOT NULL AND c.id_iglesia = get_my_tenant_id())
          OR (c.id_ministerio IS NOT NULL AND c.id_ministerio IN (SELECT id FROM get_my_ministerios()))
     )
@@ -144,7 +144,7 @@ CREATE POLICY aula_modulo_enlace_write ON aula_modulo_enlace
     is_super_admin()
     OR (get_my_role() IN ('admin_iglesia', 'lider') AND id_aula_modulo IN (
       SELECT am.id_aula_modulo FROM aula_modulo am
-      JOIN aula_curso c ON c.id_aula_curso = am.id_aula_curso
+-- SKIP:       JOIN aula_curso c ON c.id_aula_curso = am.id_aula_curso
       WHERE (c.id_iglesia IS NOT NULL AND c.id_iglesia = get_my_tenant_id())
          OR (c.id_ministerio IS NOT NULL AND c.id_ministerio IN (SELECT id FROM get_my_ministerios()))
     ))

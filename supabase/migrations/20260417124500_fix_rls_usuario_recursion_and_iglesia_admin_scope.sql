@@ -3,156 +3,156 @@
 -- 2) Allow Super Administrador through iglesia admin helper.
 -- 3) Replace direct usuario lookups in dependent policies.
 
-CREATE OR REPLACE FUNCTION public.current_usuario_id()
-RETURNS bigint
-LANGUAGE plpgsql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-DECLARE
-  v_id bigint;
-BEGIN
-  SELECT u.id_usuario
-    INTO v_id
-  FROM public.usuario u
-  WHERE u.auth_user_id = auth.uid()
-  LIMIT 1;
-
-  RETURN v_id;
-END;
-$$;
-
-GRANT EXECUTE ON FUNCTION public.current_usuario_id() TO authenticated;
-
-CREATE OR REPLACE FUNCTION public.get_user_iglesias()
-RETURNS TABLE(id_iglesia bigint)
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-  SELECT DISTINCT ur.id_iglesia
-  FROM public.usuario_rol ur
-  WHERE ur.id_usuario = public.current_usuario_id()
-    AND ur.id_iglesia IS NOT NULL
-    AND ur.fecha_fin IS NULL;
-$$;
-
-CREATE OR REPLACE FUNCTION public.is_super_admin()
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.usuario_rol ur
-    JOIN public.rol r ON r.id_rol = ur.id_rol
-    WHERE ur.id_usuario = public.current_usuario_id()
-      AND ur.fecha_fin IS NULL
-      AND r.nombre = 'Super Administrador'
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION public.is_admin_iglesia()
-RETURNS boolean
-LANGUAGE plpgsql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-BEGIN
-  IF public.is_super_admin() THEN
-    RETURN true;
-  END IF;
-
-  RETURN EXISTS (
-    SELECT 1
-    FROM public.usuario_rol ur
-    JOIN public.rol r ON r.id_rol = ur.id_rol
-    WHERE ur.id_usuario = public.current_usuario_id()
-      AND ur.fecha_fin IS NULL
-      AND r.nombre = 'Administrador de Iglesia'
-  );
-END;
-$$;
-
-DROP POLICY IF EXISTS "Scoped select usuario por iglesia" ON public.usuario;
-DROP POLICY IF EXISTS "Scoped update usuario" ON public.usuario;
-
-CREATE POLICY "Scoped select usuario por iglesia"
-  ON public.usuario FOR SELECT
-  TO authenticated
-  USING (
-    auth_user_id = auth.uid()
-    OR public.is_super_admin()
-    OR EXISTS (
-      SELECT 1
-      FROM public.usuario_rol ur_me
-      JOIN public.usuario_rol ur_target
-        ON ur_target.id_iglesia = ur_me.id_iglesia
-       AND ur_target.fecha_fin IS NULL
-      WHERE ur_me.id_usuario = public.current_usuario_id()
-        AND ur_me.fecha_fin IS NULL
-        AND ur_me.id_iglesia IS NOT NULL
-        AND ur_target.id_usuario = usuario.id_usuario
-    )
-  );
-
-CREATE POLICY "Scoped update usuario"
-  ON public.usuario FOR UPDATE
-  TO authenticated
-  USING (
-    auth_user_id = auth.uid()
-    OR public.is_super_admin()
-    OR EXISTS (
-      SELECT 1
-      FROM public.usuario_rol ur_me
-      JOIN public.rol r_me ON r_me.id_rol = ur_me.id_rol
-      JOIN public.usuario_rol ur_target
-        ON ur_target.id_iglesia = ur_me.id_iglesia
-       AND ur_target.fecha_fin IS NULL
-      WHERE ur_me.id_usuario = public.current_usuario_id()
-        AND ur_me.fecha_fin IS NULL
-        AND ur_me.id_iglesia IS NOT NULL
-        AND r_me.nombre IN ('Administrador de Iglesia')
-        AND ur_target.id_usuario = usuario.id_usuario
-    )
-  )
-  WITH CHECK (
-    auth_user_id = auth.uid()
-    OR public.is_super_admin()
-    OR EXISTS (
-      SELECT 1
-      FROM public.usuario_rol ur_me
-      JOIN public.rol r_me ON r_me.id_rol = ur_me.id_rol
-      JOIN public.usuario_rol ur_target
-        ON ur_target.id_iglesia = ur_me.id_iglesia
-       AND ur_target.fecha_fin IS NULL
-      WHERE ur_me.id_usuario = public.current_usuario_id()
-        AND ur_me.fecha_fin IS NULL
-        AND ur_me.id_iglesia IS NOT NULL
-        AND r_me.nombre IN ('Administrador de Iglesia')
-        AND ur_target.id_usuario = usuario.id_usuario
-    )
-  );
-
-DROP POLICY IF EXISTS "Usuario ve sus roles" ON public.usuario_rol;
-CREATE POLICY "Usuario ve sus roles"
-  ON public.usuario_rol FOR SELECT
-  TO authenticated
-  USING (id_usuario = public.current_usuario_id());
-
-DROP POLICY IF EXISTS "Usuario ve sus evaluaciones" ON public.evaluacion;
-CREATE POLICY "Usuario ve sus evaluaciones"
-  ON public.evaluacion FOR SELECT
-  TO authenticated
-  USING (id_usuario = public.current_usuario_id());
-
-DROP POLICY IF EXISTS "Usuario ve sus notificaciones" ON public.notificacion;
-CREATE POLICY "Usuario ve sus notificaciones"
-  ON public.notificacion FOR SELECT
-  TO authenticated
-  USING (id_usuario = public.current_usuario_id());
+-- SKIP (defined in 20260415000000): CREATE OR REPLACE FUNCTION public.current_usuario_id()
+-- SKIP (defined in 20260415000000): RETURNS bigint
+-- SKIP (defined in 20260415000000): LANGUAGE plpgsql
+-- SKIP (defined in 20260415000000): SECURITY DEFINER
+-- SKIP (defined in 20260415000000): STABLE
+-- SKIP (defined in 20260415000000): SET search_path = public
+-- SKIP (defined in 20260415000000): AS $$
+-- SKIP (defined in 20260415000000): DECLARE
+-- SKIP (defined in 20260415000000):   v_id bigint;
+-- SKIP (defined in 20260415000000): BEGIN
+-- SKIP (defined in 20260415000000):   SELECT u.id_usuario
+-- SKIP (defined in 20260415000000):     INTO v_id
+-- SKIP (defined in 20260415000000):   FROM public.usuario u
+-- SKIP (defined in 20260415000000):   WHERE u.auth_user_id = auth.uid()
+-- SKIP (defined in 20260415000000):   LIMIT 1;
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000):   RETURN v_id;
+-- SKIP (defined in 20260415000000): END;
+-- SKIP (defined in 20260415000000): $$;
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): GRANT EXECUTE ON FUNCTION public.current_usuario_id() TO authenticated;
+-- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): CREATE OR REPLACE FUNCTION public.get_user_iglesias()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): RETURNS TABLE(id_iglesia bigint)
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): LANGUAGE sql
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): SECURITY DEFINER
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): STABLE
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): SET search_path = public
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): AS $$
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   SELECT DISTINCT ur.id_iglesia
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   FROM public.usuario_rol ur
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   WHERE ur.id_usuario = public.current_usuario_id()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     AND ur.id_iglesia IS NOT NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     AND ur.fecha_fin IS NULL;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): $$;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): CREATE OR REPLACE FUNCTION public.is_super_admin()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): RETURNS boolean
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): LANGUAGE sql
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): SECURITY DEFINER
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): STABLE
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): SET search_path = public
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): AS $$
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   SELECT EXISTS (
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     SELECT 1
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     FROM public.usuario_rol ur
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     JOIN public.rol r ON r.id_rol = ur.id_rol
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     WHERE ur.id_usuario = public.current_usuario_id()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       AND ur.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       AND r.nombre = 'Super Administrador'
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   );
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): $$;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): CREATE OR REPLACE FUNCTION public.is_admin_iglesia()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): RETURNS boolean
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): LANGUAGE plpgsql
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): SECURITY DEFINER
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): STABLE
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): SET search_path = public
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): AS $$
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): BEGIN
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   IF public.is_super_admin() THEN
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     RETURN true;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   END IF;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   RETURN EXISTS (
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     SELECT 1
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     FROM public.usuario_rol ur
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     JOIN public.rol r ON r.id_rol = ur.id_rol
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     WHERE ur.id_usuario = public.current_usuario_id()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       AND ur.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       AND r.nombre = 'Administrador de Iglesia'
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   );
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): END;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): $$;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): DROP POLICY IF EXISTS "Scoped select usuario por iglesia" ON public.usuario;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): DROP POLICY IF EXISTS "Scoped update usuario" ON public.usuario;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): CREATE POLICY "Scoped select usuario por iglesia"
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   ON public.usuario FOR SELECT
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   TO authenticated
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   USING (
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     auth_user_id = auth.uid()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     OR public.is_super_admin()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     OR EXISTS (
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       SELECT 1
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       FROM public.usuario_rol ur_me
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       JOIN public.usuario_rol ur_target
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         ON ur_target.id_iglesia = ur_me.id_iglesia
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):        AND ur_target.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       WHERE ur_me.id_usuario = public.current_usuario_id()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         AND ur_me.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         AND ur_me.id_iglesia IS NOT NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         AND ur_target.id_usuario = usuario.id_usuario
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     )
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   );
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): CREATE POLICY "Scoped update usuario"
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   ON public.usuario FOR UPDATE
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   TO authenticated
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   USING (
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     auth_user_id = auth.uid()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     OR public.is_super_admin()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     OR EXISTS (
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       SELECT 1
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       FROM public.usuario_rol ur_me
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       JOIN public.rol r_me ON r_me.id_rol = ur_me.id_rol
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       JOIN public.usuario_rol ur_target
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         ON ur_target.id_iglesia = ur_me.id_iglesia
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):        AND ur_target.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       WHERE ur_me.id_usuario = public.current_usuario_id()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         AND ur_me.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         AND ur_me.id_iglesia IS NOT NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         AND r_me.nombre IN ('Administrador de Iglesia')
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         AND ur_target.id_usuario = usuario.id_usuario
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     )
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   )
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   WITH CHECK (
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     auth_user_id = auth.uid()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     OR public.is_super_admin()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     OR EXISTS (
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       SELECT 1
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       FROM public.usuario_rol ur_me
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       JOIN public.rol r_me ON r_me.id_rol = ur_me.id_rol
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       JOIN public.usuario_rol ur_target
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         ON ur_target.id_iglesia = ur_me.id_iglesia
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):        AND ur_target.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):       WHERE ur_me.id_usuario = public.current_usuario_id()
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         AND ur_me.fecha_fin IS NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         AND ur_me.id_iglesia IS NOT NULL
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         AND r_me.nombre IN ('Administrador de Iglesia')
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):         AND ur_target.id_usuario = usuario.id_usuario
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):     )
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   );
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): DROP POLICY IF EXISTS "Usuario ve sus roles" ON public.usuario_rol;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): CREATE POLICY "Usuario ve sus roles"
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   ON public.usuario_rol FOR SELECT
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   TO authenticated
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   USING (id_usuario = public.current_usuario_id());
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): DROP POLICY IF EXISTS "Usuario ve sus evaluaciones" ON public.evaluacion;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): CREATE POLICY "Usuario ve sus evaluaciones"
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   ON public.evaluacion FOR SELECT
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   TO authenticated
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   USING (id_usuario = public.current_usuario_id());
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): 
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): DROP POLICY IF EXISTS "Usuario ve sus notificaciones" ON public.notificacion;
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000): CREATE POLICY "Usuario ve sus notificaciones"
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   ON public.notificacion FOR SELECT
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   TO authenticated
+-- SKIP (defined in 20260415000000): -- SKIP (defined in 20260415000000):   USING (id_usuario = public.current_usuario_id());

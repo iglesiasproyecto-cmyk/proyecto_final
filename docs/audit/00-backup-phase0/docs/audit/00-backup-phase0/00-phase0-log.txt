@@ -1,0 +1,50 @@
+═══════════════════════════════════════════════════════════════════
+FASE 0: PREPARACIÓN - LOG DE EJECUCIÓN
+═══════════════════════════════════════════════════════════════════
+
+Timestamp Inicio: 2026-05-12T [NOW]
+Estado: EN PROGRESO
+
+PASO 0.1: Obtener Acceso Directo a PostgreSQL
+─────────────────────────────────────────────
+
+✓ Información del Proyecto Obtenida:
+  • Host: db.heibyjbvfiokmduwwawm.supabase.co
+  • Port: 5432
+  • Database: postgres
+  • Postgres Version: 17.6.1.084
+  • Region: sa-east-1
+  • Status: ACTIVE_HEALTHY
+
+⚠ BLOCKER: Credenciales de PostgreSQL NO disponibles vía Management API
+  • Endpoints probados: db-password, database, database/credentials, database/password
+  • Todos retornan "Cannot GET" (endpoint no existe)
+
+SOLUCIÓN REQUERIDA:
+─────────────────
+Necesitas proporcionar manualmente la CONTRASEÑA de PostgreSQL:
+
+  Usuario: postgres
+  Host: db.heibyjbvfiokmduwwawm.supabase.co:5432
+  Base de Datos: postgres
+  
+  CONTRASEÑA: [REQUERIDA - Proporciona por favor]
+
+Una vez tengas la contraseña, ejecutaré:
+  psql postgresql://postgres:PASSWORD@db.heibyjbvfiokmduwwawm.supabase.co:5432/postgres
+
+ALTERNATIVAS:
+─────────────
+1. Resetear contraseña en Supabase Dashboard:
+   https://app.supabase.com/project/heibyjbvfiokmduwwawm/settings/database
+
+2. Usar Supabase CLI con enlace de proyecto:
+   supabase link --project-ref heibyjbvfiokmduwwawm
+   supabase db pull  # Esto obtiene el schema automáticamente
+
+3. Usar credenciales que ya tengas guardadas en:
+   - .env.local (si existe)
+   - Notas personales/contraseñero
+   - Ambiente anterior
+
+═══════════════════════════════════════════════════════════════════

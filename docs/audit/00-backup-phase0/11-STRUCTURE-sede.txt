@@ -1,0 +1,8 @@
+creado_en
+direccion
+estado
+id_ciudad
+id_iglesia
+id_sede
+nombre
+updated_at

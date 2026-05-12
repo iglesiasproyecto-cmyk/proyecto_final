@@ -1,0 +1,7 @@
+creado_en
+descripcion
+estado
+id_ministerio
+id_sede
+nombre
+updated_at

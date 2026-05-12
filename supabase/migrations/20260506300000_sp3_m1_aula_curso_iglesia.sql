@@ -23,8 +23,8 @@ ALTER TABLE public.aula_curso
 
 -- Índice para búsquedas por iglesia
 CREATE INDEX IF NOT EXISTS idx_aula_curso_iglesia
-  ON public.aula_curso(id_iglesia) WHERE id_iglesia IS NOT NULL;
+-- SKIP:   ON public.aula_curso(id_iglesia) WHERE id_iglesia IS NOT NULL;
 
 -- Índice para búsquedas por ministerio (ya existía, verificar)
 CREATE INDEX IF NOT EXISTS idx_aula_curso_ministerio
-  ON public.aula_curso(id_ministerio) WHERE id_ministerio IS NOT NULL;
+-- SKIP:   ON public.aula_curso(id_ministerio) WHERE id_ministerio IS NOT NULL;

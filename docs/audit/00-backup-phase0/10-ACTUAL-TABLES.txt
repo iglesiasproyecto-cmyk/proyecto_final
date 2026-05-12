@@ -1,0 +1,7 @@
+usuario (TABLE)
+iglesia (TABLE)
+sede (TABLE)
+ministerio (TABLE)
+rol (TABLE)
+evento (TABLE)
+tarea (TABLE)
