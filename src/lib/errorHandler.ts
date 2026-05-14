@@ -19,37 +19,33 @@ export interface ApiError {
 }
 
 /**
- * Custom error class for Supabase errors
+ * Error messages mapped by error type
  */
-export class SupabaseError extends Error {
-  type: ApiErrorType;
-  details?: Record<string, any>;
-  statusCode?: number;
-
-  constructor(type: ApiErrorType, message: string, details?: Record<string, any>, statusCode?: number) {
-    super(message);
-    this.name = 'SupabaseError';
-    this.type = type;
-    this.details = details;
-    this.statusCode = statusCode;
-  }
-}
+const ERROR_MESSAGES: Record<ApiErrorType, string> = {
+  rls_violation: 'No tienes permiso para realizar esta acción',
+  not_found: 'El recurso no fue encontrado',
+  conflict: 'Este registro ya existe',
+  validation: 'Los datos proporcionados no son válidos',
+  network: 'Error de conexión. Verifica tu internet e intenta de nuevo',
+  unknown: 'Algo salió mal. Intenta de nuevo más tarde',
+};
 
 /**
  * Categorizes raw Supabase errors into typed ApiError objects
  * Maps error codes and messages to specific error categories
  */
-export function categorizeSupabaseError(error: any): ApiError {
-  // Handle missing error
-  if (!error) {
+export function categorizeSupabaseError(error: unknown): ApiError {
+  // Handle missing or non-object error
+  if (!error || typeof error !== 'object') {
     return {
       type: 'unknown',
-      message: 'Error desconocido',
+      message: ERROR_MESSAGES.unknown,
     };
   }
 
-  const errorMessage = error?.message?.toLowerCase() || '';
-  const errorCode = error?.code || '';
+  const err = error as Record<string, any>;
+  const errorMessage = err?.message?.toLowerCase() || '';
+  const errorCode = err?.code || '';
 
   // RLS Violations (permission denied)
   if (
@@ -59,7 +55,7 @@ export function categorizeSupabaseError(error: any): ApiError {
   ) {
     return {
       type: 'rls_violation',
-      message: 'No tienes permiso para realizar esta acción',
+      message: ERROR_MESSAGES.rls_violation,
       statusCode: 403,
       details: { originalError: error },
     };
@@ -69,7 +65,7 @@ export function categorizeSupabaseError(error: any): ApiError {
   if (errorCode === 'PGRST116' || errorMessage.includes('not found')) {
     return {
       type: 'not_found',
-      message: 'El recurso no fue encontrado',
+      message: ERROR_MESSAGES.not_found,
       statusCode: 404,
       details: { originalError: error },
     };
@@ -79,7 +75,7 @@ export function categorizeSupabaseError(error: any): ApiError {
   if (errorCode === '23505' || errorMessage.includes('duplicate key')) {
     return {
       type: 'conflict',
-      message: 'Este registro ya existe',
+      message: ERROR_MESSAGES.conflict,
       statusCode: 409,
       details: { originalError: error },
     };
@@ -89,7 +85,7 @@ export function categorizeSupabaseError(error: any): ApiError {
   if (errorCode === '23503') {
     return {
       type: 'validation',
-      message: 'El registro referenciado no existe',
+      message: ERROR_MESSAGES.validation,
       statusCode: 400,
       details: { originalError: error },
     };
@@ -99,7 +95,8 @@ export function categorizeSupabaseError(error: any): ApiError {
   if (errorMessage.includes('failed to fetch') || errorMessage.includes('network')) {
     return {
       type: 'network',
-      message: 'Error de conexión. Intenta de nuevo',
+      message: ERROR_MESSAGES.network,
+      statusCode: 0,
       details: { originalError: error },
     };
   }
@@ -107,7 +104,7 @@ export function categorizeSupabaseError(error: any): ApiError {
   // Unknown error (default case)
   return {
     type: 'unknown',
-    message: error?.message || 'Error desconocido',
+    message: err?.message || ERROR_MESSAGES.unknown,
     details: { originalError: error },
   };
 }
@@ -116,20 +113,5 @@ export function categorizeSupabaseError(error: any): ApiError {
  * Returns a user-friendly Spanish message for the given error
  */
 export function getUserFriendlyMessage(error: ApiError): string {
-  switch (error.type) {
-    case 'rls_violation':
-      return 'No tienes permiso para realizar esta acción';
-    case 'not_found':
-      return 'El recurso no fue encontrado';
-    case 'conflict':
-      return 'Este registro ya existe';
-    case 'validation':
-      return 'Los datos proporcionados no son válidos';
-    case 'network':
-      return 'Error de conexión. Verifica tu internet e intenta de nuevo';
-    case 'unknown':
-      return 'Algo salió mal. Intenta de nuevo más tarde';
-    default:
-      return 'Algo salió mal. Intenta de nuevo más tarde';
-  }
+  return ERROR_MESSAGES[error.type] ?? ERROR_MESSAGES.unknown;
 }
