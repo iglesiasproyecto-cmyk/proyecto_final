@@ -1,0 +1,88 @@
+<h2>Resumen del diseño — Todas las decisiones</h2>
+<p class="subtitle">Confirma que todo está correcto antes de escribir el documento de especificación.</p>
+
+<div style="display:flex;flex-direction:column;gap:12px;margin-top:8px;">
+
+  <!-- 1. Membership model -->
+  <div style="background:#0f1923;border:1px solid #22543d;border-radius:10px;padding:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:10px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.08em;">1 · Modelo de membresía</div>
+      <div style="background:#05966920;color:#34d399;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">✓ Confirmado</div>
+    </div>
+    <p style="font-size:12px;color:#cbd5e1;margin:0 0 8px 0;"><strong>Sede primero, luego ministerio.</strong> Una persona se incorpora primero a una sede (queda como "feligrés"). Después se le asigna a uno o más ministerios con su rol.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="background:#1a2234;border-radius:6px;padding:8px;">
+        <div style="font-size:10px;color:#34d399;font-weight:700;margin-bottom:3px;">Nueva tabla</div>
+        <code style="color:#94a3b8;font-size:10px;">usuario_sede (id_usuario, id_sede, fecha_ingreso, estado)</code>
+      </div>
+      <div style="background:#1a2234;border-radius:6px;padding:8px;">
+        <div style="font-size:10px;color:#34d399;font-weight:700;margin-bottom:3px;">Ya existe</div>
+        <code style="color:#94a3b8;font-size:10px;">miembro_ministerio (id_usuario, id_ministerio, rol_en_ministerio, fecha_ingreso)</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Forms -->
+  <div style="background:#0f1923;border:1px solid #22543d;border-radius:10px;padding:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:10px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.08em;">2 · Formularios (evento, tarea, curso)</div>
+      <div style="background:#05966920;color:#34d399;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">✓ Confirmado</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:11px;">
+      <div style="background:#1a2234;border-radius:6px;padding:8px;"><span style="color:#a78bfa;font-weight:700;">super_admin:</span> Elige iglesia → sede → ministerio</div>
+      <div style="background:#1a2234;border-radius:6px;padding:8px;"><span style="color:#34d399;font-weight:700;">admin_iglesia:</span> Elige sede → ministerio (de su iglesia)</div>
+      <div style="background:#1a2234;border-radius:6px;padding:8px;"><span style="color:#fb923c;font-weight:700;">admin_sede:</span> Sede pre-fijada → elige ministerio</div>
+      <div style="background:#1a2234;border-radius:6px;padding:8px;"><span style="color:#c084fc;font-weight:700;">lider:</span> Sede y ministerio pre-fijados (solo los suyos)</div>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:#94a3b8;">Ministerio siempre filtrado por sede seleccionada. Para admin_iglesia y super_admin: opción "sin sede/ministerio" (evento general de iglesia).</div>
+  </div>
+
+  <!-- 3. Roles y permisos -->
+  <div style="background:#0f1923;border:1px solid #22543d;border-radius:10px;padding:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:10px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.08em;">3 · Roles y permisos de creación</div>
+      <div style="background:#05966920;color:#34d399;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">✓ Confirmado</div>
+    </div>
+    <p style="font-size:12px;color:#cbd5e1;margin:0 0 8px 0;">Rol de sistema = el más alto que tiene en cualquier ministerio. Pero <strong>crear</strong> eventos/tareas/cursos solo está permitido para los ministerios donde su <code>rol_en_ministerio = 'lider'</code>.</p>
+    <div style="background:#1a2234;border-radius:6px;padding:8px;font-size:11px;">
+      <div style="color:#94a3b8;margin-bottom:4px;">Nueva función RLS necesaria:</div>
+      <code style="color:#60a5fa;font-size:10px;">get_my_ministerios_as_lider() → devuelve solo ministerios donde rol_en_ministerio = 'lider'</code>
+    </div>
+  </div>
+
+  <!-- 4. UI contexto -->
+  <div style="background:#0f1923;border:1px solid #22543d;border-radius:10px;padding:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:10px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.08em;">4 · UI adaptada por contexto</div>
+      <div style="background:#05966920;color:#34d399;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">✓ Confirmado</div>
+    </div>
+    <p style="font-size:12px;color:#cbd5e1;margin:0 0 8px 0;">Cuando el usuario selecciona un ministerio, la UI detecta su <code>rol_en_ministerio</code> en ese contexto y muestra/oculta los botones de creación automáticamente.</p>
+    <div style="display:flex;gap:6px;font-size:11px;">
+      <div style="flex:1;background:#1a2234;border:1px solid #22543d;border-radius:6px;padding:8px;">
+        <div style="color:#34d399;font-weight:700;margin-bottom:3px;">Si es lider en ese ministerio</div>
+        <div style="color:#94a3b8;">Muestra: + Crear evento, + Crear tarea, + Crear curso</div>
+      </div>
+      <div style="flex:1;background:#1a2234;border:1px solid #312e81;border-radius:6px;padding:8px;">
+        <div style="color:#a78bfa;font-weight:700;margin-bottom:3px;">Si es servidor en ese ministerio</div>
+        <div style="color:#94a3b8;">Solo lectura. Sin botones de gestión.</div>
+      </div>
+    </div>
+    <div style="margin-top:6px;font-size:11px;color:#94a3b8;">Aplica en: EventsPage, TasksPage, MinisteriosPage (miembros), CoursesPage.</div>
+  </div>
+
+  <!-- 5. Pastores -->
+  <div style="background:#0f1923;border:1px solid #4a3a1e;border-radius:10px;padding:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:10px;font-weight:700;color:#fb923c;text-transform:uppercase;letter-spacing:.08em;">5 · Pastores por sede</div>
+      <div style="background:#d9770620;color:#fb923c;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">⚠ Pendiente decisión</div>
+    </div>
+    <p style="font-size:12px;color:#cbd5e1;margin:0 0 8px 0;">Los pastores se asignan por sede (<code>pastor_sede</code>). ¿Un pastor puede estar en múltiples sedes o solo en una?</p>
+    <div style="display:flex;gap:8px;">
+      <div style="flex:1;background:#1a2234;border-radius:6px;padding:8px;font-size:11px;color:#94a3b8;"><strong style="color:#e2e8f0;">A:</strong> Un pastor → una sede (más común)</div>
+      <div style="flex:1;background:#1a2234;border-radius:6px;padding:8px;font-size:11px;color:#94a3b8;"><strong style="color:#e2e8f0;">B:</strong> Un pastor → múltiples sedes (pastor itinerante)</div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">¿Algo que cambiarías? Una vez confirmado, paso a escribir el documento de especificación.</p>

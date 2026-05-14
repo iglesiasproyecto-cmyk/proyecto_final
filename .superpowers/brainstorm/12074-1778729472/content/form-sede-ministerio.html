@@ -1,0 +1,68 @@
+<h2>Formulario de Tarea/Evento — ¿Cómo seleccionar sede + ministerio?</h2>
+<p class="subtitle">Problema actual: ministerios con el mismo nombre en distintas sedes son indistinguibles. ¿Qué flujo prefieres?</p>
+
+<div class="cards">
+
+  <!-- Opción A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#0f1923;border-radius:8px;">
+      <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Sede <span style="color:#ef4444">*</span></div>
+      <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:8px 10px;font-size:12px;color:#e2e8f0;margin-bottom:10px;">
+        ▼ Sede Central
+      </div>
+      <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Ministerio <span style="color:#ef4444">*</span></div>
+      <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:8px 10px;font-size:12px;color:#e2e8f0;margin-bottom:6px;">
+        ▼ Alabanza <span style="color:#4a90d9;font-size:10px;">(Sede Central)</span>
+      </div>
+      <div style="background:#1e2d3d;border:1px solid #444;border-radius:6px;padding:5px 10px;opacity:.4;font-size:11px;color:#9ca3af;">Jóvenes · Niños · Damas...</div>
+      <div style="margin-top:8px;font-size:10px;color:#4a90d9;">→ Sede primero, luego filtra ministerios</div>
+    </div>
+    <div class="card-body">
+      <h3>A — Sede obligatoria primero</h3>
+      <p>El usuario debe seleccionar sede antes de ver ministerios. Ministerios filtrados por sede. Sin ambigüedad. Aplica a tareas Y eventos.</p>
+    </div>
+  </div>
+
+  <!-- Opción B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#0f1923;border-radius:8px;">
+      <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Sede <span style="color:#6b7280;font-size:9px;normal-case">(opcional)</span></div>
+      <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:8px 10px;font-size:12px;color:#e2e8f0;margin-bottom:10px;">
+        ▼ — General / toda la iglesia
+      </div>
+      <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Ministerio <span style="color:#6b7280;font-size:9px;">(opcional)</span></div>
+      <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:8px 10px;font-size:12px;color:#9ca3af;margin-bottom:6px;">
+        ▼ Selecciona sede primero...
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:#4a90d9;">→ Ambos opcionales. Si no seleccionas sede, el campo ministerio queda desactivado</div>
+    </div>
+    <div class="card-body">
+      <h3>B — Ambos opcionales, cascada</h3>
+      <p>Sede opcional. Si se selecciona, habilita y filtra ministerios. Permite crear eventos/tareas de "toda la iglesia" sin sede ni ministerio.</p>
+    </div>
+  </div>
+
+  <!-- Opción C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#0f1923;border-radius:8px;">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <div style="flex:1">
+          <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Alcance</div>
+          <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:6px 8px;font-size:11px;color:#e2e8f0;">▼ Ministerio</div>
+        </div>
+      </div>
+      <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:8px 10px;font-size:12px;color:#e2e8f0;margin-bottom:8px;">
+        ▼ Alabanza — Sede Norte
+      </div>
+      <div style="background:#1e2d3d;border:1px solid #444;border-radius:6px;padding:5px 10px;opacity:.5;font-size:11px;color:#9ca3af;">Alabanza — Sede Sur · Jóvenes — Sede Norte...</div>
+      <div style="margin-top:8px;font-size:10px;color:#4a90d9;">→ Un solo select "Ministerio (Sede)" con el nombre de sede incluido</div>
+    </div>
+    <div class="card-body">
+      <h3>C — Select único con sede en el nombre</h3>
+      <p>Un solo dropdown que muestra "Alabanza — Sede Central". Simple pero el listado puede crecer mucho si hay muchas sedes y ministerios.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">💡 Para tareas la sede sería derivada del ministerio (la tarea siempre pertenece a un ministerio). Para eventos podría haber eventos sin ministerio (solo sede o solo iglesia).</p>

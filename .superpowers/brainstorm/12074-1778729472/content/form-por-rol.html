@@ -1,0 +1,71 @@
+<h2>Formulario Crear Tarea/Evento — según rol</h2>
+<p class="subtitle">¿Así se vería el formulario para cada rol? Confirma si este comportamiento es correcto.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;">
+
+  <!-- Super Admin -->
+  <div style="background:#0f1923;border:1px solid #1e3a5f;border-radius:12px;padding:16px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="background:#7c3aed20;color:#a78bfa;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;">Super Admin</span>
+    </div>
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Iglesia</div>
+    <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:7px 10px;font-size:12px;color:#e2e8f0;margin-bottom:8px;">▼ Iglesia Central</div>
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Sede <span style="color:#ef4444">*</span></div>
+    <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:7px 10px;font-size:12px;color:#e2e8f0;margin-bottom:8px;">▼ Sede Norte</div>
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Ministerio <span style="color:#ef4444">*</span></div>
+    <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:7px 10px;font-size:12px;color:#e2e8f0;">▼ Alabanza</div>
+    <div style="margin-top:8px;font-size:10px;color:#a78bfa;">Elige todo manualmente</div>
+  </div>
+
+  <!-- Admin Iglesia -->
+  <div style="background:#0f1923;border:1px solid #1e4a3f;border-radius:12px;padding:16px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="background:#05966920;color:#34d399;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;">Admin Iglesia</span>
+    </div>
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Sede <span style="color:#ef4444">*</span></div>
+    <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:7px 10px;font-size:12px;color:#e2e8f0;margin-bottom:8px;">▼ Sede Norte</div>
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Ministerio <span style="color:#ef4444">*</span></div>
+    <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:7px 10px;font-size:12px;color:#e2e8f0;">▼ Alabanza <span style="color:#4a90d9;font-size:10px;">(Sede Norte)</span></div>
+    <div style="margin-top:8px;font-size:10px;color:#34d399;">Ve todas las sedes de su iglesia</div>
+  </div>
+
+  <!-- Admin Sede -->
+  <div style="background:#0f1923;border:1px solid #4a3a1e;border-radius:12px;padding:16px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="background:#d9770620;color:#fb923c;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;">Admin Sede</span>
+    </div>
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Sede</div>
+    <div style="background:#1e2d3d;border:1px solid #555;border-radius:6px;padding:7px 10px;font-size:12px;color:#9ca3af;margin-bottom:8px;display:flex;justify-content:space-between;">
+      <span>Sede Norte</span><span style="font-size:10px;color:#6b7280;">🔒 pre-fijada</span>
+    </div>
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Ministerio <span style="color:#ef4444">*</span></div>
+    <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:7px 10px;font-size:12px;color:#e2e8f0;">▼ Alabanza</div>
+    <div style="background:#1e2d3d;border:1px solid #444;border-radius:6px;padding:5px 10px;opacity:.4;font-size:11px;color:#9ca3af;margin-top:4px;">Jóvenes · Damas · ...</div>
+    <div style="margin-top:8px;font-size:10px;color:#fb923c;">Sede pre-seleccionada, solo elige ministerio</div>
+  </div>
+
+  <!-- Lider -->
+  <div style="background:#0f1923;border:1px solid #3a1e4a;border-radius:12px;padding:16px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="background:#9333ea20;color:#c084fc;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;">Lider</span>
+    </div>
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Sede</div>
+    <div style="background:#1e2d3d;border:1px solid #555;border-radius:6px;padding:7px 10px;font-size:12px;color:#9ca3af;margin-bottom:8px;display:flex;justify-content:space-between;">
+      <span>Sede Norte</span><span style="font-size:10px;color:#6b7280;">🔒 del ministerio</span>
+    </div>
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Ministerio</div>
+    <div style="background:#1e2d3d;border:1px solid #555;border-radius:6px;padding:7px 10px;font-size:12px;color:#9ca3af;display:flex;justify-content:space-between;">
+      <span>Alabanza</span><span style="font-size:10px;color:#6b7280;">🔒 pre-fijado</span>
+    </div>
+    <div style="margin-top:8px;font-size:10px;color:#c084fc;">Sede y ministerio pre-seleccionados (solo el suyo)</div>
+  </div>
+
+</div>
+
+<div style="margin-top:16px;background:#1a2234;border:1px solid #2d4a63;border-radius:10px;padding:14px;">
+  <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">⚠️ Pregunta sobre eventos "generales de iglesia"</div>
+  <p style="font-size:12px;color:#cbd5e1;margin:0;">Para <strong>admin_iglesia</strong> y <strong>super_admin</strong>: ¿debe existir la opción de crear un evento <em>sin sede y sin ministerio</em> (nivel iglesia completa)?<br>
+  Ejemplo: "Vigilia General" — aplica a toda la iglesia, no a una sede específica.</p>
+</div>
+
+<p class="subtitle" style="margin-top:12px;">¿Este comportamiento por rol es correcto? ¿Algo que cambiarías?</p>

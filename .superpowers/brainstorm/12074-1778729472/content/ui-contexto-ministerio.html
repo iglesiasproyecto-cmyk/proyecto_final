@@ -1,0 +1,64 @@
+<h2>¿Cómo adaptar la UI al rol dentro del ministerio?</h2>
+<p class="subtitle">Juan es lider en Alabanza y servidor en Contabilidad. ¿Cómo sabe el sistema qué mostrarle en cada contexto?</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Contexto automático por ministerio seleccionado</h3>
+      <p>Cuando Juan filtra por "Alabanza" ve botones de crear evento/tarea. Cuando filtra por "Contabilidad" esos botones desaparecen. El sistema detecta su <code>rol_en_ministerio</code> para el ministerio activo y ajusta la UI.</p>
+      <div style="margin-top:8px;display:flex;gap:8px;">
+        <div style="flex:1;background:#0f1923;border:1px solid #22543d;border-radius:6px;padding:8px;">
+          <div style="font-size:10px;color:#34d399;font-weight:700;margin-bottom:4px;">ALABANZA (lider)</div>
+          <div style="background:#059669;color:white;font-size:10px;border-radius:4px;padding:3px 8px;display:inline-block;">+ Crear evento</div>
+          <div style="background:#059669;color:white;font-size:10px;border-radius:4px;padding:3px 8px;display:inline-block;margin-top:3px;">+ Crear tarea</div>
+        </div>
+        <div style="flex:1;background:#0f1923;border:1px solid #312e81;border-radius:6px;padding:8px;">
+          <div style="font-size:10px;color:#a78bfa;font-weight:700;margin-bottom:4px;">CONTABILIDAD (servidor)</div>
+          <div style="font-size:10px;color:#6b7280;font-style:italic;margin-top:6px;">Solo lectura</div>
+        </div>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#94a3b8;">✅ Natural. No requiere que el usuario cambie de modo.</div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Selector de "contexto activo" global</h3>
+      <p>Un selector en el header o sidebar: <em>"Actuando como: Lider · Alabanza"</em>. Juan puede cambiarlo manualmente. Toda la UI se adapta al contexto activo.</p>
+      <div style="margin-top:8px;background:#0f1923;border:1px solid #2d4a63;border-radius:8px;padding:8px;">
+        <div style="font-size:10px;color:#6b7280;margin-bottom:4px;">CONTEXTO ACTIVO</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <div style="background:#1e2d3d;border:1px solid #2d4a63;border-radius:6px;padding:5px 10px;font-size:11px;color:#e2e8f0;">
+            🎵 Alabanza <span style="color:#34d399;">· Lider</span> ▼
+          </div>
+          <div style="font-size:10px;color:#6b7280;">→ cambia a Contabilidad · Servidor</div>
+        </div>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#94a3b8;">⚠️ Más control pero más fricción. El usuario puede olvidar en qué contexto está.</div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:20px;background:#1a2234;border:1px solid #2d4a63;border-radius:10px;padding:14px;">
+  <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">También cambia en la lista de miembros</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:200px;background:#0f1923;border:1px solid #22543d;border-radius:8px;padding:10px;">
+      <div style="font-size:10px;color:#34d399;font-weight:700;margin-bottom:6px;">Lista de miembros — Alabanza (Juan = lider)</div>
+      <div style="font-size:11px;color:#e2e8f0;">María García &nbsp;<span style="color:#a78bfa;font-size:10px;">servidor</span> &nbsp;<button style="background:#ef444420;color:#ef4444;border:none;border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;">✕</button></div>
+      <div style="font-size:11px;color:#e2e8f0;margin-top:4px;">Pedro López &nbsp;<span style="color:#a78bfa;font-size:10px;">servidor</span> &nbsp;<button style="background:#ef444420;color:#ef4444;border:none;border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;">✕</button></div>
+      <div style="margin-top:6px;background:#05966920;color:#34d399;font-size:10px;border-radius:4px;padding:3px 8px;display:inline-block;">+ Agregar miembro</div>
+    </div>
+    <div style="flex:1;min-width:200px;background:#0f1923;border:1px solid #312e81;border-radius:8px;padding:10px;">
+      <div style="font-size:10px;color:#a78bfa;font-weight:700;margin-bottom:6px;">Lista de miembros — Contabilidad (Juan = servidor)</div>
+      <div style="font-size:11px;color:#e2e8f0;">María García &nbsp;<span style="color:#34d399;font-size:10px;">lider</span></div>
+      <div style="font-size:11px;color:#e2e8f0;margin-top:4px;">Pedro López &nbsp;<span style="color:#a78bfa;font-size:10px;">servidor</span></div>
+      <div style="font-size:10px;color:#6b7280;font-style:italic;margin-top:6px;">Sin permisos de gestión</div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:12px;">💡 Mi recomendación: Opción A — la UI se adapta automáticamente según el ministerio seleccionado. Sin fricción para el usuario.</p>
