@@ -5,6 +5,7 @@ import type { TareaEnriquecida } from "@/services/eventos.service";
 import { useMinisteriosEnriquecidos, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
+import { useUsuariosDeIglesia } from "@/hooks/useUsuariosDeIglesia";
 import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service";
 import { filterAndSortTareas } from "@/lib/taskUtils";
 import { useApp } from "../store/AppContext";
@@ -58,6 +59,7 @@ export function TasksPage() {
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(idIglesiaNum);
   const { data: sedes = [] } = useSedesEnriquecidas(idIglesiaNum);
   const { data: usuarioMinisterioIds = [] } = useMinisteriosIdsDeUsuario(rolActual === "lider" ? usuarioActual?.idUsuario : undefined);
+  const { data: usuariosDeIglesia = [] } = useUsuariosDeIglesia(idIglesiaNum);
 
   const isAdminSede = rolActual === "admin_sede";
   const isLider = rolActual === "lider";
@@ -95,15 +97,6 @@ export function TasksPage() {
 
   const task = selectedTask ? tareas.find(t => t.idTarea === selectedTask) : null;
   const { data: evidencias = [] } = useTareaEvidencias(task?.idTarea);
-
-  const usuariosDeIglesia = useMemo(() => {
-    const seen = new Set<number>();
-    return (ministerios || []).flatMap(m => m.miembros ?? []).filter(u => {
-      if (seen.has(u.idUsuario)) return false;
-      seen.add(u.idUsuario);
-      return u.activo !== false;
-    });
-  }, [ministerios]);
 
   const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: singleUserMinisterio?.idMinisterio ?? 0, idSede: 0, _hideSelectorFields: !shouldShowSelectorFields } as any);
 
@@ -652,7 +645,7 @@ export function TasksPage() {
                         <option value={0}>Seleccionar usuario...</option>
                         {usuariosDeIglesia
                           .filter(u => !(task?.asignados || []).some(a => a.idUsuario === u.idUsuario))
-                          .map(u => <option key={u.idUsuario} value={u.idUsuario}>{u.nombres} {u.apellidos}</option>)
+                          .map(u => <option key={u.idUsuario} value={u.idUsuario}>{u.nombres} {u.apellidos} ({u.ministerios.join(', ')})</option>)
                         }
                       </select>
                       <Button
