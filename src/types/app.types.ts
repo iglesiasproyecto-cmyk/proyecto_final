@@ -118,6 +118,19 @@ export interface MiembroMinisterio {
   activo?: boolean
 }
 
+export interface UsuarioSede {
+  id: number
+  idUsuario: number
+  idSede: number
+  fechaIngreso: string
+  estado: 'activo' | 'inactivo'
+  creadoEn: string
+  actualizadoEn: string
+  usuarioNombre?: string
+  usuarioCorreo?: string
+  sedeNombre?: string
+}
+
 // ── Usuarios & Roles ──
 export interface Rol {
   idRol: number

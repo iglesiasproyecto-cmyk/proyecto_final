@@ -4,6 +4,7 @@ import {
   useMinisteriosEnriquecidos, useDeleteMinisterio, useMiembrosMinisterioEnriquecidos, useToggleMinisterioEstado, useCreateMinisterio, useCreateMiembroMinisterio,
 } from "@/hooks/useMinisterios";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
+import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
 import { useApp } from "../store/AppContext";
@@ -39,7 +40,7 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
   const [memberForm, setMemberForm] = useState({ idUsuario: "", rolEnMinisterio: "servidor" });
   const createMemberMutation = useCreateMiembroMinisterio();
 
-  const canManageMembers = rolActual === "super_admin" || rolActual === "admin_iglesia" || rolActual === "lider";
+  const canManageMembers = useCanManageMinisterio(min.idMinisterio);
 
   const availableUsers = allUsers.filter(user =>
     !minMembers.some(member => member.idUsuario === user.idUsuario)
@@ -257,7 +258,7 @@ export function MinisteriosPage() {
   const toggleEstadoMutation = useToggleMinisterioEstado();
   const createMinisterioMutation = useCreateMinisterio();
   const deleteMinisterioMutation = useDeleteMinisterio();
-  const canManageMinisterios = rolActual === "super_admin" || rolActual === "admin_iglesia";
+  const canManageMinisterios = useCanManageMinisterio(null);
 
   function handleDeleteMinisterio(id: number, nombre: string) {
     if (!confirm(`¿Eliminar ministerio "${nombre}"? Esta acción no se puede deshacer.`)) return;
