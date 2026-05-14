@@ -3,6 +3,7 @@ import { useParams } from "react-router";
 import { useEventosEnriquecidos, useDeleteEvento, useCreateEvento, useUpdateEvento } from "@/hooks/useEventos";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
+import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
 import type { EventoEnriquecido } from "@/services/eventos.service";
 import { useApp } from "@/app/store/AppContext";
 import { AnimatedCard } from "./ui/AnimatedCard";
@@ -14,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion, AnimatePresence } from "motion/react";
 import { Skeleton } from "./ui/skeleton";
+import { SedeMinisterioSelector } from "./ui/SedeMinisterioSelector";
 import {
   CalendarDays, Plus, MapPin, Clock, Globe, Users, Pencil, Trash2, Eye,
   CheckCircle2, XCircle, PlayCircle, BookMarked, Church,
@@ -69,22 +71,26 @@ function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { fo
         <FieldLabel>Detalle del Evento <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span></FieldLabel>
         <GlassInput value={form.tipoEventoTexto} onChange={e => setForm((p: any) => ({ ...p, tipoEventoTexto: e.target.value }))} placeholder="Ej. Vigilia, aniversario, campaña, culto especial..." />
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <FieldLabel>Sede <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span></FieldLabel>
-          <GlassSelect value={form.idSede} onChange={v => setForm((p: any) => ({ ...p, idSede: v }))}>
-            <option value={0}>Seleccionar sede...</option>
-            {sedes.map(s => <option key={s.idSede} value={s.idSede}>{s.nombre}</option>)}
-          </GlassSelect>
-        </div>
-        <div>
-          <FieldLabel>Ministerio <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span></FieldLabel>
-          <GlassSelect value={form.idMinisterio} onChange={v => setForm((p: any) => ({ ...p, idMinisterio: v }))}>
-            <option value={0}>Seleccionar ministerio...</option>
-            {ministerios.map(m => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
-          </GlassSelect>
-        </div>
-      </div>
+      <SedeMinisterioSelector
+        sedes={sedes}
+        ministerios={ministerios}
+        selectedSedeId={form.idSede}
+        selectedMinisterioId={form.idMinisterio}
+        onSedeChange={(idSede, clearMinisterio) =>
+          setForm((p: any) => ({
+            ...p,
+            idSede,
+            idMinisterio: clearMinisterio ? 0 : p.idMinisterio,
+          }))
+        }
+        onMinisterioChange={(idMinisterio, autoSedeId) =>
+          setForm((p: any) => ({ ...p, idMinisterio, idSede: autoSedeId }))
+        }
+        sedeReadOnly={form._sedeReadOnly ?? false}
+        ministerioReadOnly={form._ministerioReadOnly ?? false}
+        allowNoMinisterio
+        allowGeneral={form._allowGeneral ?? false}
+      />
       <div className="grid grid-cols-2 gap-3">
         <div>
           <FieldLabel>Inicio</FieldLabel>
@@ -136,9 +142,20 @@ export function EventsPage() {
   const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
   const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", estado: "programado" as string, idSede: 0, idMinisterio: 0 });
 
-  const canManageEvents = rolActual === "lider" || rolActual === "admin_iglesia" || rolActual === "super_admin";
+  const canManageEvents = rolActual === "lider" || rolActual === "admin_iglesia" || rolActual === "admin_sede" || rolActual === "super_admin";
 
-  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
+  const isAdminSede = rolActual === "admin_sede";
+  const isLider = rolActual === "lider";
+
+  const sedePreFill = isAdminSede || isLider
+    ? (sedes.length === 1 ? sedes[0].idSede : 0)
+    : 0;
+
+  const [activeMinisterioFilter] = useState<number>(0);
+  const canCreateInContext = useCanManageMinisterio(activeMinisterioFilter || null);
+  const canShowCreateButton = canManageEvents && (activeMinisterioFilter === 0 || canCreateInContext);
+
+  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: sedePreFill, idMinisterio: 0, _sedeReadOnly: isAdminSede || isLider, _ministerioReadOnly: isLider, _allowGeneral: rolActual === "super_admin" || rolActual === "admin_iglesia" } as any);
 
   const openEditDialog = (ev: EventoEnriquecido) => {
     setEditEvento(ev);
@@ -396,7 +413,7 @@ export function EventsPage() {
             <p className="text-foreground text-xs sm:text-sm mt-1">Agenda y gestiona los eventos de la iglesia</p>
           </div>
         </div>
-        {canManageEvents && (
+        {canShowCreateButton && (
           <Button
             onClick={() => setShowCreate(true)}
             disabled={!iglesiaActual}

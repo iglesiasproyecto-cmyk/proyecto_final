@@ -144,7 +144,11 @@ export async function getMinisteriosIdsDeUsuario(idUsuario: number): Promise<num
   if (error) throw error
 
   const rows = (data as Array<{ id_ministerio: number; rol_en_ministerio: string | null }>) ?? []
-  const liderRows = rows.filter((r) => r.rol_en_ministerio === 'Líder de Ministerio')
+  const isLider = (rol: string | null) => {
+    const n = (rol ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    return n.includes('lider')
+  }
+  const liderRows = rows.filter((r) => isLider(r.rol_en_ministerio))
   const source = liderRows.length > 0 ? liderRows : rows
   return Array.from(new Set(source.map((r) => r.id_ministerio)))
 }
@@ -278,7 +282,7 @@ export async function getServidoresMinisterio(idMinisterio: number): Promise<Ser
     .from('miembro_ministerio')
     .select('id_usuario, rol_en_ministerio, usuario(nombres, apellidos)')
     .eq('id_ministerio', idMinisterio)
-    .neq('rol_en_ministerio', 'Líder de Ministerio')
+    .not('rol_en_ministerio', 'ilike', '%lider%')
     .is('fecha_salida', null)
   if (error) throw error
   return (data as any[]).map(r => ({

@@ -40,7 +40,20 @@ Deno.serve(async (req) => {
     }
     const user = await userRes.json()
 
-    // 2. Get user roles via RPC
+    // 2. Resolve internal usuario_id (avoids DB bypass query on every request)
+    const usuarioRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/usuario?select=id_usuario&auth_user_id=eq.${user.id}&activo=eq.true&limit=1`,
+      {
+        headers: {
+          Authorization: authHeader,
+          apikey: SUPABASE_ANON_KEY,
+        },
+      }
+    )
+    const usuarioRows: any[] = usuarioRes.ok ? await usuarioRes.json() : []
+    const usuarioId: number | null = usuarioRows.length > 0 ? Number(usuarioRows[0].id_usuario) : null
+
+    // 3. Get user roles via RPC
     const rolesRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_my_roles`, {
       method: 'POST',
       headers: {
@@ -110,9 +123,10 @@ Deno.serve(async (req) => {
       ministerioIds = mins.map((m: any) => Number(m.id))
     }
 
-    // 3. Update app_metadata using service role
+    // 4. Update app_metadata using service role
     const claimsAt = Math.floor(Date.now() / 1000)
     const appMetadata: Record<string, unknown> = { role, claims_at: claimsAt }
+    if (usuarioId !== null) appMetadata.usuario_id = usuarioId
     if (tenantId !== null) appMetadata.tenant_id = tenantId
     if (sedeId !== null) appMetadata.sede_id = sedeId
     if (ministerioIds.length > 0) appMetadata.ministerio_ids = ministerioIds

@@ -60,7 +60,7 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
   const ministeriosFiltrados = ministeriosDisponibles
     ? ministeriosDisponibles
     : miembriaMinisterios
-        .filter(m => m.rol_en_ministerio === 'Líder de Ministerio')
+        .filter(m => (m.rol_en_ministerio ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes('lider'))
         .map(m => (m.ministerio as any))
         .filter(Boolean)
 
