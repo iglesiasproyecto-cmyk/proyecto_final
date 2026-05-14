@@ -305,31 +305,26 @@ export interface UsuarioEnriquecido {
 }
 
 export async function getUsuariosDeIglesia(idIglesia: number): Promise<UsuarioEnriquecido[]> {
-  // Get all sedes for the church
-  const { data: sedesData, error: sedesError } = await supabase
-    .from('sede')
-    .select('id_sede')
-    .eq('id_iglesia', idIglesia)
-
-  if (sedesError) throw sedesError
-  const sedeIds = (sedesData ?? []).map(s => s.id_sede)
-  if (sedeIds.length === 0) return []
-
-  // Get users from miembro_ministerio with active status
+  // Single query: Let RLS enforce iglesia scope via ministerio.sede.iglesia relationship
   const { data, error } = await supabase
     .from('miembro_ministerio')
-    .select('id_usuario, rol_en_ministerio, usuario(nombres, apellidos, correo, telefono), ministerio(nombre)')
-    .in('ministerio.id_sede', sedeIds)
+    .select('id_usuario, rol_en_ministerio, usuario(nombres, apellidos, correo, telefono), ministerio(nombre, id_sede)')
+    .eq('ministerio.sede.id_iglesia', idIglesia)
     .is('fecha_salida', null)
     .order('usuario(nombres)', { ascending: true })
 
-  if (error) throw error
+  if (error) {
+    console.error('[getUsuariosDeIglesia] Error:', error)
+    throw error
+  }
 
-  // Group by usuario and collect ministerios
+  // Group by usuario and deduplicate ministerios using Set
   const usuariosMap = new Map<number, UsuarioEnriquecido>()
+  const ministerios_sets = new Map<number, Set<string>>()
 
-  ;(data as any[]).forEach(row => {
+  ;(data || []).forEach((row: any) => {
     const idUsuario = row.id_usuario
+
     if (!usuariosMap.has(idUsuario)) {
       usuariosMap.set(idUsuario, {
         idUsuario,
@@ -338,15 +333,18 @@ export async function getUsuariosDeIglesia(idIglesia: number): Promise<UsuarioEn
         correo: row.usuario?.correo ?? '',
         telefono: row.usuario?.telefono ?? null,
         ministerios: [],
-        rol: null,
+        rol: row.rol_en_ministerio || null,
       })
+      ministerios_sets.set(idUsuario, new Set())
     }
+
     const usuario = usuariosMap.get(idUsuario)!
-    if (row.ministerio?.nombre && !usuario.ministerios.includes(row.ministerio.nombre)) {
+    const minSet = ministerios_sets.get(idUsuario)!
+
+    // Use Set for O(1) deduplication
+    if (row.ministerio?.nombre && !minSet.has(row.ministerio.nombre)) {
+      minSet.add(row.ministerio.nombre)
       usuario.ministerios.push(row.ministerio.nombre)
-    }
-    if (!usuario.rol && row.rol_en_ministerio) {
-      usuario.rol = row.rol_en_ministerio
     }
   })
 
