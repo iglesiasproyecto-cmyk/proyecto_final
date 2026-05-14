@@ -259,52 +259,65 @@ export function UsuariosPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <Users className="w-6 h-6 text-white" />
+    <div className="space-y-6 max-w-6xl mx-auto pb-10">
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col gap-6">
+        {/* Logo + Título + Botón Invitar Usuario */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+            </div>
+            <div>
+              <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Directorio</p>
+              <h1 className="text-2xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">Gestión de Usuarios</h1>
+            </div>
           </div>
-          <div>
-            <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-0.5">Directorio</p>
-            <h1 className="text-3xl font-light tracking-tight text-foreground leading-tight">Gestión de Usuarios</h1>
-          </div>
+          <Button onClick={() => setShowInvite(true)} className="shrink-0 shadow-md shadow-[#4682b4]/20 rounded-full px-4 sm:px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 text-white h-10 sm:h-11 text-sm sm:text-base">
+            <UserPlus className="w-4 h-4 mr-1 sm:mr-2" /> 
+            <span className="hidden xs:inline">Invitar Usuario</span>
+            <span className="xs:hidden">Invitar</span>
+          </Button>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 border-t border-border/30 md:border-t-0 pt-3 md:pt-0">
-          <div className="relative flex-1 max-w-sm">
+        {/* Búsqueda y Filtros */}
+        <div className="flex flex-col gap-2">
+          <div className="relative w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
-            <Input placeholder="Buscar por nombre o correo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" />
+            <Input placeholder="Buscar por nombre o correo..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" />
           </div>
-          <Select value={filterEstado} onValueChange={setFilterEstado}>
-            <SelectTrigger className="w-36 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="activo">Activos</SelectItem>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Select value={filterEstado} onValueChange={setFilterEstado}>
+              <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="activo">Activos</SelectItem>
               <SelectItem value="inactivo">Inactivos</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterRol} onValueChange={setFilterRol}>
-            <SelectTrigger className="w-52 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Rol" /></SelectTrigger>
+            <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Rol" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los roles</SelectItem>
               {roles.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterIglesia} onValueChange={setFilterIglesia}>
-            <SelectTrigger className="w-56 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Iglesia" /></SelectTrigger>
+            <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Iglesia" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas las iglesias</SelectItem>
               {iglesias.map(ig => <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="ghost" className="h-10 rounded-xl text-xs" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); }}>
-            Limpiar filtros
+          <Button variant="ghost" className="h-10 rounded-xl text-xs whitespace-nowrap" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); }}>
+            <span className="hidden sm:inline">Limpiar filtros</span>
+            <span className="sm:hidden">Limpiar</span>
           </Button>
         </div>
-        <Button onClick={() => setShowInvite(true)} className="shrink-0 shadow-md shadow-[#4682b4]/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 text-white h-11">
-          <UserPlus className="w-4 h-4 mr-2" /> Invitar Usuario
-        </Button>
+          <Button variant="ghost" className="h-10 rounded-xl text-xs whitespace-nowrap" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); }}>
+            <span className="hidden sm:inline">Limpiar filtros</span>
+            <span className="sm:hidden">Limpiar</span>
+          </Button>
+        </div>
       </motion.div>
 
       <Card>

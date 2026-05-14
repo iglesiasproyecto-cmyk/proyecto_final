@@ -305,48 +305,53 @@ export function ChurchesPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <Building2 className="w-8 h-8 text-white" />
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col gap-6">
+        {/* Logo + Título + Botón */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+              <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+            </div>
+            <div>
+              <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Directorio</p>
+              <h1 className="text-2xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">Gestión de Iglesias</h1>
+            </div>
           </div>
-          <div>
-            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Directorio</p>
-            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Gestión de Iglesias</h1>
-          </div>
-        </div>
-        {rolActual === "super_admin" && (
-          <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", direccion: "", telefono: "", descripcion: "", sitioWeb: "", idPais: 0, idDepartamento: 0, idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20 text-sm">
-            <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Nueva Iglesia</span>
-            <span className="sm:hidden">Nueva</span>
-          </Button>
-        )}
-      </motion.div>
-
-      <div className="flex flex-col sm:flex-row gap-3 border-t border-border/30 pt-3 sm:pt-0">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
-          <Input 
-            placeholder="Buscar por nombre o ciudad..." 
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)} 
-            className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
-          />
-        </div>
-        <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto h-10 items-center min-w-0">
-          {(["all", "activa", "inactiva"] as const).map((f) => (
-            <Button 
-              key={f} 
-              variant={filter === f ? "default" : "ghost"} 
-              size="sm" 
-              onClick={() => setFilter(f)} 
-              className={`h-full px-3 sm:px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm bg-[#4682b4] text-white hover:bg-[#4682b4]/90" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
-            >
-              {f === "all" ? "Todas" : f === "activa" ? "Activas" : "Inactivas"}
+          {rolActual === "super_admin" && (
+            <Button onClick={() => { setForm({ nombre: "", fechaFundacion: "", direccion: "", telefono: "", descripcion: "", sitioWeb: "", idPais: 0, idDepartamento: 0, idCiudad: 0 }); setFormErrors({}); setShowCreate(true); }} className="shrink-0 shadow-md shadow-primary/20 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20 h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base rounded-full">
+              <Plus className="w-4 h-4 mr-1 sm:mr-2" /> 
+              <span className="hidden xs:inline">Nueva Iglesia</span>
+              <span className="xs:hidden">Nueva</span>
             </Button>
-          ))}
+          )}
         </div>
-      </div>
+
+        {/* Búsqueda y Filtros */}
+        <div className="flex flex-col gap-2">
+          <div className="relative w-full">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+            <Input 
+              placeholder="Buscar por nombre o ciudad..." 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+              className="w-full pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
+            />
+          </div>
+          <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto h-10 items-center min-w-0">
+            {(["all", "activa", "inactiva"] as const).map((f) => (
+              <Button 
+                key={f} 
+                variant={filter === f ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => setFilter(f)} 
+                className={`h-full px-3 sm:px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm bg-[#4682b4] text-white hover:bg-[#4682b4]/90" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
+              >
+                {f === "all" ? "Todas" : f === "activa" ? "Activas" : "Inactivas"}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </motion.div>
 
       {/* Grid de Iglesias */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
