@@ -10,7 +10,9 @@ import {
   getTareaEvidencias, createTareaEvidencia,
   getEventosPorMinisterio,
 } from '@/services/eventos.service'
+import { archiveTask, unarchiveTask } from '@/services/tareaArchive.service'
 import type { Tarea } from '@/types/app.types'
+import { toast } from 'sonner'
 
 export function useEventos(idIglesia?: number) {
   return useQuery({
@@ -276,5 +278,37 @@ export function useEventosPorMinisterio(idMinisterio: number) {
     queryFn: () => getEventosPorMinisterio(idMinisterio),
     enabled: typeof idMinisterio === 'number' && idMinisterio > 0,
     staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ── Archive mutations ──
+
+export function useArchiveTask() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: archiveTask,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      toast.success('Tarea archivada exitosamente')
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Error al archivar tarea')
+    },
+  })
+}
+
+export function useUnarchiveTask() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: unarchiveTask,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      toast.success('Tarea restaurada exitosamente')
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Error al restaurar tarea')
+    },
   })
 }
