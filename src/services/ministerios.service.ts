@@ -305,10 +305,10 @@ export interface UsuarioEnriquecido {
 }
 
 export async function getUsuariosDeIglesia(idIglesia: number): Promise<UsuarioEnriquecido[]> {
-  // Single query: Let RLS enforce iglesia scope via ministerio.sede.iglesia relationship
+  // Single query: Include sede in select to enable filtering by ministerio.sede.id_iglesia
   const { data, error } = await supabase
     .from('miembro_ministerio')
-    .select('id_usuario, rol_en_ministerio, usuario(nombres, apellidos, correo, telefono), ministerio(nombre, id_sede)')
+    .select('id_usuario, rol_en_ministerio, usuario(nombres, apellidos, correo, telefono), ministerio(nombre, id_sede, sede(id_iglesia))')
     .eq('ministerio.sede.id_iglesia', idIglesia)
     .is('fecha_salida', null)
     .order('usuario(nombres)', { ascending: true })
