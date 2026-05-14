@@ -31,7 +31,6 @@ import { NotificationsPage } from "./components/NotificationsPage";
 import { ProfilePage } from "./components/ProfilePage";
 import { GeographyPage } from "./components/GeographyPage";
 import { UsuariosPage } from "./components/UsuariosPage";
-import { CatalogosPage } from "./components/CatalogosPage";
 import { SitemapPage } from "./components/SitemapPage";
 import { NoChurchAssignedPage } from "./components/NoChurchAssignedPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
@@ -69,7 +68,6 @@ export const router = createBrowserRouter([
               { path: "sedes", Component: SedesPage, ErrorBoundary: ErrorPage },
               { path: "usuarios", Component: UsuariosPage, ErrorBoundary: ErrorPage },
               { path: "geografia", Component: GeographyPage, ErrorBoundary: ErrorPage },
-              { path: "catalogos", Component: CatalogosPage, ErrorBoundary: ErrorPage },
               { path: "notificaciones", Component: NotificationsPage, ErrorBoundary: ErrorPage },
               { path: "perfil", Component: ProfilePage, ErrorBoundary: ErrorPage },
               { path: "sitemap", Component: SitemapPage, ErrorBoundary: ErrorPage },

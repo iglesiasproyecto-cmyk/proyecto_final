@@ -44,7 +44,6 @@ const pageTitles: Record<string, string> = {
   "/app/global/administradores": "Administradores de Iglesia",
   "/app/global/usuarios": "Usuarios",
   "/app/global/geografia": "Geografía",
-  "/app/global/catalogos": "Catálogos",
   "/app/global/notificaciones": "Notificaciones",
   "/app/global/perfil": "Mi Perfil",
 };
@@ -83,7 +82,6 @@ function getNavItemsForRole(
         { label: "Administradores de Sede", path: "/app/global/admin-sedes", icon: <Settings className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Usuarios", path: "/app/global/usuarios", icon: <Users className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Geografía", path: "/app/global/geografia", icon: <Globe className="w-5 h-5" />, section: "Configuración" },
-        { label: "Catálogos", path: "/app/global/catalogos", icon: <Settings2 className="w-5 h-5" />, section: "Configuración" },
         { label: "Notificaciones", path: "/app/global/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: "/app/global/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
