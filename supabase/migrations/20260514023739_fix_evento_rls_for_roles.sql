@@ -15,7 +15,7 @@ DROP POLICY IF EXISTS evento_select ON public.evento;
 -- ── EVENTO ──
 -- Super admin can CRUD all eventos
 -- Admin iglesia can CRUD eventos in their iglesia
--- Admin sede can CRUD eventos in their sedes
+-- Admin sede can CRUD eventos in their sedes (must verify sede ownership)
 -- Lider can create/update eventos in ministerios they belong to (via get_my_ministerios)
 
 CREATE POLICY evento_insert ON public.evento
@@ -25,10 +25,14 @@ CREATE POLICY evento_insert ON public.evento
     OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id())
     OR (
       is_admin_sede()
+      AND id_sede IS NOT NULL
       AND EXISTS (
-        SELECT 1 FROM public.sede s
-        WHERE s.id_sede = public.evento.id_sede
-        AND s.id_iglesia = get_my_tenant_id()
+        SELECT 1 FROM public.usuario_rol_sede urs
+        JOIN public.rol r ON r.id_rol = urs.id_rol
+        WHERE urs.id_sede = public.evento.id_sede
+        AND urs.id_usuario = get_my_usuario_id()
+        AND r.nombre ILIKE '%administrador de sede%'
+        AND urs.fecha_fin IS NULL
       )
     )
     OR (
@@ -47,10 +51,14 @@ CREATE POLICY evento_update ON public.evento
     OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id())
     OR (
       is_admin_sede()
+      AND id_sede IS NOT NULL
       AND EXISTS (
-        SELECT 1 FROM public.sede s
-        WHERE s.id_sede = public.evento.id_sede
-        AND s.id_iglesia = get_my_tenant_id()
+        SELECT 1 FROM public.usuario_rol_sede urs
+        JOIN public.rol r ON r.id_rol = urs.id_rol
+        WHERE urs.id_sede = public.evento.id_sede
+        AND urs.id_usuario = get_my_usuario_id()
+        AND r.nombre ILIKE '%administrador de sede%'
+        AND urs.fecha_fin IS NULL
       )
     )
     OR (
@@ -63,10 +71,14 @@ CREATE POLICY evento_update ON public.evento
     OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id())
     OR (
       is_admin_sede()
+      AND id_sede IS NOT NULL
       AND EXISTS (
-        SELECT 1 FROM public.sede s
-        WHERE s.id_sede = public.evento.id_sede
-        AND s.id_iglesia = get_my_tenant_id()
+        SELECT 1 FROM public.usuario_rol_sede urs
+        JOIN public.rol r ON r.id_rol = urs.id_rol
+        WHERE urs.id_sede = public.evento.id_sede
+        AND urs.id_usuario = get_my_usuario_id()
+        AND r.nombre ILIKE '%administrador de sede%'
+        AND urs.fecha_fin IS NULL
       )
     )
     OR (
@@ -82,10 +94,14 @@ CREATE POLICY evento_delete ON public.evento
     OR (is_admin_iglesia() AND id_iglesia = get_my_tenant_id())
     OR (
       is_admin_sede()
+      AND id_sede IS NOT NULL
       AND EXISTS (
-        SELECT 1 FROM public.sede s
-        WHERE s.id_sede = public.evento.id_sede
-        AND s.id_iglesia = get_my_tenant_id()
+        SELECT 1 FROM public.usuario_rol_sede urs
+        JOIN public.rol r ON r.id_rol = urs.id_rol
+        WHERE urs.id_sede = public.evento.id_sede
+        AND urs.id_usuario = get_my_usuario_id()
+        AND r.nombre ILIKE '%administrador de sede%'
+        AND urs.fecha_fin IS NULL
       )
     )
   );
