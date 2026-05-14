@@ -27,22 +27,22 @@ export function validateTaskForm(data: Partial<CreateTaskFormData>): TaskValidat
   // Validate titulo
   if (!data.titulo || data.titulo.trim() === '') {
     errors.titulo = 'El título es requerido';
-  } else if (data.titulo.length < 3) {
+  } else if (data.titulo.trim().length < 3) {
     errors.titulo = 'El título debe tener al menos 3 caracteres';
-  } else if (data.titulo.length > 255) {
+  } else if (data.titulo.trim().length > 255) {
     errors.titulo = 'El título no puede exceder 255 caracteres';
   }
 
   // Validate descripcion
-  if (data.descripcion && data.descripcion.length > 2000) {
+  if (data.descripcion && data.descripcion.trim().length > 2000) {
     errors.descripcion = 'La descripción no puede exceder 2000 caracteres';
   }
 
   // Validate fechaLimite
   if (data.fechaLimite) {
-    const date = new Date(data.fechaLimite);
-    const now = new Date();
-    if (date < now) {
+    const fecha = new Date(data.fechaLimite);
+    const ahora = new Date();
+    if (fecha <= ahora) {
       errors.fechaLimite = 'La fecha límite debe ser en el futuro';
     }
   }
