@@ -18,6 +18,7 @@ import { motion } from "motion/react";
 import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2, Settings } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { CardSkeleton } from "./loading/skeletons";
+import { toast } from "sonner";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-700", servidor: "bg-gray-100 text-gray-700" };
@@ -45,7 +46,10 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
   );
 
   const handleAddMember = () => {
-    if (!memberForm.idUsuario) return;
+    if (!memberForm.idUsuario) {
+      toast.error('Por favor selecciona un usuario');
+      return;
+    }
     createMemberMutation.mutate({
       idUsuario: parseInt(memberForm.idUsuario),
       idMinisterio: min.idMinisterio,
@@ -53,9 +57,13 @@ function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void
       fechaIngreso: new Date().toISOString().split('T')[0],
     }, {
       onSuccess: () => {
+        toast.success('Miembro agregado exitosamente');
         setShowAddMember(false);
         setMemberForm({ idUsuario: "", rolEnMinisterio: "servidor" });
       },
+      onError: (error: any) => {
+        toast.error(`Error al agregar miembro: ${error.message}`);
+      }
     });
   };
 
@@ -253,7 +261,10 @@ export function MinisteriosPage() {
 
   function handleDeleteMinisterio(id: number, nombre: string) {
     if (!confirm(`¿Eliminar ministerio "${nombre}"? Esta acción no se puede deshacer.`)) return;
-    deleteMinisterioMutation.mutate(id);
+    deleteMinisterioMutation.mutate(id, {
+      onSuccess: () => toast.success(`Ministerio "${nombre}" eliminado exitosamente`),
+      onError: (error: any) => toast.error(`Error al eliminar ministerio: ${error.message}`)
+    });
   }
   const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idSede: "" });
 
@@ -279,10 +290,13 @@ export function MinisteriosPage() {
 
   const handleCreateMinisterio = () => {
     if (!canManageMinisterios) {
-      alert("No tienes permisos para crear ministerios");
+      toast.error("No tienes permisos para crear ministerios");
       return;
     }
-    if (!createForm.nombre.trim() || !createForm.idSede) return;
+    if (!createForm.nombre.trim() || !createForm.idSede) {
+      toast.error("Por favor completa nombre y sede");
+      return;
+    }
 
     // Verificar si ya existe un ministerio con el mismo nombre en la misma sede
     const existingMinisterio = ministerios.find(m =>
@@ -291,7 +305,7 @@ export function MinisteriosPage() {
     );
 
     if (existingMinisterio) {
-      alert(`Ya existe un ministerio llamado "${existingMinisterio.nombre}" en esta sede. Por favor elige un nombre diferente.`);
+      toast.error(`Ya existe un ministerio llamado "${existingMinisterio.nombre}" en esta sede. Por favor elige un nombre diferente.`);
       return;
     }
 
@@ -304,15 +318,16 @@ export function MinisteriosPage() {
       },
       {
         onSuccess: () => {
+          toast.success('Ministerio creado exitosamente');
           setShowCreate(false);
           setCreateForm({ nombre: "", descripcion: "", idSede: "" });
         },
         onError: (error: any) => {
           console.error('Error creando ministerio:', error);
           if (error.message?.includes('duplicate key') || error.code === '23505') {
-            alert('Ya existe un ministerio con este nombre en la sede seleccionada. Por favor elige un nombre diferente.');
+            toast.error('Ya existe un ministerio con este nombre en la sede seleccionada. Por favor elige un nombre diferente.');
           } else {
-            alert('Error al crear el ministerio: ' + (error.message || 'Error desconocido'));
+            toast.error(`Error al crear el ministerio: ${error.message || 'Error desconocido'}`);
           }
         }
       }

@@ -167,7 +167,10 @@ export function ChurchesPage() {
   };
 
   const handleCreate = () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.error("Por favor completa los campos requeridos");
+      return;
+    }
     createIglesiaMutation.mutate(
       {
         nombre: form.nombre.trim(),
@@ -179,7 +182,17 @@ export function ChurchesPage() {
         descripcion: form.descripcion.trim() || null,
         sitioWeb: form.sitioWeb.trim() || null,
       },
-      { onSuccess: () => setShowCreate(false) }
+      {
+        onSuccess: () => {
+          toast.success(`Iglesia "${form.nombre}" creada exitosamente`);
+          setShowCreate(false);
+          setForm({ nombre: "", fechaFundacion: "", direccion: "", telefono: "", descripcion: "", sitioWeb: "", idPais: 0, idDepartamento: 0, idCiudad: 0 });
+        },
+        onError: (error: any) => {
+          console.error("Error creating iglesia:", error);
+          toast.error(`Error al crear iglesia: ${error.message}`);
+        }
+      }
     );
   };
 
