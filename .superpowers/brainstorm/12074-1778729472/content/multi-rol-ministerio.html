@@ -1,0 +1,62 @@
+<h2>Juan está en 2 ministerios con roles distintos</h2>
+<p class="subtitle">¿Cómo debe funcionar el sistema? El rol de Juan EN el ministerio (lider/servidor) no es lo mismo que su rol de acceso al sistema.</p>
+
+<div style="background:#0f1923;border:1px solid #2d4a63;border-radius:12px;padding:16px;margin-bottom:20px;">
+  <div style="font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">La situación de Juan</div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:180px;background:#1a2a1a;border:1px solid #22543d;border-radius:8px;padding:12px;">
+      <div style="font-size:10px;color:#6b7280;margin-bottom:4px;">MINISTERIO 1</div>
+      <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:6px;">🎵 Alabanza</div>
+      <div style="font-size:11px;color:#34d399;background:#05966920;padding:3px 8px;border-radius:20px;display:inline-block;">Lider</div>
+      <div style="font-size:10px;color:#6b7280;margin-top:6px;">Sede Norte</div>
+    </div>
+    <div style="flex:1;min-width:180px;background:#1a1a2a;border:1px solid #312e81;border-radius:8px;padding:12px;">
+      <div style="font-size:10px;color:#6b7280;margin-bottom:4px;">MINISTERIO 2</div>
+      <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:6px;">💰 Contabilidad</div>
+      <div style="font-size:11px;color:#a78bfa;background:#7c3aed20;padding:3px 8px;border-radius:20px;display:inline-block;">Servidor</div>
+      <div style="font-size:10px;color:#6b7280;margin-top:6px;">Sede Norte</div>
+    </div>
+  </div>
+</div>
+
+<div style="font-size:12px;color:#f59e0b;background:#f59e0b10;border:1px solid #f59e0b30;border-radius:8px;padding:10px;margin-bottom:16px;">
+  ⚠️ <strong>Bug actual:</strong> La RLS actual verifica <code>is_lider()</code> globalmente + ministerios del usuario. Juan podría crear eventos para Contabilidad aunque ahí es solo servidor.
+</div>
+
+<h3 style="margin-bottom:12px;">¿Cuál modelo es correcto?</h3>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Rol de sistema = rol más alto</h3>
+      <p>Juan tiene rol <strong>"lider"</strong> en el sistema (el mayor que tiene en cualquier ministerio). Pero la creación de eventos/tareas se restringe a los ministerios donde SÍ es lider. Para Contabilidad solo puede ver, no crear.</p>
+      <div style="margin-top:6px;font-size:11px;color:#94a3b8;">✅ Más simple. La RLS usa <code>get_my_ministerios_as_lider()</code> para crear, <code>get_my_ministerios()</code> para ver.</div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Dos entradas en usuario_rol</h3>
+      <p>Juan tiene <strong>dos registros</strong>: uno como lider (para Alabanza) y otro como servidor (para Contabilidad). El sistema evalúa permisos por contexto de ministerio activo.</p>
+      <div style="margin-top:6px;font-size:11px;color:#94a3b8;">⚠️ Más preciso pero complejo. Requiere cambios en JWT y en cada check de RLS.</div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>El rol del sistema es independiente del ministerio</h3>
+      <p>El rol de acceso (lider/servidor) se asigna a la <strong>persona en la sede</strong>, no por ministerio. Juan es "lider" en Sede Norte. Dentro del ministerio el campo <code>rol_en_ministerio</code> es solo organizacional (no afecta permisos del sistema).</p>
+      <div style="margin-top:6px;font-size:11px;color:#94a3b8;">⚡ Más simple arquitectónicamente. Ya funciona así hoy. Pero pierde granularidad.</div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:16px;background:#1a2234;border:1px solid #2d4a63;border-radius:10px;padding:12px;">
+  <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">💡 Mi recomendación</div>
+  <p style="font-size:12px;color:#cbd5e1;margin:0;"><strong>Opción A</strong>: es el balance ideal entre precisión y simplicidad. El rol del sistema sigue siendo uno (el más alto), pero las acciones de creación se evalúan contra los ministerios donde tiene ese rol específico. Requiere agregar <code>get_my_ministerios_as_lider()</code> en la RLS.</p>
+</div>

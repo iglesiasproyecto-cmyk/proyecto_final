@@ -1,0 +1,65 @@
+<h2>¿Cómo se incorpora una persona al sistema?</h2>
+<p class="subtitle">Actualmente no existe el concepto de "miembro de sede". ¿Cuál es el flujo correcto de incorporación?</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Sede primero, luego ministerio</h3>
+      <p>Se registra a la persona en la sede (su "hogar"). Ahí queda como <strong>miembro de la sede</strong> aunque aún no tenga ministerio ni rol. Después se le asigna a uno o más ministerios con su rol en cada uno.</p>
+      <div style="margin-top:8px;background:#0f1923;border-radius:8px;padding:10px;font-size:11px;">
+        <div style="display:flex;align-items:center;gap:6px;color:#34d399;">
+          <span style="background:#059669;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;">1</span>
+          Crear usuario → asignar a <strong>Sede Norte</strong>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;color:#60a5fa;margin-top:5px;">
+          <span style="background:#2563eb;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;">2</span>
+          Agregar al <strong>Ministerio Alabanza</strong> como <em>lider</em>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;color:#60a5fa;margin-top:5px;">
+          <span style="background:#2563eb;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;">3</span>
+          Agregar al <strong>Ministerio Contabilidad</strong> como <em>servidor</em>
+        </div>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#94a3b8;">✅ Modelo más completo. Permite tener personas en la sede que aún no están en ningún ministerio ("feligreses").</div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Solo ministerio (como hoy)</h3>
+      <p>Una persona solo existe en el sistema cuando está en al menos un ministerio. La sede queda implícita por el ministerio. No hay concepto de "miembro sin ministerio".</p>
+      <div style="margin-top:8px;background:#0f1923;border-radius:8px;padding:10px;font-size:11px;">
+        <div style="display:flex;align-items:center;gap:6px;color:#60a5fa;">
+          <span style="background:#2563eb;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;">1</span>
+          Crear usuario
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;color:#60a5fa;margin-top:5px;">
+          <span style="background:#2563eb;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;">2</span>
+          Agregar directo a ministerio con rol
+        </div>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#94a3b8;">⚠️ Más simple pero no representa la realidad: alguien puede asistir a la sede sin estar en un ministerio activo.</div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:20px;background:#1a2234;border:1px solid #f59e0b40;border-radius:10px;padding:14px;">
+  <div style="font-size:10px;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">¿Qué implica la Opción A en la BD?</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;">
+    <div style="background:#0f1923;border-radius:6px;padding:8px;">
+      <div style="color:#34d399;font-weight:700;margin-bottom:4px;">Nueva tabla (o campo)</div>
+      <code style="color:#94a3b8;font-size:10px;">usuario_sede</code>
+      <div style="color:#6b7280;font-size:10px;margin-top:3px;">id_usuario · id_sede · fecha_ingreso · estado (activo/inactivo)</div>
+    </div>
+    <div style="background:#0f1923;border-radius:6px;padding:8px;">
+      <div style="color:#34d399;font-weight:700;margin-bottom:4px;">Ya existe</div>
+      <code style="color:#94a3b8;font-size:10px;">miembro_ministerio</code>
+      <div style="color:#6b7280;font-size:10px;margin-top:3px;">id_usuario · id_ministerio · rol_en_ministerio · fecha_ingreso</div>
+    </div>
+  </div>
+  <p style="font-size:11px;color:#cbd5e1;margin-top:8px;margin-bottom:0;">Con Opción A, la página de <strong>"Miembros"</strong> muestra a las personas de la sede aunque no estén en ningún ministerio todavía. Hay una diferencia entre <em>"feligrés de la sede"</em> y <em>"miembro activo de un ministerio"</em>.</p>
+</div>
