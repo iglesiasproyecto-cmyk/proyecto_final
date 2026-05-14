@@ -37,7 +37,7 @@ export function CursosLiderList() {
         .select(`
           *,
           ministerio:ministerio(nombre),
-          modulos:aula_modulo(count)
+          modulos:aula_modulo(id_aula_modulo)
         `)
         .eq('id_usuario_creador', internalUserId)
         .order('creado_en', { ascending: false })
@@ -149,7 +149,7 @@ export function CursosLiderList() {
                     </Badge>
                     <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-muted/30 px-2 py-1 rounded-lg">
                       <Users className="h-3 w-3" />
-                      {curso.modulos?.[0]?.count || 0} módulos
+                      {curso.modulos?.length || 0} módulos
                     </div>
                   </div>
                   <CardTitle className="text-xl font-black group-hover:text-primary transition-colors line-clamp-1">

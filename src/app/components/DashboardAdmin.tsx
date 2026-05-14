@@ -23,8 +23,8 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
           titulo,
           estado,
           ministerio!inner(nombre, sede!inner(id_iglesia)),
-          aula_inscripcion(count),
-          aula_modulo(count)
+          aula_inscripcion(id_aula_inscripcion),
+          aula_modulo(id_aula_modulo)
         `)
         .eq('ministerio.sede.id_iglesia', idIglesia)
 
@@ -55,8 +55,8 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
           id: c.id_aula_curso,
           titulo: c.titulo,
           ministerio: (c.ministerio as any)?.nombre ?? '',
-          inscritos: (c.aula_inscripcion as any)?.[0]?.count ?? 0,
-          modulos: (c.aula_modulo as any)?.[0]?.count ?? 0,
+          inscritos: (c.aula_inscripcion as any)?.length ?? 0,
+          modulos: (c.aula_modulo as any)?.length ?? 0,
         }))
         .sort((a, b) => b.inscritos - a.inscritos)
         .slice(0, 5)

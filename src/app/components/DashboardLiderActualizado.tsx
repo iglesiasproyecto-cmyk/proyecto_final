@@ -36,7 +36,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
           id_aula_curso,
           titulo,
           estado,
-          modulos:aula_modulo(count)
+          modulos:aula_modulo(id_aula_modulo)
         `)
         .eq('id_usuario_creador', internalUserId)
         .order('creado_en', { ascending: false })
@@ -62,7 +62,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
         .select(`
           id_aula_curso,
           ministerio:ministerio(
-            miembro_ministerio(count)
+            miembro_ministerio(id_miembro_ministerio)
           )
         `)
         .eq('id_usuario_creador', internalUserId)
@@ -232,7 +232,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
                         {curso.estado}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        {curso.modulos?.[0]?.count || 0} módulos
+                        {curso.modulos?.length || 0} módulos
                       </span>
                     </div>
                   </div>
