@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router";
 import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia } from "@/hooks/useEventos";
 import type { TareaEnriquecida } from "@/services/eventos.service";
-import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
+import { useMinisteriosEnriquecidos, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
 import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service";
@@ -57,6 +57,20 @@ export function TasksPage() {
   const createEvidenciaMutation = useCreateTareaEvidencia();
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(idIglesiaNum);
   const { data: sedes = [] } = useSedesEnriquecidas(idIglesiaNum);
+  const { data: usuarioMinisterioIds = [] } = useMinisteriosIdsDeUsuario(rolActual === "lider" ? usuarioActual?.idUsuario : undefined);
+
+  const isAdminSede = rolActual === "admin_sede";
+  const isLider = rolActual === "lider";
+
+  // Count how many ministerios the current user leads (for conditional display)
+  const userLeadMinisterios = usuarioMinisterioIds.length;
+  const hasMultipleMinisterios = userLeadMinisterios >= 2;
+  const shouldShowSelectorFields = !isLider || hasMultipleMinisterios || rolActual === "admin_iglesia" || rolActual === "super_admin" || rolActual === "admin_sede";
+
+  // Get the first ministerio if user leads exactly one
+  const singleUserMinisterio = isLider && userLeadMinisterios === 1
+    ? ministerios.find(m => m.idMinisterio === usuarioMinisterioIds[0])
+    : null;
 
   const [showCreate, setShowCreate] = useState(false);
   const [sedeFilter, setSedeFilter] = useState<number>(0);
@@ -91,7 +105,13 @@ export function TasksPage() {
     });
   }, [ministerios]);
 
-  const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: 0 });
+  const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: singleUserMinisterio?.idMinisterio ?? 0, idSede: 0, _hideSelectorFields: !shouldShowSelectorFields } as any);
+
+  useEffect(() => {
+    if (showCreate) {
+      resetCreateForm();
+    }
+  }, [showCreate, singleUserMinisterio, isAdminSede, isLider, shouldShowSelectorFields, rolActual]);
 
   useEffect(() => {
     if (!task) {
@@ -225,7 +245,6 @@ export function TasksPage() {
     </div>
   );
 
-  const isLider = rolActual === "lider";
   const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin" || rolActual === "admin_sede";
   const canManageTasks = isLider || isAdmin;
   const canShowCreateButton =
@@ -796,20 +815,22 @@ export function TasksPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <SedeMinisterioSelector
-              sedes={sedes}
-              ministerios={ministerios}
-              selectedSedeId={createForm.idSede}
-              selectedMinisterioId={createForm.idMinisterio}
-              onSedeChange={(idSede, clearMinisterio) =>
-                setCreateForm((p) => ({ ...p, idSede, idMinisterio: clearMinisterio ? 0 : p.idMinisterio }))
-              }
-              onMinisterioChange={(idMinisterio, autoSedeId) =>
-                setCreateForm((p) => ({ ...p, idMinisterio, idSede: autoSedeId }))
-              }
-              sedeReadOnly={rolActual === "admin_sede" || rolActual === "lider"}
-              ministerioReadOnly={rolActual === "lider"}
-            />
+            {shouldShowSelectorFields && (
+              <SedeMinisterioSelector
+                sedes={sedes}
+                ministerios={ministerios}
+                selectedSedeId={createForm.idSede}
+                selectedMinisterioId={createForm.idMinisterio}
+                onSedeChange={(idSede, clearMinisterio) =>
+                  setCreateForm((p) => ({ ...p, idSede, idMinisterio: clearMinisterio ? 0 : p.idMinisterio }))
+                }
+                onMinisterioChange={(idMinisterio, autoSedeId) =>
+                  setCreateForm((p) => ({ ...p, idMinisterio, idSede: autoSedeId }))
+                }
+                sedeReadOnly={rolActual === "admin_sede" || rolActual === "lider"}
+                ministerioReadOnly={rolActual === "lider"}
+              />
+            )}
             <div>
               <FieldLabel>Título</FieldLabel>
               <Input value={createForm.titulo} onChange={e => setCreateForm(p => ({ ...p, titulo: e.target.value }))} placeholder="Ej. Preparar la reunión de líderes" className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
