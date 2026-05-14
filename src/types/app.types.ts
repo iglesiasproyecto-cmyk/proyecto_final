@@ -227,6 +227,7 @@ export interface Tarea {
   idIglesia: number | null
   creadoEn: string
   actualizadoEn: string
+  archivedAt?: string | null
   asignados?: TareaAsignada[]
 }
 
