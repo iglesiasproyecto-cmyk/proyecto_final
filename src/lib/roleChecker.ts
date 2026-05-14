@@ -1,6 +1,6 @@
 // Role-based permission checking for task operations
 
-export type UserRole = 'super_admin' | 'admin_iglesia' | 'lider' | 'miembro' | 'servidor';
+export type UserRole = 'super_admin' | 'admin_iglesia' | 'lider' | 'admin_sede' | 'servidor';
 
 export interface TaskPermissions {
   canEdit: boolean;
