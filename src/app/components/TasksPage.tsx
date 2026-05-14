@@ -3,9 +3,12 @@ import { useParams } from "react-router";
 import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia } from "@/hooks/useEventos";
 import type { TareaEnriquecida } from "@/services/eventos.service";
 import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
+import { useSedesEnriquecidas } from "@/hooks/useIglesias";
+import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
 import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service";
 import { filterAndSortTareas } from "@/lib/taskUtils";
 import { useApp } from "../store/AppContext";
+import { SedeMinisterioSelector } from "./ui/SedeMinisterioSelector";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -53,12 +56,15 @@ export function TasksPage() {
   const deleteAsignadaMutation = useDeleteTareaAsignada();
   const createEvidenciaMutation = useCreateTareaEvidencia();
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(idIglesiaNum);
+  const { data: sedes = [] } = useSedesEnriquecidas(idIglesiaNum);
 
   const [showCreate, setShowCreate] = useState(false);
+  const [sedeFilter, setSedeFilter] = useState<number>(0);
   const [selectedTask, setSelectedTask] = useState<number | null>(null);
   const [assignUserId, setAssignUserId] = useState(0);
   const [createForm, setCreateForm] = useState({
-    titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as "baja" | "media" | "alta" | "urgente", idMinisterio: 0,
+    titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as "baja" | "media" | "alta" | "urgente",
+    idSede: 0, idMinisterio: 0,
   });
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; titulo: string }>({ open: false, id: 0, titulo: "" });
   const [searchQuery, setSearchQuery] = useState("");
@@ -203,6 +209,9 @@ export function TasksPage() {
     return filteredAndSortedTareas.filter(t => t.idMinisterio === ministerioFilter);
   }, [filteredAndSortedTareas, ministerioFilter]);
 
+  // Hooks must be called before any conditional returns
+  const canCreateInContext = useCanManageMinisterio(ministerioFilter || null);
+
   if (isLoading) return (
     <div className="space-y-6 max-w-7xl mx-auto px-4">
       <div className="flex items-center gap-4 p-4">
@@ -217,8 +226,10 @@ export function TasksPage() {
   );
 
   const isLider = rolActual === "lider";
-  const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin";
+  const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin" || rolActual === "admin_sede";
   const canManageTasks = isLider || isAdmin;
+  const canShowCreateButton =
+    canManageTasks && (ministerioFilter === 0 || canCreateInContext);
   const myAssignment = task?.asignados?.find(a => a.idUsuario === usuarioActual?.idUsuario) ?? null;
   const canActAsServidor = rolActual === "servidor" && !!myAssignment;
 
@@ -262,7 +273,7 @@ export function TasksPage() {
             <p className="text-foreground text-xs sm:text-sm mt-1">Gestión de tareas operativas del ministerio</p>
           </div>
         </div>
-        {canManageTasks && (
+        {canShowCreateButton && (
           <Button onClick={() => setShowCreate(true)} className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all">
             <Plus className="w-4 h-4 mr-1.5" /> Nueva Tarea
           </Button>
@@ -328,18 +339,21 @@ export function TasksPage() {
             <option value="newest">Más recientes primero</option>
             <option value="oldest">Más antiguas primero</option>
           </select>
-          {isAdmin && (
-            <select
-              value={ministerioFilter}
-              onChange={(e) => setMinisterioFilter(Number(e.target.value))}
-              className="w-[180px] h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-            >
-              <option value={0}>Todos los ministerios</option>
-              {ministerios.map(m => (
-                <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>
-              ))}
-            </select>
-          )}
+          <SedeMinisterioSelector
+            sedes={sedes}
+            ministerios={ministerios}
+            selectedSedeId={sedeFilter}
+            selectedMinisterioId={ministerioFilter}
+            onSedeChange={(idSede, clearMinisterio) => {
+              setSedeFilter(idSede);
+              if (clearMinisterio) setMinisterioFilter(0);
+            }}
+            onMinisterioChange={(idMinisterio, autoSedeId) => {
+              setMinisterioFilter(idMinisterio);
+              setSedeFilter(autoSedeId);
+            }}
+            allowNoMinisterio
+          />
         </div>
       </motion.div>
 
@@ -782,22 +796,23 @@ export function TasksPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            <SedeMinisterioSelector
+              sedes={sedes}
+              ministerios={ministerios}
+              selectedSedeId={createForm.idSede}
+              selectedMinisterioId={createForm.idMinisterio}
+              onSedeChange={(idSede, clearMinisterio) =>
+                setCreateForm((p) => ({ ...p, idSede, idMinisterio: clearMinisterio ? 0 : p.idMinisterio }))
+              }
+              onMinisterioChange={(idMinisterio, autoSedeId) =>
+                setCreateForm((p) => ({ ...p, idMinisterio, idSede: autoSedeId }))
+              }
+              sedeReadOnly={rolActual === "admin_sede" || rolActual === "lider"}
+              ministerioReadOnly={rolActual === "lider"}
+            />
             <div>
               <FieldLabel>Título</FieldLabel>
               <Input value={createForm.titulo} onChange={e => setCreateForm(p => ({ ...p, titulo: e.target.value }))} placeholder="Ej. Preparar la reunión de líderes" className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
-            </div>
-            <div>
-              <FieldLabel>Ministerio</FieldLabel>
-              <select
-                value={createForm.idMinisterio}
-                onChange={e => setCreateForm(p => ({ ...p, idMinisterio: Number(e.target.value) }))}
-                className="w-full h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-              >
-                <option value={0}>Seleccionar ministerio...</option>
-                {ministerios.map(m => (
-                  <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>
-                ))}
-              </select>
             </div>
             <div>
               <FieldLabel>Descripción <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span></FieldLabel>
