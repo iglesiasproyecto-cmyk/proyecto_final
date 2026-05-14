@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router";
-import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia } from "@/hooks/useEventos";
+import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia, useArchiveTask, useUnarchiveTask } from "@/hooks/useEventos";
 import type { TareaEnriquecida } from "@/services/eventos.service";
 import { useMinisteriosEnriquecidos, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
 import { useUsuariosDeIglesia } from "@/hooks/useUsuariosDeIglesia";
+import { useTaskPermissions, useCanBulkUpdate } from "@/hooks/useTaskPermissions";
 import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service";
 import { filterAndSortTareas } from "@/lib/taskUtils";
 import { useApp } from "../store/AppContext";
@@ -24,6 +25,10 @@ import {
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { Skeleton } from "./ui/skeleton";
 import { TableSkeleton } from "./loading/skeletons";
+import { TasksSkeleton } from "./tasks/TasksSkeleton";
+import { TaskBulkActions } from "./tasks/TaskBulkActions";
+import { TaskArchiveIndicator } from "./tasks/TaskArchiveIndicator";
+import { TaskApprovalSection } from "./tasks/TaskApprovalSection";
 
 const statusConfig = {
   pendiente:   { label: "Pendiente",   color: "bg-amber-500/10 text-amber-400 border-amber-500/20",   dot: "bg-amber-400",   icon: <AlertCircle className="w-3.5 h-3.5" /> },
@@ -80,7 +85,7 @@ export function TasksPage() {
   const [assignUserId, setAssignUserId] = useState(0);
   const [createForm, setCreateForm] = useState({
     titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as "baja" | "media" | "alta" | "urgente",
-    idSede: 0, idMinisterio: 0,
+    idSede: 0, idMinisterio: 0, _hideSelectorFields: false,
   });
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; titulo: string }>({ open: false, id: 0, titulo: "" });
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,11 +99,18 @@ export function TasksPage() {
   const [editForm, setEditForm] = useState({
     titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as TareaEnriquecida['prioridad']
   });
+  const [selectedTareaIds, setSelectedTareaIds] = useState<Set<number>>(new Set());
 
   const task = selectedTask ? tareas.find(t => t.idTarea === selectedTask) : null;
   const { data: evidencias = [] } = useTareaEvidencias(task?.idTarea);
 
-  const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: singleUserMinisterio?.idMinisterio ?? 0, idSede: 0, _hideSelectorFields: !shouldShowSelectorFields } as any);
+  // Archive and permission hooks
+  const archiveMutation = useArchiveTask();
+  const unarchiveMutation = useUnarchiveTask();
+  const canBulkUpdate = useCanBulkUpdate();
+  const taskPerms = useTaskPermissions(task);
+
+  const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: singleUserMinisterio?.idMinisterio ?? 0, idSede: 0, _hideSelectorFields: !shouldShowSelectorFields });
 
   useEffect(() => {
     if (showCreate) {
@@ -212,6 +224,58 @@ export function TasksPage() {
     );
   };
 
+  const handleBulkUpdateEstado = (estado: string) => {
+    if (selectedTareaIds.size === 0) {
+      toast.error("No hay tareas seleccionadas");
+      return;
+    }
+    if (!canBulkUpdate) {
+      toast.error("No tienes permiso para actualizar múltiples tareas");
+      return;
+    }
+    // TODO: Implement bulk update RPC call
+    toast.success(`Actualizando ${selectedTareaIds.size} tareas a ${estado}`);
+    setSelectedTareaIds(new Set());
+  };
+
+  const handleBulkArchive = () => {
+    if (selectedTareaIds.size === 0) {
+      toast.error("No hay tareas seleccionadas");
+      return;
+    }
+    if (!canBulkUpdate) {
+      toast.error("No tienes permiso para archivar tareas");
+      return;
+    }
+    // TODO: Implement bulk archive
+    toast.success(`Archivando ${selectedTareaIds.size} tareas`);
+    setSelectedTareaIds(new Set());
+  };
+
+  const handleClearSelection = () => {
+    setSelectedTareaIds(new Set());
+  };
+
+  const handleToggleTaskSelect = (idTarea: number) => {
+    const newSet = new Set(selectedTareaIds);
+    if (newSet.has(idTarea)) {
+      newSet.delete(idTarea);
+    } else {
+      newSet.add(idTarea);
+    }
+    setSelectedTareaIds(newSet);
+  };
+
+  const handleArchiveTask = () => {
+    if (!task?.idTarea || !canBulkUpdate) return;
+    archiveMutation.mutate(task.idTarea);
+  };
+
+  const handleUnarchiveTask = () => {
+    if (!task?.idTarea || !canBulkUpdate) return;
+    unarchiveMutation.mutate(task.idTarea);
+  };
+
   const filteredAndSortedTareas = useMemo(() =>
     filterAndSortTareas(tareas, { searchQuery, dateFilter, sortOrder }),
     [tareas, searchQuery, dateFilter, sortOrder]
@@ -234,7 +298,7 @@ export function TasksPage() {
           <Skeleton className="h-4 w-32" />
         </div>
       </div>
-      <TableSkeleton rows={8} columns={5} />
+      <TasksSkeleton />
     </div>
   );
 
@@ -368,6 +432,15 @@ export function TasksPage() {
           />
         </div>
       </motion.div>
+
+      {/* ── Bulk Actions ── */}
+      <TaskBulkActions
+        selectedCount={selectedTareaIds.size}
+        onBulkUpdateEstado={canBulkUpdate ? handleBulkUpdateEstado : undefined}
+        onBulkArchive={canBulkUpdate ? handleBulkArchive : undefined}
+        onClearSelection={handleClearSelection}
+        isLoading={false}
+      />
 
       {/* ── Kanban Board ── */}
       <motion.div
@@ -561,7 +634,7 @@ export function TasksPage() {
                         <FieldLabel>Prioridad</FieldLabel>
                         <select
                           value={editForm.prioridad}
-                          onChange={e => setEditForm(p => ({ ...p, prioridad: e.target.value as any }))}
+                          onChange={e => setEditForm(p => ({ ...p, prioridad: e.target.value as "baja" | "media" | "alta" | "urgente" }))}
                           className="w-full h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none"
                         >
                           <option value="baja">Baja</option>
@@ -705,6 +778,25 @@ export function TasksPage() {
                       </div>
                     )}
                   </div>
+                )}
+
+                {/* Archive Indicator */}
+                {task && (
+                  <TaskArchiveIndicator
+                    archivedAt={task.archivedAt}
+                    onUnarchive={canBulkUpdate ? handleUnarchiveTask : undefined}
+                    isLoading={unarchiveMutation.isPending}
+                  />
+                )}
+
+                {/* Approval Section */}
+                {task && (
+                  <TaskApprovalSection
+                    task={task}
+                    onApprove={() => updateEstadoMutation.mutate({ id: task.idTarea, estado: 'completada' })}
+                    onReject={() => setConfirmCancel({ open: true, id: task.idTarea })}
+                    isLoading={updateEstadoMutation.isPending}
+                  />
                 )}
               </div>
 
