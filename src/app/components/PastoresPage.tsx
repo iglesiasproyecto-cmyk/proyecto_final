@@ -24,6 +24,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { motion } from "motion/react";
 import { UserCheck, Plus, Pencil, Trash2, Search, Link2, Church, Mail, Phone, Save, X, Eye, Calendar } from "lucide-react";
+import { toast } from "sonner";
 
 function GlassCard({ children, index = 0 }: { children: React.ReactNode; index?: number }) {
   return (
@@ -52,7 +53,7 @@ function normalizeEmail(value: string) {
 }
 
 export function PastoresPage() {
-  const { rolActual } = useApp();
+  const { rolActual, usuarioActual } = useApp();
   const { data: pastores = [], isLoading } = usePastoresEnriquecidos();
   const { data: sedePastores = [] } = useSedePastores();
   const { data: iglesias = [] } = useIglesias();
@@ -92,7 +93,10 @@ export function PastoresPage() {
 
   const handleDeletePastor = (id: number, nombre: string) => {
     if (!confirm(`¿Eliminar pastor "${nombre}"? Esta acción es irreversible.`)) return;
-    deletePastorMutation.mutate(id);
+    deletePastorMutation.mutate(id, {
+      onSuccess: () => toast.success(`Pastor "${nombre}" eliminado exitosamente`),
+      onError: (error: any) => toast.error(`Error al eliminar pastor: ${error.message}`)
+    });
   };
 
   const openAddPastor = () => { setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 }); setEditingPastor(null); setDialogPastor(true); };
@@ -103,63 +107,92 @@ export function PastoresPage() {
   };
   const handleSubmitPastor = async () => {
     const correo = normalizeEmail(formP.correo);
-    if (!formP.nombres.trim() || !formP.apellidos.trim() || !correo) return;
+    if (!formP.nombres.trim() || !formP.apellidos.trim() || !correo) {
+      toast.error('Por favor completa los campos requeridos (nombres, apellidos, correo)');
+      return;
+    }
     if (!EMAIL_REGEX.test(correo)) {
-      alert('Ingresa un correo electrónico válido.');
+      toast.error('Ingresa un correo electrónico válido.');
       return;
     }
 
     try {
       // Validar correo único
       if (await checkPastorCorreoExists(correo, editingPastor || undefined)) {
-        alert('El correo ya está en uso por otro pastor activo.');
+        toast.error('El correo ya está en uso por otro pastor activo.');
         return;
       }
 
       // Validar idUsuario único si se proporciona
       if (formP.idUsuario && await checkPastorUsuarioExists(formP.idUsuario, editingPastor || undefined)) {
-        alert('El usuario ya está asignado a otro pastor activo.');
+        toast.error('El usuario ya está asignado a otro pastor activo.');
         return;
       }
 
       if (editingPastor) {
         updatePastorMutation.mutate(
           { id: editingPastor, data: { nombres: formP.nombres, apellidos: formP.apellidos, correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null } },
-          { onSuccess: () => setDialogPastor(false) }
+          {
+            onSuccess: () => {
+              toast.success('Pastor actualizado exitosamente');
+              setDialogPastor(false);
+            },
+            onError: (error: any) => toast.error(`Error al actualizar pastor: ${error.message}`)
+          }
         );
       } else {
         createPastorMutation.mutate(
           { nombres: formP.nombres, apellidos: formP.apellidos, correo, telefono: formP.telefono || null, idUsuario: formP.idUsuario || null },
-          { onSuccess: () => {
-            setDialogPastor(false);
-            setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
-          } }
+          {
+            onSuccess: () => {
+              toast.success('Pastor creado exitosamente');
+              setDialogPastor(false);
+              setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 });
+            },
+            onError: (error: any) => toast.error(`Error al crear pastor: ${error.message}`)
+          }
         );
       }
     } catch (error) {
       console.error('Error validating pastor:', error);
-      alert('Error al validar los datos del pastor.');
+      toast.error('Error al validar los datos del pastor.');
     }
   };
 
   const openAsign = () => { setFormA({ idSede: 0, idPastor: 0, esPrincipal: false, fechaInicio: new Date().toISOString().split("T")[0], observaciones: "" }); setDialogAsign(true); };
   const handleSubmitAsign = () => {
-    if (!formA.idSede || !formA.idPastor || !formA.fechaInicio) return;
+    if (!formA.idSede || !formA.idPastor || !formA.fechaInicio) {
+      toast.error('Por favor completa todos los campos requeridos');
+      return;
+    }
     createAsignMutation.mutate(
       { idSede: formA.idSede, idPastor: formA.idPastor, esPrincipal: formA.esPrincipal, fechaInicio: formA.fechaInicio, fechaFin: null, observaciones: formA.observaciones || null },
-      { onSuccess: () => setDialogAsign(false) }
+      {
+        onSuccess: () => {
+          toast.success('Asignación creada exitosamente');
+          setDialogAsign(false);
+          setFormA({ idSede: 0, idPastor: 0, esPrincipal: false, fechaInicio: new Date().toISOString().split("T")[0], observaciones: "" });
+        },
+        onError: (error: any) => toast.error(`Error al crear asignación: ${error.message}`)
+      }
     );
   };
 
   const handleSolicitarCambio = async () => {
-    if (!usuarioActual || !formSolicitud.idPastorActual || !formSolicitud.idSede || !formSolicitud.idPastorNuevo || !formSolicitud.motivo.trim()) return;
+    if (!usuarioActual || !formSolicitud.idPastorActual || !formSolicitud.idSede || !formSolicitud.idPastorNuevo || !formSolicitud.motivo.trim()) {
+      toast.error('Por favor completa todos los campos requeridos');
+      return;
+    }
 
     // Buscar los pastores
     const pastorActual = pastores.find(p => p.idPastor === formSolicitud.idPastorActual);
     const pastorNuevo = pastores.find(p => p.idPastor === formSolicitud.idPastorNuevo);
     const sede = sedes.find(s => s.idSede === formSolicitud.idSede);
 
-    if (!pastorActual || !pastorNuevo || !sede) return;
+    if (!pastorActual || !pastorNuevo || !sede) {
+      toast.error('Error: No se encontraron los pastores o sede seleccionados');
+      return;
+    }
 
     try {
       // Buscar super admins para enviarles la notificación
@@ -171,7 +204,7 @@ export function PastoresPage() {
       if (error) throw error;
 
       if (!superAdmins || superAdmins.length === 0) {
-        console.error('No se encontraron super admins');
+        toast.error('No se encontraron super administradores para enviar la solicitud');
         return;
       }
 

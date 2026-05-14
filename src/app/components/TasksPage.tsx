@@ -113,9 +113,13 @@ export function TasksPage() {
     if (!deleteConfirm.id) return;
     deleteTareaMutation.mutate(deleteConfirm.id, {
       onSuccess: () => {
+        toast.success(`Tarea "${deleteConfirm.titulo}" eliminada exitosamente`);
         setDeleteConfirm({ open: false, id: 0, titulo: "" });
         setSelectedTask(null);
       },
+      onError: (error: any) => {
+        toast.error(`Error al eliminar tarea: ${error.message}`);
+      }
     });
   };
 

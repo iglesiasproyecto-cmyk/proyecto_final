@@ -19,6 +19,7 @@ import {
   CheckCircle2, XCircle, PlayCircle, BookMarked, Church,
 } from "lucide-react";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
+import { toast } from "sonner";
 
 const estadoConfig: Record<string, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
   programado:  { label: "Programado",  color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",    dot: "bg-[#4682b4]",    icon: <BookMarked className="w-3 h-3" /> },
@@ -153,18 +154,37 @@ export function EventsPage() {
   };
 
   const handleCreateEvento = () => {
-    if (!createForm.nombre.trim() || !createForm.fechaInicio || !createForm.fechaFin || !(idIglesiaNum ?? iglesiaActual?.id)) return;
+    if (!createForm.nombre.trim() || !createForm.fechaInicio || !createForm.fechaFin || !(idIglesiaNum ?? iglesiaActual?.id)) {
+      toast.error('Por favor completa nombre, fecha de inicio y fecha de fin del evento');
+      return;
+    }
     createEventoMutation.mutate(
       { nombre: createForm.nombre.trim(), descripcion: createForm.descripcion.trim() || null, tipoEventoTexto: createForm.tipoEventoTexto.trim() || null, fechaInicio: createForm.fechaInicio, fechaFin: createForm.fechaFin, idIglesia: idIglesiaNum ?? iglesiaActual?.id ?? 0, idSede: createForm.idSede || null, idMinisterio: createForm.idMinisterio || null },
-      { onSuccess: () => { setShowCreate(false); resetCreateForm(); } }
+      {
+        onSuccess: () => {
+          toast.success('Evento creado exitosamente');
+          setShowCreate(false);
+          resetCreateForm();
+        },
+        onError: (error: any) => toast.error(`Error al crear evento: ${error.message}`)
+      }
     );
   };
 
   const handleUpdateEvento = () => {
-    if (!editEvento || !editForm.nombre.trim()) return;
+    if (!editEvento || !editForm.nombre.trim()) {
+      toast.error('Por favor completa el nombre del evento');
+      return;
+    }
     updateEventoMutation.mutate(
       { id: editEvento.idEvento, data: { nombre: editForm.nombre.trim(), descripcion: editForm.descripcion.trim() || null, tipoEventoTexto: editForm.tipoEventoTexto.trim() || null, fechaInicio: editForm.fechaInicio, fechaFin: editForm.fechaFin || null, estado: editForm.estado, idSede: editForm.idSede || null, idMinisterio: editForm.idMinisterio || null } },
-      { onSuccess: () => setEditEvento(null) }
+      {
+        onSuccess: () => {
+          toast.success('Evento actualizado exitosamente');
+          setEditEvento(null);
+        },
+        onError: (error: any) => toast.error(`Error al actualizar evento: ${error.message}`)
+      }
     );
   };
 
@@ -555,7 +575,13 @@ export function EventsPage() {
       <ConfirmDialog
         isOpen={confirmDeleteEvento.isOpen}
         onClose={() => setConfirmDeleteEvento({ isOpen: false, id: 0, nombre: "" })}
-        onConfirm={() => deleteEventoMutation.mutate(confirmDeleteEvento.id)}
+        onConfirm={() => deleteEventoMutation.mutate(confirmDeleteEvento.id, {
+          onSuccess: () => {
+            toast.success(`Evento "${confirmDeleteEvento.nombre}" eliminado exitosamente`);
+            setConfirmDeleteEvento({ isOpen: false, id: 0, nombre: "" });
+          },
+          onError: (error: any) => toast.error(`Error al eliminar evento: ${error.message}`)
+        })}
         title="¿Eliminar Evento?"
         description={`¿Estás seguro de que quieres eliminar el evento "${confirmDeleteEvento.nombre}"?`}
       />
