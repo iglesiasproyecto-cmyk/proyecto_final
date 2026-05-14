@@ -72,6 +72,9 @@ export function TasksPage() {
     ? ministerios.find(m => m.idMinisterio === usuarioMinisterioIds[0])
     : null;
 
+  // DEBUG
+  console.log('[TasksPage] rolActual:', rolActual, 'usuarioActual:', usuarioActual, 'usuarioMinisterioIds:', usuarioMinisterioIds, 'shouldShowSelectorFields:', shouldShowSelectorFields);
+
   const [showCreate, setShowCreate] = useState(false);
   const [sedeFilter, setSedeFilter] = useState<number>(0);
   const [selectedTask, setSelectedTask] = useState<number | null>(null);
