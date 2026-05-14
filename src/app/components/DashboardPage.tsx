@@ -290,7 +290,6 @@ function SuperAdminDashboard() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {[
                 { label: "Iglesias", path: "/app/global/iglesias", icon: <Building2 className="w-5 h-5" /> },
-                { label: "Catálogos", path: "/app/global/catalogos", icon: <Church className="w-5 h-5" /> },
                 { label: "Usuarios", path: "/app/global/usuarios", icon: <Users className="w-5 h-5" /> },
                 { label: "Administradores", path: "/app/global/administradores", icon: <UserCheck className="w-5 h-5" /> },
               ].map((q) => (
