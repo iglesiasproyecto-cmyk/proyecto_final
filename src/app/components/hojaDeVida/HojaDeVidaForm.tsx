@@ -23,7 +23,6 @@ import {
 } from '@/app/components/ui/dialog';
 
 interface HojaDeVidaFormData {
-  titulo_profesional: string; // Rol en la iglesia
   resumen_profesional: string; // Testimonio de fe
   experiencia_laboral: string; // Experiencia en iglesias
   foto_perfil_url: string; // No se usa ahora
@@ -63,7 +62,6 @@ export function HojaDeVidaForm({
 
   const { control, handleSubmit, watch, setValue } = useForm<HojaDeVidaFormData>({
     defaultValues: {
-      titulo_profesional: hojaActual?.titulo_profesional || '',
       resumen_profesional: hojaActual?.resumen_profesional || '',
       experiencia_laboral: hojaActual?.experiencia_laboral || '',
       foto_perfil_url: hojaActual?.foto_perfil_url || '',
@@ -98,7 +96,6 @@ export function HojaDeVidaForm({
   const onSubmit = async (data: HojaDeVidaFormData) => {
     try {
       await onGuardar({
-        titulo_profesional: data.titulo_profesional || null,
         resumen_profesional: data.resumen_profesional || null,
         experiencia_laboral: data.experiencia_laboral || null,
         foto_perfil_url: data.foto_perfil_url || null,
@@ -176,23 +173,6 @@ export function HojaDeVidaForm({
           <CardTitle>Información Espiritual</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Controller
-            name="titulo_profesional"
-            control={control}
-            render={({ field }) => (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Rol en la Iglesia
-                </label>
-                <Input
-                  {...field}
-                  placeholder="Ej: Pastor, Diácono, Líder de Alabanza, Maestro de Escuela Dominical, etc."
-                  disabled={isUpdating}
-                />
-              </div>
-            )}
-          />
-
           <Controller
             name="resumen_profesional"
             control={control}

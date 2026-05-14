@@ -106,11 +106,6 @@ export function HojaDeVidaView({
                 <Mail className="w-4 h-4" />
                 {hoja.usuario_correo}
               </p>
-              {hoja.titulo_profesional && (
-                <p className="text-lg font-semibold text-primary mt-2">
-                  Rol: {hoja.titulo_profesional}
-                </p>
-              )}
             </div>
             {puedeEditar && onEditar && (
               <button
