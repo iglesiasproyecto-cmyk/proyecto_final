@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router";
 import { useEventosEnriquecidos, useDeleteEvento, useCreateEvento, useUpdateEvento } from "@/hooks/useEventos";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
-import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
+import { useMinisteriosEnriquecidos, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
 import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
 import type { EventoEnriquecido } from "@/services/eventos.service";
 import { useApp } from "@/app/store/AppContext";
@@ -61,6 +61,8 @@ function GlassSelect({ value, onChange, children }: { value: number; onChange: (
 }
 
 function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { form: any; setForm: (f: any) => void; sedes?: any[]; ministerios?: any[] }) {
+  const shouldHideSelectorFields = form._hideSelectorFields ?? false;
+
   return (
     <div className="space-y-4 py-2">
       <div>
@@ -71,26 +73,28 @@ function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { fo
         <FieldLabel>Detalle del Evento <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span></FieldLabel>
         <GlassInput value={form.tipoEventoTexto} onChange={e => setForm((p: any) => ({ ...p, tipoEventoTexto: e.target.value }))} placeholder="Ej. Vigilia, aniversario, campaña, culto especial..." />
       </div>
-      <SedeMinisterioSelector
-        sedes={sedes}
-        ministerios={ministerios}
-        selectedSedeId={form.idSede}
-        selectedMinisterioId={form.idMinisterio}
-        onSedeChange={(idSede, clearMinisterio) =>
-          setForm((p: any) => ({
-            ...p,
-            idSede,
-            idMinisterio: clearMinisterio ? 0 : p.idMinisterio,
-          }))
-        }
-        onMinisterioChange={(idMinisterio, autoSedeId) =>
-          setForm((p: any) => ({ ...p, idMinisterio, idSede: autoSedeId }))
-        }
-        sedeReadOnly={form._sedeReadOnly ?? false}
-        ministerioReadOnly={form._ministerioReadOnly ?? false}
-        allowNoMinisterio
-        allowGeneral={form._allowGeneral ?? false}
-      />
+      {!shouldHideSelectorFields && (
+        <SedeMinisterioSelector
+          sedes={sedes}
+          ministerios={ministerios}
+          selectedSedeId={form.idSede}
+          selectedMinisterioId={form.idMinisterio}
+          onSedeChange={(idSede, clearMinisterio) =>
+            setForm((p: any) => ({
+              ...p,
+              idSede,
+              idMinisterio: clearMinisterio ? 0 : p.idMinisterio,
+            }))
+          }
+          onMinisterioChange={(idMinisterio, autoSedeId) =>
+            setForm((p: any) => ({ ...p, idMinisterio, idSede: autoSedeId }))
+          }
+          sedeReadOnly={form._sedeReadOnly ?? false}
+          ministerioReadOnly={form._ministerioReadOnly ?? false}
+          allowNoMinisterio
+          allowGeneral={form._allowGeneral ?? false}
+        />
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <FieldLabel>Inicio</FieldLabel>
@@ -126,10 +130,11 @@ function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { fo
 export function EventsPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
   const idIglesiaNum = Number(idIglesia) || undefined;
-  const { iglesiaActual, rolActual } = useApp();
+  const { iglesiaActual, rolActual, usuarioActual } = useApp();
   const { data: eventos = [], isLoading } = useEventosEnriquecidos(idIglesiaNum);
   const { data: sedes = [] } = useSedesEnriquecidas(idIglesiaNum);
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(idIglesiaNum);
+  const { data: usuarioMinisterioIds = [] } = useMinisteriosIdsDeUsuario(rolActual === "lider" ? usuarioActual?.idUsuario : undefined);
   const createEventoMutation = useCreateEvento();
   const deleteEventoMutation = useDeleteEvento();
   const updateEventoMutation = useUpdateEvento();
@@ -155,7 +160,26 @@ export function EventsPage() {
   const canCreateInContext = useCanManageMinisterio(activeMinisterioFilter || null);
   const canShowCreateButton = canManageEvents && (activeMinisterioFilter === 0 || canCreateInContext);
 
-  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: sedePreFill, idMinisterio: 0, _sedeReadOnly: isAdminSede || isLider, _ministerioReadOnly: isLider, _allowGeneral: rolActual === "super_admin" || rolActual === "admin_iglesia" } as any);
+  // Count how many ministerios the current user leads (for conditional display)
+  const userLeadMinisterios = usuarioMinisterioIds.length;
+  const hasMultipleMinisterios = userLeadMinisterios >= 2;
+  const shouldShowSelectorFields = !isLider || hasMultipleMinisterios || rolActual === "admin_iglesia" || rolActual === "super_admin" || rolActual === "admin_sede";
+
+  // Get the first ministerio if user leads exactly one
+  const singleUserMinisterio = isLider && userLeadMinisterios === 1
+    ? ministerios.find(m => m.idMinisterio === usuarioMinisterioIds[0])
+    : null;
+
+  // DEBUG
+  console.log('[EventsPage] rolActual:', rolActual, 'usuarioActual:', usuarioActual, 'usuarioMinisterioIds:', usuarioMinisterioIds, 'shouldShowSelectorFields:', shouldShowSelectorFields);
+
+  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: sedePreFill, idMinisterio: singleUserMinisterio?.idMinisterio ?? 0, _sedeReadOnly: isAdminSede || isLider, _ministerioReadOnly: isLider, _allowGeneral: rolActual === "super_admin" || rolActual === "admin_iglesia", _hideSelectorFields: !shouldShowSelectorFields } as any);
+
+  useEffect(() => {
+    if (showCreate) {
+      resetCreateForm();
+    }
+  }, [showCreate, sedePreFill, singleUserMinisterio, isAdminSede, isLider, shouldShowSelectorFields, rolActual]);
 
   const openEditDialog = (ev: EventoEnriquecido) => {
     setEditEvento(ev);
