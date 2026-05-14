@@ -37,7 +37,7 @@ function mapTarea(r: TareaRow): Tarea {
     idEvento: r.id_evento,
     idUsuarioCreador: r.id_usuario_creador,
     idMinisterio: r.id_ministerio ?? null,
-    idIglesia: (r as any).id_iglesia ?? null,
+    idIglesia: null,
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
   }
