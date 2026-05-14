@@ -52,7 +52,7 @@ export async function getAvanceCursoByUsuario(idUsuario: number): Promise<Avance
       id_aula_inscripcion,
       id_aula_curso,
       aula_curso:aula_curso(
-        aula_modulo(count)
+        aula_modulo(id_aula_modulo)
       )
     `)
     .eq('id_usuario', idUsuario)
@@ -64,7 +64,7 @@ export async function getAvanceCursoByUsuario(idUsuario: number): Promise<Avance
     idAulaInscripcion: inscription.id_aula_inscripcion,
     idUsuario: idUsuario,
     idCurso: inscription.id_aula_curso,
-    modulosPublicados: Array.isArray(inscription.aula_curso?.aula_modulo) ? inscription.aula_curso.aula_modulo[0]?.count ?? 0 : 0,
+    modulosPublicados: Array.isArray(inscription.aula_curso?.aula_modulo) ? inscription.aula_curso.aula_modulo.length ?? 0 : 0,
     modulosCompletados: 0, // TODO: calculate based on completed activities
   }))
 }
