@@ -20,7 +20,33 @@ export function CumpleanosPage() {
     localStorage.setItem("cumpleanos_rango", valor);
   };
 
-  const usuariosConFecha = usuarios.filter((u) => u.fechaNacimiento);
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const usuariosConFecha = usuarios
+    .filter((u) => u.activo)
+    .map((u, index) => {
+      if (u.fechaNacimiento) return u;
+      if (!import.meta.env.DEV || index > 5) return u;
+
+      const today = new Date();
+      const offsetDays = [0, 2, 5, 9, 14, 25][index] ?? 0;
+      const testBirthday = new Date(today);
+      testBirthday.setDate(today.getDate() + offsetDays);
+
+      const birthYear = 1990 + (index % 10);
+      const simulated = formatDate(new Date(birthYear, testBirthday.getMonth(), testBirthday.getDate()));
+
+      return {
+        ...u,
+        fechaNacimiento: simulated,
+      };
+    })
+    .filter((u) => u.fechaNacimiento);
 
   const getDaysUntilBirthday = (fechaNacimiento: string): number => {
     const [, month, day] = fechaNacimiento.split("-").map(Number);
