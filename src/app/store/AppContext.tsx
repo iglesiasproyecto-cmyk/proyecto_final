@@ -414,10 +414,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (flag === 'done') {
       reloadQueuedRef.current = true
     }
-    const logoutFlag = sessionStorage.getItem('post_logout_reload')
-    if (logoutFlag === 'pending') {
-      sessionStorage.setItem('post_logout_reload', 'done')
-    }
   }, [])
 
   useEffect(() => {
@@ -669,15 +665,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsMockMode(false)
     resetClientState('logout')
     try {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('post_logout_reload', 'pending')
-      }
       await supabase.auth.signOut({ scope: 'local' })
     } finally {
       logoutInProgressRef.current = false
-      if (typeof window !== 'undefined') {
-        window.location.reload()
-      }
     }
   }
 

@@ -170,6 +170,8 @@ export function AppLayout() {
     usuarioActual,
     rolActual,
     iglesiaActual,
+    setIglesiaActual,
+    logout,
     notificacionesCount,
     iglesiasDelUsuario,
     sidebarOpen,
