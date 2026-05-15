@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       return jsonResponse(origin, { message: 'Unauthorized' }, 401)
     }
 
-    const { correo, nombres, apellidos, idIglesia, idRol, idSede, idMinisterio } = await req.json()
+    const { correo, nombres, apellidos, idIglesia, idRol, idSede, idMinisterio, fechaNacimiento } = await req.json()
 
     if (!correo || !nombres || !apellidos || !idIglesia || !idRol) {
       return jsonResponse(origin, { message: 'Missing required fields' }, 400)
@@ -225,6 +225,7 @@ Deno.serve(async (req) => {
           id_rol: idRol,
           id_sede: isSedeRole ? sedeId : null,
           id_ministerio: requiresMinisterio ? ministerioId : null,
+          fecha_nacimiento: fechaNacimiento || null,
           expires_at: expiresAt.toISOString(),
         })
         .select('id_invite_token')
@@ -286,7 +287,19 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Existing user path — assign role directly via RPC
+    // Existing user path — update fecha_nacimiento if provided
+    if (usuarioId && fechaNacimiento) {
+      const { error: updateError } = await supabaseAdmin
+        .from('usuario')
+        .update({ fecha_nacimiento: fechaNacimiento })
+        .eq('id_usuario', usuarioId)
+
+      if (updateError) {
+        console.error('Error updating user fecha_nacimiento:', updateError)
+      }
+    }
+
+    // Assign role directly via RPC
     const { error: rpcError } = await supabaseAdmin.rpc(
       'assign_role_with_ministerio',
       {
