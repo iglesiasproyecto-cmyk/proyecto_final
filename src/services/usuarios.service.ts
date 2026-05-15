@@ -249,7 +249,7 @@ export async function inviteUser(data: {
   idRol: number
   idSede?: number | null
   idMinisterio?: number | null
-}): Promise<{ success: boolean; message: string }> {
+}): Promise<{ success: boolean; message?: string; inviteSent?: boolean; profileReconciled?: boolean; roleAssigned?: boolean; userAlreadyExisted?: boolean }> {
   try {
     console.log('[inviteUser] Starting invitation process for:', data.correo)
 
