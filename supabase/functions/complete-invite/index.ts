@@ -75,6 +75,7 @@ Deno.serve(async (req) => {
         apellidos: inviteToken.apellidos,
         correo: inviteToken.email,
         activo: true,
+        fecha_nacimiento: inviteToken.fecha_nacimiento || null,
       })
       .select('id_usuario')
       .single()

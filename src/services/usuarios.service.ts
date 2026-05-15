@@ -119,7 +119,7 @@ export interface UsuarioEnriquecido extends Usuario {
     fechaFin: string | null
     source: UsuarioRolSource
   }[]
-  minNames: { nombre: string; rol: string }[]
+  minNames: { idMinisterio: number; nombre: string; rol: string }[]
 }
 
 export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
@@ -141,8 +141,9 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
       source: rol.source ?? 'usuario_rol',
     })),
     minNames: (r.ministerios ?? []).map((min: any) => ({
-      nombre: min.nombre ?? `Ministerio #${min.id_ministerio}`,
-      rol: min.rol ?? '',
+      idMinisterio: min.id_ministerio ?? 0,
+      nombre: min.ministerio_nombre ?? `Ministerio #${min.id_ministerio}`,
+      rol: min.rol_en_ministerio ?? '',
     })),
   }))
 }
@@ -177,6 +178,7 @@ export async function getUsuariosByIglesia(idIglesia: number): Promise<UsuarioEn
       source: rol.source ?? 'usuario_rol',
     })),
     minNames: (r.ministerios ?? []).map((mm: any) => ({
+      idMinisterio: mm.id_ministerio ?? 0,
       nombre: mm.ministerio_nombre ?? '',
       rol: mm.rol_en_ministerio ?? '',
     })),
@@ -264,6 +266,7 @@ export async function inviteUser(data: {
   idRol: number
   idSede?: number | null
   idMinisterio?: number | null
+  fechaNacimiento?: string | null
 }): Promise<{ success: boolean; message?: string; inviteSent?: boolean; profileReconciled?: boolean; roleAssigned?: boolean; userAlreadyExisted?: boolean }> {
   try {
     console.log('[inviteUser] Starting invitation process for:', data.correo)

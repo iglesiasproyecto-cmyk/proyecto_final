@@ -20,11 +20,21 @@ import { TableSkeleton } from "./loading/skeletons";
 import { Skeleton } from "./ui/skeleton";
 
 export function UsuariosPage() {
-  const { iglesiaActual, rolActual, iglesiasDelUsuario } = useApp();
+  const { iglesiaActual, rolActual, iglesiasDelUsuario, ministeriosDelUsuario, sedesDelUsuario } = useApp();
 
   const isSuperAdmin = rolActual === "super_admin";
   const isAdminIglesia = rolActual === "admin_iglesia";
-  const canManageUsers = isSuperAdmin || isAdminIglesia;
+  const isAdminSede = rolActual === "admin_sede";
+  const isLider = rolActual === "lider";
+  const canManageUsers = isSuperAdmin || isAdminIglesia || isAdminSede || isLider;
+
+  const canAssignRole = (idRol: number): boolean => {
+    if (isSuperAdmin) return true;
+    if (isAdminIglesia) return idRol !== ROLE_IDS.SUPER_ADMIN;
+    if (isAdminSede) return ![ROLE_IDS.SUPER_ADMIN, ROLE_IDS.ADMIN_IGLESIA].includes(idRol);
+    if (isLider) return idRol === ROLE_IDS.SERVIDOR;
+    return false;
+  };
 
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
@@ -57,21 +67,36 @@ export function UsuariosPage() {
     correo: "",
     nombres: "",
     apellidos: "",
+    fechaNacimiento: "",
     idIglesia: iglesiaActual?.id ?? 0,
     idRol: 0,
-    idSede: 0,
-    idMinisterio: 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
-  const resetInviteForm = () => setInviteForm({ correo: "", nombres: "", apellidos: "", idIglesia: iglesiaActual?.id ?? 0, idRol: 0, idSede: 0, idMinisterio: 0 });
+  const resetInviteForm = () => setInviteForm({
+    correo: "",
+    nombres: "",
+    apellidos: "",
+    fechaNacimiento: "",
+    idIglesia: iglesiaActual?.id ?? 0,
+    idRol: 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0
+  });
 
   // Assign role form state
   const [assignForm, setAssignForm] = useState({
     idRol: 0,
     idIglesia: iglesiaActual?.id ?? 0,
-    idSede: 0,
-    idMinisterio: 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
-  const resetAssignForm = () => setAssignForm({ idRol: 0, idIglesia: iglesiaActual?.id ?? 0, idSede: 0, idMinisterio: 0 });
+  const resetAssignForm = () => setAssignForm({
+    idRol: 0,
+    idIglesia: iglesiaActual?.id ?? 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
+  });
 
   const { data: sedesInvite = [] } = useSedesEnriquecidas(inviteForm.idIglesia || undefined);
   const { data: sedesAssign = [] } = useSedesEnriquecidas(assignForm.idIglesia || undefined);
@@ -112,6 +137,22 @@ export function UsuariosPage() {
       if (!hasRoleInMyIglesia) return false;
     }
 
+    // If admin_sede, only show users from their sede
+    if (isAdminSede) {
+      const mySede = sedesDelUsuario.find(s => s.id === iglesiaActual?.id);
+      if (!mySede) return false; // Security: no sede context, hide all
+      const hasRoleInMySede = u.roleNames.some(rn => rn.idSede === mySede.id);
+      if (!hasRoleInMySede) return false;
+    }
+
+    // If líder, only show users from their ministerios
+    if (isLider) {
+      const inMyMinisterios = u.minNames.some(mn =>
+        ministeriosDelUsuario.some(m => m.id === mn.idMinisterio)
+      );
+      if (!inMyMinisterios) return false;
+    }
+
     if (search) {
       const q = search.toLowerCase().trim();
       const fullName = `${u.nombres} ${u.apellidos}`.toLowerCase();
@@ -150,6 +191,25 @@ export function UsuariosPage() {
       toast.error("Completa todos los campos obligatorios");
       return;
     }
+
+    // NEW: Validate user can assign this role
+    if (!canAssignRole(inviteForm.idRol)) {
+      toast.error("No tienes permiso para asignar este rol");
+      return;
+    }
+
+    // NEW: Validate sede requirement for admin_sede
+    if (isAdminSede && !inviteForm.idSede) {
+      toast.error("Debes seleccionar una sede");
+      return;
+    }
+
+    // NEW: Validate ministerio requirement for lider
+    if (isLider && !inviteForm.idMinisterio) {
+      toast.error("Debes seleccionar un ministerio");
+      return;
+    }
+
     if (roleNeedsSede(inviteForm.idRol) && !inviteForm.idSede) {
       toast.error("Debes seleccionar una sede para este rol");
       return;
@@ -163,6 +223,7 @@ export function UsuariosPage() {
         correo: inviteForm.correo.trim(),
         nombres: inviteForm.nombres.trim(),
         apellidos: inviteForm.apellidos.trim(),
+        fechaNacimiento: inviteForm.fechaNacimiento || null,
         idIglesia: inviteForm.idIglesia,
         idRol: inviteForm.idRol,
         idSede: inviteForm.idSede || null,
@@ -550,6 +611,16 @@ export function UsuariosPage() {
               </p>
             </div>
             <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Fecha de Nacimiento</label>
+              <Input
+                type="date"
+                value={inviteForm.fechaNacimiento}
+                onChange={e => setInviteForm(p => ({ ...p, fechaNacimiento: e.target.value }))}
+                className="bg-input-background"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Opcional</p>
+            </div>
+            <div>
               <label className="text-sm text-muted-foreground mb-1 block">Iglesia {isAdminIglesia && '(Tu iglesia)'} *</label>
               <Select
                 value={inviteForm.idIglesia ? String(inviteForm.idIglesia) : ""}
@@ -569,17 +640,26 @@ export function UsuariosPage() {
             {inviteForm.idIglesia > 0 && (
               <div>
                 <label className="text-sm text-muted-foreground mb-1 block">Sede{roleNeedsSede(inviteForm.idRol) ? ' *' : ''}</label>
-                <Select
-                  value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
-                  onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
-                >
-                  <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
-                  <SelectContent>
-                    {sedesInvite.map(sd => (
-                      <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Show sede selector only if not admin_sede and not lider */}
+                {!isAdminSede && !isLider && (
+                  <Select
+                    value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
+                    onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
+                  >
+                    <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
+                    <SelectContent>
+                      {sedesInvite.map(sd => (
+                        <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {/* Show as text if admin_sede */}
+                {isAdminSede && (
+                  <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                    Sede: {sedesDelUsuario.find(s => s.id === inviteForm.idSede)?.nombre}
+                  </div>
+                )}
               </div>
             )}
             <div>
@@ -591,10 +671,7 @@ export function UsuariosPage() {
                 <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar rol..." /></SelectTrigger>
                 <SelectContent>
                   {roles
-                    .filter(r => {
-                      if (isSuperAdmin) return true;
-                      return r.nombre !== 'Super Administrador';
-                    })
+                    .filter(role => canAssignRole(role.idRol))
                     .map(r => (
                       <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
                     ))}
@@ -605,21 +682,30 @@ export function UsuariosPage() {
               <div className="space-y-3">
                 <div>
                   <label className="text-sm text-muted-foreground mb-1 block">Ministerio *</label>
-                  <Select
-                    value={inviteForm.idMinisterio ? String(inviteForm.idMinisterio) : ""}
-                    onValueChange={v => setInviteForm(p => ({ ...p, idMinisterio: Number(v) }))}
-                  >
-                    <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
-                    <SelectContent>
-                      {ministeriosInviteFiltered.length > 0 ? (
-                        ministeriosInviteFiltered.map(m => (
-                          <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
-                        ))
-                      ) : (
-                        <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  {/* Show ministerio selector only if not lider */}
+                  {!isLider && (
+                    <Select
+                      value={inviteForm.idMinisterio ? String(inviteForm.idMinisterio) : ""}
+                      onValueChange={v => setInviteForm(p => ({ ...p, idMinisterio: Number(v) }))}
+                    >
+                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
+                      <SelectContent>
+                        {ministeriosInviteFiltered.length > 0 ? (
+                          ministeriosInviteFiltered.map(m => (
+                            <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {/* Show as text if lider */}
+                  {isLider && (
+                    <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                      Ministerio: {ministeriosDelUsuario.find(m => m.id === inviteForm.idMinisterio)?.nombre}
+                    </div>
+                  )}
                 </div>
                 <p className="text-[11px] text-muted-foreground bg-accent/30 px-2 py-1.5 rounded">
                   Para Lider/Servidor la persona debe pertenecer a un ministerio de la sede.
@@ -683,12 +769,7 @@ export function UsuariosPage() {
                       <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                       <SelectContent>
                         {roles
-                          .filter(r => {
-                            // Super Admin puede asignar cualquier rol
-                            if (isSuperAdmin) return true;
-                            // Admin Iglesia no puede asignar Super Admin
-                            return r.nombre !== 'Super Administrador';
-                          })
+                          .filter(role => canAssignRole(role.idRol))
                           .map(r => (
                             <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
                           ))}
@@ -716,38 +797,56 @@ export function UsuariosPage() {
                 {assignForm.idIglesia > 0 && (
                   <div className="mt-3">
                     <label className="text-xs text-muted-foreground mb-1 block">Sede{roleNeedsSede(assignForm.idRol) ? ' *' : ''}</label>
-                    <Select
-                      value={assignForm.idSede ? String(assignForm.idSede) : ""}
-                      onValueChange={v => setAssignForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
-                    >
-                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
-                      <SelectContent>
-                        {sedesAssign.map(sd => (
-                          <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {/* Show sede selector only if not admin_sede and not lider */}
+                    {!isAdminSede && !isLider && (
+                      <Select
+                        value={assignForm.idSede ? String(assignForm.idSede) : ""}
+                        onValueChange={v => setAssignForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
+                      >
+                        <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
+                        <SelectContent>
+                          {sedesAssign.map(sd => (
+                            <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {/* Show as text if admin_sede */}
+                    {isAdminSede && (
+                      <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                        Sede: {sedesDelUsuario.find(s => s.id === assignForm.idSede)?.nombre}
+                      </div>
+                    )}
                   </div>
                 )}
                 {roleNeedsMinisterio(assignForm.idRol) && assignForm.idSede && (
                   <div className="mt-3 space-y-3">
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Ministerio *</label>
-                      <Select
-                        value={assignForm.idMinisterio ? String(assignForm.idMinisterio) : ""}
-                        onValueChange={v => setAssignForm(p => ({ ...p, idMinisterio: Number(v) }))}
-                      >
-                        <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
-                        <SelectContent>
-                          {ministeriosFiltered.length > 0 ? (
-                            ministeriosFiltered.map(m => (
-                              <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
-                            ))
-                          ) : (
-                            <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
-                          )}
-                        </SelectContent>
-                      </Select>
+                      {/* Show ministerio selector only if not lider */}
+                      {!isLider && (
+                        <Select
+                          value={assignForm.idMinisterio ? String(assignForm.idMinisterio) : ""}
+                          onValueChange={v => setAssignForm(p => ({ ...p, idMinisterio: Number(v) }))}
+                        >
+                          <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
+                          <SelectContent>
+                            {ministeriosFiltered.length > 0 ? (
+                              ministeriosFiltered.map(m => (
+                                <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
+                              ))
+                            ) : (
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {/* Show as text if lider */}
+                      {isLider && (
+                        <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                          Ministerio: {ministeriosDelUsuario.find(m => m.id === assignForm.idMinisterio)?.nombre}
+                        </div>
+                      )}
                     </div>
                     <p className="text-[11px] text-muted-foreground bg-accent/30 px-2 py-1.5 rounded">
                       Para Lider/Servidor la persona debe pertenecer a un ministerio de la sede.
