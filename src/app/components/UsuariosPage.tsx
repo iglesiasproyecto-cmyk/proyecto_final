@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUpdateUsuario, useDeleteUsuarioAsSuperAdmin } from "@/hooks/useUsuarios";
 import { useIglesias, useSedesEnriquecidas } from "@/hooks/useIglesias";
+import { useMinisterios } from "@/hooks/useMinisterios";
 import { useApp } from "@/app/store/AppContext";
 import { ROLE_IDS } from "@/app/constants/roles";
 import { Card } from "./ui/card";
@@ -58,21 +59,28 @@ export function UsuariosPage() {
     idIglesia: iglesiaActual?.id ?? 0,
     idRol: 0,
     idSede: 0,
+    idMinisterio: 0,
   });
-  const resetInviteForm = () => setInviteForm({ correo: "", nombres: "", apellidos: "", idIglesia: iglesiaActual?.id ?? 0, idRol: 0, idSede: 0 });
+  const resetInviteForm = () => setInviteForm({ correo: "", nombres: "", apellidos: "", idIglesia: iglesiaActual?.id ?? 0, idRol: 0, idSede: 0, idMinisterio: 0 });
 
   // Assign role form state
   const [assignForm, setAssignForm] = useState({
     idRol: 0,
     idIglesia: iglesiaActual?.id ?? 0,
     idSede: 0,
+    idMinisterio: 0,
   });
-  const resetAssignForm = () => setAssignForm({ idRol: 0, idIglesia: iglesiaActual?.id ?? 0, idSede: 0 });
+  const resetAssignForm = () => setAssignForm({ idRol: 0, idIglesia: iglesiaActual?.id ?? 0, idSede: 0, idMinisterio: 0 });
 
   const { data: sedesInvite = [] } = useSedesEnriquecidas(inviteForm.idIglesia || undefined);
   const { data: sedesAssign = [] } = useSedesEnriquecidas(assignForm.idIglesia || undefined);
+  const { data: ministeriosInvite = [] } = useMinisterios(inviteForm.idIglesia || undefined);
+  const { data: ministeriosAssign = [] } = useMinisterios(assignForm.idIglesia || undefined);
 
   const roleNeedsSede = (idRol: number) => [ROLE_IDS.ADMIN_SEDE, ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR].includes(idRol);
+  const roleNeedsMinisterio = (idRol: number) => [ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR].includes(idRol);
+  const ministeriosInviteFiltered = ministeriosInvite.filter(m => inviteForm.idSede ? m.idSede === inviteForm.idSede : true);
+  const ministeriosFiltered = ministeriosAssign.filter(m => assignForm.idSede ? m.idSede === assignForm.idSede : true);
 
   if (isLoading) return (
     <div className="space-y-6 max-w-7xl mx-auto px-4">
@@ -136,6 +144,10 @@ export function UsuariosPage() {
       toast.error("Debes seleccionar una sede para este rol");
       return;
     }
+    if (roleNeedsMinisterio(inviteForm.idRol) && !inviteForm.idMinisterio) {
+      toast.error("Debes seleccionar un ministerio para este rol");
+      return;
+    }
     inviteMutation.mutate(
       {
         correo: inviteForm.correo.trim(),
@@ -144,6 +156,7 @@ export function UsuariosPage() {
         idIglesia: inviteForm.idIglesia,
         idRol: inviteForm.idRol,
         idSede: inviteForm.idSede || null,
+        idMinisterio: inviteForm.idMinisterio || null,
       },
       {
         onSuccess: (result) => {
@@ -172,12 +185,17 @@ export function UsuariosPage() {
       toast.error("Debes seleccionar una sede para este rol");
       return;
     }
+    if (roleNeedsMinisterio(assignForm.idRol) && !assignForm.idMinisterio) {
+      toast.error("Debes seleccionar un ministerio para este rol");
+      return;
+    }
     assignRolMutation.mutate(
       {
         idUsuario: showAssignRol,
         idRol: assignForm.idRol,
         idIglesia: assignForm.idIglesia,
         idSede: assignForm.idSede || null,
+        idMinisterio: assignForm.idMinisterio || null,
       },
       {
         onSuccess: () => {
@@ -198,6 +216,9 @@ export function UsuariosPage() {
       onSuccess: () => {
         toast.success(`Rol "${confirmRemoveRol.rolNombre}" removido`);
         setConfirmRemoveRol({ isOpen: false, idUsuarioRol: 0, rolNombre: "", source: "usuario_rol" });
+      },
+      onError: (err: any) => {
+        toast.error(err?.message ?? "No se pudo remover el rol");
       },
     });
   };
@@ -382,7 +403,7 @@ export function UsuariosPage() {
                         <ShieldPlus className="w-3.5 h-3.5 text-[#4682b4] dark:text-[#709dbd]" />
                       </Button>
                     )}
-                    {canManageUsers && (
+                    {isSuperAdmin && (
                       <Button variant="ghost" size="sm" title="Eliminar usuario" onClick={() => openDeleteDialog(u.idUsuario)}>
                         <Trash2 className="w-3.5 h-3.5 text-red-600" />
                       </Button>
@@ -495,12 +516,13 @@ export function UsuariosPage() {
               />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Iglesia *</label>
+              <label className="text-sm text-muted-foreground mb-1 block">Iglesia {isAdminIglesia && '(Tu iglesia)'} *</label>
               <Select
                 value={inviteForm.idIglesia ? String(inviteForm.idIglesia) : ""}
-                onValueChange={v => setInviteForm(p => ({ ...p, idIglesia: Number(v), idSede: 0 }))}
+                onValueChange={v => setInviteForm(p => ({ ...p, idIglesia: Number(v), idSede: 0, idMinisterio: 0 }))}
+                disabled={isAdminIglesia}
               >
-                <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar iglesia..." /></SelectTrigger>
+                <SelectTrigger className={`bg-input-background ${isAdminIglesia ? 'opacity-70 cursor-not-allowed' : ''}`}><SelectValue placeholder="Seleccionar iglesia..." /></SelectTrigger>
                 <SelectContent>
                   {iglesias.map(ig => (
                     <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>
@@ -514,7 +536,7 @@ export function UsuariosPage() {
               <label className="text-sm text-muted-foreground mb-1 block">Rol inicial *</label>
               <Select
                 value={inviteForm.idRol ? String(inviteForm.idRol) : ""}
-                onValueChange={v => setInviteForm(p => ({ ...p, idRol: Number(v), idSede: 0 }))}
+                onValueChange={v => setInviteForm(p => ({ ...p, idRol: Number(v), idSede: 0, idMinisterio: 0 }))}
               >
                 <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar rol..." /></SelectTrigger>
                 <SelectContent>
@@ -532,20 +554,42 @@ export function UsuariosPage() {
               </Select>
             </div>
             {roleNeedsSede(inviteForm.idRol) && (
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Sede *</label>
-                <Select
-                  value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
-                  onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v) }))}
-                >
-                  <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
-                  <SelectContent>
-                    {sedesInvite.map(sd => (
-                      <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-[11px] text-muted-foreground mt-1">
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">Sede *</label>
+                  <Select
+                    value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
+                    onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
+                  >
+                    <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
+                    <SelectContent>
+                      {sedesInvite.map(sd => (
+                        <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {roleNeedsMinisterio(inviteForm.idRol) && inviteForm.idSede && (
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Ministerio *</label>
+                    <Select
+                      value={inviteForm.idMinisterio ? String(inviteForm.idMinisterio) : ""}
+                      onValueChange={v => setInviteForm(p => ({ ...p, idMinisterio: Number(v) }))}
+                    >
+                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
+                      <SelectContent>
+                        {ministeriosInviteFiltered.length > 0 ? (
+                          ministeriosInviteFiltered.map(m => (
+                            <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <p className="text-[11px] text-muted-foreground bg-accent/30 px-2 py-1.5 rounded">
                   Para Lider/Servidor la persona debe pertenecer a un ministerio de la sede.
                 </p>
               </div>
@@ -553,7 +597,10 @@ export function UsuariosPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowInvite(false); resetInviteForm(); }}>Cancelar</Button>
-            <Button onClick={handleInvite} disabled={inviteMutation.isPending}>
+            <Button
+              onClick={handleInvite}
+              disabled={inviteMutation.isPending || !inviteForm.nombres.trim() || !inviteForm.apellidos.trim() || !inviteForm.correo.trim() || !inviteForm.idRol || !inviteForm.idIglesia || (roleNeedsSede(inviteForm.idRol) && !inviteForm.idSede) || (roleNeedsMinisterio(inviteForm.idRol) && !inviteForm.idMinisterio)}
+            >
               {inviteMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...</> : <><UserPlus className="w-4 h-4 mr-2" /> Enviar Invitación</>}
             </Button>
           </DialogFooter>
@@ -617,12 +664,13 @@ export function UsuariosPage() {
                     </Select>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Iglesia *</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">Iglesia {isAdminIglesia && '(Tu iglesia)'} *</label>
                     <Select
                       value={assignForm.idIglesia ? String(assignForm.idIglesia) : ""}
-                      onValueChange={v => setAssignForm(p => ({ ...p, idIglesia: Number(v), idSede: 0 }))}
+                      onValueChange={v => setAssignForm(p => ({ ...p, idIglesia: Number(v), idSede: 0, idMinisterio: 0 }))}
+                      disabled={isAdminIglesia}
                     >
-                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                      <SelectTrigger className={`bg-input-background ${isAdminIglesia ? 'opacity-70 cursor-not-allowed' : ''}`}><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                       <SelectContent>
                         {iglesias.map(ig => (
                           <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>
@@ -634,20 +682,42 @@ export function UsuariosPage() {
                   </div>
                 </div>
                 {roleNeedsSede(assignForm.idRol) && (
-                  <div className="mt-3">
-                    <label className="text-xs text-muted-foreground mb-1 block">Sede *</label>
-                    <Select
-                      value={assignForm.idSede ? String(assignForm.idSede) : ""}
-                      onValueChange={v => setAssignForm(p => ({ ...p, idSede: Number(v) }))}
-                    >
-                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
-                      <SelectContent>
-                        {sedesAssign.map(sd => (
-                          <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-[11px] text-muted-foreground mt-1">
+                  <div className="mt-3 space-y-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Sede *</label>
+                      <Select
+                        value={assignForm.idSede ? String(assignForm.idSede) : ""}
+                        onValueChange={v => setAssignForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
+                      >
+                        <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
+                        <SelectContent>
+                          {sedesAssign.map(sd => (
+                            <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {roleNeedsMinisterio(assignForm.idRol) && assignForm.idSede && (
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Ministerio *</label>
+                        <Select
+                          value={assignForm.idMinisterio ? String(assignForm.idMinisterio) : ""}
+                          onValueChange={v => setAssignForm(p => ({ ...p, idMinisterio: Number(v) }))}
+                        >
+                          <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
+                          <SelectContent>
+                            {ministeriosFiltered.length > 0 ? (
+                              ministeriosFiltered.map(m => (
+                                <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
+                              ))
+                            ) : (
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <p className="text-[11px] text-muted-foreground bg-accent/30 px-2 py-1.5 rounded">
                       Para Lider/Servidor la persona debe pertenecer a un ministerio de la sede.
                     </p>
                   </div>
