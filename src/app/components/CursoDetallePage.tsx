@@ -201,6 +201,8 @@ export function CursoDetallePage() {
         )
       : 0
 
+  const cursoVacio = totalModulos === 0
+
   if (isLoading || !curso) {
     return (
       <div className="space-y-6 max-w-6xl mx-auto px-4">
@@ -321,6 +323,31 @@ export function CursoDetallePage() {
           </CardContent>
         </Card>
       </div>
+
+      {cursoVacio && (
+        <Card className="border-dashed border-primary/30 bg-primary/5 rounded-3xl">
+          <CardContent className="py-8 px-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-widest text-primary/80">Curso en preparación</p>
+                <h3 className="text-xl font-black tracking-tight mt-1">Este curso aún no tiene módulos publicados</h3>
+                <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
+                  Agrega módulos con objetivos claros, actividades y evaluación para que los servidores puedan iniciar su ruta de aprendizaje.
+                </p>
+              </div>
+              {(isLider || isAdmin) && (
+                <Button
+                  onClick={() => setShowAgregarPersonas(true)}
+                  className="rounded-xl h-11 px-5"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Gestionar participantes
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Contenido Principal */}
       <Tabs defaultValue="modulos" className="space-y-6">

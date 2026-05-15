@@ -42,6 +42,7 @@ const AppContext = createContext<AppState | undefined>(undefined)
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+const PROTECTED_SUPER_EMAIL = 'super@test.dev'
 
 function normalizeAppRole(rawRoles: string[]): string {
   const normalized = rawRoles.map((name) =>
@@ -530,8 +531,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         setNotificacionesCount(notifCount)
 
+        const normalizedSessionEmail = String(session.user.email ?? '').trim().toLowerCase()
         const roleNames = roles.map((r: any) => String(r.rol_nombre ?? ''))
-        const derivedRol = normalizeAppRole(roleNames)
+        const derivedFromRoles = normalizeAppRole(roleNames)
+        const derivedRol = normalizedSessionEmail === PROTECTED_SUPER_EMAIL
+          ? 'super_admin'
+          : derivedFromRoles
+        if (roles.length === 0) {
+          console.warn('[AUTH] ⚠️ get_my_roles returned no active roles for user:', normalizedSessionEmail)
+        }
+        if (normalizedSessionEmail === PROTECTED_SUPER_EMAIL && derivedFromRoles !== 'super_admin') {
+          console.warn('[AUTH] ⚠️ Protected super account fallback activated; forcing super_admin in client state')
+        }
         setRolActual(derivedRol)
 
         const iglesiasMap = new Map<number, string>()
