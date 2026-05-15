@@ -189,6 +189,25 @@ export function UsuariosPage() {
       toast.error("Completa todos los campos obligatorios");
       return;
     }
+
+    // NEW: Validate user can assign this role
+    if (!canAssignRole(inviteForm.idRol)) {
+      toast.error("No tienes permiso para asignar este rol");
+      return;
+    }
+
+    // NEW: Validate sede requirement for admin_sede
+    if (isAdminSede && !inviteForm.idSede) {
+      toast.error("Debes seleccionar una sede");
+      return;
+    }
+
+    // NEW: Validate ministerio requirement for lider
+    if (isLider && !inviteForm.idMinisterio) {
+      toast.error("Debes seleccionar un ministerio");
+      return;
+    }
+
     if (roleNeedsSede(inviteForm.idRol) && !inviteForm.idSede) {
       toast.error("Debes seleccionar una sede para este rol");
       return;
