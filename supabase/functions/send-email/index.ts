@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     const resend = new Resend(apiKey)
     const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev'
 
-    const response = await resend.emails.send({
+    const { data, error: resendError } = await resend.emails.send({
       from: fromEmail,
       to: email,
       subject: subject ?? 'Bienvenido a IGLESIABD',
@@ -28,14 +28,21 @@ Deno.serve(async (req) => {
       `,
     })
 
-    console.log('[send-email] Sent to:', email, '| id:', (response as any)?.id)
+    if (resendError) {
+      console.error('[send-email] Resend error:', JSON.stringify(resendError))
+      return new Response(JSON.stringify({ error: String((resendError as any).message ?? resendError) }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
 
-    return new Response(JSON.stringify(response), {
+    console.log('[send-email] ✅ Sent to:', email, '| id:', (data as any)?.id)
+    return new Response(JSON.stringify({ success: true, id: (data as any)?.id }), {
       headers: { 'Content-Type': 'application/json' },
       status: 200,
     })
   } catch (error) {
-    console.error('[send-email] Error:', String(error))
+    console.error('[send-email] Unexpected error:', String(error))
     return new Response(JSON.stringify({ error: String(error) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
