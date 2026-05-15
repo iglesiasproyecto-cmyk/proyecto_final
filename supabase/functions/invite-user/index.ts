@@ -276,12 +276,18 @@ Deno.serve(async (req) => {
       }
 
       inviteSent = true
+
+      // Early return for new users — role will be assigned when they accept the invite via complete-invite
+      return jsonResponse(origin, {
+        success: true,
+        inviteSent: true,
+        profileReconciled: false,
+        roleAssigned: false,
+        userAlreadyExisted: false,
+      })
     }
 
-    if (!usuarioId) {
-      throw new Error('No se pudo resolver el usuario objetivo')
-    }
-
+    // Existing user path — assign role directly via RPC
     const { error: rpcError } = await supabaseAdmin.rpc(
       'assign_role_with_ministerio',
       {
@@ -293,14 +299,13 @@ Deno.serve(async (req) => {
       }
     )
     if (rpcError) throw rpcError
-    const roleAssigned = true
 
     return jsonResponse(origin, {
       success: true,
-      inviteSent,
-      profileReconciled,
-      roleAssigned,
-      userAlreadyExisted: !inviteSent,
+      inviteSent: false,
+      profileReconciled: false,
+      roleAssigned: true,
+      userAlreadyExisted: true,
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
