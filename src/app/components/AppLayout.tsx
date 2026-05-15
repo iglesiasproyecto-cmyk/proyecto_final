@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { useApp } from "../store/AppContext";
+import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
 import { GlobalLoader } from "./GlobalLoader";
 import { AuthRecovery } from "./AuthRecovery";
 import { Badge } from "./ui/badge";
@@ -190,6 +191,14 @@ export function AppLayout() {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const isExpanded = !isCollapsed || isHovered;
   const authResolved = isHydrated && !authLoading;
+  const { data: usuarios = [] } = useUsuariosEnriquecidos();
+
+  const cumpleanosHoy = usuarios.filter((u) => {
+    if (!u.fechaNacimiento) return false;
+    const today = new Date();
+    const [, month, day] = u.fechaNacimiento.split("-").map(Number);
+    return today.getMonth() === month - 1 && today.getDate() === day;
+  }).length;
 
   useEffect(() => {
     if (!authResolved) return;
@@ -390,6 +399,7 @@ export function AppLayout() {
                       location.pathname === item.path ||
                       (item.path !== "/" && location.pathname.startsWith(item.path));
                     const isNotif = item.label === "Notificaciones";
+                    const isCumpleanos = item.label === "Cumpleaños";
 
                     if (!isExpanded) {
                       return (
@@ -413,6 +423,11 @@ export function AppLayout() {
                                 {isNotif && unreadCount > 0 && (
                                   <span className="absolute top-2 right-2 z-10 bg-red-500 outline outline-2 outline-sidebar text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold animate-pulse">
                                     {unreadCount}
+                                  </span>
+                                )}
+                                {isCumpleanos && cumpleanosHoy > 0 && (
+                                  <span className="absolute top-2 right-2 z-10 bg-red-500 outline outline-2 outline-sidebar text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                                    {cumpleanosHoy}
                                   </span>
                                 )}
                               </button>
@@ -451,7 +466,14 @@ export function AppLayout() {
                           {item.icon}
                         </span>
                         <span className={`relative z-10 flex-1 text-left truncate transition-all duration-300 ${isActive ? "font-black tracking-tight" : "font-bold tracking-tight group-hover/nav:translate-x-1"}`}>
-                          {item.label}
+                          <span className="flex items-center gap-2">
+                            {item.label}
+                            {isCumpleanos && cumpleanosHoy > 0 && (
+                              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-[10px] font-bold rounded-full bg-red-500 text-white">
+                                {cumpleanosHoy}
+                              </span>
+                            )}
+                          </span>
                         </span>
                         {isNotif && unreadCount > 0 && (
                           <span className="relative z-10 bg-red-500 text-white text-[10px] rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 font-bold shadow-lg animate-pulse">
