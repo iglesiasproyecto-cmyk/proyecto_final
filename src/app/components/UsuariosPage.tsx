@@ -77,8 +77,8 @@ export function UsuariosPage() {
   const { data: ministeriosInvite = [] } = useMinisterios(inviteForm.idIglesia || undefined);
   const { data: ministeriosAssign = [] } = useMinisterios(assignForm.idIglesia || undefined);
 
-  const roleNeedsSede = (idRol: number) => [ROLE_IDS.ADMIN_SEDE, ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR].includes(idRol);
-  const roleNeedsMinisterio = (idRol: number) => [ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR].includes(idRol);
+  const roleNeedsSede = (idRol: number) => ([ ROLE_IDS.ADMIN_SEDE, ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR] as number[]).includes(idRol);
+  const roleNeedsMinisterio = (idRol: number) => ([ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR] as number[]).includes(idRol);
   const ministeriosInviteFiltered = ministeriosInvite.filter(m => inviteForm.idSede ? m.idSede === inviteForm.idSede : true);
   const ministeriosFiltered = ministeriosAssign.filter(m => assignForm.idSede ? m.idSede === assignForm.idSede : true);
 
@@ -333,6 +333,7 @@ export function UsuariosPage() {
             <span className="hidden sm:inline">Limpiar filtros</span>
             <span className="sm:hidden">Limpiar</span>
           </Button>
+        </div>
         </div>
       </motion.div>
 
