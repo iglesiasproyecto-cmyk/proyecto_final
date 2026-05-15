@@ -32,31 +32,37 @@ export function LiderAulaPage() {
 
   return (
     <div className="space-y-8">
-      {/* Admin Hero Section */}
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#4682b4]/15 via-[#709dbd]/5 to-transparent border border-[#4682b4]/20 p-8"
+        className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#4682b4]/15 via-[#709dbd]/5 to-transparent p-6 sm:p-8 shadow-[0_20px_60px_rgb(0,0,0,0.06)]"
       >
         <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
           <ShieldCheck className="h-40 w-40 -rotate-12" />
         </div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="max-w-2xl">
-            <Badge className="mb-4 bg-[#4682b4]/20 text-[#4682b4] hover:bg-[#4682b4]/30 border-none px-4 py-1 flex items-center gap-2 w-fit">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Panel de Gestión Académica
-            </Badge>
-            <h2 className="text-2xl md:text-3xl font-black mb-3 text-foreground">Panel de <span className="text-[#4682b4]">Líder</span></h2>
-            <p className="text-muted-foreground font-medium leading-relaxed">
-              Diseña la formación de tu equipo, monitorea el progreso en tiempo real y empodera a tus servidores con las herramientas necesarias.
-            </p>
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="border-none bg-[#4682b4]/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#4682b4]">
+                <ShieldCheck className="mr-1 h-3.5 w-3.5" />
+                Panel de gestión académica
+              </Badge>
+              <Badge variant="outline" className="border-white/15 bg-background/50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">
+                Líder ministerial
+              </Badge>
+            </div>
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">Panel de <span className="text-[#4682b4]">Líder</span></h2>
+              <p className="mt-3 max-w-2xl text-sm sm:text-base font-medium leading-relaxed text-muted-foreground">
+                Diseña la formación de tu equipo, monitorea el progreso en tiempo real y empodera a tus servidores con las herramientas necesarias.
+              </p>
+            </div>
           </div>
           
           {ministeriosIds.length > 0 && (
             <Button 
               onClick={() => setShowCrearCurso(true)}
-              className="bg-gradient-to-r from-[#4682b4] to-[#709dbd] hover:from-[#3b6d96] hover:to-[#5b84a1] text-white rounded-2xl px-6 py-6 h-auto shadow-lg shadow-blue-900/30 transition-all hover:scale-105 active:scale-95"
+              className="h-auto shrink-0 rounded-2xl bg-gradient-to-r from-[#4682b4] to-[#709dbd] px-6 py-4 text-white shadow-lg shadow-blue-900/20 transition-all hover:scale-[1.02] hover:from-[#3b6d96] hover:to-[#5b84a1] active:scale-[0.98]"
             >
               <Plus className="h-5 w-5 mr-2" />
               <span className="font-bold">Crear Nuevo Curso</span>
@@ -66,13 +72,13 @@ export function LiderAulaPage() {
       </motion.div>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <div className="flex items-center justify-between mb-6 overflow-x-auto pb-2 no-scrollbar">
-          <TabsList className="bg-muted/50 p-1.5 rounded-2xl border border-border/50 backdrop-blur-md inline-flex">
-            <TabsTrigger value="dashboard" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-[#4682b4] transition-all">
+        <div className="mb-6 flex items-center justify-between overflow-x-auto pb-2 no-scrollbar">
+          <TabsList className="inline-flex rounded-2xl border border-border/50 bg-muted/50 p-1.5 backdrop-blur-md">
+            <TabsTrigger value="dashboard" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-[#4682b4] data-[state=active]:shadow-lg">
               <TrendingUp className="h-4 w-4 mr-2" />
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="cursos" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-[#4682b4] transition-all">
+            <TabsTrigger value="cursos" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-[#4682b4] data-[state=active]:shadow-lg">
               <BookOpen className="h-4 w-4 mr-2" />
               Mis Cursos
             </TabsTrigger>

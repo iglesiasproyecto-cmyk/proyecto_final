@@ -122,7 +122,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
     <div className="space-y-6">
       {/* Estadísticas Generales */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden relative group">
+        <Card className="relative overflow-hidden rounded-[28px] border border-white/10 bg-card/55 shadow-sm backdrop-blur-2xl group">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
             <BookOpen className="h-12 w-12" />
           </div>
@@ -138,7 +138,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden relative group">
+        <Card className="relative overflow-hidden rounded-[28px] border border-white/10 bg-card/55 shadow-sm backdrop-blur-2xl group">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
             <Users className="h-12 w-12" />
           </div>
@@ -154,7 +154,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden relative group">
+        <Card className="relative overflow-hidden rounded-[28px] border border-white/10 bg-card/55 shadow-sm backdrop-blur-2xl group">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
             <Award className="h-12 w-12" />
           </div>
@@ -170,7 +170,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden relative group">
+        <Card className="relative overflow-hidden rounded-[28px] border border-white/10 bg-card/55 shadow-sm backdrop-blur-2xl group">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
             <TrendingUp className="h-12 w-12" />
           </div>
@@ -190,7 +190,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
       {/* Estadísticas del Grupo (solo si hay un curso específico) */}
       {idCurso && progresoGrupo && progresoGrupo.length > 0 && (
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
+          <Card className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Miembros Activos</CardTitle>
               <UserCheck className="h-4 w-4 text-muted-foreground" />
@@ -203,7 +203,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Miembros Atrasados</CardTitle>
               <AlertCircle className="h-4 w-4 text-muted-foreground" />
@@ -216,7 +216,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Ranking de Avance</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -226,7 +226,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
                 {cursos?.slice(0, 3).map((curso: any) => (
                   <div
                     key={curso.id_curso}
-                    className="p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/10 cursor-pointer hover:bg-primary/10 transition-colors"
+                    className="cursor-pointer rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/5 to-primary/10 p-3 transition-colors hover:bg-primary/10"
                     onClick={() => navigate(`/app/aula/curso/${curso.id_curso}`)}
                   >
                     <p className="text-sm font-medium truncate">{curso.titulo}</p>
@@ -248,7 +248,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
 
       {/* Lista de miembros atrasados */}
       {idCurso && miembrosAtrasados > 0 && (
-        <Card>
+        <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
           <CardHeader>
             <CardTitle className="text-lg">Miembros que necesitan atención</CardTitle>
             <CardDescription>
@@ -258,7 +258,7 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
           <CardContent>
             <div className="space-y-3">
               {progresoGrupo?.filter(p => p.porcentaje < 25).map((miembro) => (
-                <div key={miembro.idUsuario} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={miembro.idUsuario} className="flex items-center justify-between rounded-2xl border border-white/10 p-3">
                   <div>
                     <p className="font-medium">{miembro.nombre}</p>
                     <p className="text-sm text-muted-foreground">{miembro.correo}</p>

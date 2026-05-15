@@ -98,7 +98,7 @@ export function NotificacionesAula() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
         <CardHeader>
           <div className="flex items-center gap-3">
             <Skeleton className="h-5 w-5 rounded" />
@@ -113,11 +113,11 @@ export function NotificacionesAula() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Bell className="h-5 w-5" />
+    <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
+      <CardHeader className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Bell className="h-5 w-5 text-primary" />
             <CardTitle>Notificaciones de Aula</CardTitle>
             {notificacionesNoLeidas.length > 0 && (
               <Badge variant="destructive">{notificacionesNoLeidas.length}</Badge>
@@ -140,9 +140,9 @@ export function NotificacionesAula() {
       </CardHeader>
       <CardContent>
         {!notificaciones || notificaciones.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No tienes notificaciones de aula</p>
+          <div className="rounded-[24px] border border-dashed border-border bg-muted/20 py-10 text-center text-muted-foreground">
+            <Bell className="mx-auto mb-4 h-12 w-12 opacity-50" />
+            <p className="font-medium">No tienes notificaciones de aula</p>
             <p className="text-sm">Las notificaciones aparecerán aquí cuando haya nuevo contenido disponible</p>
           </div>
         ) : (
@@ -150,17 +150,17 @@ export function NotificacionesAula() {
             {notificaciones.map((notificacion) => (
               <div
                 key={notificacion.id_notificacion}
-                className={`p-4 border rounded-lg transition-colors ${
-                  notificacion.leida ? 'bg-muted/50' : 'bg-blue-50 border-blue-200'
+                className={`rounded-2xl border p-4 transition-colors ${
+                  notificacion.leida ? 'bg-muted/40' : 'border-primary/15 bg-primary/5'
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
-                      <BookOpen className="h-4 w-4 text-blue-600" />
+                      <BookOpen className="h-4 w-4 text-primary" />
                       <p className="font-medium text-sm">{notificacion.titulo}</p>
                       {!notificacion.leida && (
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <div className="h-2 w-2 rounded-full bg-primary"></div>
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">

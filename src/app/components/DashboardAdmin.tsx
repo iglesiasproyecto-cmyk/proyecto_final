@@ -94,13 +94,13 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.07 }}
           >
-            <Card className="border-white/10 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden">
+            <Card className="overflow-hidden rounded-[28px] border border-white/10 bg-card/55 shadow-sm backdrop-blur-2xl">
               <CardContent className="p-5">
                 <div className="flex justify-between items-start mb-3">
                   <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${kpi.color} flex items-center justify-center text-white shadow-lg`}>
                     {kpi.icon}
                   </div>
-                  <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-[10px] py-0 tracking-widest uppercase">KPI</Badge>
+                  <Badge variant="secondary" className="border-0 bg-primary/10 py-0 text-[10px] uppercase tracking-widest text-primary">KPI</Badge>
                 </div>
                 <p className="text-4xl font-light tracking-tight text-foreground">{kpi.value}</p>
                 <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{kpi.label}</p>
@@ -112,7 +112,7 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
 
       {/* Top courses table */}
       {stats.topCursos.length > 0 && (
-        <Card className="border-white/10 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden">
+        <Card className="overflow-hidden rounded-[28px] border border-white/10 bg-card/55 shadow-sm backdrop-blur-2xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-black uppercase tracking-[0.15em] text-foreground/70 flex items-center gap-2">
               <Award className="w-4 h-4 text-primary" />
@@ -142,7 +142,7 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
       )}
 
       {stats.total === 0 && (
-        <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-[28px] border border-dashed border-border bg-muted/20 py-12 text-muted-foreground">
           <CheckCircle2 className="w-10 h-10 opacity-20" />
           <p className="text-sm">No hay cursos en la iglesia todavía. ¡Crea el primero!</p>
         </div>
