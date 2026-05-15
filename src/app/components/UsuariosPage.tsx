@@ -20,11 +20,21 @@ import { TableSkeleton } from "./loading/skeletons";
 import { Skeleton } from "./ui/skeleton";
 
 export function UsuariosPage() {
-  const { iglesiaActual, rolActual, iglesiasDelUsuario } = useApp();
+  const { iglesiaActual, rolActual, iglesiasDelUsuario, ministeriosDelUsuario, sedesDelUsuario } = useApp();
 
   const isSuperAdmin = rolActual === "super_admin";
   const isAdminIglesia = rolActual === "admin_iglesia";
-  const canManageUsers = isSuperAdmin || isAdminIglesia;
+  const isAdminSede = rolActual === "admin_sede";
+  const isLider = rolActual === "lider";
+  const canManageUsers = isSuperAdmin || isAdminIglesia || isAdminSede || isLider;
+
+  const canAssignRole = (idRol: number): boolean => {
+    if (isSuperAdmin) return true;
+    if (isAdminIglesia) return idRol !== ROLE_IDS.SUPER_ADMIN;
+    if (isAdminSede) return ![ROLE_IDS.SUPER_ADMIN, ROLE_IDS.ADMIN_IGLESIA].includes(idRol);
+    if (isLider) return idRol === ROLE_IDS.SERVIDOR;
+    return false;
+  };
 
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
