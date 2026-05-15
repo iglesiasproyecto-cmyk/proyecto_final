@@ -65,12 +65,12 @@ export function AgregarPersonasCursoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl rounded-[28px] border-white/10 bg-card/95 backdrop-blur-2xl">
         <DialogHeader>
-          <DialogTitle>Agregar personas al curso</DialogTitle>
+          <DialogTitle className="text-xl font-black tracking-tight">Agregar personas al curso</DialogTitle>
         </DialogHeader>
 
-        <div className="max-h-[420px] overflow-y-auto space-y-2">
+        <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
           {isLoading && (
             <p className="text-sm text-muted-foreground">
               Cargando candidatos...
@@ -86,7 +86,7 @@ export function AgregarPersonasCursoDialog({
           {candidatos.map((usuario: any) => (
             <label
               key={usuario.id_usuario}
-              className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50"
+              className="flex cursor-pointer items-center gap-3 rounded-2xl border border-border/60 p-3 transition-colors hover:bg-muted/50"
             >
               <Checkbox
                 checked={selectedIds.includes(usuario.id_usuario)}
@@ -106,16 +106,14 @@ export function AgregarPersonasCursoDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-2xl">
             Cancelar
           </Button>
 
           <Button
             onClick={handleSubmit}
             disabled={inscribirMutation.isPending || selectedIds.length === 0}
+            className="rounded-2xl bg-[#4682b4] text-white hover:bg-[#4682b4]/90"
           >
             Agregar seleccionados
           </Button>

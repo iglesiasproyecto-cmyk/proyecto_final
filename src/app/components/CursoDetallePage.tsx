@@ -219,22 +219,23 @@ export function CursoDetallePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 rounded-[32px] border border-white/10 bg-card/55 p-5 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={() => navigate(aulaBasePath)}
-            className="rounded-xl border-white/20 bg-background/50 h-10 px-4"
+            className="h-10 rounded-2xl border-white/20 bg-background/55 px-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{curso.titulo}</h1>
-            <p className="text-primary/70 font-bold text-xs uppercase tracking-widest">{curso.ministerio?.nombre}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Detalle del curso</p>
+            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{curso.titulo}</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-primary/70">{curso.ministerio?.nombre}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -252,13 +253,13 @@ export function CursoDetallePage() {
             <Button
               onClick={() => setShowAgregarPersonas(true)}
               size="sm"
-              className="rounded-xl border-white/20 bg-background/50 h-10"
+              className="h-10 rounded-2xl border-white/20 bg-background/55"
             >
               <UserPlus className="h-4 w-4 mr-2 text-primary" />
               Agregar personas
             </Button>
           )}
-          <Button variant="outline" size="sm" className="rounded-xl border-white/20 bg-background/50 h-10">
+          <Button variant="outline" size="sm" className="h-10 rounded-2xl border-white/20 bg-background/55">
             <Settings className="h-4 w-4 mr-2 text-primary" />
             Configuración
           </Button>
@@ -266,8 +267,8 @@ export function CursoDetallePage() {
       </div>
 
       {/* Estadísticas Rápidas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden group">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-2xl bg-[#4682b4]/10 text-[#4682b4]">
@@ -281,7 +282,7 @@ export function CursoDetallePage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden group">
+        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500">
@@ -295,7 +296,7 @@ export function CursoDetallePage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden group">
+        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500">
@@ -309,7 +310,7 @@ export function CursoDetallePage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/20 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden group">
+        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500">
@@ -325,20 +326,20 @@ export function CursoDetallePage() {
       </div>
 
       {cursoVacio && (
-        <Card className="border-dashed border-primary/30 bg-primary/5 rounded-3xl">
+        <Card className="rounded-[28px] border border-dashed border-primary/30 bg-primary/5">
           <CardContent className="py-8 px-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-bold uppercase tracking-widest text-primary/80">Curso en preparación</p>
-                <h3 className="text-xl font-black tracking-tight mt-1">Este curso aún no tiene módulos publicados</h3>
-                <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Curso en preparación</p>
+                <h3 className="mt-1 text-xl font-black tracking-tight">Este curso aún no tiene módulos publicados</h3>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                   Agrega módulos con objetivos claros, actividades y evaluación para que los servidores puedan iniciar su ruta de aprendizaje.
                 </p>
               </div>
               {(isLider || isAdmin) && (
                 <Button
                   onClick={() => setShowAgregarPersonas(true)}
-                  className="rounded-xl h-11 px-5"
+                  className="h-11 rounded-2xl px-5"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Gestionar participantes
@@ -352,16 +353,16 @@ export function CursoDetallePage() {
       {/* Contenido Principal */}
       <Tabs defaultValue="modulos" className="space-y-6">
         <div className="flex items-center justify-between overflow-x-auto pb-2 no-scrollbar">
-          <TabsList className="bg-muted/50 p-1.5 rounded-2xl border border-border/50 backdrop-blur-md inline-flex">
-            <TabsTrigger value="modulos" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-primary transition-all">
+          <TabsList className="inline-flex rounded-2xl border border-border/50 bg-muted/50 p-1.5 backdrop-blur-md">
+            <TabsTrigger value="modulos" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <BookOpen className="h-4 w-4 mr-2" />
               Módulos
             </TabsTrigger>
-            <TabsTrigger value="progreso" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-primary transition-all">
+            <TabsTrigger value="progreso" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <BarChart3 className="h-4 w-4 mr-2" />
               Progreso
             </TabsTrigger>
-            <TabsTrigger value="servidores" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-primary transition-all">
+            <TabsTrigger value="servidores" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <Users className="h-4 w-4 mr-2" />
               Servidores
             </TabsTrigger>
@@ -385,7 +386,7 @@ export function CursoDetallePage() {
         </TabsContent>
 
         <TabsContent value="servidores">
-          <ServidoresCursoTab progresoGrupo={progresoGrupo || []} />
+          <ServidoresCursoTab progresoGrupo={progresoGrupo || []} aulaBasePath={aulaBasePath} />
         </TabsContent>
       </Tabs>
 
@@ -410,8 +411,8 @@ function ProgresoCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
           <CardContent className="p-4 text-center">
             <UserCheck className="h-8 w-8 mx-auto mb-2 text-blue-600" />
             <div className="text-2xl font-bold">{miembrosActivos}</div>
@@ -419,7 +420,7 @@ function ProgresoCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
           <CardContent className="p-4 text-center">
             <Award className="h-8 w-8 mx-auto mb-2 text-green-600" />
             <div className="text-2xl font-bold">{miembrosCompletaron}</div>
@@ -427,7 +428,7 @@ function ProgresoCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
           <CardContent className="p-4 text-center">
             <TrendingUp className="h-8 w-8 mx-auto mb-2 text-purple-600" />
             <div className="text-2xl font-bold">{promedioProgreso}%</div>
@@ -436,7 +437,7 @@ function ProgresoCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
         </Card>
       </div>
 
-      <Card>
+      <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
         <CardHeader>
           <CardTitle>Distribución de Progreso</CardTitle>
           <CardDescription>Progreso de todos los servidores inscritos</CardDescription>
@@ -448,7 +449,7 @@ function ProgresoCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
               .slice(0, 10)
               .map((servidor, index) => (
                 <div key={servidor.idUsuario} className="flex items-center space-x-4">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">
                     {index + 1}
                   </div>
                   <div className="flex-1">
@@ -468,7 +469,7 @@ function ProgresoCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
 }
 
 // Componente para la pestaña de servidores
-function ServidoresCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
+function ServidoresCursoTab({ progresoGrupo, aulaBasePath }: { progresoGrupo: any[]; aulaBasePath: string }) {
   const navigate = useNavigate()
   const { idCurso } = useParams<{ idCurso: string }>()
   const servidoresAtrasados = progresoGrupo.filter(p => p.porcentaje < 25)
@@ -476,7 +477,7 @@ function ServidoresCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
   return (
     <div className="space-y-6">
       {servidoresAtrasados.length > 0 && (
-        <Card>
+        <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
           <CardHeader>
             <CardTitle className="flex items-center text-orange-600">
               <AlertCircle className="h-5 w-5 mr-2" />
@@ -491,7 +492,7 @@ function ServidoresCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
               {servidoresAtrasados.map((servidor) => (
                 <div
                   key={servidor.idUsuario}
-                  className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
+                  className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/10 p-3 transition-colors hover:bg-accent/50"
                   onClick={() => navigate(`${aulaBasePath}/curso/${idCurso}/servidor/${servidor.idUsuario}`)}
                 >
                   <div>
@@ -511,7 +512,7 @@ function ServidoresCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
         </Card>
       )}
 
-      <Card>
+      <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
         <CardHeader>
           <CardTitle>Todos los Servidores</CardTitle>
           <CardDescription>
@@ -521,11 +522,11 @@ function ServidoresCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
         <CardContent>
           <div className="space-y-3">
             {progresoGrupo.map((servidor) => (
-              <div
-                key={servidor.idUsuario}
-                className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
-                onClick={() => navigate(`${aulaBasePath}/curso/${idCurso}/servidor/${servidor.idUsuario}`)}
-              >
+                <div
+                  key={servidor.idUsuario}
+                  className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/10 p-3 transition-colors hover:bg-accent/50"
+                  onClick={() => navigate(`${aulaBasePath}/curso/${idCurso}/servidor/${servidor.idUsuario}`)}
+                >
                 <div>
                   <p className="font-medium">{servidor.nombre}</p>
                   <p className="text-sm text-muted-foreground">{servidor.correo}</p>

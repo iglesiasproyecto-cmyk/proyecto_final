@@ -80,7 +80,7 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-4 p-4">
+        <div className="flex items-center gap-4 rounded-[28px] border border-white/10 bg-card/50 p-4 backdrop-blur-2xl">
           <Skeleton className="h-12 w-12 rounded-2xl" />
           <div className="space-y-2">
             <Skeleton className="h-6 w-48" />
@@ -95,35 +95,35 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 bg-card/40 backdrop-blur-xl border border-border/50 p-4 rounded-2xl">
+      <div className="flex flex-col gap-3 rounded-[28px] border border-white/10 bg-card/55 p-4 backdrop-blur-2xl lg:flex-row lg:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Buscar curso..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 h-10 bg-background/50 border-white/10 rounded-xl"
+            className="h-11 rounded-2xl border-white/10 bg-background/60 pl-9"
           />
         </div>
         <select
           value={ministerioFilter}
           onChange={e => setMinisterioFilter(Number(e.target.value))}
-          className="h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20"
+          className="h-11 rounded-2xl border border-white/10 bg-background/60 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20"
         >
           <option value={0}>Todos los ministerios</option>
           {ministerios.map(m => (
             <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>
           ))}
         </select>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-2">
           {(['todos', 'iglesia', 'ministerio'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTipoFilter(t)}
-              className={`h-10 px-3 rounded-xl text-xs font-semibold capitalize transition-all ${
+              className={`h-11 px-4 rounded-2xl text-xs font-semibold capitalize transition-all ${
                 tipoFilter === t
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-background/50 border border-white/10 text-foreground/60 hover:text-foreground'
+                  : 'bg-background/55 border border-white/10 text-foreground/60 hover:text-foreground'
               }`}
             >
               {t === 'todos' ? 'Todos' : t === 'iglesia' ? 'Iglesia' : 'Ministerio'}
@@ -133,7 +133,7 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
         <select
           value={estadoFilter}
           onChange={e => setEstadoFilter(e.target.value)}
-          className="h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20"
+          className="h-11 rounded-2xl border border-white/10 bg-background/60 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20"
         >
           <option value="todos">Todos los estados</option>
           <option value="activo">Activos</option>
@@ -142,7 +142,7 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
       </div>
 
       {/* Course grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         <AnimatePresence>
           {visible.map((curso, idx) => (
             <AnimatedCard key={curso.idAulaCurso} index={idx} className="p-5 group">
@@ -170,19 +170,19 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
                 </div>
               </div>
 
-              <h3 className="font-bold text-sm leading-snug tracking-tight group-hover:text-primary transition-colors mb-2 uppercase italic line-clamp-2">
+              <h3 className="mb-2 line-clamp-2 text-sm font-bold uppercase italic leading-snug tracking-tight transition-colors group-hover:text-primary">
                 {curso.titulo}
               </h3>
               {curso.descripcion && (
-                <p className="text-[11px] text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+                <p className="mb-4 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
                   {curso.descripcion}
                 </p>
               )}
 
-              <div className="flex items-center gap-2 pt-3 border-t border-white/5">
+              <div className="flex items-center gap-2 border-t border-white/5 pt-3">
                 <Button
                   size="sm"
-                  className="flex-1 h-8 rounded-xl text-xs"
+                  className="h-9 flex-1 rounded-2xl text-xs"
                   onClick={() => {
                     if (!iglesiaActual?.id) return
                     navigate(`/app/${iglesiaActual.id}/aula/curso/${curso.idAulaCurso}`)
@@ -191,14 +191,14 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
                   <ChevronRight className="w-3.5 h-3.5 mr-1" /> Ver detalle
                 </Button>
                 <button
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/50 hover:text-primary hover:bg-primary/10 transition-all"
+                  className="flex h-9 w-9 items-center justify-center rounded-2xl text-muted-foreground/50 transition-all hover:bg-primary/10 hover:text-primary"
                   onClick={() => togglePublicacion(curso.idAulaCurso, curso.estado)}
                   title={curso.estado === 'activo' ? 'Despublicar' : 'Publicar'}
                 >
                   {curso.estado === 'activo' ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
                 <button
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/50 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                  className="flex h-9 w-9 items-center justify-center rounded-2xl text-muted-foreground/50 transition-all hover:bg-rose-500/10 hover:text-rose-400"
                   onClick={() => setDeleteConfirm({ open: true, id: curso.idAulaCurso, titulo: curso.titulo })}
                   title="Eliminar curso"
                 >
@@ -214,10 +214,10 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground"
+          className="flex flex-col items-center justify-center gap-3 rounded-[28px] border border-dashed border-border bg-muted/20 py-16 text-muted-foreground"
         >
-          <Inbox className="w-10 h-10 opacity-20" />
-          <p className="text-sm">
+          <Inbox className="h-10 w-10 opacity-20" />
+          <p className="text-sm font-medium">
             {cursos.length === 0 ? 'No hay cursos en esta iglesia todavía.' : 'Ningún curso coincide con los filtros.'}
           </p>
         </motion.div>
@@ -225,14 +225,14 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteConfirm.open} onOpenChange={open => setDeleteConfirm(p => ({ ...p, open }))}>
-        <DialogContent className="sm:max-w-sm rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10">
+        <DialogContent className="sm:max-w-sm rounded-[28px] border-white/10 bg-card/95 backdrop-blur-2xl">
           <DialogHeader>
             <div className="flex flex-col items-center gap-3 pt-2">
-              <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-                <Trash2 className="w-7 h-7 text-rose-400" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-rose-500/20 bg-rose-500/10">
+                <Trash2 className="h-7 w-7 text-rose-400" />
               </div>
-              <DialogTitle className="text-lg font-bold text-center">¿Eliminar curso?</DialogTitle>
-              <p className="text-sm text-muted-foreground text-center">
+              <DialogTitle className="text-center text-lg font-bold">¿Eliminar curso?</DialogTitle>
+              <p className="text-center text-sm text-muted-foreground">
                 Estás a punto de eliminar <span className="font-semibold text-foreground">"{deleteConfirm.titulo}"</span>. Esta acción no se puede deshacer.
               </p>
             </div>

@@ -80,7 +80,7 @@ export function CursosServidorList() {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3].map(i => (
-          <div key={i} className="h-[280px] rounded-3xl bg-muted/50 animate-pulse border border-border/50" />
+          <div key={i} className="h-[280px] rounded-[28px] border border-white/10 bg-muted/50 animate-pulse" />
         ))}
       </div>
     )
@@ -106,13 +106,13 @@ export function CursosServidorList() {
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex flex-col items-center justify-center py-20 bg-muted/20 rounded-3xl border border-dashed border-border"
+        className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-border bg-muted/20 py-20"
       >
-        <div className="p-4 bg-background rounded-2xl shadow-sm mb-4">
+        <div className="mb-4 rounded-2xl bg-background p-4 shadow-sm">
           <BookOpen className="h-10 w-10 text-muted-foreground" />
         </div>
-        <h3 className="text-xl font-bold mb-2">No tienes cursos asignados</h3>
-        <p className="text-muted-foreground text-center max-w-sm font-medium">
+        <h3 className="mb-2 text-xl font-bold">No tienes cursos asignados</h3>
+        <p className="max-w-sm text-center font-medium text-muted-foreground">
           Cuando tu líder publique un curso para tu ministerio, aparecerá aquí automáticamente.
         </p>
       </motion.div>
@@ -150,16 +150,16 @@ function CursoCard({ curso, userId, index }: { curso: any, userId?: number, inde
       transition={{ delay: index * 0.1 }}
       whileHover={{ y: -8 }}
       onClick={() => navigate(`/app/aula/curso/${curso.id_curso}`)}
-      className="group cursor-pointer relative"
+      className="group relative cursor-pointer"
     >
-      <Card className="h-full overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-primary/10 group-hover:border-primary/30 rounded-3xl">
-        <div className={`h-32 bg-gradient-to-br ${colorClass} relative overflow-hidden`}>
+      <Card className="h-full overflow-hidden rounded-[28px] border border-white/10 bg-background/55 backdrop-blur-2xl transition-all duration-500 group-hover:-translate-y-1 group-hover:border-primary/30 group-hover:shadow-2xl group-hover:shadow-primary/10">
+        <div className={`relative h-32 overflow-hidden bg-gradient-to-br ${colorClass}`}>
           <div className="absolute top-4 right-4">
-            <Badge variant="secondary" className="bg-background/80 backdrop-blur-md border-none text-[10px] font-bold uppercase tracking-tight">
+            <Badge variant="secondary" className="border-none bg-background/80 text-[10px] font-bold uppercase tracking-tight backdrop-blur-md">
               {curso.ministerio?.nombre || 'General'}
             </Badge>
           </div>
-          <div className="absolute -bottom-6 -left-6 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-700">
+          <div className="absolute -bottom-6 -left-6 opacity-10 transition-transform duration-700 group-hover:scale-110 group-hover:rotate-12">
             <BookOpen className="h-32 w-32" />
           </div>
           {progreso?.porcentaje === 100 && (
@@ -172,10 +172,10 @@ function CursoCard({ curso, userId, index }: { curso: any, userId?: number, inde
         </div>
         
         <CardHeader className="pb-2">
-          <CardTitle className="text-xl font-black group-hover:text-primary transition-colors leading-tight">
+          <CardTitle className="text-xl font-black leading-tight transition-colors group-hover:text-primary">
             {curso.nombre}
           </CardTitle>
-          <CardDescription className="line-clamp-2 text-sm font-medium h-10">
+          <CardDescription className="h-10 line-clamp-2 text-sm font-medium">
             {curso.descripcion || 'Inicia hoy tu camino de formación en este curso especializado.'}
           </CardDescription>
         </CardHeader>
@@ -183,7 +183,7 @@ function CursoCard({ curso, userId, index }: { curso: any, userId?: number, inde
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <div className="flex justify-between items-end">
-              <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                 <TrendingUp className="h-3 w-3" />
                 Progreso Actual
               </span>
@@ -201,12 +201,12 @@ function CursoCard({ curso, userId, index }: { curso: any, userId?: number, inde
             />
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-border/50">
-            <div className="flex items-center text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+          <div className="flex items-center justify-between border-t border-border/50 pt-2">
+            <div className="flex items-center text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
               <Clock className="h-3 w-3 mr-1 text-primary" />
               {new Date(curso.fecha_inscripcion).toLocaleDateString()}
             </div>
-            <div className="flex items-center gap-1 text-primary font-bold text-xs group-hover:translate-x-1 transition-transform">
+            <div className="flex items-center gap-1 text-xs font-bold text-primary transition-transform group-hover:translate-x-1">
               Continuar <ArrowRight className="h-3 w-3" />
             </div>
           </div>
