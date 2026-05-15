@@ -195,7 +195,7 @@ export function AppLayout() {
   const { data: usuarios = [] } = useUsuariosEnriquecidos();
 
   const cumpleanosHoy = usuarios.filter((u) => {
-    if (!u.fechaNacimiento) return false;
+    if (!u.activo || !u.fechaNacimiento) return false;
     const today = new Date();
     const [, month, day] = u.fechaNacimiento.split("-").map(Number);
     return today.getMonth() === month - 1 && today.getDate() === day;
