@@ -19,8 +19,7 @@ import { SedesPage } from "./components/SedesPage";
 import { PastoresPage } from "./components/PastoresPage";
 import { MinisteriosPage } from "./components/MinisteriosPage";
 import { MiMinisterioPage } from "./components/MiMinisterioPage";
-import { AdministradoresPage } from "./components/AdministradoresPage";
-import { AdminSedesPage } from "./components/AdminSedesPage";
+import { AdministradorPage } from "./components/AdministradorPage";
 import { MembersPage } from "./components/MembersPage";
 import { EventsPage } from "./components/EventsPage";
 import { TasksPage } from "./components/TasksPage";
@@ -71,8 +70,7 @@ export const router = createBrowserRouter([
               { path: "notificaciones", Component: NotificationsPage, ErrorBoundary: ErrorPage },
               { path: "perfil", Component: ProfilePage, ErrorBoundary: ErrorPage },
               { path: "sitemap", Component: SitemapPage, ErrorBoundary: ErrorPage },
-              { path: "administradores", Component: AdministradoresPage, ErrorBoundary: ErrorPage },
-              { path: "admin-sedes", Component: AdminSedesPage, ErrorBoundary: ErrorPage },
+              { path: "administrador", Component: AdministradorPage, ErrorBoundary: ErrorPage },
             ],
           },
 
@@ -94,7 +92,7 @@ export const router = createBrowserRouter([
               { path: "aula", Component: AulaPage, ErrorBoundary: ErrorPage },
               { path: "aula/curso/:idCurso", Component: CursoDetallePage, ErrorBoundary: ErrorPage },
               { path: "aula/curso/:idCurso/servidor/:idUsuario", Component: ProgresoIndividualPage, ErrorBoundary: ErrorPage },
-              { path: "admin-sedes", Component: AdminSedesPage, ErrorBoundary: ErrorPage },
+              { path: "administrador", Component: AdministradorPage, ErrorBoundary: ErrorPage },
               { path: "mi-ministerio", Component: MiMinisterioPage, ErrorBoundary: ErrorPage },
               { path: "notificaciones", Component: NotificationsPage, ErrorBoundary: ErrorPage },
               { path: "perfil", Component: ProfilePage, ErrorBoundary: ErrorPage },

@@ -12,7 +12,8 @@ import {
   Settings, FolderHeart, Globe, UserCheck, Settings2,
   PanelLeftClose, PanelLeftOpen, Moon, Sun, BookOpen
 } from "lucide-react";
-import { SEILogo } from "./SEILogo";
+import logoLight from "../../assets/logo-light.png";
+import logoDark from "../../assets/logo-dark.png";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -41,7 +42,7 @@ const pageTitles: Record<string, string> = {
   "/app/global": "Dashboard Global",
   "/app/global/iglesias": "Gestión de Iglesias",
   "/app/global/sedes": "Gestión de Sedes",
-  "/app/global/administradores": "Administradores de Iglesia",
+  "/app/global/administrador": "Administrador",
   "/app/global/usuarios": "Usuarios",
   "/app/global/geografia": "Geografía",
   "/app/global/notificaciones": "Notificaciones",
@@ -78,8 +79,7 @@ function getNavItemsForRole(
         { label: "Dashboard", path: "/app/global", icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
         { label: "Iglesias", path: "/app/global/iglesias", icon: <Building2 className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Sedes", path: "/app/global/sedes", icon: <Church className="w-5 h-5" />, section: "Gestión Global" },
-        { label: "Administradores", path: "/app/global/administradores", icon: <UserCheck className="w-5 h-5" />, section: "Gestión Global" },
-        { label: "Administradores de Sede", path: "/app/global/admin-sedes", icon: <Settings className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Administrador", path: "/app/global/administrador", icon: <UserCheck className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Usuarios", path: "/app/global/usuarios", icon: <Users className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Geografía", path: "/app/global/geografia", icon: <Globe className="w-5 h-5" />, section: "Configuración" },
         { label: "Notificaciones", path: "/app/global/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
@@ -91,7 +91,7 @@ function getNavItemsForRole(
         { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
         { label: "Mi Iglesia", path: `${t}/iglesia`, icon: <Church className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Sedes", path: `${t}/sedes`, icon: <Building2 className="w-5 h-5" />, section: "Mi Iglesia" },
-        { label: "Administradores de Sede", path: `${t}/admin-sedes`, icon: <Settings className="w-5 h-5" />, section: "Mi Iglesia" },
+        { label: "Administrador", path: `${t}/administrador`, icon: <Settings className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Pastores", path: `${t}/pastores`, icon: <UserCheck className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Ministerios", path: `${t}/ministerios`, icon: <Settings2 className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Usuarios", path: `${t}/usuarios`, icon: <Users className="w-5 h-5" />, section: "Mi Iglesia" },
@@ -159,11 +159,30 @@ function groupBySection(items: NavItem[]) {
 }
 
 export function AppLayout() {
-  const { usuarioActual, logout, notificacionesCount, sidebarOpen, toggleSidebar, darkMode, toggleDarkMode, authLoading, iglesiaActual, setIglesiaActual, iglesiasDelUsuario, rolActual, isHydrated, isInitializing, authError, authReady } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
-  const [showChurchSelector, setShowChurchSelector] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const {
+    isHydrated,
+    authLoading,
+    authError,
+    authReady,
+    isInitializing,
+    usuarioActual,
+    rolActual,
+    iglesiaActual,
+    notificacionesCount,
+    iglesiasDelUsuario,
+    sidebarOpen,
+    toggleSidebar,
+    showChurchSelector,
+    setShowChurchSelector,
+    darkMode,
+    toggleDarkMode,
+  } = useApp();
+
+  const [isHovered, setIsHovered] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const isExpanded = !isCollapsed || isHovered;
   const authResolved = isHydrated && !authLoading;
 
   useEffect(() => {
@@ -207,7 +226,7 @@ export function AppLayout() {
   const showChurchSelectorPanel = rol !== "super_admin";
   const fullName = `${usuarioActual.nombres} ${usuarioActual.apellidos}`;
   const initials = `${usuarioActual.nombres.charAt(0)}${usuarioActual.apellidos.charAt(0)}`;
-  const sidebarWidth = isCollapsed ? "w-[72px]" : "w-64";
+  const sidebarWidth = isExpanded ? "w-72" : "w-[78px]";
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -228,24 +247,38 @@ export function AppLayout() {
 
         {/* Sidebar */}
         <aside
-          className={`fixed lg:static inset-y-0 left-0 z-40 ${sidebarWidth} bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 ease-in-out ${
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className={`fixed lg:static inset-y-0 left-0 z-40 ${sidebarWidth} bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) shadow-[4px_0_24px_rgba(0,0,0,0.3)] border-r border-sidebar-border/30 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           }`}
         >
           {/* Sidebar Header */}
-          <div className="h-20 flex items-center px-5 border-b border-sidebar-border shrink-0 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
-            {!isCollapsed ? (
-              <div className="flex items-center gap-4 flex-1 min-w-0 relative z-10">
-                <SEILogo className="w-16 h-16 shrink-0 drop-shadow-lg group-hover:scale-110 transition-transform duration-500" />
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-[17px] font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-200 tracking-tight drop-shadow-sm">S.E.I.</h3>
-                  <p className="text-[10px] font-bold text-cyan-400/80 uppercase tracking-[0.2em] mt-0.5">Soporte Estr.</p>
-                </div>
-              </div>
-            ) : (
-              <SEILogo className="w-14 h-14 drop-shadow-lg group-hover:scale-110 transition-transform duration-500" />
-            )}
+          <div className="h-28 flex items-center px-4 border-b border-sidebar-border/30 shrink-0 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/10 to-transparent pointer-events-none" />
+            <AnimatePresence mode="wait">
+              {isExpanded ? (
+                <motion.div 
+                  key="expanded-header"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="flex items-center justify-center flex-1 min-w-0 relative z-10 w-full h-full"
+                >
+                  <img src={darkMode ? logoLight : logoDark} alt="SEI Logo" className="h-22 w-auto max-w-[90%] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key="collapsed-header"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="w-full h-full flex justify-center items-center"
+                >
+                  <img src={darkMode ? logoLight : logoDark} alt="SEI Logo" className="h-22 w-auto max-w-[85%] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
+                </motion.div>
+              )}
+            </AnimatePresence>
             <button
               onClick={toggleSidebar}
               className="lg:hidden text-sidebar-foreground/60 hover:text-white ml-2 relative z-10"
@@ -255,135 +288,137 @@ export function AppLayout() {
           </div>
 
           {/* Church Selector */}
-          {showChurchSelectorPanel && !isCollapsed && (
-            <div className="px-3 py-4 border-b border-sidebar-border/50 bg-gradient-to-b from-sidebar-accent/40 to-transparent">
-              <div className="relative">
-                <button
-                  onClick={() => setShowChurchSelector(!showChurchSelector)}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold text-sidebar-foreground bg-gradient-to-r from-sidebar-primary/20 to-sidebar-primary/10 hover:from-sidebar-primary/30 hover:to-sidebar-primary/20 transition-all duration-300 border border-sidebar-primary/30 hover:border-sidebar-primary/50 shadow-sm hover:shadow-md group"
-                >
-                  <Building2 className="w-5 h-5 text-sidebar-primary shrink-0 group-hover:scale-110 transition-transform" />
-                  <span className="flex-1 text-left truncate">
-                    {iglesiaActual?.nombre || "Seleccionar iglesia"}
-                  </span>
-                  <ChevronDown className={`w-5 h-5 text-sidebar-primary/70 shrink-0 transition-all duration-300 ${showChurchSelector ? "rotate-180 text-sidebar-primary" : ""}`} />
-                </button>
-                <AnimatePresence>
-                  {showChurchSelector && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8, scaleY: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scaleY: 1 }}
-                      exit={{ opacity: 0, y: -8, scaleY: 0.9 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-sidebar-accent rounded-xl border border-sidebar-primary/30 shadow-2xl z-50 overflow-hidden origin-top backdrop-blur-sm"
+          {showChurchSelectorPanel && (
+            <div className={`px-3 py-4 border-b border-sidebar-border/30 bg-gradient-to-b from-sidebar-accent/20 to-transparent transition-all duration-500 ${!isExpanded ? "flex justify-center" : ""}`}>
+              {isExpanded ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowChurchSelector(!showChurchSelector)}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold text-sidebar-foreground bg-white/[0.03] hover:bg-white/[0.08] transition-all duration-300 border border-white/[0.05] hover:border-sidebar-primary/40 shadow-inner group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-sidebar-primary/20 flex items-center justify-center shrink-0 group-hover:bg-sidebar-primary/30 transition-colors">
+                      <Building2 className="w-4 h-4 text-sidebar-primary group-hover:scale-110 transition-transform" />
+                    </div>
+                    <span className="flex-1 text-left truncate tracking-tight">
+                      {iglesiaActual?.nombre || "Seleccionar iglesia"}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-sidebar-primary/70 shrink-0 transition-all duration-300 ${showChurchSelector ? "rotate-180 text-sidebar-primary" : ""}`} />
+                  </button>
+                  <AnimatePresence>
+                    {showChurchSelector && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="absolute top-full left-0 right-0 mt-2 bg-[#0f172a] rounded-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 overflow-hidden origin-top backdrop-blur-xl"
+                      >
+                        <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                          {iglesiasDelUsuario.map((ig) => (
+                            <button
+                              key={ig.id}
+                              onClick={() => {
+                                setIglesiaActual(ig);
+                                setShowChurchSelector(false);
+                              }}
+                              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-3 mb-1 last:mb-0 ${
+                                ig.id === iglesiaActual?.id
+                                  ? "text-white bg-gradient-to-r from-sidebar-primary to-blue-600 shadow-lg"
+                                  : "text-sidebar-foreground/70 hover:bg-white/5 hover:text-white"
+                              }`}
+                            >
+                              <div className={`w-2 h-2 rounded-full shrink-0 transition-all ${ig.id === iglesiaActual?.id ? "bg-white scale-100" : "bg-white/20 scale-75"}`} />
+                              {ig.nombre}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setShowChurchSelector(!showChurchSelector)}
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center bg-sidebar-primary/10 border border-sidebar-primary/20 text-sidebar-primary hover:bg-sidebar-primary/20 transition-all"
                     >
-                      <div className="p-2">
-                        {iglesiasDelUsuario.map((ig) => (
-                          <button
-                            key={ig.id}
-                            onClick={() => {
-                              setIglesiaActual(ig);
-                              setShowChurchSelector(false);
-                            }}
-                            className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-3 mb-1 last:mb-0 ${
-                              ig.id === iglesiaActual?.id
-                                ? "text-white bg-gradient-to-r from-sidebar-primary to-sidebar-primary/80 shadow-md"
-                                : "text-sidebar-foreground hover:bg-sidebar-primary/10 hover:text-sidebar-primary"
-                            }`}
-                          >
-                            <div className={`w-2 h-2 rounded-full shrink-0 transition-all ${ig.id === iglesiaActual?.id ? "bg-white scale-100" : "bg-sidebar-foreground/40 scale-75"}`} />
-                            {ig.nombre}
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                      <Building2 className="w-5 h-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="font-bold">
+                    {iglesiaActual?.nombre || "Cambiar Iglesia"}
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
           )}
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {navGroups.map((group, groupIndex) => (
-              <div key={group.section}>
-                {group.section && !isCollapsed && (
-                  <p className={`text-[10px] font-black uppercase tracking-[0.25em] text-sidebar-foreground/40 px-3 mb-2 ${groupIndex > 0 ? "mt-6" : ""}`}>
-                    {group.section}
-                  </p>
-                )}
-                {isCollapsed && group.section && groupIndex > 0 && <div className="w-8 h-[2px] rounded-full bg-sidebar-foreground/10 mx-auto my-4" />}
-                <div className="space-y-1">
+              <div key={group.section} className="space-y-2">
+                <AnimatePresence mode="popLayout">
+                  {group.section && isExpanded && (
+                    <motion.p 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400/50 px-3 mb-3"
+                    >
+                      {group.section}
+                    </motion.p>
+                  )}
+                  {!isExpanded && groupIndex > 0 && (
+                    <motion.div 
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      className="w-8 h-[1px] bg-white/10 mx-auto mb-4" 
+                    />
+                  )}
+                </AnimatePresence>
+                
+                <div className="space-y-1.5">
                   {group.items.map((item) => {
                     const isActive =
                       location.pathname === item.path ||
                       (item.path !== "/" && location.pathname.startsWith(item.path));
                     const isNotif = item.label === "Notificaciones";
 
-                    const navButtonContent = (
-                      <>
-                        <span className="shrink-0">{item.icon}</span>
-                        {!isCollapsed && (
-                          <>
-                            <span className="flex-1 text-left truncate">{item.label}</span>
-                            {isNotif && unreadCount > 0 && (
-                              <span className="bg-red-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                                {unreadCount}
-                              </span>
-                            )}
-                          </>
-                        )}
-                        {isCollapsed && isNotif && unreadCount > 0 && (
-                          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
-                            {unreadCount}
-                          </span>
-                        )}
-                      </>
-                    );
-
-                    if (isCollapsed) {
+                    if (!isExpanded) {
                       return (
                         <Tooltip key={item.path}>
                           <TooltipTrigger asChild>
-                            <div className="relative group/nav mb-1 w-full">
+                            <div className="relative group/nav w-full flex justify-center">
                               <button
                                 onClick={() => {
                                   navigate(item.path);
                                   if (window.innerWidth < 1024) toggleSidebar();
                                 }}
-                                className={`w-full flex items-center justify-center gap-3 px-2 py-3 rounded-2xl text-sm transition-all duration-300 relative overflow-hidden focus:outline-none ${
-                                  isActive ? "text-white" : "text-sidebar-foreground/60"
+                                className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative overflow-hidden focus:outline-none ${
+                                  isActive 
+                                    ? "text-white bg-gradient-to-br from-sidebar-primary to-blue-600 shadow-[0_8px_20px_rgba(26,127,168,0.4)]" 
+                                    : "text-sidebar-foreground/40 hover:text-cyan-400 hover:bg-white/[0.05]"
                                 }`}
                               >
-                                {isActive && (
-                                  <motion.div
-                                    layoutId="active-nav-bg"
-                                    className="absolute inset-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] rounded-2xl z-0 shadow-[0_4px_25px_rgba(70,157,189,0.3)] overflow-hidden"
-                                    initial={false}
-                                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                                  >
-                                  </motion.div>
-                                )}
-                                {!isActive && (
-                                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-900/30 to-blue-900/10 opacity-0 group-hover/nav:opacity-100 transition-all duration-500 rounded-2xl z-0 border border-cyan-500/0 group-hover/nav:border-cyan-500/20 scale-95 group-hover/nav:scale-100" />
-                                )}
-                                <span className={`relative z-10 shrink-0 transition-transform duration-500 ${isActive ? "scale-125 text-white" : "group-hover/nav:scale-125 group-hover/nav:text-cyan-400 group-hover/nav:drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"}`}>
+                                <span className={`relative z-10 transition-transform duration-500 ${isActive ? "scale-110" : "group-hover/nav:scale-110"}`}>
                                   {item.icon}
                                 </span>
-                                {isCollapsed && isNotif && unreadCount > 0 && (
-                                  <span className="absolute top-1.5 right-1.5 z-10 bg-red-500 outline outline-2 outline-sidebar text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                                {isNotif && unreadCount > 0 && (
+                                  <span className="absolute top-2 right-2 z-10 bg-red-500 outline outline-2 outline-sidebar text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold animate-pulse">
                                     {unreadCount}
                                   </span>
                                 )}
                               </button>
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5 bg-gradient-to-r from-[#709dbd] to-[#4682b4] text-white border-none shadow-[0_0_20px_rgba(70,157,189,0.4)]">
+                          <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5 bg-[#0f172a] text-white border-white/10 shadow-2xl">
                             {item.label}
                           </TooltipContent>
                         </Tooltip>
                       );
                     }
+
                     return (
                       <button
                         key={item.path}
@@ -392,29 +427,28 @@ export function AppLayout() {
                           if (window.innerWidth < 1024) toggleSidebar();
                         }}
                         className={`group/nav w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm transition-all duration-300 relative overflow-hidden focus:outline-none ${
-                          isActive ? "text-white" : "text-sidebar-foreground/60"
+                          isActive ? "text-white shadow-lg" : "text-sidebar-foreground/60 hover:text-white"
                         }`}
                       >
                         {isActive && (
                           <motion.div
                             layoutId="active-nav-bg"
-                            className="absolute inset-0 bg-gradient-to-r from-[#1a7fa8] to-[#1a7fa8] rounded-2xl z-0 shadow-[0_4px_25px_rgba(26,127,168,0.3)] overflow-hidden"
+                            className="absolute inset-0 bg-gradient-to-r from-sidebar-primary to-blue-600 z-0"
                             initial={false}
-                            transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                          >
-                          </motion.div>
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          />
                         )}
                         {!isActive && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-cyan-900/30 to-blue-900/10 opacity-0 group-hover/nav:opacity-100 transition-all duration-500 rounded-2xl z-0 border border-cyan-500/0 group-hover/nav:border-cyan-500/20 scale-95 group-hover/nav:scale-100" />
+                          <div className="absolute inset-0 bg-white/[0.03] opacity-0 group-hover/nav:opacity-100 transition-opacity duration-300 z-0" />
                         )}
-                        <span className={`relative z-10 shrink-0 transition-transform duration-500 ${isActive ? "scale-125 text-white" : "group-hover/nav:scale-125 group-hover/nav:text-cyan-400 group-hover/nav:drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"}`}>
+                        <span className={`relative z-10 shrink-0 transition-all duration-500 ${isActive ? "scale-110 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : "group-hover/nav:scale-110 group-hover/nav:text-cyan-400"}`}>
                           {item.icon}
                         </span>
-                        <span className={`relative z-10 flex-1 text-left truncate transition-all duration-500 ${isActive ? "font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70" : "font-semibold tracking-wide group-hover/nav:translate-x-1.5 group-hover/nav:text-white"}`}>
+                        <span className={`relative z-10 flex-1 text-left truncate transition-all duration-300 ${isActive ? "font-black tracking-tight" : "font-bold tracking-tight group-hover/nav:translate-x-1"}`}>
                           {item.label}
                         </span>
                         {isNotif && unreadCount > 0 && (
-                          <span className="relative z-10 bg-red-500 text-white text-[10px] rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 font-bold shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">
+                          <span className="relative z-10 bg-red-500 text-white text-[10px] rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 font-bold shadow-lg animate-pulse">
                             {unreadCount}
                           </span>
                         )}
@@ -427,18 +461,27 @@ export function AppLayout() {
           </nav>
 
           {/* Collapse Toggle (desktop only) */}
-          <div className={`hidden lg:flex py-4 border-t border-sidebar-border mt-auto shrink-0 transition-all ${isCollapsed ? "justify-center" : "px-4"}`}>
+          <div className={`hidden lg:flex py-6 border-t border-sidebar-border/30 mt-auto shrink-0 transition-all duration-500 ${!isExpanded ? "justify-center" : "px-6"}`}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setIsCollapsed(!isCollapsed)}
-                  className="w-10 h-10 rounded-xl bg-sidebar-accent/30 flex items-center justify-center text-sidebar-foreground/60 hover:text-white hover:bg-sidebar-accent transition-all duration-300 outline-none"
+                  className={`flex items-center justify-center transition-all duration-500 outline-none ${
+                    !isExpanded 
+                    ? "w-12 h-12 rounded-2xl bg-white/[0.03] text-sidebar-foreground/40 hover:text-white hover:bg-white/10" 
+                    : "gap-3 px-4 py-3 rounded-2xl bg-white/[0.03] text-sidebar-foreground/60 hover:text-white hover:bg-white/10 w-full"
+                  }`}
                 >
-                  {isCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+                  {isCollapsed ? <PanelLeftOpen className="w-5 h-5 shrink-0" /> : <PanelLeftClose className="w-5 h-5 shrink-0" />}
+                  {isExpanded && (
+                    <span className="text-sm font-bold truncate">
+                      {isCollapsed ? "Fijar Menú" : "Contraer Menú"}
+                    </span>
+                  )}
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5">
-                {isCollapsed ? "Expandir Menú" : "Ocultar Menú"}
+                {isCollapsed ? "Expandir y Fijar" : "Permitir auto-contraer"}
               </TooltipContent>
             </Tooltip>
           </div>
