@@ -611,6 +611,16 @@ export function UsuariosPage() {
               </p>
             </div>
             <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Fecha de Nacimiento</label>
+              <Input
+                type="date"
+                value={inviteForm.fechaNacimiento}
+                onChange={e => setInviteForm(p => ({ ...p, fechaNacimiento: e.target.value }))}
+                className="bg-input-background"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Opcional</p>
+            </div>
+            <div>
               <label className="text-sm text-muted-foreground mb-1 block">Iglesia {isAdminIglesia && '(Tu iglesia)'} *</label>
               <Select
                 value={inviteForm.idIglesia ? String(inviteForm.idIglesia) : ""}
