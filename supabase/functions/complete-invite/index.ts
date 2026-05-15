@@ -89,17 +89,14 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Asignar rol
-    const targetTable = inviteToken.id_sede ? 'usuario_rol_sede' : 'usuario_rol'
-    const { error: rolError } = await supabaseAdmin
-      .from(targetTable)
-      .insert({
-        id_usuario: usuario.id_usuario,
-        id_rol: inviteToken.id_rol,
-        id_iglesia: inviteToken.id_iglesia,
-        id_sede: inviteToken.id_sede || null,
-        fecha_inicio: new Date().toISOString().split('T')[0],
-      })
+    // Asignar rol e insertar en miembro_ministerio si aplica (atómico via RPC)
+    const { error: rolError } = await supabaseAdmin.rpc('assign_role_with_ministerio', {
+      p_id_usuario:    usuario.id_usuario,
+      p_id_rol:        inviteToken.id_rol,
+      p_id_iglesia:    inviteToken.id_iglesia,
+      p_id_sede:       inviteToken.id_sede ?? null,
+      p_id_ministerio: inviteToken.id_ministerio ?? null,
+    })
 
     if (rolError) {
       console.error('Error assigning role:', rolError)
