@@ -74,8 +74,8 @@ export function CumpleanosPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Cumpleanos</h1>
-        <p className="text-muted-foreground">Gestiona los cumpleanos de los miembros de tu comunidad</p>
+        <h1 className="text-3xl font-bold text-foreground">Cumpleaños</h1>
+        <p className="text-muted-foreground">Gestiona los cumpleaños de los miembros de tu comunidad</p>
       </div>
 
       <div className="flex gap-4 items-center flex-wrap">
