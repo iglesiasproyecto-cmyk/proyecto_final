@@ -20,7 +20,6 @@ export async function createEvaluacion(evaluacion: any) {
       titulo: evaluacion.titulo,
       descripcion: evaluacion.descripcion,
       id_aula_modulo: evaluacion.idModulo,
-      estado: 'borrador',
       orden: evaluacion.orden || 1
     }])
     .select()
@@ -36,7 +35,6 @@ export async function updateEvaluacion(id: number, evaluacion: any) {
     .update({
       titulo: evaluacion.titulo,
       descripcion: evaluacion.descripcion,
-      estado: evaluacion.estado,
       orden: evaluacion.orden
     })
     .eq('id_aula_evaluacion', id)
@@ -50,7 +48,7 @@ export async function updateEvaluacion(id: number, evaluacion: any) {
 export async function deleteEvaluacion(id: number) {
   const { error } = await supabase
     .from('aula_evaluacion')
-    .update({ activo: false })
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id_aula_evaluacion', id)
 
   if (error) throw error
@@ -98,9 +96,10 @@ export async function crearPregunta(data: {
     .from('aula_pregunta')
     .insert([{
       id_aula_evaluacion: data.idEvaluacion,
+      enunciado: data.pregunta,
       pregunta: data.pregunta,
+      tipo: data.tipoPregunta,
       tipo_pregunta: data.tipoPregunta,
-      opciones: data.opciones || null,
       respuesta_correcta: data.respuestaCorrecta || null,
       orden: data.orden || 1
     }])
@@ -115,9 +114,10 @@ export async function actualizarPregunta(idPregunta: number, data: any) {
   const { data: pregunta, error } = await supabase
     .from('aula_pregunta')
     .update({
+      enunciado: data.pregunta,
       pregunta: data.pregunta,
+      tipo: data.tipoPregunta,
       tipo_pregunta: data.tipoPregunta,
-      opciones: data.opciones,
       respuesta_correcta: data.respuestaCorrecta,
       orden: data.orden
     })
@@ -150,6 +150,7 @@ export async function crearOpcion(data: {
     .from('aula_opcion')
     .insert([{
       id_aula_pregunta: data.idPregunta,
+      texto: data.opcion,
       opcion: data.opcion,
       es_correcta: data.esCorrecta || false,
       orden: data.orden || 1
@@ -165,6 +166,7 @@ export async function actualizarOpcion(idOpcion: number, data: any) {
   const { data: opcion, error } = await supabase
     .from('aula_opcion')
     .update({
+      texto: data.opcion,
       opcion: data.opcion,
       es_correcta: data.esCorrecta,
       orden: data.orden
@@ -198,7 +200,6 @@ export async function iniciarIntento(data: {
     .insert([{
       id_usuario: data.idUsuario,
       id_aula_evaluacion: data.idEvaluacion,
-      estado: 'en_progreso',
       numero_intento: 1, // TODO: Calculate actual attempt number
       iniciado_en: new Date().toISOString()
     }])
@@ -221,7 +222,8 @@ export async function registrarRespuesta(data: {
       id_aula_intento_evaluacion: data.idIntento,
       id_aula_pregunta: data.idPregunta,
       id_aula_opcion: data.idOpcion || null,
-      respuesta_texto: data.respuestaTexto || null
+      respuesta_texto: data.respuestaTexto || null,
+      respuesta: data.respuestaTexto || null
     }])
     .select()
     .single()

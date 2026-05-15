@@ -104,7 +104,6 @@ export async function getCursosParaUsuario(): Promise<AulaCursoEnriquecido[]> {
       ministerio:id_ministerio(nombre),
       iglesia:id_iglesia(nombre)
     `)
-    .eq('estado', 'activo')
     .order('creado_en', { ascending: false })
 
   if (error) throw error
