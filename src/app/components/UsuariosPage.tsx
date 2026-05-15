@@ -69,10 +69,18 @@ export function UsuariosPage() {
     apellidos: "",
     idIglesia: iglesiaActual?.id ?? 0,
     idRol: 0,
-    idSede: 0,
-    idMinisterio: 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
-  const resetInviteForm = () => setInviteForm({ correo: "", nombres: "", apellidos: "", idIglesia: iglesiaActual?.id ?? 0, idRol: 0, idSede: 0, idMinisterio: 0 });
+  const resetInviteForm = () => setInviteForm({
+    correo: "",
+    nombres: "",
+    apellidos: "",
+    idIglesia: iglesiaActual?.id ?? 0,
+    idRol: 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0
+  });
 
   // Assign role form state
   const [assignForm, setAssignForm] = useState({
@@ -595,17 +603,26 @@ export function UsuariosPage() {
             {inviteForm.idIglesia > 0 && (
               <div>
                 <label className="text-sm text-muted-foreground mb-1 block">Sede{roleNeedsSede(inviteForm.idRol) ? ' *' : ''}</label>
-                <Select
-                  value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
-                  onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
-                >
-                  <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
-                  <SelectContent>
-                    {sedesInvite.map(sd => (
-                      <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Show sede selector only if not admin_sede and not lider */}
+                {!isAdminSede && !isLider && (
+                  <Select
+                    value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
+                    onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
+                  >
+                    <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
+                    <SelectContent>
+                      {sedesInvite.map(sd => (
+                        <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {/* Show as text if admin_sede */}
+                {isAdminSede && (
+                  <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                    Sede: {sedesDelUsuario.find(s => s.id === inviteForm.idSede)?.nombre}
+                  </div>
+                )}
               </div>
             )}
             <div>
@@ -617,10 +634,7 @@ export function UsuariosPage() {
                 <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar rol..." /></SelectTrigger>
                 <SelectContent>
                   {roles
-                    .filter(r => {
-                      if (isSuperAdmin) return true;
-                      return r.nombre !== 'Super Administrador';
-                    })
+                    .filter(role => canAssignRole(role.idRol))
                     .map(r => (
                       <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
                     ))}
@@ -631,21 +645,30 @@ export function UsuariosPage() {
               <div className="space-y-3">
                 <div>
                   <label className="text-sm text-muted-foreground mb-1 block">Ministerio *</label>
-                  <Select
-                    value={inviteForm.idMinisterio ? String(inviteForm.idMinisterio) : ""}
-                    onValueChange={v => setInviteForm(p => ({ ...p, idMinisterio: Number(v) }))}
-                  >
-                    <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
-                    <SelectContent>
-                      {ministeriosInviteFiltered.length > 0 ? (
-                        ministeriosInviteFiltered.map(m => (
-                          <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
-                        ))
-                      ) : (
-                        <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  {/* Show ministerio selector only if not lider */}
+                  {!isLider && (
+                    <Select
+                      value={inviteForm.idMinisterio ? String(inviteForm.idMinisterio) : ""}
+                      onValueChange={v => setInviteForm(p => ({ ...p, idMinisterio: Number(v) }))}
+                    >
+                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
+                      <SelectContent>
+                        {ministeriosInviteFiltered.length > 0 ? (
+                          ministeriosInviteFiltered.map(m => (
+                            <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {/* Show as text if lider */}
+                  {isLider && (
+                    <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                      Ministerio: {ministeriosDelUsuario.find(m => m.id === inviteForm.idMinisterio)?.nombre}
+                    </div>
+                  )}
                 </div>
                 <p className="text-[11px] text-muted-foreground bg-accent/30 px-2 py-1.5 rounded">
                   Para Lider/Servidor la persona debe pertenecer a un ministerio de la sede.
