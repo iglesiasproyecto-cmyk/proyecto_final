@@ -81,7 +81,10 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
   }, [ministeriosFiltrados.length])
 
   const onSubmit = async (data: FormData) => {
-    if (!user?.id || !internalUserId) return
+    if (!user?.id || !internalUserId) {
+      toast.error('Tu sesión aún se está inicializando. Intenta de nuevo en unos segundos.')
+      return
+    }
 
     setLoading(true)
     try {
@@ -101,7 +104,8 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
       onOpenChange(false)
     } catch (error) {
       console.error('Error creating course:', error)
-      toast.error('Error al crear el curso')
+      const message = error instanceof Error ? error.message : 'Error al crear el curso'
+      toast.error(message)
     } finally {
       setLoading(false)
     }

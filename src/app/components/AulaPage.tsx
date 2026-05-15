@@ -3,7 +3,7 @@ import { LiderAulaPage } from './LiderAulaPage'
 import { ServidorAulaPage } from './ServidorAulaPage'
 import { AdminAulaPage } from './AdminAulaPage'
 import { Alert, AlertDescription } from '@/app/components/ui/alert'
-import { GraduationCap, Sparkles } from 'lucide-react'
+import { GraduationCap, Sparkles, ShieldCheck, BookOpenCheck } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useMemo } from 'react'
 import { Skeleton } from '@/app/components/ui/skeleton';
@@ -94,6 +94,23 @@ export function AulaPage() {
             <p className="text-muted-foreground mt-1 text-sm md:text-base max-w-2xl font-medium">
               Potenciando el crecimiento espiritual y técnico de nuestros ministerios a través del conocimiento.
             </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-[280px]">
+            <div className="rounded-2xl border border-primary/15 bg-card/60 backdrop-blur-sm px-4 py-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Acceso</p>
+              <p className="mt-1 text-sm font-semibold text-foreground flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                {stableRole ? stableRole.replace('_', ' ') : 'Validando rol...'}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-primary/15 bg-card/60 backdrop-blur-sm px-4 py-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Enfoque</p>
+              <p className="mt-1 text-sm font-semibold text-foreground flex items-center gap-2">
+                <BookOpenCheck className="h-4 w-4 text-primary" />
+                Progreso continuo
+              </p>
+            </div>
           </div>
         </div>
 

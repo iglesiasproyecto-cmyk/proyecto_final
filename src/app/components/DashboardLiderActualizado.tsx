@@ -84,10 +84,13 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
       }, 0) || 0
 
       // Obtener certificados emitidos
-      const { data: certificados } = await supabase
-        .from('aula_certificado')
-        .select('id_aula_certificado')
-        .in('id_aula_curso', cursos?.map(c => c.id_aula_curso) || [])
+      const cursoIds = cursos?.map(c => c.id_aula_curso) || []
+      const { data: certificados } = cursoIds.length
+        ? await supabase
+            .from('aula_certificado')
+            .select('id_aula_certificado')
+            .in('id_aula_curso', cursoIds)
+        : { data: [] as Array<{ id_aula_certificado: number }> }
 
       return {
         totalCursos,
