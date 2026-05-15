@@ -122,6 +122,22 @@ export function UsuariosPage() {
       if (!hasRoleInMyIglesia) return false;
     }
 
+    // If admin_sede, only show users from their sede
+    if (isAdminSede) {
+      const mySede = sedesDelUsuario.find(s => s.id === iglesiaActual?.id);
+      if (!mySede) return false; // Security: no sede context, hide all
+      const hasRoleInMySede = u.roleNames.some(rn => rn.idSede === mySede.id);
+      if (!hasRoleInMySede) return false;
+    }
+
+    // If líder, only show users from their ministerios
+    if (isLider) {
+      const inMyMinisterios = u.minNames.some(mn =>
+        ministeriosDelUsuario.some(m => m.id === mn.idMinisterio)
+      );
+      if (!inMyMinisterios) return false;
+    }
+
     if (search) {
       const q = search.toLowerCase().trim();
       const fullName = `${u.nombres} ${u.apellidos}`.toLowerCase();
