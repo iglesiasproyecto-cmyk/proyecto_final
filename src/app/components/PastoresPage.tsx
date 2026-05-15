@@ -261,25 +261,25 @@ return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10 px-4 md:px-0">
       {/* HEADER */}
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <UserCheck className="w-8 h-8 text-white" />
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <UserCheck className="w-6 h-6 md:w-8 md:h-8 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Estructura</p>
-            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Gestión de Pastores</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[8px] md:text-[10px] mb-0.5">Estructura</p>
+            <h1 className="text-2xl md:text-4xl font-light tracking-tight text-foreground leading-tight">Gestión de Pastores</h1>
           </div>
         </div>
       </motion.div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <div className="flex justify-start overflow-x-auto">
-          <TabsList className="bg-card/40 backdrop-blur-xl border border-white/20 dark:border-white/10 dark:bg-card/20 rounded-2xl h-12 sm:h-14 px-1.5 shadow-sm">
-            <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-10 sm:h-11 px-4 sm:px-6 font-medium text-xs sm:text-sm transition-all text-muted-foreground data-[state=active]:text-white">
-              <span className="hidden sm:inline">Directorio</span><span className="sm:hidden">Pastores</span> ({pastores.length})
+        <div className="flex justify-start overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="bg-card/40 backdrop-blur-xl border border-white/20 dark:border-white/10 dark:bg-card/20 rounded-2xl h-11 sm:h-14 px-1 shadow-sm whitespace-nowrap">
+            <TabsTrigger value="pastores" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-9 sm:h-11 px-4 sm:px-6 font-medium text-[10px] sm:text-sm transition-all text-muted-foreground data-[state=active]:text-white">
+              Directorio ({pastores.length})
             </TabsTrigger>
-            <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-10 sm:h-11 px-4 sm:px-6 font-medium text-xs sm:text-sm transition-all text-muted-foreground data-[state=active]:text-white">
-              Asig. ({sedePastores.filter(sp => !sp.fechaFin).length})
+            <TabsTrigger value="asignaciones" className="rounded-xl data-[state=active]:bg-[#4682b4] data-[state=active]:shadow-sm h-9 sm:h-11 px-4 sm:px-6 font-medium text-[10px] sm:text-sm transition-all text-muted-foreground data-[state=active]:text-white">
+              Asignaciones ({sedePastores.filter(sp => !sp.fechaFin).length})
             </TabsTrigger>
           </TabsList>
         </div>
@@ -297,9 +297,8 @@ return (
                   className="pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
                 />
               </div>
-              <Button onClick={openAddPastor} className="shrink-0 shadow-md shadow-blue-900/20 rounded-full px-4 sm:px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-blue-900/20 text-sm">
-                <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Nuevo Pastor</span>
-                <span className="sm:hidden">Nuevo</span>
+              <Button onClick={openAddPastor} className="w-full sm:w-auto shrink-0 shadow-md shadow-blue-900/20 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 text-xs sm:text-sm h-11">
+                <Plus className="w-4 h-4 mr-2" /> Nuevo Pastor
               </Button>
             </div>
           </motion.div>
