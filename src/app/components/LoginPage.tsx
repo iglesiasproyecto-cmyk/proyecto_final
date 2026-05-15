@@ -121,12 +121,7 @@ export function LoginPage() {
           animate={{ opacity: 1, x: 0 }}
           className="relative z-10 flex items-center gap-6"
         >
-          <SEILogo className="w-24 h-24 filter drop-shadow-lg" />
-          <div className="h-12 w-px bg-white/10" />
-          <div>
-            <h1 className="text-white text-2xl font-bold tracking-widest leading-none">S.E.I.</h1>
-            <p className="text-primary/60 text-[10px] uppercase font-black tracking-[0.2em] mt-2">Soporte Estructural</p>
-          </div>
+          <SEILogo className="w-48 h-48 xl:w-64 xl:h-64 filter drop-shadow-2xl" />
         </motion.div>
 
         {/* Contenido Central */}
@@ -189,7 +184,7 @@ export function LoginPage() {
       </div>
 
       {/* ── SECCIÓN DERECHA: Formulario de Login ── */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
 
         <motion.div
@@ -199,21 +194,19 @@ export function LoginPage() {
           className="w-full max-w-[420px] relative z-10"
         >
           {/* Mobile Header */}
-          <div className="lg:hidden flex flex-col items-center mb-10">
-            <SEILogo className="w-32 h-32 drop-shadow-lg mb-6" />
-            <h1 className="text-2xl font-black tracking-tight leading-none text-foreground">S.E.I.</h1>
-            <p className="text-muted-foreground text-xs mt-1 font-medium italic">Soporte Estructural de Iglesias</p>
+          <div className="lg:hidden flex flex-col items-center mb-6 sm:mb-10">
+            <SEILogo className="w-20 h-20 sm:w-28 sm:h-28 drop-shadow-xl mb-2 sm:mb-6" variant="light-bg" />
           </div>
 
-          <div className="mb-12 text-center lg:text-left">
+          <div className="mb-8 sm:mb-12 text-center lg:text-left px-2 sm:px-0">
             <motion.h2 
               initial={{ opacity: 0, scale: 0.9, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="text-4xl lg:text-5xl font-black tracking-tight leading-none text-foreground"
+              className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-none text-foreground"
             >
               Bienvenido<span className="text-primary">.</span><br />
-              <span className="text-2xl lg:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary/40 leading-normal">
+              <span className="text-xl sm:text-2xl lg:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary/40 leading-normal">
                 Nos alegra verte.
               </span>
             </motion.h2>
@@ -221,7 +214,7 @@ export function LoginPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-muted-foreground text-sm mt-4 font-medium"
+              className="text-muted-foreground text-xs sm:text-sm mt-3 sm:mt-4 font-medium"
             >
               Identifícate para gestionar tu ministerio y equipo hoy.
             </motion.p>

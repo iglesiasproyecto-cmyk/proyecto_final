@@ -61,16 +61,16 @@ export function NotificationsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-10">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 overflow-hidden">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/30 shrink-0">
-            <Bell className="w-8 h-8 text-white" />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 overflow-hidden">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-3xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/30 shrink-0">
+            <Bell className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Mi Bandeja</p>
-            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Notificaciones</h1>
-            <p className="text-foreground text-xs sm:text-sm mt-1">
-              {unreadCount > 0 ? `${unreadCount} notificaciones sin leer` : "Estás al día con tus notificaciones"}
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[8px] sm:text-[10px] mb-0.5">Mi Bandeja</p>
+            <h1 className="text-2xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">Notificaciones</h1>
+            <p className="text-foreground text-[10px] sm:text-sm mt-0.5">
+              {unreadCount > 0 ? `${unreadCount} sin leer` : "Estás al día"}
             </p>
           </div>
         </div>
@@ -81,19 +81,21 @@ export function NotificationsPage() {
         )}
       </motion.div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-        <TabsList className="bg-card/40 backdrop-blur-xl border border-white/10 p-1.5 h-auto rounded-2xl w-full sm:w-auto inline-flex shadow-xl shadow-black/5 flex-wrap gap-1">
-          <TabsTrigger value="todas" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Todas</TabsTrigger>
-          <TabsTrigger value="no_leidas" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
-            Sin leer
-            {unreadCount > 0 && (
-              <span className="ml-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow-sm">{unreadCount}</span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="evento" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Eventos</TabsTrigger>
-          <TabsTrigger value="tarea" className="rounded-xl px-5 py-2.5 text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Tareas</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-card/40 backdrop-blur-xl border border-white/10 p-1 h-auto rounded-2xl inline-flex shadow-xl shadow-black/5 whitespace-nowrap">
+            <TabsTrigger value="todas" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Todas</TabsTrigger>
+            <TabsTrigger value="no_leidas" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+              Sin leer
+              {unreadCount > 0 && (
+                <span className="ml-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-4.5 flex items-center justify-center px-1 shadow-sm">{unreadCount}</span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="evento" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Eventos</TabsTrigger>
+            <TabsTrigger value="tarea" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Tareas</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
       <div className="space-y-2">
         <AnimatePresence mode="popLayout">
@@ -108,7 +110,7 @@ export function NotificationsPage() {
                 transition={{ duration: 0.2, delay: i * 0.02 }}
               >
                 <div
-                  className={`group flex items-start gap-4 p-5 rounded-3xl backdrop-blur-2xl border transition-all duration-300 cursor-pointer hover:-translate-y-1 ${
+                  className={`group flex items-start gap-3 sm:gap-4 p-4 sm:p-5 rounded-3xl backdrop-blur-2xl border transition-all duration-300 cursor-pointer hover:-translate-y-1 ${
                     !n.leida ? "bg-[#4682b4]/5 border-[#4682b4]/20 shadow-lg shadow-blue-900/5" : "bg-card/40 border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl"
                   }`}
                   onClick={() => {

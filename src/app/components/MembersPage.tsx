@@ -138,15 +138,15 @@ export function MembersPage() {
       >
         <div className="absolute top-0 right-0 w-72 h-40 bg-primary/10 rounded-full blur-[80px] pointer-events-none -z-10" />
 
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <Users className="w-8 h-8 text-white" />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Directorio</p>
-            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Miembros</h1>
-            <p className="text-foreground text-xs sm:text-sm mt-1">
-              Gestiona los miembros de los ministerios y sus roles
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[8px] sm:text-[10px] mb-0.5">Directorio</p>
+            <h1 className="text-2xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">Miembros</h1>
+            <p className="text-muted-foreground text-[10px] sm:text-sm mt-0.5">
+              Gestión ministerial de integrantes
             </p>
           </div>
         </div>
@@ -211,22 +211,22 @@ export function MembersPage() {
       </motion.div>
 
       {/* Métricas rápidas */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[
-          { label: "Total Miembros", value: filtered.length, icon: <Users className="w-5 h-5" />, color: "from-[#709dbd] to-[#4682b4]", delay: 0 },
-          { label: "Activos Ahora", value: activeCount, icon: <ShieldCheck className="w-5 h-5" />, color: "from-emerald-500/80 to-teal-600/80", delay: 1 },
-          { label: "Líderes de Red", value: leaderCount, icon: <User className="w-5 h-5" />, color: "from-[#709dbd] to-[#4682b4]", delay: 2 },
+          { label: "Miembros", value: filtered.length, icon: <Users className="w-4 h-4 sm:w-5 sm:h-5" />, color: "from-[#709dbd] to-[#4682b4]" },
+          { label: "Activos", value: activeCount, icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />, color: "from-emerald-500/80 to-teal-600/80" },
+          { label: "Líderes", value: leaderCount, icon: <User className="w-4 h-4 sm:w-5 sm:h-5" />, color: "from-[#709dbd] to-[#4682b4]" },
         ].map((stat, idx) => (
-          <AnimatedCard key={stat.label} index={idx} className="p-4 group">
-            <div className="flex justify-between items-start mb-3">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg text-white`}>
+          <AnimatedCard key={stat.label} index={idx} className={`p-3 sm:p-4 group ${idx === 2 ? "col-span-2 sm:col-span-1" : ""}`}>
+            <div className="flex justify-between items-start mb-2 sm:mb-3">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg text-white`}>
                 {stat.icon}
               </div>
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-[10px] py-0 tracking-widest uppercase">Estadística</Badge>
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-[8px] sm:text-[10px] py-0 tracking-widest uppercase">Info</Badge>
             </div>
             <div>
-              <p className="text-4xl font-light tracking-tight text-foreground">{stat.value}</p>
-              <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{stat.label}</p>
+              <p className="text-2xl sm:text-4xl font-light tracking-tight text-foreground">{stat.value}</p>
+              <p className="text-[9px] sm:text-xs font-bold text-muted-foreground mt-0.5 uppercase tracking-widest">{stat.label}</p>
             </div>
           </AnimatedCard>
         ))}
@@ -261,18 +261,20 @@ export function MembersPage() {
                   className="group flex flex-col md:grid md:grid-cols-[2fr_2fr_1fr_1fr_auto] gap-3 md:gap-4 items-start md:items-center px-6 py-5 hover:bg-white/5 transition-all duration-300"
                 >
                   {/* Avatar + nombre */}
-                  <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 w-full md:w-auto">
                     <div className="relative shrink-0">
-                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white font-bold text-sm shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform">
+                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white font-bold text-sm shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform">
                         {inicial}
                       </div>
                       {mm.activo && (
-                        <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
+                        <span className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[15px] font-bold truncate group-hover:text-blue-500 transition-colors uppercase tracking-tight">{name}</p>
-                      <p className="text-xs text-muted-foreground truncate md:hidden">{email}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] sm:text-[15px] font-bold truncate group-hover:text-blue-500 transition-colors uppercase tracking-tight">{name}</p>
+                      <div className="flex items-center gap-2 md:hidden mt-0.5">
+                        <p className="text-[10px] text-muted-foreground truncate">{email}</p>
+                      </div>
                     </div>
                   </div>
 
@@ -288,17 +290,13 @@ export function MembersPage() {
                     </div>
                   </div>
 
-                  {/* Rol */}
-                  <div>
-                    <Badge variant="outline" className={`${rolColors[rol] ?? rolColors.servidor} border-0 bg-[#4682b4]/10 text-[#4682b4] dark:text-[#709dbd] text-[10px] uppercase font-black tracking-widest px-2.5 py-1 flex items-center gap-1.5 w-fit rounded-lg`}>
+                  {/* Etiquetas Rol/Estado - Fila en móvil */}
+                  <div className="flex items-center gap-2 md:contents">
+                    <Badge variant="outline" className={`${rolColors[rol] ?? rolColors.servidor} border-0 bg-[#4682b4]/10 text-[#4682b4] dark:text-[#709dbd] text-[9px] sm:text-[10px] uppercase font-black tracking-widest px-2 py-0.5 sm:px-2.5 sm:py-1 flex items-center gap-1.5 w-fit rounded-md sm:rounded-lg`}>
                       {rolIcons[rol] ?? rolIcons.servidor}
                       {rolLabels[rol] ?? rol}
                     </Badge>
-                  </div>
-
-                  {/* Estado */}
-                  <div>
-                    <Badge variant="outline" className={`text-[10px] uppercase font-black tracking-widest px-2.5 py-1 border-0 rounded-lg ${mm.activo ? "bg-emerald-500/10 text-emerald-600" : "bg-slate-500/10 text-slate-400"}`}>
+                    <Badge variant="outline" className={`text-[9px] sm:text-[10px] uppercase font-black tracking-widest px-2 py-0.5 sm:px-2.5 sm:py-1 border-0 rounded-md sm:rounded-lg ${mm.activo ? "bg-emerald-500/10 text-emerald-600" : "bg-slate-500/10 text-slate-400"}`}>
                       {mm.activo ? "Activo" : "Inactivo"}
                     </Badge>
                   </div>

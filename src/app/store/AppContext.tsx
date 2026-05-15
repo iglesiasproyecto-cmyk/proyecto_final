@@ -157,7 +157,7 @@ async function fetchRolesRaw(accessToken: string): Promise<any[]> {
         },
         body: '{}',
       },
-      5000
+      3000
     )
     if (res.ok) {
       const data = await res.json()
@@ -209,7 +209,7 @@ async function refreshTenantClaims(accessToken: string): Promise<void> {
         },
         body: '{}',
       },
-      8000
+      3000
     )
   } catch (err: any) {
     console.warn('[AUTH] set-tenant-claims failed:', err.message)
@@ -436,13 +436,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setAuthError(null)
     }
 
-    // Safety timeout: 8 seconds absolute max
+    // Safety timeout: 4 seconds absolute max
     const safetyTimeout = setTimeout(() => {
       if (!loadingResolved) {
-        console.warn('[AUTH] ⚠️ Safety timeout (8s) — forcing authLoading=false')
+        console.warn('[AUTH] ⚠️ Safety timeout (4s) — forcing authLoading=false')
         resolveLoading()
+        // Ensure claims are marked as ready so we can at least show the UI
+        setIsClaimsReady(true)
       }
-    }, 8000)
+    }, 4000)
 
     const hydrateSession = async (session: Session, cycleId: number) => {
       if (isHydratingRef.current && hydratingUserIdRef.current === session.user.id) {
@@ -479,6 +481,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             }
           }
         }
+      } catch (err: any) {
+        console.warn('[AUTH] Background claims refresh failed:', err.message)
       } finally {
         claimsRefreshInFlightRef.current = false
       }
@@ -561,17 +565,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         hydratedUserIdRef.current = authUserId
         hydratedTokenRef.current = token
         setIsClaimsReady(true)
-        if (typeof window !== 'undefined') {
-          const reloadFlag = sessionStorage.getItem('post_login_reload')
-          if (!reloadQueuedRef.current && reloadFlag !== 'pending' && reloadFlag !== 'done') {
-            reloadQueuedRef.current = true
-            sessionStorage.setItem('post_login_reload', 'done')
-            setTimeout(() => {
-              window.location.reload()
-            }, 0)
-            return
-          }
-        }
+        // window.location.reload() logic removed to prevent double load as requested
         resolveLoading()
       } catch (err) {
         console.error('[AUTH] Error loading user data:', err)

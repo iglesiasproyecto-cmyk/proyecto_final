@@ -12,8 +12,7 @@ import {
   Settings, FolderHeart, Globe, UserCheck, Settings2,
   PanelLeftClose, PanelLeftOpen, Moon, Sun, BookOpen
 } from "lucide-react";
-import logoLight from "../../assets/logo-light.png";
-import logoDark from "../../assets/logo-dark.png";
+import { SEILogo } from "./SEILogo";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -226,7 +225,6 @@ export function AppLayout() {
   const navItems = getNavItemsForRole(rol, iglesiaActual);
   const navGroups = groupBySection(navItems);
   const showChurchSelectorPanel = rol !== "super_admin";
-  const fullName = `${usuarioActual.nombres} ${usuarioActual.apellidos}`;
   const initials = `${usuarioActual.nombres.charAt(0)}${usuarioActual.apellidos.charAt(0)}`;
   const sidebarWidth = isExpanded ? "w-72" : "w-[78px]";
 
@@ -257,7 +255,7 @@ export function AppLayout() {
         >
           {/* Sidebar Header */}
           <div className="h-28 flex items-center px-4 border-b border-sidebar-border/30 shrink-0 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/10 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
             <AnimatePresence mode="wait">
               {isExpanded ? (
                 <motion.div 
@@ -267,7 +265,7 @@ export function AppLayout() {
                   exit={{ opacity: 0, x: -10 }}
                   className="flex items-center justify-center flex-1 min-w-0 relative z-10 w-full h-full"
                 >
-                  <img src={darkMode ? logoLight : logoDark} alt="SEI Logo" className="h-22 w-auto max-w-[90%] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
+                  <SEILogo className="w-28 h-28" />
                 </motion.div>
               ) : (
                 <motion.div 
@@ -277,7 +275,7 @@ export function AppLayout() {
                   exit={{ opacity: 0, scale: 0.8 }}
                   className="w-full h-full flex justify-center items-center"
                 >
-                  <img src={darkMode ? logoLight : logoDark} alt="SEI Logo" className="h-22 w-auto max-w-[85%] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
+                  <SEILogo className="w-8 h-8" />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -325,7 +323,7 @@ export function AppLayout() {
                               }}
                               className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-3 mb-1 last:mb-0 ${
                                 ig.id === iglesiaActual?.id
-                                  ? "text-white bg-gradient-to-r from-sidebar-primary to-blue-600 shadow-lg"
+                                  ? "text-white bg-gradient-to-r from-[#709dbd] to-[#4682b4] shadow-lg"
                                   : "text-sidebar-foreground/70 hover:bg-white/5 hover:text-white"
                               }`}
                             >
@@ -366,7 +364,7 @@ export function AppLayout() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
-                      className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400/50 px-3 mb-3"
+                      className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/70 px-3 mb-3"
                     >
                       {group.section}
                     </motion.p>
@@ -399,8 +397,8 @@ export function AppLayout() {
                                 }}
                                 className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative overflow-hidden focus:outline-none ${
                                   isActive 
-                                    ? "text-white bg-gradient-to-br from-sidebar-primary to-blue-600 shadow-[0_8px_20px_rgba(26,127,168,0.4)]" 
-                                    : "text-sidebar-foreground/40 hover:text-cyan-400 hover:bg-white/[0.05]"
+                                    ? "text-white bg-gradient-to-br from-[#709dbd] to-[#4682b4] shadow-lg shadow-blue-900/40" 
+                                    : "text-sidebar-foreground/40 hover:text-primary hover:bg-white/[0.05]"
                                 }`}
                               >
                                 <span className={`relative z-10 transition-transform duration-500 ${isActive ? "scale-110" : "group-hover/nav:scale-110"}`}>
@@ -429,13 +427,13 @@ export function AppLayout() {
                           if (window.innerWidth < 1024) toggleSidebar();
                         }}
                         className={`group/nav w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm transition-all duration-300 relative overflow-hidden focus:outline-none ${
-                          isActive ? "text-white shadow-lg" : "text-sidebar-foreground/60 hover:text-white"
+                          isActive ? "text-white shadow-lg shadow-blue-900/40" : "text-sidebar-foreground/60 hover:text-white"
                         }`}
                       >
                         {isActive && (
                           <motion.div
                             layoutId="active-nav-bg"
-                            className="absolute inset-0 bg-gradient-to-r from-sidebar-primary to-blue-600 z-0"
+                            className="absolute inset-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] z-0"
                             initial={false}
                             transition={{ type: "spring", stiffness: 400, damping: 30 }}
                           />
@@ -443,7 +441,7 @@ export function AppLayout() {
                         {!isActive && (
                           <div className="absolute inset-0 bg-white/[0.03] opacity-0 group-hover/nav:opacity-100 transition-opacity duration-300 z-0" />
                         )}
-                        <span className={`relative z-10 shrink-0 transition-all duration-500 ${isActive ? "scale-110 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : "group-hover/nav:scale-110 group-hover/nav:text-cyan-400"}`}>
+                        <span className={`relative z-10 shrink-0 transition-all duration-500 ${isActive ? "scale-110 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : "group-hover/nav:scale-110 group-hover/nav:text-primary"}`}>
                           {item.icon}
                         </span>
                         <span className={`relative z-10 flex-1 text-left truncate transition-all duration-300 ${isActive ? "font-black tracking-tight" : "font-bold tracking-tight group-hover/nav:translate-x-1"}`}>
