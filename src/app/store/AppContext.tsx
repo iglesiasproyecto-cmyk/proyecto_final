@@ -20,6 +20,7 @@ interface AppState {
   setIglesiaActual: (ig: { id: number; nombre: string } | null) => void
   iglesiasDelUsuario: { id: number; nombre: string }[]
   sedesDelUsuario: { id: number; nombre: string }[]
+  ministeriosDelUsuario: { id: number; nombre: string; idSede: number }[]
   rolActual: string
   sidebarOpen: boolean
   notificacionesCount: number
@@ -170,6 +171,34 @@ async function fetchRolesRaw(accessToken: string): Promise<any[]> {
   return []
 }
 
+/** Fetch ministerios where user is líder */
+async function fetchMinisteriosRaw(accessToken: string): Promise<any[] | null> {
+  const headers = {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${accessToken}`,
+  }
+
+  try {
+    console.log('[AUTH] Fetching ministerios where user is líder...')
+    const res = await fetchWithTimeout(
+      `${SUPABASE_URL}/rest/v1/rpc/get_my_ministerios`,
+      { method: 'POST', headers, body: '{}' },
+      5000
+    )
+    if (res.ok) {
+      const ministerios = await res.json()
+      console.log('[AUTH] Ministerios fetched:', ministerios.length)
+      return Array.isArray(ministerios) ? ministerios : []
+    }
+    console.warn('[AUTH] get_my_ministerios returned', res.status)
+    return []
+  } catch (err) {
+    console.warn('[AUTH] Failed to fetch ministerios:', err)
+    return []
+  }
+}
+
 /** Fetch unread notification count via RPC */
 async function fetchNotifCountRaw(accessToken: string): Promise<number> {
   try {
@@ -250,6 +279,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [iglesiaActual, setIglesiaActual] = useState<{ id: number; nombre: string } | null>(null)
   const [iglesiasDelUsuario, setIglesiasDelUsuario] = useState<{ id: number; nombre: string }[]>([])
   const [sedesDelUsuario, setSedesDelUsuario] = useState<{ id: number; nombre: string }[]>([])
+  const [ministeriosDelUsuario, setMinisteriosDelUsuario] = useState<{ id: number; nombre: string; idSede: number }[]>([])
   const [rolActual, setRolActual] = useState<string>('')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [notificacionesCount, setNotificacionesCount] = useState(0)
@@ -375,6 +405,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIglesiaActual(null)
     setIglesiasDelUsuario([])
     setSedesDelUsuario([])
+    setMinisteriosDelUsuario([])
     setRolActual('')
     setIsClaimsReady(false)
     setAuthError(null)
@@ -519,9 +550,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           actualizadoEn: data.updated_at,
         })
 
-        const [notifCount, roles] = await Promise.all([
+        const [notifCount, roles, ministerios] = await Promise.all([
           fetchNotifCountRaw(token),
           fetchRolesRaw(token),
+          fetchMinisteriosRaw(token),
         ])
         if (cycleId !== authCycleRef.current) return
 
@@ -556,6 +588,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         })
         const sedes = Array.from(sedesMap.entries()).map(([id, nombre]) => ({ id, nombre }))
         setSedesDelUsuario(sedes)
+
+        const ministeriosData = (ministerios || []).map((m: any) => ({
+          id: m.idMinisterio,
+          nombre: m.ministerioNombre,
+          idSede: m.idSede,
+        }))
+        setMinisteriosDelUsuario(ministeriosData)
 
         console.log('[AUTH] ✅ Fully loaded — role:', derivedRol, '— iglesias:', iglesias.length)
         hydratedUserIdRef.current = authUserId
@@ -719,6 +758,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIglesiaActual,
         iglesiasDelUsuario,
         sedesDelUsuario,
+        ministeriosDelUsuario,
         rolActual,
         sidebarOpen,
         notificacionesCount,
