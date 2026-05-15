@@ -4,11 +4,11 @@
  */
 
 export const ROLE_IDS = {
-  SUPER_ADMIN: 25,
-  ADMIN_IGLESIA: 26,
-  LIDER: 27,
-  SERVIDOR: 28,
-  ADMIN_SEDE: 33,
+  SUPER_ADMIN: 1,
+  ADMIN_IGLESIA: 2,
+  LIDER: 3,
+  SERVIDOR: 4,
+  ADMIN_SEDE: 9,
 } as const;
 
 export const ROLE_LABELS: Record<keyof typeof ROLE_IDS, string> = {
@@ -36,11 +36,12 @@ export type RolSlug = 'super_admin' | 'admin_iglesia' | 'admin_sede' | 'lider' |
  * Mapeo de ID a slug (para convertir entre formatos)
  */
 export const ROLE_ID_TO_SLUG: Record<number, RolSlug | undefined> = {
-  25: 'super_admin',
-  26: 'admin_iglesia',
-  27: 'lider',
-  28: 'servidor',
-  33: 'admin_sede',
+  1: 'super_admin',
+  2: 'admin_iglesia',
+  3: 'lider',
+  4: 'servidor',
+  9: 'admin_sede',
+  13: 'lider',
 } as const;
 
 /**
