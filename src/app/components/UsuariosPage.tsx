@@ -334,11 +334,6 @@ export function UsuariosPage() {
             <span className="sm:hidden">Limpiar</span>
           </Button>
         </div>
-          <Button variant="ghost" className="h-10 rounded-xl text-xs whitespace-nowrap" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); }}>
-            <span className="hidden sm:inline">Limpiar filtros</span>
-            <span className="sm:hidden">Limpiar</span>
-          </Button>
-        </div>
       </motion.div>
 
       <Card>
