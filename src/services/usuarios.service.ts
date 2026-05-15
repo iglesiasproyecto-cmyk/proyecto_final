@@ -9,6 +9,7 @@ type UsuarioRolRow = Database['public']['Tables']['usuario_rol']['Row']
 type UsuarioRolSedeRow = Database['public']['Tables']['usuario_rol_sede']['Row']
 
 type UsuarioRolSource = 'usuario_rol' | 'usuario_rol_sede'
+const PROTECTED_SUPER_EMAIL = 'super@test.dev'
 
 function mapRol(r: RolRow): Rol {
   return {
@@ -229,6 +230,20 @@ export async function assignRol(data: {
 export async function removeRol(params: { idUsuarioRol: number; source: UsuarioRolSource }): Promise<void> {
   const table = params.source === 'usuario_rol_sede' ? 'usuario_rol_sede' : 'usuario_rol'
   const idColumn = params.source === 'usuario_rol_sede' ? 'id_usuario_rol_sede' : 'id_usuario_rol'
+
+  const { data: roleAssignment, error: roleAssignmentError } = await supabase
+    .from(table)
+    .select('id_usuario, rol:rol!inner(nombre), usuario:usuario!inner(correo)')
+    .eq(idColumn, params.idUsuarioRol)
+    .maybeSingle()
+
+  if (roleAssignmentError) throw roleAssignmentError
+  const roleName = String((roleAssignment as any)?.rol?.nombre ?? '').trim().toLowerCase()
+  const userEmail = String((roleAssignment as any)?.usuario?.correo ?? '').trim().toLowerCase()
+  if (userEmail === PROTECTED_SUPER_EMAIL && roleName === 'super administrador') {
+    throw new Error('No se puede remover el rol Super Administrador de la cuenta protegida')
+  }
+
   // Set fecha_fin to yesterday to ensure it's marked as removed
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   const { data, error } = await supabase

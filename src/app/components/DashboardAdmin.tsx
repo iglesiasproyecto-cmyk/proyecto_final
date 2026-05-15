@@ -32,23 +32,22 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
 
       const activos = (cursos ?? []).filter(c => c.estado === 'activo').length
       const borradores = (cursos ?? []).filter(c => c.estado !== 'activo').length
+      const cursoIds = (cursos ?? []).map(c => c.id_aula_curso)
+
+      if (cursoIds.length === 0) {
+        return { activos, borradores, uniqueServidores: 0, promedio: 0, topCursos: [], total: 0 }
+      }
 
       const { data: inscripciones, error: inscError } = await supabase
         .from('aula_inscripcion')
-        .select('id_usuario, porcentaje_progreso')
+        .select('id_usuario')
         .eq('activo', true)
-        .in(
-          'id_aula_curso',
-          (cursos ?? []).map(c => c.id_aula_curso)
-        )
+        .in('id_aula_curso', cursoIds)
 
       if (inscError) throw inscError
 
       const uniqueServidores = new Set((inscripciones ?? []).map(i => i.id_usuario)).size
-      const progresos = (inscripciones ?? []).map(i => Number(i.porcentaje_progreso ?? 0))
-      const promedio = progresos.length
-        ? Math.round(progresos.reduce((a, b) => a + b, 0) / progresos.length)
-        : 0
+      const promedio = 0
 
       const topCursos = (cursos ?? [])
         .map(c => ({
