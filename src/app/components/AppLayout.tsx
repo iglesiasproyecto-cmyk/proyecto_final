@@ -64,6 +64,7 @@ function getDynamicPageTitle(pathname: string): string {
   if (pathname.match(/\/app\/\d+\/mi-ministerio/)) return "Mi Ministerio";
   if (pathname.match(/\/app\/\d+\/notificaciones/)) return "Notificaciones";
   if (pathname.match(/\/app\/\d+\/perfil/)) return "Mi Perfil";
+  if (pathname.match(/\/app\/(global\/)?cumpleanos/)) return "Cumpleaños";
   if (pathname.match(/\/app\/\d+$/)) return "Dashboard";
   return "Panel";
 }
