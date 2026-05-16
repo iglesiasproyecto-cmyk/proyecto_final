@@ -139,8 +139,8 @@ export function UsuariosPage() {
 
     // If admin_sede, only show users from their sede
     if (isAdminSede) {
-      const mySede = sedesDelUsuario.find(s => s.id === iglesiaActual?.id);
-      if (!mySede) return false; // Security: no sede context, hide all
+      if (sedesDelUsuario.length === 0) return false; // Security: no sede assigned, hide all
+      const mySede = sedesDelUsuario[0]; // Use admin's assigned sede
       const hasRoleInMySede = u.roleNames.some(rn => rn.idSede === mySede.id);
       if (!hasRoleInMySede) return false;
     }
@@ -258,6 +258,10 @@ export function UsuariosPage() {
     }
     if (roleNeedsMinisterio(assignForm.idRol) && !assignForm.idMinisterio) {
       toast.error("Debes seleccionar un ministerio para este rol");
+      return;
+    }
+    if (!canAssignRole(assignForm.idRol)) {
+      toast.error("No tienes permiso para asignar este rol");
       return;
     }
     assignRolMutation.mutate(
