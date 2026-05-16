@@ -34,6 +34,7 @@ import { UsuariosPage } from "./components/UsuariosPage";
 import { SitemapPage } from "./components/SitemapPage";
 import { CumpleanosPage } from "./components/CumpleanosPage";
 import { NoChurchAssignedPage } from "./components/NoChurchAssignedPage";
+import { GlobalMinisteriosPage } from "./components/GlobalMinisteriosPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
 
 export const router = createBrowserRouter([
@@ -74,6 +75,7 @@ export const router = createBrowserRouter([
               { path: "cumpleanos", Component: CumpleanosPage, ErrorBoundary: ErrorPage },
               { path: "sitemap", Component: SitemapPage, ErrorBoundary: ErrorPage },
               { path: "administrador", Component: AdministradorPage, ErrorBoundary: ErrorPage },
+              { path: "ministerios", Component: GlobalMinisteriosPage, ErrorBoundary: ErrorPage },
             ],
           },
 

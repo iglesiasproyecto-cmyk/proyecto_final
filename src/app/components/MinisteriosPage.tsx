@@ -1,36 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "react-router";
 import {
-  useMinisteriosEnriquecidos, useDeleteMinisterio, useMiembrosMinisterioEnriquecidos, useToggleMinisterioEstado, useCreateMinisterio, useCreateMiembroMinisterio,
+  useMinisteriosEnriquecidos,
+  useDeleteMinisterio,
+  useToggleMinisterioEstado,
+  useCreateMinisterio,
 } from "@/hooks/useMinisterios";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
 import { useApp } from "../store/AppContext";
-import type { Ministerio } from "@/types/app.types";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
 import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2, Settings } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { CardSkeleton } from "./loading/skeletons";
 import { toast } from "sonner";
-
-const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
-const rolColors: Record<string, string> = { lider: "bg-indigo-100 text-indigo-700", servidor: "bg-gray-100 text-gray-700" };
-
-function normalizeRol(rol?: string | null) {
-  const raw = `${rol ?? ""}`
-  const normalized = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  if (normalized.includes('lider')) return 'lider'
-  if (normalized.includes('servidor')) return 'servidor'
-  return 'servidor'
-}
+import { MinisterioDetailPanel } from "./MinisterioDetailPanel";
 
 function MinisterioDetail({ min, onBack }: { min: Ministerio; onBack: () => void }) {
   const { rolActual } = useApp();
@@ -286,7 +276,7 @@ export function MinisteriosPage() {
   const min = selectedMin ? ministerios.find((m) => m.idMinisterio === selectedMin) : null;
 
   if (selectedMin && min) {
-    return <MinisterioDetail min={min} onBack={() => setSelectedMin(null)} />;
+    return <MinisterioDetailPanel min={min} onBack={() => setSelectedMin(null)} />;
   }
 
   const handleCreateMinisterio = () => {
