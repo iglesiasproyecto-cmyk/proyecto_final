@@ -1,5 +1,6 @@
 // src/app/routes.ts
-import { createBrowserRouter } from "react-router";
+import React from "react";
+import { createBrowserRouter, Navigate } from "react-router";
 import { RootLayout } from "./components/RootLayout";
 import { AppLayout } from "./components/AppLayout";
 import { TenantLayout } from "./components/TenantLayout";
@@ -103,6 +104,9 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      // Redirecciones usando React.createElement para evitar JSX en archivo .ts
+      { path: "index", element: React.createElement(Navigate, { to: "/", replace: true }) },
+      { path: "*", element: React.createElement(Navigate, { to: "/", replace: true }) }
     ],
   },
 ]);

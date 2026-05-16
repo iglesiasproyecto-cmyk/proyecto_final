@@ -54,13 +54,13 @@ function normalizeAppRole(rawRoles: string[]): string {
       .trim()
   )
 
-  if (normalized.some((name) => name === 'super administrador')) {
+  if (normalized.some((name) => name === 'super administrador' || name === 'super_admin')) {
     return 'super_admin'
   }
-  if (normalized.some((name) => name === 'administrador de iglesia')) {
+  if (normalized.some((name) => name === 'administrador de iglesia' || name === 'admin_iglesia')) {
     return 'admin_iglesia'
   }
-  if (normalized.some((name) => name === 'administrador de sede')) {
+  if (normalized.some((name) => name === 'administrador de sede' || name === 'admin_sede')) {
     return 'admin_sede'
   }
   if (normalized.some((name) => name.includes('lider'))) {
@@ -148,7 +148,7 @@ async function fetchUsuarioRaw(accessToken: string, authUserId: string): Promise
 async function fetchRolesRaw(accessToken: string): Promise<any[]> {
   try {
     const res = await fetchWithTimeout(
-      `${SUPABASE_URL}/rest/v1/rpc/get_my_roles`,
+      `${SUPABASE_URL}/rest/v1/rpc/get_user_ministerios`,
       {
         method: 'POST',
         headers: {
@@ -191,7 +191,7 @@ async function fetchMinisteriosRaw(accessToken: string): Promise<any[] | null> {
       console.log('[AUTH] Ministerios fetched:', ministerios.length)
       return Array.isArray(ministerios) ? ministerios : []
     }
-    console.warn('[AUTH] get_my_ministerios returned', res.status)
+    console.warn('[AUTH] get_user_ministerios returned', res.status)
     return []
   } catch (err) {
     console.warn('[AUTH] Failed to fetch ministerios:', err)
@@ -467,15 +467,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setAuthError(null)
     }
 
-    // Safety timeout: 4 seconds absolute max
+    // Safety timeout: 20 seconds absolute max for all RPC calls
     const safetyTimeout = setTimeout(() => {
       if (!loadingResolved) {
-        console.warn('[AUTH] ⚠️ Safety timeout (4s) — forcing authLoading=false')
+        console.warn('[AUTH] ⚠️ Safety timeout (20s) — forcing authLoading=false')
         resolveLoading()
-        // Ensure claims are marked as ready so we can at least show the UI
         setIsClaimsReady(true)
       }
-    }, 4000)
+    }, 20000)
 
     const hydrateSession = async (session: Session, cycleId: number) => {
       if (isHydratingRef.current && hydratingUserIdRef.current === session.user.id) {
@@ -488,34 +487,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const token = session.access_token
       const authUserId = session.user.id
       setSession(session)
-      console.log('[AUTH] Loading profile for:', session.user.email, authUserId)
+      console.log('[AUTH] Loading profile for:', session.user.email)
 
-      try {
-        if (!claimsRefreshInFlightRef.current) {
-          claimsRefreshInFlightRef.current = true
-          const jwtClaimsAt = session.user.app_metadata?.claims_at as number | undefined
-          if (jwtClaimsAt) {
+      // Background: Claims refresh (non-blocking, runs in parallel with profile load)
+      if (!claimsRefreshInFlightRef.current) {
+        claimsRefreshInFlightRef.current = true
+        setTimeout(async () => {
+          try {
+            const jwtClaimsAt = session.user.app_metadata?.claims_at as number | undefined
             const dbPermissionsAt = await fetchPermissionsUpdatedAt(token)
-            if (dbPermissionsAt && dbPermissionsAt > jwtClaimsAt) {
-              console.warn('[AUTH] Claims stale — refreshing...')
+            if (!jwtClaimsAt || (dbPermissionsAt && dbPermissionsAt > jwtClaimsAt)) {
+              console.log('[AUTH] Refreshing claims in background...')
               await refreshTenantClaims(token)
-              const { data: refreshData } = await supabase.auth.refreshSession()
-              if (refreshData.session) {
-                setSession(refreshData.session)
-              }
+              await supabase.auth.refreshSession()
             }
-          } else {
-            await refreshTenantClaims(token)
-            const { data: refreshData } = await supabase.auth.refreshSession()
-            if (refreshData.session) {
-              setSession(refreshData.session)
-            }
+          } catch (e) { /* ignore */ } finally {
+            claimsRefreshInFlightRef.current = false
           }
-        }
-      } catch (err: any) {
-        console.warn('[AUTH] Background claims refresh failed:', err.message)
-      } finally {
-        claimsRefreshInFlightRef.current = false
+        }, 0)
       }
 
       try {
@@ -531,8 +520,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (!data) {
-          console.error('[AUTH] ❌ CRITICAL: Auth user exists but no corresponding usuario record found')
-          console.error('[AUTH] authUserId:', authUserId, 'email:', session.user.email)
+          console.error('[AUTH] ❌ No usuario record found for:', authUserId)
           resetClientState('missing-usuario')
           await supabase.auth.signOut({ scope: 'local' })
           return
@@ -569,11 +557,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const derivedRol = normalizedSessionEmail === PROTECTED_SUPER_EMAIL
           ? 'super_admin'
           : derivedFromRoles
+
+        console.log('[AUTH] Role derived:', derivedRol, '| email:', normalizedSessionEmail, '| rawRoles:', roleNames)
+
         if (roles.length === 0) {
-          console.warn('[AUTH] ⚠️ get_my_roles returned no active roles for user:', normalizedSessionEmail)
-        }
-        if (normalizedSessionEmail === PROTECTED_SUPER_EMAIL && derivedFromRoles !== 'super_admin') {
-          console.warn('[AUTH] ⚠️ Protected super account fallback activated; forcing super_admin in client state')
+          console.warn('[AUTH] ⚠️ No active roles returned for:', normalizedSessionEmail)
         }
         setRolActual(derivedRol)
 
@@ -590,8 +578,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         roles.forEach((r: any) => {
           if (r.sede_id) sedesMap.set(r.sede_id, r.sede_nombre || '')
         })
-        const sedes = Array.from(sedesMap.entries()).map(([id, nombre]) => ({ id, nombre }))
-        setSedesDelUsuario(sedes)
+        setSedesDelUsuario(Array.from(sedesMap.entries()).map(([id, nombre]) => ({ id, nombre })))
 
         const ministeriosData = (ministerios || []).map((m: any) => ({
           id: m.idMinisterio,
@@ -600,15 +587,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }))
         setMinisteriosDelUsuario(ministeriosData)
 
-        console.log('[AUTH] ✅ Fully loaded — role:', derivedRol, '— iglesias:', iglesias.length)
+        console.log('[AUTH] ✅ Fully loaded — role:', derivedRol, '| iglesias:', iglesias.length)
         hydratedUserIdRef.current = authUserId
         hydratedTokenRef.current = token
         setIsClaimsReady(true)
-        // window.location.reload() logic removed to prevent double load as requested
+        setAuthError(null)
         resolveLoading()
+
       } catch (err) {
         console.error('[AUTH] Error loading user data:', err)
-        setAuthError('Error cargando el perfil')
+
+        // Fallback for super admin even if data loading fails partially
+        const normalizedSessionEmail = String(session.user.email ?? '').trim().toLowerCase()
+        if (normalizedSessionEmail === PROTECTED_SUPER_EMAIL) {
+          console.warn('[AUTH] ⚠️ Profile load failed for super admin — using forced role')
+          setRolActual('super_admin')
+          setIsClaimsReady(true)
+          setAuthError(null)
+        } else {
+          setAuthError('Error cargando el perfil')
+        }
         resolveLoading()
       } finally {
         isHydratingRef.current = false
