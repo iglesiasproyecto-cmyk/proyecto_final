@@ -185,6 +185,106 @@ export async function getUsuariosByIglesia(idIglesia: number): Promise<UsuarioEn
   }))
 }
 
+// ── Cumpleaños por scope ──────────────────────────────────────────────────────
+
+export interface UsuarioCumpleanos {
+  idUsuario: number
+  nombres: string
+  apellidos: string
+  correo: string
+  telefono: string | null
+  fechaNacimiento: string | null
+  activo: boolean
+}
+
+function rowToUsuarioCumpleanos(u: any): UsuarioCumpleanos {
+  return {
+    idUsuario: u.id_usuario,
+    nombres: u.nombres ?? '',
+    apellidos: u.apellidos ?? '',
+    correo: u.correo ?? '',
+    telefono: u.telefono ?? null,
+    fechaNacimiento: u.fecha_nacimiento ?? null,
+    activo: u.activo ?? true,
+  }
+}
+
+function deduplicateByIdUsuario(items: UsuarioCumpleanos[]): UsuarioCumpleanos[] {
+  const map = new Map<number, UsuarioCumpleanos>()
+  items.forEach((u) => { if (!map.has(u.idUsuario)) map.set(u.idUsuario, u) })
+  return Array.from(map.values())
+}
+
+/** Super admin: todos los usuarios del sistema */
+export async function getCumpleanosAll(): Promise<UsuarioCumpleanos[]> {
+  const { data, error } = await supabase
+    .from('usuario')
+    .select('id_usuario, nombres, apellidos, correo, telefono, fecha_nacimiento, activo')
+    .order('apellidos')
+  if (error) throw error
+  return (data ?? []).map(rowToUsuarioCumpleanos)
+}
+
+/** Admin iglesia: usuarios con rol asignado en esa iglesia */
+export async function getCumpleanosByIglesia(idIglesia: number): Promise<UsuarioCumpleanos[]> {
+  const [r1, r2] = await Promise.all([
+    supabase
+      .from('usuario_rol')
+      .select('usuario(id_usuario, nombres, apellidos, correo, telefono, fecha_nacimiento, activo)')
+      .eq('id_iglesia', idIglesia)
+      .is('fecha_fin', null),
+    supabase
+      .from('usuario_rol_sede')
+      .select('usuario(id_usuario, nombres, apellidos, correo, telefono, fecha_nacimiento, activo)')
+      .eq('id_iglesia', idIglesia)
+      .is('fecha_fin', null),
+  ])
+  const items: UsuarioCumpleanos[] = []
+  ;(r1.data ?? []).forEach((row: any) => { if (row.usuario) items.push(rowToUsuarioCumpleanos(row.usuario)) })
+  ;(r2.data ?? []).forEach((row: any) => { if (row.usuario) items.push(rowToUsuarioCumpleanos(row.usuario)) })
+  return deduplicateByIdUsuario(items)
+}
+
+/** Admin sede: miembros de ministerios en esa sede */
+export async function getCumpleanosBySede(idSede: number): Promise<UsuarioCumpleanos[]> {
+  const { data: mins, error: mErr } = await supabase
+    .from('ministerio')
+    .select('id_ministerio')
+    .eq('id_sede', idSede)
+  if (mErr) throw mErr
+
+  const ministerioIds = (mins ?? []).map((m: any) => m.id_ministerio)
+  if (ministerioIds.length === 0) return []
+
+  return getCumpleanosByMinisterios(ministerioIds)
+}
+
+/** Líder / servidor: miembros de los ministerios dados */
+export async function getCumpleanosByMinisterios(ministerioIds: number[]): Promise<UsuarioCumpleanos[]> {
+  if (ministerioIds.length === 0) return []
+  const { data, error } = await supabase
+    .from('miembro_ministerio')
+    .select('usuario(id_usuario, nombres, apellidos, correo, telefono, fecha_nacimiento, activo)')
+    .in('id_ministerio', ministerioIds)
+    .is('fecha_salida', null)
+  if (error) throw error
+
+  const items: UsuarioCumpleanos[] = []
+  ;(data ?? []).forEach((row: any) => { if (row.usuario) items.push(rowToUsuarioCumpleanos(row.usuario)) })
+  return deduplicateByIdUsuario(items)
+}
+
+/** Servidor sin ministerio: solo su propio perfil */
+export async function getCumpleanosPropio(idUsuario: number): Promise<UsuarioCumpleanos[]> {
+  const { data, error } = await supabase
+    .from('usuario')
+    .select('id_usuario, nombres, apellidos, correo, telefono, fecha_nacimiento, activo')
+    .eq('id_usuario', idUsuario)
+    .single()
+  if (error) throw error
+  return data ? [rowToUsuarioCumpleanos(data)] : []
+}
+
 // ── Usuario mutations ──
 
 export async function updateUsuario(
