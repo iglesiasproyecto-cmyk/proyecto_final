@@ -36,6 +36,8 @@ export interface MinisterioEnriquecido extends Ministerio {
   cantidadMiembros: number
   sedeNombre: string
   liderNombre: string
+  iglesiaId?: number
+  iglesiaNombre?: string
 }
 
 export interface MiembroMinisterioEnriquecido extends MiembroMinisterio {
@@ -66,7 +68,11 @@ type MinisterioMiembroRelacion = {
 }
 
 type MinisterioEnriquecidoRow = MinisterioRow & {
-  sede: { nombre: string | null } | null
+  sede: {
+    nombre: string | null
+    id_iglesia: number | null
+    iglesia: { id_iglesia: number | null; nombre: string | null } | null
+  } | null
   miembro_ministerio: MinisterioMiembroRelacion[] | null
 }
 
@@ -86,13 +92,15 @@ function mapMinisterioEnriquecidoRow(r: MinisterioEnriquecidoRow): MinisterioEnr
     liderNombre: lider?.usuario
       ? `${lider.usuario.nombres ?? ''} ${lider.usuario.apellidos ?? ''}`.trim()
       : '',
+    iglesiaId: r.sede?.id_iglesia ?? undefined,
+    iglesiaNombre: r.sede?.iglesia?.nombre ?? undefined,
   }
 }
 
 export async function getMinisteriosEnriquecidos(idIglesia?: number): Promise<MinisterioEnriquecido[]> {
   let q = supabase
     .from('ministerio')
-    .select('*, sede(nombre), miembro_ministerio(rol_en_ministerio, fecha_salida, usuario(nombres, apellidos))')
+    .select('*, sede(nombre, id_iglesia, iglesia(id_iglesia, nombre)), miembro_ministerio(rol_en_ministerio, fecha_salida, usuario(nombres, apellidos))')
     .eq('estado', 'activo')
     .order('nombre')
 

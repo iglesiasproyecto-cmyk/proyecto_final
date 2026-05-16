@@ -35,6 +35,14 @@ export function useMinisteriosEnriquecidos(idIglesia?: number) {
   })
 }
 
+export function useMinisteriosGlobal() {
+  return useQuery({
+    queryKey: ['ministerios-enriquecidos', 'global'],
+    queryFn: () => getMinisteriosEnriquecidos(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 export function useMinisteriosPorSede(idSede?: number) {
   const sedeId = idSede ?? 0
   return useQuery({
