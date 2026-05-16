@@ -697,6 +697,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     resetClientState('logout')
     try {
       await supabase.auth.signOut({ scope: 'local' })
+      window.location.replace('/login')
     } finally {
       logoutInProgressRef.current = false
     }

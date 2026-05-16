@@ -47,6 +47,32 @@ export interface MiembroMinisterioEnriquecido extends MiembroMinisterio {
   correo: string
 }
 
+export interface UsuarioMinisterioAsignable {
+  idUsuario: number
+  nombres: string
+  apellidos: string
+  nombreCompleto: string
+}
+
+function mapMinisterioEnriquecidoRow(r: any): MinisterioEnriquecido {
+  const miembros = Array.isArray(r.miembro_ministerio) ? r.miembro_ministerio : []
+  const miembrosActivos = miembros.filter((m: any) => !m.fecha_salida)
+  const lider = miembrosActivos.find((m: any) => {
+    const raw = `${m.rol_en_ministerio ?? ''}`
+    const normalized = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    return normalized.includes('lider')
+  })
+
+  return {
+    ...mapMinisterio(r),
+    cantidadMiembros: miembrosActivos.length,
+    sedeNombre: r.sede?.nombre ?? '',
+    liderNombre: lider?.usuario
+      ? `${lider.usuario.nombres ?? ''} ${lider.usuario.apellidos ?? ''}`.trim()
+      : '',
+  }
+}
+
 export async function getMinisteriosEnriquecidos(idIglesia?: number): Promise<MinisterioEnriquecido[]> {
   let q = supabase
     .from('ministerio')
@@ -66,23 +92,48 @@ export async function getMinisteriosEnriquecidos(idIglesia?: number): Promise<Mi
 
   const { data, error } = await q
   if (error) throw error
-  return (data as any[]).map(r => {
-    const miembros = Array.isArray(r.miembro_ministerio) ? r.miembro_ministerio : []
-    const miembrosActivos = miembros.filter((m: any) => !m.fecha_salida)
-    const lider = miembrosActivos.find((m: any) => {
-      const raw = `${m.rol_en_ministerio ?? ''}`
-      const normalized = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      return normalized.includes('lider')
+  return (data as any[]).map(mapMinisterioEnriquecidoRow)
+}
+
+export async function getMinisteriosPorSede(idSede: number): Promise<MinisterioEnriquecido[]> {
+  const { data, error } = await supabase
+    .from('ministerio')
+    .select('*, sede(nombre), miembro_ministerio(rol_en_ministerio, fecha_salida, usuario(nombres, apellidos))')
+    .eq('id_sede', idSede)
+    .eq('estado', 'activo')
+    .order('nombre')
+
+  if (error) throw error
+  return (data as any[]).map(mapMinisterioEnriquecidoRow)
+}
+
+export async function getUsuariosActivosPorMinisterio(idMinisterio: number): Promise<UsuarioMinisterioAsignable[]> {
+  const { data, error } = await supabase
+    .from('miembro_ministerio')
+    .select('id_usuario, usuario(nombres, apellidos)')
+    .eq('id_ministerio', idMinisterio)
+    .is('fecha_salida', null)
+
+  if (error) throw error
+
+  const seen = new Set<number>()
+
+  return (data as any[])
+    .filter((row) => {
+      if (seen.has(row.id_usuario)) return false
+      seen.add(row.id_usuario)
+      return true
     })
-    return {
-      ...mapMinisterio(r),
-      cantidadMiembros: miembrosActivos.length,
-      sedeNombre: r.sede?.nombre ?? '',
-      liderNombre: lider?.usuario
-        ? `${lider.usuario.nombres ?? ''} ${lider.usuario.apellidos ?? ''}`.trim()
-        : '',
-    }
-  })
+    .map((row) => {
+      const nombres = row.usuario?.nombres ?? ''
+      const apellidos = row.usuario?.apellidos ?? ''
+      return {
+        idUsuario: row.id_usuario,
+        nombres,
+        apellidos,
+        nombreCompleto: `${nombres} ${apellidos}`.trim(),
+      }
+    })
 }
 
 export async function getMiembrosMinisterioEnriquecidos(idMinisterio?: number): Promise<MiembroMinisterioEnriquecido[]> {
@@ -350,4 +401,3 @@ export async function getUsuariosDeIglesia(idIglesia: number): Promise<UsuarioEn
 
   return Array.from(usuariosMap.values())
 }
-

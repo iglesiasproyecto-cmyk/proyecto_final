@@ -31,10 +31,15 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Buscar token válido
+    // Buscar token válido con nombres de rol e iglesia
     const { data: inviteToken, error } = await supabaseAdmin
       .from('invite_tokens')
-      .select('*')
+      .select(`
+        *,
+        rol:id_rol ( nombre ),
+        iglesia:id_iglesia ( nombre ),
+        sede:id_sede ( nombre )
+      `)
       .eq('token', token)
       .is('used_at', null)
       .gt('expires_at', new Date().toISOString())
@@ -49,13 +54,18 @@ Deno.serve(async (req) => {
 
     // Retornar datos del token (sin token mismo por seguridad)
     return new Response(JSON.stringify({
-      success: true,
-      email: inviteToken.email,
-      nombres: inviteToken.nombres,
-      apellidos: inviteToken.apellidos,
-      idIglesia: inviteToken.id_iglesia,
-      idRol: inviteToken.id_rol,
-      idSede: inviteToken.id_sede,
+      valid: true,
+      inviteData: {
+        email: inviteToken.email,
+        nombres: inviteToken.nombres,
+        apellidos: inviteToken.apellidos,
+        id_iglesia: inviteToken.id_iglesia,
+        id_rol: inviteToken.id_rol,
+        id_sede: inviteToken.id_sede,
+        rol: inviteToken.rol,
+        iglesia: inviteToken.iglesia,
+        sede: inviteToken.sede,
+      },
     }), {
       status: 200,
       headers: { ...baseCorsHeaders, 'Content-Type': 'application/json' }

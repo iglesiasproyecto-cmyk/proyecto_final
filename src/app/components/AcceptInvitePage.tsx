@@ -51,8 +51,8 @@ export function AcceptInvitePage() {
 
       if (error) throw error
 
-      if (!data.valid) {
-        setError(data.message || 'Token inválido')
+      if (!data?.valid) {
+        setError(data?.error || data?.message || 'Token inválido o expirado')
         return
       }
 
@@ -88,11 +88,19 @@ export function AcceptInvitePage() {
         body: { token, password }
       })
 
-      if (error) throw error
+      if (error) {
+        // Extraer mensaje real de la Edge Function si está disponible
+        try {
+          const errBody = await (error as any).context?.json?.()
+          if (errBody?.error) throw new Error(errBody.error)
+        } catch (parseErr) {
+          if ((parseErr as Error)?.message) throw parseErr
+        }
+        throw error
+      }
 
-      if (data.success) {
+      if (data?.success) {
         setSuccess(true)
-        // Redirigir al login después de 3 segundos
         setTimeout(() => {
           navigate('/login', {
             state: {
@@ -102,11 +110,11 @@ export function AcceptInvitePage() {
           })
         }, 3000)
       } else {
-        setError(data.error || 'Error completando invitación')
+        setError(data?.error || 'Error completando invitación')
       }
     } catch (err) {
       console.error('Error completing invite:', err)
-      setError('Error completando invitación')
+      setError(err instanceof Error ? err.message : 'Error completando invitación')
     } finally {
       setSubmitting(false)
     }
