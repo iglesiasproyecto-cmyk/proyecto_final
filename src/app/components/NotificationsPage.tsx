@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { useNotificaciones, useMarkNotificacionRead, useMarkAllNotificacionesRead } from "@/hooks/useNotificaciones";
 import { useApp } from "../store/AppContext";
+import { extractTaskIdFromNotificationMessage } from "@/services/notificaciones.service";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -22,13 +24,32 @@ const typeConfig: Record<string, { label: string; color: string; bg: string; ico
 };
 
 export function NotificationsPage() {
-  const { usuarioActual } = useApp();
+  const { usuarioActual, iglesiaActual } = useApp();
+  const navigate = useNavigate();
   const { data: notificaciones = [], isLoading } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
   const [activeTab, setActiveTab] = useState("todas");
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
   const markReadMutation = useMarkNotificacionRead();
   const markAllReadMutation = useMarkAllNotificacionesRead();
+
+  const handleOpenNotification = (n: any) => {
+    if (!n.leida) markReadMutation.mutate(n.idNotificacion);
+
+    if (n.tipo !== "tarea") {
+      setSelectedNotification(n);
+      return;
+    }
+
+    const taskId = extractTaskIdFromNotificationMessage(n.mensaje || "");
+    if (!taskId) {
+      setSelectedNotification(n);
+      return;
+    }
+
+    const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}/tareas` : "/app/tareas";
+    navigate(`${basePath}?openTask=${taskId}`);
+  };
 
   if (isLoading) return (
     <div className="space-y-6 max-w-4xl mx-auto px-4">
@@ -113,10 +134,7 @@ export function NotificationsPage() {
                   className={`group flex items-start gap-3 sm:gap-4 p-4 sm:p-5 rounded-3xl backdrop-blur-2xl border transition-all duration-300 cursor-pointer hover:-translate-y-1 ${
                     !n.leida ? "bg-[#4682b4]/5 border-[#4682b4]/20 shadow-lg shadow-blue-900/5" : "bg-card/40 border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl"
                   }`}
-                  onClick={() => {
-                    setSelectedNotification(n);
-                    if (!n.leida) markReadMutation.mutate(n.idNotificacion);
-                  }}
+                  onClick={() => handleOpenNotification(n)}
                 >
                   <div className={`w-12 h-12 rounded-2xl ${cfg.bg} flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform ${cfg.color}`}>
                     {cfg.icon}

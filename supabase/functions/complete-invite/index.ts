@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const { token, password } = await req.json()
+    const { token, password, telefono } = await req.json()
 
     if (!token || !password) {
       return new Response(JSON.stringify({ error: 'Token y contraseña requeridos' }), {
@@ -96,14 +96,21 @@ Deno.serve(async (req) => {
 
     let usuarioId: number
     if (existingUsuario) {
-      // Asegurarse que auth_user_id está vinculado y cuenta está activa
+      // Actualizar perfil con todos los datos del invite token
       await supabaseAdmin
         .from('usuario')
-        .update({ auth_user_id: authUserId, activo: true })
+        .update({
+          auth_user_id: authUserId,
+          activo: true,
+          nombres: inviteToken.nombres,
+          apellidos: inviteToken.apellidos,
+          fecha_nacimiento: inviteToken.fecha_nacimiento || null,
+          ...(telefono ? { telefono } : {}),
+        })
         .eq('id_usuario', existingUsuario.id_usuario)
       usuarioId = existingUsuario.id_usuario
     } else {
-      // Insertar en tabla usuario
+      // Insertar nuevo perfil en tabla usuario
       const { data: usuario, error: usuarioError } = await supabaseAdmin
         .from('usuario')
         .insert({
@@ -113,6 +120,7 @@ Deno.serve(async (req) => {
           correo: inviteToken.email,
           activo: true,
           fecha_nacimiento: inviteToken.fecha_nacimiento || null,
+          ...(telefono ? { telefono } : {}),
         })
         .select('id_usuario')
         .single()
@@ -128,7 +136,7 @@ Deno.serve(async (req) => {
       usuarioId = usuario.id_usuario
     }
 
-    // Asignar rol e insertar en miembro_ministerio si aplica (atómico via RPC)
+    // Asignar rol — no bloquear si falla (usuario ya puede autenticarse)
     const { error: rolError } = await supabaseAdmin.rpc('assign_role_with_ministerio', {
       p_id_usuario:    usuarioId,
       p_id_rol:        inviteToken.id_rol,
@@ -136,29 +144,22 @@ Deno.serve(async (req) => {
       p_id_sede:       inviteToken.id_sede ?? null,
       p_id_ministerio: inviteToken.id_ministerio ?? null,
     })
-
     if (rolError) {
-      console.error('Error assigning role:', rolError)
-      return new Response(JSON.stringify({ error: rolError.message ?? 'Error asignando rol' }), {
-        status: 500,
-        headers: { ...baseCorsHeaders, 'Content-Type': 'application/json' }
-      })
+      console.error('[complete-invite] Role assignment error (non-fatal):', rolError.message)
     }
 
-    // Marcar token como usado
+    // Marcar token como usado (no bloquear si falla)
     const { error: updateTokenError } = await supabaseAdmin
       .from('invite_tokens')
       .update({ used_at: new Date().toISOString() })
       .eq('id_invite_token', inviteToken.id_invite_token)
-
     if (updateTokenError) {
-      console.warn('Error marking token as used:', updateTokenError)
-      // No fallar por esto
+      console.warn('[complete-invite] Token mark-used error (non-fatal):', updateTokenError.message)
     }
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Usuario creado exitosamente',
+      message: 'Cuenta creada exitosamente',
       userId: usuarioId,
     }), {
       status: 200,

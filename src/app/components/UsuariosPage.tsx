@@ -44,6 +44,7 @@ export function UsuariosPage() {
   const [filterEstado, setFilterEstado] = useState("all");
   const [filterRol, setFilterRol] = useState("all");
   const [filterIglesia, setFilterIglesia] = useState<string>("all");
+  const [filterMinisterio, setFilterMinisterio] = useState<string>("all");
   const [showTechnicalArchived, setShowTechnicalArchived] = useState(false);
   const [detail, setDetail] = useState<number | null>(null);
   const [showHojaDeVida, setShowHojaDeVida] = useState<number | null>(null);
@@ -168,8 +169,21 @@ export function UsuariosPage() {
     if (filterEstado === "inactivo" && u.activo) return false;
     if (filterRol !== "all" && !u.roleNames.some(rn => rn.rolNombre.toLowerCase().includes(filterRol.toLowerCase()))) return false;
     if (filterIglesia !== "all" && !u.roleNames.some(rn => String(rn.idIglesia) === filterIglesia)) return false;
+    if (filterMinisterio !== "all" && !u.minNames.some(mn => String(mn.idMinisterio) === filterMinisterio)) return false;
     return true;
   });
+
+  // Ministerios disponibles para el filtro según el rol actual
+  const ministeriosParaFiltro = isAdminSede
+    ? ministeriosInvite.filter(m => m.idSede === sedesDelUsuario[0]?.id)
+    : isLider
+    ? ministeriosDelUsuario.map(m => ({ idMinisterio: m.id, nombre: m.nombre }))
+    : [];
+
+  // Roles disponibles para el filtro (acotados por lo que cada rol puede ver)
+  const rolesParaFiltro = (isLider || isAdminSede)
+    ? roles.filter(r => r.idRol === ROLE_IDS.LIDER || r.idRol === ROLE_IDS.SERVIDOR)
+    : roles;
 
   const detailUser = detail ? enriched.find(u => u.idUsuario === detail) : null;
   const assignUser = showAssignRol ? enriched.find(u => u.idUsuario === showAssignRol) : null;
@@ -387,28 +401,41 @@ export function UsuariosPage() {
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="activo">Activos</SelectItem>
-              <SelectItem value="inactivo">Inactivos</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterRol} onValueChange={setFilterRol}>
-            <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Rol" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los roles</SelectItem>
-              {roles.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filterIglesia} onValueChange={setFilterIglesia}>
-            <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Iglesia" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las iglesias</SelectItem>
-              {iglesias.map(ig => <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Button variant="ghost" className="h-10 rounded-xl text-xs whitespace-nowrap" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); }}>
-            <span className="hidden sm:inline">Limpiar filtros</span>
-            <span className="sm:hidden">Limpiar</span>
-          </Button>
-        </div>
+                <SelectItem value="inactivo">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterRol} onValueChange={setFilterRol}>
+              <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Rol" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los roles</SelectItem>
+                {rolesParaFiltro.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {/* Filtro de Iglesia: solo para super_admin y admin_iglesia */}
+            {!isAdminSede && !isLider && (
+              <Select value={filterIglesia} onValueChange={setFilterIglesia}>
+                <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Iglesia" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las iglesias</SelectItem>
+                  {iglesias.map(ig => <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {/* Filtro de Ministerio: para admin_sede y lider (si tiene varios) */}
+            {(isAdminSede || (isLider && ministeriosDelUsuario.length > 1)) && ministeriosParaFiltro.length > 0 && (
+              <Select value={filterMinisterio} onValueChange={setFilterMinisterio}>
+                <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Ministerio" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los ministerios</SelectItem>
+                  {ministeriosParaFiltro.map(m => <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            <Button variant="ghost" className="h-10 rounded-xl text-xs whitespace-nowrap" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); setFilterMinisterio("all"); }}>
+              <span className="hidden sm:inline">Limpiar filtros</span>
+              <span className="sm:hidden">Limpiar</span>
+            </Button>
+          </div>
         {archivedTechnicalCount > 0 && (
           <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-300/50 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:border-amber-700/40 dark:bg-amber-950/30 dark:text-amber-200">
             <p>
@@ -674,19 +701,25 @@ export function UsuariosPage() {
             )}
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Rol inicial *</label>
-              <Select
-                value={inviteForm.idRol ? String(inviteForm.idRol) : ""}
-                onValueChange={v => setInviteForm(p => ({ ...p, idRol: Number(v), idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0 }))}
-              >
-                <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar rol..." /></SelectTrigger>
-                <SelectContent>
-                  {roles
-                    .filter(role => canAssignRole(role.idRol))
-                    .map(r => (
-                      <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              {isLider ? (
+                <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md opacity-70">
+                  Servidor
+                </div>
+              ) : (
+                <Select
+                  value={inviteForm.idRol ? String(inviteForm.idRol) : ""}
+                  onValueChange={v => setInviteForm(p => ({ ...p, idRol: Number(v), idMinisterio: 0 }))}
+                >
+                  <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar rol..." /></SelectTrigger>
+                  <SelectContent>
+                    {roles
+                      .filter(role => canAssignRole(role.idRol))
+                      .map(r => (
+                        <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             {roleNeedsMinisterio(inviteForm.idRol) && inviteForm.idSede && (
               <div className="space-y-3">
@@ -788,19 +821,25 @@ export function UsuariosPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Rol *</label>
-                    <Select
-                      value={assignForm.idRol ? String(assignForm.idRol) : ""}
-                      onValueChange={v => setAssignForm(p => ({ ...p, idRol: Number(v), idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0 }))}
-                    >
-                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                      <SelectContent>
-                        {roles
-                          .filter(role => canAssignRole(role.idRol))
-                          .map(r => (
-                            <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                    {isLider ? (
+                      <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md opacity-70">
+                        Servidor
+                      </div>
+                    ) : (
+                      <Select
+                        value={assignForm.idRol ? String(assignForm.idRol) : ""}
+                        onValueChange={v => setAssignForm(p => ({ ...p, idRol: Number(v), idMinisterio: 0 }))}
+                      >
+                        <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                        <SelectContent>
+                          {roles
+                            .filter(role => canAssignRole(role.idRol))
+                            .map(r => (
+                              <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Iglesia {(isAdminIglesia || isLider) && '(Tu iglesia)'} *</label>

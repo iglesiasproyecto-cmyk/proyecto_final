@@ -348,7 +348,7 @@ export async function createTareaAsignada(data: {
     throw error
   }
 
-  // Notificar por correo
+  // Notificar por correo + in-app
   try {
     const [{ data: user }, { data: task }] = await Promise.all([
       supabase.from('usuario').select('correo, nombres').eq('id_usuario', data.idUsuario).single(),
@@ -356,6 +356,14 @@ export async function createTareaAsignada(data: {
     ])
 
     if (user && user.correo && task) {
+      await supabase.from('notificacion').insert({
+        id_usuario: data.idUsuario,
+        tipo: 'tarea',
+        titulo: 'Nueva tarea asignada',
+        mensaje: `Se te asigno la tarea: ${task.titulo} [TASK_ID:${data.idTarea}]`,
+        leida: false,
+      })
+
       await sendEmail({
         to: user.correo,
         subject: 'Nueva tarea asignada',
@@ -374,6 +382,120 @@ export async function createTareaAsignada(data: {
   } catch (err) {
     console.error('[createTareaAsignada] Error enviando correo:', err)
   }
+}
+
+export interface AssignBatchInput {
+  idTarea: number
+  idMinisterioContexto: number
+  idsUsuarios: number[]
+}
+
+export interface AssignBatchResult {
+  assigned: number
+  duplicated: number
+  rejected: number
+}
+
+export async function assignUsuariosATarea(input: AssignBatchInput): Promise<AssignBatchResult> {
+  const { data: authData } = await supabase.auth.getUser()
+  const authUserId = authData.user?.id
+  if (!authUserId) throw new Error('No autenticado')
+
+  const { data: actor, error: actorError } = await supabase
+    .from('usuario')
+    .select('id_usuario')
+    .eq('auth_user_id', authUserId)
+    .single()
+  if (actorError || !actor) throw new Error('No se pudo resolver el usuario actual')
+
+  const [{ data: roles }, { data: taskRow, error: taskError }] = await Promise.all([
+    supabase
+      .from('usuario_rol')
+      .select('id_sede, id_iglesia, fecha_fin, rol:rol(nombre)')
+      .eq('id_usuario', actor.id_usuario)
+      .is('fecha_fin', null),
+    supabase
+      .from('tarea')
+      .select('id_tarea, id_ministerio, titulo, ministerio(id_sede, sede(id_iglesia))')
+      .eq('id_tarea', input.idTarea)
+      .single(),
+  ])
+
+  if (taskError || !taskRow) throw new Error('Tarea no encontrada')
+  if (!taskRow.id_ministerio || taskRow.id_ministerio !== input.idMinisterioContexto) {
+    throw new Error('Contexto de ministerio invalido')
+  }
+
+  const roleNames = ((roles || []) as any[]).map(r => `${r.rol?.nombre || ''}`.toLowerCase())
+  const isSuper = roleNames.some(n => n.includes('super'))
+  const isAdminIglesia = isSuper || roleNames.some(n => n.includes('iglesia'))
+  const isAdminSede = roleNames.some(n => n.includes('sede'))
+
+  const taskSedeId = (taskRow as any).ministerio?.id_sede as number | undefined
+  const taskIglesiaId = (taskRow as any).ministerio?.sede?.id_iglesia as number | undefined
+
+  const hasScope = isSuper || (isAdminIglesia && (roles || []).some((r: any) => !r.id_iglesia || r.id_iglesia === taskIglesiaId)) ||
+    (isAdminSede && (roles || []).some((r: any) => r.id_sede && r.id_sede === taskSedeId))
+
+  let isLiderDelMinisterio = false
+  if (!hasScope) {
+    const { data: liderRows } = await supabase
+      .from('miembro_ministerio')
+      .select('rol_en_ministerio')
+      .eq('id_usuario', actor.id_usuario)
+      .eq('id_ministerio', input.idMinisterioContexto)
+      .is('fecha_salida', null)
+    isLiderDelMinisterio = (liderRows || []).some((r: any) => `${r.rol_en_ministerio || ''}`.toLowerCase().includes('lider'))
+  }
+
+  if (!hasScope && !isLiderDelMinisterio) {
+    throw new Error('403: no autorizado para asignar en este ministerio')
+  }
+
+  const uniqueUserIds = Array.from(new Set(input.idsUsuarios.filter(Boolean)))
+  if (uniqueUserIds.length === 0) return { assigned: 0, duplicated: 0, rejected: 0 }
+
+  const { data: miembros } = await supabase
+    .from('miembro_ministerio')
+    .select('id_usuario')
+    .eq('id_ministerio', input.idMinisterioContexto)
+    .is('fecha_salida', null)
+    .in('id_usuario', uniqueUserIds)
+
+  const allowedSet = new Set((miembros || []).map((m: any) => m.id_usuario as number))
+
+  let assigned = 0
+  let duplicated = 0
+  let rejected = 0
+
+  for (const idUsuario of uniqueUserIds) {
+    if (!allowedSet.has(idUsuario)) {
+      rejected += 1
+      continue
+    }
+
+    const { error } = await supabase
+      .from('tarea_asignada')
+      .upsert({ id_tarea: input.idTarea, id_usuario: idUsuario }, { onConflict: 'id_tarea,id_usuario' })
+
+    if (error) {
+      if (error.code === '23505') duplicated += 1
+      else rejected += 1
+      continue
+    }
+
+    assigned += 1
+
+    await supabase.from('notificacion').insert({
+      id_usuario: idUsuario,
+      tipo: 'tarea',
+      titulo: 'Nueva tarea asignada',
+      mensaje: `Se te asigno la tarea: ${taskRow.titulo} [TASK_ID:${input.idTarea}]`,
+      leida: false,
+    })
+  }
+
+  return { assigned, duplicated, rejected }
 }
 
 export async function updateTareaAsignada(
@@ -472,4 +594,3 @@ export async function getEventosPorMinisterio(idMinisterio: number): Promise<Eve
   if (error) throw error
   return data.map(mapEvento)
 }
-
