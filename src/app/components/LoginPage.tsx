@@ -90,78 +90,57 @@ export function LoginPage() {
     <div className="min-h-screen flex bg-background overflow-hidden selection:bg-primary/30">
       
       {/* ── SECCIÓN IZQUIERDA: Branding & Animaciones ── */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-[50%] relative flex-col justify-between p-16 bg-[#0c2340] overflow-hidden group">
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[50%] relative flex-col justify-center p-12 bg-[#0c2340] overflow-hidden group">
         
         {/* Luces de Fondo Animadas (Orbs) */}
         <div className="absolute inset-0 z-0">
-          <motion.div 
-            animate={{ 
-              x: [0, 40, 0], 
-              y: [0, -40, 0],
-              scale: [1, 1.1, 1]
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[120px]" 
-          />
-          <motion.div 
-            animate={{ 
-              x: [0, -30, 0], 
-              y: [0, 50, 0],
-              scale: [1, 1.2, 1]
-            }}
-            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-            className="absolute bottom-1/4 -right-32 w-[400px] h-[400px] bg-[#2596be]/10 rounded-full blur-[100px]" 
-          />
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] mix-blend-overlay" />
         </div>
 
-        {/* Logo superior */}
         <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="relative z-10 flex items-center gap-6"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative z-10 flex justify-center w-full -mt-40 -mb-20"
         >
-          <SEILogo className="w-48 h-48 xl:w-64 xl:h-64 filter drop-shadow-2xl" />
+          <SEILogo className="w-[750px] h-[750px] xl:w-[950px] xl:h-[950px] filter drop-shadow-[0_0_120px_rgba(255,255,255,0.3)]" />
         </motion.div>
 
         {/* Contenido Central */}
-        <div className="relative z-10">
+        <div className="relative z-10 -mt-20">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="max-w-xl"
+            className="max-w-3xl mx-auto flex flex-col items-center text-center"
           >
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest mb-6">
-              <Activity className="w-3 h-3" /> Sistema de gestión v2.0
-            </span>
-            <h2 className="text-white text-5xl xl:text-6xl font-black tracking-tight leading-[0.95] mb-6">
+
+            <h2 className="text-white text-6xl xl:text-8xl font-black tracking-tight leading-[0.9] mb-12 text-center">
               Liderazgo con <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-white/40">Visión Técnica.</span>
             </h2>
-            <p className="text-slate-400 text-lg leading-relaxed mb-10 max-w-md">
+            <p className="text-slate-400 text-xl leading-relaxed mb-16 max-w-xl text-center">
               La plataforma definitiva para unificar la formación, operaciones y crecimiento de tu iglesia local.
             </p>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-8">
               {[
-                { n: "24/7", l: "Soporte", icon: <Globe className="w-4 h-4" /> },
-                { n: "Admin", l: "Módulos", icon: <Layers className="w-4 h-4" /> },
-                { n: "Total", l: "Seguridad", icon: <Shield className="w-4 h-4" /> },
+                { n: "24/7", l: "Soporte", icon: <Globe className="w-6 h-6" /> },
+                { n: "Admin", l: "Módulos", icon: <Layers className="w-6 h-6" /> },
+                { n: "Total", l: "Seguridad", icon: <Shield className="w-6 h-6" /> },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.l}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: 0.6 + i * 0.1 }}
-                  className="bg-white/[0.03] backdrop-blur-md rounded-2xl p-5 border border-white/[0.05] hover:bg-white/[0.06] hover:border-white/10 transition-all group/stat"
+                  className="bg-white/[0.03] backdrop-blur-md rounded-3xl p-8 border border-white/[0.05] hover:bg-white/[0.06] hover:border-white/10 transition-all group/stat"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-3 group-hover/stat:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover/stat:scale-110 transition-transform">
                     {stat.icon}
                   </div>
-                  <p className="text-white text-xl font-bold">{stat.n}</p>
-                  <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest mt-1">{stat.l}</p>
+                  <p className="text-white text-2xl font-bold">{stat.n}</p>
+                  <p className="text-slate-500 text-[11px] uppercase font-bold tracking-widest mt-2">{stat.l}</p>
                 </motion.div>
               ))}
             </div>
@@ -173,40 +152,36 @@ export function LoginPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
-          className="relative z-10 flex items-center justify-between"
+          className="relative z-10 flex items-center justify-between mt-auto pt-24"
         >
-          <p className="text-white/20 text-[10px] font-bold uppercase tracking-widest">IglesiaBD &middot; 2026</p>
+          <p className="text-white/20 text-[11px] font-bold uppercase tracking-widest">IglesiaBD &middot; 2026</p>
           <div className="flex gap-4">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-            <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+            <div className="w-2 h-2 rounded-full bg-primary/40" />
+            <div className="w-2 h-2 rounded-full bg-white/10" />
           </div>
         </motion.div>
       </div>
 
       {/* ── SECCIÓN DERECHA: Formulario de Login ── */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
 
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="w-full max-w-[420px] relative z-10"
+          className="w-full max-w-[480px] relative z-10"
         >
-          {/* Mobile Header */}
-          <div className="lg:hidden flex flex-col items-center mb-6 sm:mb-10">
-            <SEILogo className="w-20 h-20 sm:w-28 sm:h-28 drop-shadow-xl mb-2 sm:mb-6" variant="light-bg" />
-          </div>
-
-          <div className="mb-8 sm:mb-12 text-center lg:text-left px-2 sm:px-0">
+          
+          <div className="mb-12 sm:mb-16 text-center lg:text-left px-2 sm:px-0">
             <motion.h2 
               initial={{ opacity: 0, scale: 0.9, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-none text-foreground"
+              className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight leading-[0.85] text-foreground"
             >
               Bienvenido<span className="text-primary">.</span><br />
-              <span className="text-xl sm:text-2xl lg:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary/40 leading-normal">
+              <span className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary/40 leading-tight">
                 Nos alegra verte.
               </span>
             </motion.h2>
@@ -214,7 +189,7 @@ export function LoginPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-muted-foreground text-xs sm:text-sm mt-3 sm:mt-4 font-medium"
+              className="text-muted-foreground text-xl sm:text-2xl mt-8 sm:mt-10 font-medium max-w-md"
             >
               Identifícate para gestionar tu ministerio y equipo hoy.
             </motion.p>
@@ -239,7 +214,7 @@ export function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="bg-accent/30 border-white/5 h-12 pl-10 rounded-xl focus:ring-primary/20 transition-all text-sm"
+                  className="bg-accent/30 border-white/5 h-16 sm:h-20 pl-16 rounded-2xl focus:ring-primary/20 transition-all text-xl"
                   disabled={isLoading}
                 />
               </div>
@@ -256,7 +231,7 @@ export function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="bg-accent/30 border-white/5 h-12 pl-10 pr-12 rounded-xl focus:ring-primary/20 transition-all text-sm"
+                  className="bg-accent/30 border-white/5 h-16 sm:h-20 pl-16 rounded-2xl focus:ring-primary/20 transition-all text-xl"
                   disabled={isLoading}
                 />
                 <button
@@ -283,7 +258,7 @@ export function LoginPage() {
               )}
             </AnimatePresence>
 
-            <Button type="submit" className="w-full h-12 rounded-xl shadow-lg shadow-primary/20 font-bold transition-all active:scale-[0.98]" disabled={isLoading}>
+            <Button type="submit" className="w-full h-16 sm:h-20 rounded-2xl shadow-xl shadow-primary/20 font-black text-xl transition-all active:scale-[0.98] mt-4" disabled={isLoading}>
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
