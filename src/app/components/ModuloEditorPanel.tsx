@@ -8,6 +8,7 @@ import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { Input } from './ui/input'
 import { Skeleton } from './ui/skeleton'
+import { ConfirmDialog } from './ui/ConfirmDialog'
 import {
   Save, Loader2, Paperclip, Trash2, FileText,
   FileImage, File, ExternalLink, X, Link2, Plus,
@@ -229,12 +230,12 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-background/35 p-4 backdrop-blur-sm">
         <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             {readOnly ? 'Contenido del módulo' : 'Editar módulo'}
           </p>
-          <h3 className="font-bold text-sm truncate">{tituloModulo}</h3>
+          <h3 className="truncate text-sm font-bold">{tituloModulo}</h3>
         </div>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="w-4 h-4" />
@@ -242,8 +243,8 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
       </div>
 
       {/* ── Contenido MD ── */}
-      <Card className="bg-card/40 border-white/10 rounded-2xl p-4 space-y-3">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+      <Card className="space-y-4 rounded-[24px] border border-white/10 bg-card/55 p-4 backdrop-blur-2xl">
+        <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">
           {readOnly ? 'Contenido' : 'Contenido del módulo'}
         </p>
 
@@ -255,13 +256,13 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
               </ReactMarkdown>
             </article>
           ) : (
-            <p className="text-sm text-muted-foreground italic">
+            <p className="text-sm italic text-muted-foreground">
               Este módulo aún no tiene contenido publicado.
             </p>
           )
         ) : (
           <>
-            <div data-color-mode="auto" className="rounded-xl overflow-hidden border border-white/10">
+            <div data-color-mode="auto" className="overflow-hidden rounded-2xl border border-white/10">
               <MDEditor
                 value={contenido}
                 onChange={v => { setContenido(v ?? ''); setContenidoDirty(true) }}
@@ -278,7 +279,7 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
                 size="sm"
                 onClick={handleGuardar}
                 disabled={!contenidoDirty || guardando}
-                className="rounded-xl"
+                className="rounded-2xl"
               >
                 {guardando
                   ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Guardando...</>
@@ -290,9 +291,9 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
       </Card>
 
       {/* ── Archivos adjuntos ── */}
-      <Card className="bg-card/40 border-white/10 rounded-2xl p-4 space-y-3">
+      <Card className="space-y-4 rounded-[24px] border border-white/10 bg-card/55 p-4 backdrop-blur-2xl">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">
             Archivos adjuntos
           </p>
           {!readOnly && (
@@ -300,7 +301,7 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-xl text-xs h-8"
+                className="h-8 rounded-2xl text-xs"
                 disabled={subiendo}
                 onClick={() => fileRef.current?.click()}
               >
@@ -330,7 +331,7 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
               return (
                 <li
                   key={a.id_archivo}
-                  className="flex items-center gap-3 px-3 py-2 rounded-xl border border-white/10 bg-background/40"
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-background/40 px-3 py-2"
                 >
                   <Icon className="w-4 h-4 shrink-0 text-muted-foreground" />
                   <div className="flex-1 min-w-0">
@@ -366,16 +367,16 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
       </Card>
 
       {/* ── Enlaces ── */}
-      <Card className="bg-card/40 border-white/10 rounded-2xl p-4 space-y-3">
+      <Card className="space-y-4 rounded-[24px] border border-white/10 bg-card/55 p-4 backdrop-blur-2xl">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">
             Enlaces
           </p>
           {!readOnly && !showFormEnlace && (
             <Button
               variant="outline"
               size="sm"
-              className="rounded-xl text-xs h-8"
+              className="h-8 rounded-2xl text-xs"
               onClick={() => setShowFormEnlace(true)}
             >
               <Plus className="w-3.5 h-3.5 mr-1" />
@@ -386,37 +387,37 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
 
         {/* Inline form */}
         {showFormEnlace && (
-          <div className="space-y-2 rounded-xl border border-white/10 bg-background/40 p-3">
+          <div className="space-y-2 rounded-2xl border border-white/10 bg-background/40 p-3">
             <Input
               placeholder="Título del enlace *"
               value={nuevoTitulo}
               onChange={e => setNuevoTitulo(e.target.value)}
-              className="h-8 text-sm rounded-lg"
+              className="h-9 rounded-xl text-sm"
             />
             <Input
               placeholder="https://..."
               value={nuevoUrl}
               onChange={e => setNuevoUrl(e.target.value)}
-              className="h-8 text-sm rounded-lg"
+              className="h-9 rounded-xl text-sm"
             />
             <Input
               placeholder="Descripción (opcional)"
               value={nuevoDesc}
               onChange={e => setNuevoDesc(e.target.value)}
-              className="h-8 text-sm rounded-lg"
+              className="h-9 rounded-xl text-sm"
             />
             <div className="flex gap-2 justify-end">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs"
+                className="h-8 rounded-xl text-xs"
                 onClick={() => { setShowFormEnlace(false); setNuevoTitulo(''); setNuevoUrl(''); setNuevoDesc('') }}
               >
                 Cancelar
               </Button>
               <Button
                 size="sm"
-                className="h-7 text-xs rounded-lg"
+                className="h-8 rounded-xl text-xs"
                 disabled={guardandoEnlace}
                 onClick={handleAgregarEnlace}
               >
@@ -435,7 +436,7 @@ export function ModuloEditorPanel({ idModulo, tituloModulo, onClose, readOnly = 
             {enlaces.map(e => (
               <li
                 key={e.id_enlace}
-                className="flex items-center gap-3 px-3 py-2 rounded-xl border border-white/10 bg-background/40"
+                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-background/40 px-3 py-2"
               >
                 <Link2 className="w-4 h-4 shrink-0 text-muted-foreground" />
                 <div className="flex-1 min-w-0">

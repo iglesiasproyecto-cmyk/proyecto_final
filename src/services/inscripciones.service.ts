@@ -14,7 +14,15 @@ export async function inscribirUsuariosCurso(
     throw new Error(error.message)
   }
 
-  return data
+  const rows = Array.isArray(data) ? data : []
+  const inscritos = rows.filter((r: any) => r?.accion === 'inscrito' || r?.accion === 'nuevo').length
+  const reactivados = rows.filter((r: any) => r?.accion === 'reactivado').length
+
+  return {
+    inscritos,
+    reactivados,
+    rows,
+  }
 }
 
 export async function retirarInscripcion(idAulaInscripcion: number) {
@@ -79,8 +87,7 @@ export async function getCandidatosInscripcionCurso(idAulaCurso: number) {
     .from('aula_curso')
     .select('id_aula_curso, id_ministerio')
     .eq('id_aula_curso', idAulaCurso)
-    .eq('estado', 'activo')
-    .single()
+    .maybeSingle()
 
   if (cursoError) throw cursoError
   if (!curso) throw new Error('Curso no encontrado')
@@ -211,7 +218,7 @@ async function calcularProgresoUsuario(idUsuario: number, idCurso: number): Prom
     // Obtener todas las actividades del curso
     const { data: actividades, error: actError } = await supabase
       .from('aula_actividad')
-      .select('id')
+      .select('id_aula_actividad')
       .eq('id_aula_modulo', await getModuloIdFromCurso(idCurso))
 
     if (actError) {
@@ -225,9 +232,9 @@ async function calcularProgresoUsuario(idUsuario: number, idCurso: number): Prom
     // Obtener actividades completadas por el usuario
     const { data: completadas, error: compError } = await supabase
       .from('aula_progreso_actividad')
-      .select('id')
+      .select('id_aula_progreso_actividad')
       .eq('id_usuario', idUsuario)
-      .in('id_aula_actividad', actividades.map(a => a.id))
+      .in('id_aula_actividad', actividades.map(a => a.id_aula_actividad))
       .not('completada_en', 'is', null)
 
     if (compError) {

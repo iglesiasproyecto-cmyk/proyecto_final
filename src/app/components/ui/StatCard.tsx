@@ -52,9 +52,9 @@ export function StatCard({
         )}
       </div>
       
-      <div className="relative z-10">
-        <p className="text-4xl font-light tracking-tight text-foreground">{value}</p>
-        <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{label}</p>
+      <div className="relative z-10 flex flex-col justify-end flex-1">
+        <p className="text-3xl sm:text-4xl font-light tracking-tight text-foreground truncate">{value}</p>
+        <p className="text-[10px] sm:text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest truncate">{label}</p>
       </div>
     </div>
   );

@@ -107,25 +107,26 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 rounded-[28px] border border-white/10 bg-card/55 p-5 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-xl font-black tracking-tight">Módulos del Curso</h3>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Estructura del curso</p>
+          <h3 className="mt-1 text-xl font-black tracking-tight">Módulos del Curso</h3>
           <p className="text-sm font-medium text-muted-foreground">
             {desbloqueoSecuencial ? '🔒 Desbloqueo secuencial activado' : '🔓 Todos los módulos disponibles'}
           </p>
         </div>
-        <Button onClick={() => setShowCrearModulo(true)} className="rounded-xl bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-md shadow-blue-900/10 h-11 font-bold px-6">
+        <Button onClick={() => setShowCrearModulo(true)} className="h-11 rounded-2xl bg-[#4682b4] px-6 font-bold text-white shadow-md shadow-blue-900/10 hover:bg-[#4682b4]/90">
           <Plus className="h-4 w-4 mr-2" />
           Agregar Módulo
         </Button>
       </div>
 
       {modulosOrdenados.length === 0 ? (
-        <Card>
+        <Card className="rounded-[28px] border border-dashed border-border/70 bg-muted/20">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No hay módulos aún</h3>
-            <p className="text-muted-foreground text-center mb-4">
+            <BookOpen className="mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-semibold">No hay módulos aún</h3>
+            <p className="mb-4 text-center text-muted-foreground">
               Crea tu primer módulo para comenzar a agregar contenido al curso
             </p>
             <Button onClick={() => setShowCrearModulo(true)}>
@@ -147,31 +148,29 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
                         {...provided.draggableProps}
                         className="mb-3"
                       >
-                        <Card
-                          className="hover:shadow-md transition-shadow border-white/10 bg-card/50 backdrop-blur-sm rounded-2xl overflow-hidden"
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-center space-x-4">
-                              <div {...provided.dragHandleProps} className="cursor-grab">
+                          <Card className="overflow-hidden rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl transition-all hover:-translate-y-0.5 hover:shadow-lg">
+                          <CardContent className="p-4 sm:p-5">
+                            <div className="flex items-start gap-4">
+                              <div {...provided.dragHandleProps} className="mt-1 cursor-grab rounded-xl bg-muted/30 p-2">
                                 <GripVertical className="h-5 w-5 text-muted-foreground" />
                               </div>
 
                               <div className="flex-1">
-                                <div className="flex items-center space-x-3">
+                                <div className="flex flex-wrap items-center gap-2">
                                   <Badge variant="outline">#{modulo.orden}</Badge>
-                                  <h4 className="font-medium">{modulo.titulo}</h4>
+                                  <h4 className="font-semibold">{modulo.titulo}</h4>
                                   <Badge variant={modulo.publicado ? 'default' : 'secondary'}>
                                     {modulo.publicado ? 'publicado' : 'borrador'}
                                   </Badge>
                                 </div>
 
                                 {modulo.descripcion && (
-                                  <p className="text-sm text-muted-foreground mt-1">
+                                  <p className="mt-1 text-sm text-muted-foreground">
                                     {modulo.descripcion}
                                   </p>
                                 )}
 
-                                <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
+                                <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
                                   <span className="flex items-center">
                                     <FileText className="h-3 w-3 mr-1" />
                                     Contenido
@@ -183,7 +182,7 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
                                 </div>
                               </div>
 
-                              <div className="flex items-center space-x-2">
+                              <div className="flex shrink-0 items-center gap-2">
                                 <Button
                                   variant={moduloEditando?.id === modulo.id_aula_modulo ? 'default' : 'outline'}
                                   size="sm"
@@ -239,7 +238,7 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
                         </Card>
 
                         {moduloEditando?.id === modulo.id_aula_modulo && (
-                          <div className="mt-2 rounded-2xl border border-white/10 bg-background/30 p-4">
+                          <div className="mt-2 rounded-[24px] border border-white/10 bg-background/35 p-4">
                             <ModuloEditorPanel
                               idModulo={modulo.id_aula_modulo}
                               tituloModulo={modulo.titulo}

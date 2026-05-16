@@ -116,27 +116,27 @@ export function MiMinisterioPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative bg-card/40 backdrop-blur-xl border border-border/50 p-6 rounded-3xl shadow-sm overflow-hidden flex flex-col md:flex-row md:items-center gap-5"
+        className="relative bg-card/40 backdrop-blur-xl border border-border/50 p-5 sm:p-6 rounded-3xl shadow-sm overflow-hidden flex flex-col md:flex-row md:items-center gap-4 sm:gap-5"
       >
         <div className="absolute top-0 right-0 w-72 h-48 bg-primary/10 rounded-full blur-[90px] pointer-events-none -z-10" />
 
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white text-xl font-black shadow-lg shadow-blue-900/30">
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white text-lg sm:text-xl font-black shadow-lg shadow-blue-900/30 shrink-0">
           {min.nombre.charAt(0)}
         </div>
 
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight leading-none mb-1 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight leading-none mb-1.5 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
             {min.nombre}
           </h1>
-          <p className="text-xs text-muted-foreground mb-3">{min.descripcion}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 flex items-center gap-1">
-              <Crown className="w-3 h-3" /> {min.liderNombre || "Sin líder"}
+          <p className="text-[11px] sm:text-xs text-muted-foreground mb-3 line-clamp-2">{min.descripcion}</p>
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 flex items-center gap-1">
+              <Crown className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> {min.liderNombre || "Sin líder"}
             </Badge>
-            <Badge variant="outline" className="bg-slate-500/10 text-slate-400 border-slate-500/20 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 flex items-center gap-1">
-              <Users className="w-3 h-3" /> {activeMembers.length} miembros
+            <Badge variant="outline" className="bg-slate-500/10 text-slate-400 border-slate-500/20 text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 flex items-center gap-1">
+              <Users className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> {activeMembers.length} miembros
             </Badge>
-            <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border ${min.estado === "activo" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : "bg-slate-500/10 text-slate-400 border-slate-500/20"}`}>
+            <Badge variant="outline" className={`text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border ${min.estado === "activo" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : "bg-slate-500/10 text-slate-400 border-slate-500/20"}`}>
               {min.estado}
             </Badge>
           </div>
@@ -163,12 +163,12 @@ export function MiMinisterioPage() {
             onClick={() => navigate(s.nav)}
             className="group bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 transition-all flex items-center gap-3"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-md shadow-blue-900/20 group-hover:scale-110 transition-transform shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white shadow-md shadow-blue-900/20 group-hover:scale-110 transition-transform shrink-0">
               {s.icon}
             </div>
             <div>
-              <p className="text-2xl font-black text-primary leading-none">{s.value}</p>
-              <p className="text-[11px] font-medium text-muted-foreground mt-0.5">{s.label}</p>
+              <p className="text-xl sm:text-2xl font-black text-primary leading-none">{s.value}</p>
+              <p className="text-[10px] sm:text-[11px] font-medium text-muted-foreground mt-0.5">{s.label}</p>
             </div>
           </motion.div>
         ))}
@@ -196,28 +196,28 @@ export function MiMinisterioPage() {
             </div>
             <div className="divide-y divide-border/30">
               {activeMembers.slice(0, 6).map((mm) => (
-                <div key={mm.idMiembroMinisterio} className={`group flex items-center gap-3 px-4 py-3 hover:bg-accent/20 transition-colors ${mm.idUsuario === usuarioActual?.idUsuario ? "bg-primary/5" : ""}`}>
+                <div key={mm.idMiembroMinisterio} className={`group flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 hover:bg-accent/20 transition-colors ${mm.idUsuario === usuarioActual?.idUsuario ? "bg-primary/5" : ""}`}>
                   <div className="relative shrink-0">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/15 flex items-center justify-center text-primary text-xs font-bold">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/15 flex items-center justify-center text-primary text-xs font-bold">
                       {(mm.nombreCompleto || "?").charAt(0).toUpperCase()}
                     </div>
                     {mm.idUsuario === usuarioActual?.idUsuario && (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-primary rounded-full border-2 border-background" />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{mm.nombreCompleto}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[13px] sm:text-sm font-semibold truncate group-hover:text-primary transition-colors">{mm.nombreCompleto}</p>
                       {mm.idUsuario === usuarioActual?.idUsuario && (
-                        <Badge className="text-[9px] px-1.5 py-0 h-4 rounded-full">Tú</Badge>
+                        <Badge className="text-[8px] px-1 py-0 h-3.5 rounded-full">Tú</Badge>
                       )}
                     </div>
-                    <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
-                      <Mail className="w-3 h-3 shrink-0" /> {mm.correo}
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground flex items-center gap-1 truncate">
+                      <Mail className="w-2.5 h-2.5 shrink-0" /> {mm.correo}
                     </p>
                   </div>
-                  <Badge variant="outline" className={`${rolColors[mm.rolEnMinisterio || "servidor"]} border text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 flex items-center gap-1 shrink-0`}>
-                    {rolIcons[mm.rolEnMinisterio || "servidor"]} {rolLabels[mm.rolEnMinisterio || "servidor"]}
+                  <Badge variant="outline" className={`${rolColors[mm.rolEnMinisterio || "servidor"] || rolColors["servidor"]} border text-[8px] sm:text-[9px] uppercase font-bold tracking-wider px-1.5 sm:px-2 py-0.5 flex items-center gap-1 shrink-0`}>
+                    {React.cloneElement((rolIcons[mm.rolEnMinisterio || "servidor"] || rolIcons["servidor"]) as React.ReactElement, { className: "w-2.5 h-2.5" })} {rolLabels[mm.rolEnMinisterio || "servidor"] || "Servidor"}
                   </Badge>
                 </div>
               ))}
@@ -314,21 +314,27 @@ function LiderAulaSection({ ministerio }: { ministerio: any }) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        <div className="text-center p-3 bg-primary/5 rounded-lg">
-          <BookOpen className="w-5 h-5 mx-auto mb-1 text-primary" />
-          <div className="text-lg font-bold">{cursosActivos.length}</div>
-          <div className="text-xs text-muted-foreground">Cursos activos</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+        <div className="text-center p-2 sm:p-3 bg-primary/5 rounded-lg flex sm:flex-col items-center sm:justify-center gap-3 sm:gap-1">
+          <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+          <div className="flex-1 sm:flex-none text-left sm:text-center">
+            <div className="text-base sm:text-lg font-bold leading-none">{cursosActivos.length}</div>
+            <div className="text-[10px] sm:text-xs text-muted-foreground">Cursos activos</div>
+          </div>
         </div>
-        <div className="text-center p-3 bg-green-500/5 rounded-lg">
-          <Users className="w-5 h-5 mx-auto mb-1 text-green-600" />
-          <div className="text-lg font-bold">{totalInscritos}</div>
-          <div className="text-xs text-muted-foreground">Inscritos</div>
+        <div className="text-center p-2 sm:p-3 bg-green-500/5 rounded-lg flex sm:flex-col items-center sm:justify-center gap-3 sm:gap-1">
+          <Users className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+          <div className="flex-1 sm:flex-none text-left sm:text-center">
+            <div className="text-base sm:text-lg font-bold leading-none">{totalInscritos}</div>
+            <div className="text-[10px] sm:text-xs text-muted-foreground">Inscritos</div>
+          </div>
         </div>
-        <div className="text-center p-3 bg-amber-500/5 rounded-lg">
-          <Award className="w-5 h-5 mx-auto mb-1 text-amber-600" />
-          <div className="text-lg font-bold">0</div>
-          <div className="text-xs text-muted-foreground">Certificados</div>
+        <div className="text-center p-2 sm:p-3 bg-amber-500/5 rounded-lg flex sm:flex-col items-center sm:justify-center gap-3 sm:gap-1">
+          <Award className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+          <div className="flex-1 sm:flex-none text-left sm:text-center">
+            <div className="text-base sm:text-lg font-bold leading-none">0</div>
+            <div className="text-[10px] sm:text-xs text-muted-foreground">Certificados</div>
+          </div>
         </div>
       </div>
 

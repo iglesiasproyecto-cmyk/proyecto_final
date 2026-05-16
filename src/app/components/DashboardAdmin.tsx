@@ -23,8 +23,8 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
           titulo,
           estado,
           ministerio!inner(nombre, sede!inner(id_iglesia)),
-          aula_inscripcion(count),
-          aula_modulo(count)
+          aula_inscripcion(id_aula_inscripcion),
+          aula_modulo(id_aula_modulo)
         `)
         .eq('ministerio.sede.id_iglesia', idIglesia)
 
@@ -32,31 +32,30 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
 
       const activos = (cursos ?? []).filter(c => c.estado === 'activo').length
       const borradores = (cursos ?? []).filter(c => c.estado !== 'activo').length
+      const cursoIds = (cursos ?? []).map(c => c.id_aula_curso)
+
+      if (cursoIds.length === 0) {
+        return { activos, borradores, uniqueServidores: 0, promedio: 0, topCursos: [], total: 0 }
+      }
 
       const { data: inscripciones, error: inscError } = await supabase
         .from('aula_inscripcion')
-        .select('id_usuario, porcentaje_progreso')
+        .select('id_usuario')
         .eq('activo', true)
-        .in(
-          'id_aula_curso',
-          (cursos ?? []).map(c => c.id_aula_curso)
-        )
+        .in('id_aula_curso', cursoIds)
 
       if (inscError) throw inscError
 
       const uniqueServidores = new Set((inscripciones ?? []).map(i => i.id_usuario)).size
-      const progresos = (inscripciones ?? []).map(i => Number(i.porcentaje_progreso ?? 0))
-      const promedio = progresos.length
-        ? Math.round(progresos.reduce((a, b) => a + b, 0) / progresos.length)
-        : 0
+      const promedio = 0
 
       const topCursos = (cursos ?? [])
         .map(c => ({
           id: c.id_aula_curso,
           titulo: c.titulo,
           ministerio: (c.ministerio as any)?.nombre ?? '',
-          inscritos: (c.aula_inscripcion as any)?.[0]?.count ?? 0,
-          modulos: (c.aula_modulo as any)?.[0]?.count ?? 0,
+          inscritos: (c.aula_inscripcion as any)?.length ?? 0,
+          modulos: (c.aula_modulo as any)?.length ?? 0,
         }))
         .sort((a, b) => b.inscritos - a.inscritos)
         .slice(0, 5)
@@ -95,13 +94,13 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.07 }}
           >
-            <Card className="border-white/10 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden">
+            <Card className="overflow-hidden rounded-[28px] border border-white/10 bg-card/55 shadow-sm backdrop-blur-2xl">
               <CardContent className="p-5">
                 <div className="flex justify-between items-start mb-3">
                   <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${kpi.color} flex items-center justify-center text-white shadow-lg`}>
                     {kpi.icon}
                   </div>
-                  <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-[10px] py-0 tracking-widest uppercase">KPI</Badge>
+                  <Badge variant="secondary" className="border-0 bg-primary/10 py-0 text-[10px] uppercase tracking-widest text-primary">KPI</Badge>
                 </div>
                 <p className="text-4xl font-light tracking-tight text-foreground">{kpi.value}</p>
                 <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{kpi.label}</p>
@@ -113,7 +112,7 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
 
       {/* Top courses table */}
       {stats.topCursos.length > 0 && (
-        <Card className="border-white/10 bg-card/40 backdrop-blur-xl shadow-sm rounded-3xl overflow-hidden">
+        <Card className="overflow-hidden rounded-[28px] border border-white/10 bg-card/55 shadow-sm backdrop-blur-2xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-black uppercase tracking-[0.15em] text-foreground/70 flex items-center gap-2">
               <Award className="w-4 h-4 text-primary" />
@@ -143,7 +142,7 @@ export function DashboardAdmin({ idIglesia }: DashboardAdminProps) {
       )}
 
       {stats.total === 0 && (
-        <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-[28px] border border-dashed border-border bg-muted/20 py-12 text-muted-foreground">
           <CheckCircle2 className="w-10 h-10 opacity-20" />
           <p className="text-sm">No hay cursos en la iglesia todavía. ¡Crea el primero!</p>
         </div>

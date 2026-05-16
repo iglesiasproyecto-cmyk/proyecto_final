@@ -138,20 +138,20 @@ export function GeographyPage() {
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
       {/* HEADER */}
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] shadow-blue-900/20 shrink-0 flex items-center justify-center shadow-lg">
-            <Globe className="w-8 h-8 text-white" />
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] shadow-blue-900/20 shrink-0 flex items-center justify-center shadow-lg border border-white/20">
+            <Globe className="w-6 h-6 md:w-8 md:h-8 text-white drop-shadow-md" />
           </div>
           <div>
-            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-1">Catálogos</p>
-            <h1 className="text-4xl font-light tracking-tight">Gestión Geográfica</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[8px] md:text-[10px] mb-0.5 md:mb-1">Catálogos</p>
+            <h1 className="text-2xl md:text-4xl font-light tracking-tight">Gestión Geográfica</h1>
           </div>
         </div>
-        <Button onClick={() => openDialog("pais", "add")} className="shrink-0 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-lg shadow-blue-900/20"><Plus className="w-4 h-4 mr-2" /> Nuevo País</Button>
+        <Button onClick={() => openDialog("pais", "add")} className="w-full sm:w-auto shrink-0 rounded-full px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 shadow-lg shadow-blue-900/20"><Plus className="w-4 h-4 mr-2" /> Nuevo País</Button>
       </motion.div>
 
       {/* STATS ROW */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }} className="grid grid-cols-3 gap-4">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }} className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
         <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-white/20 shadow-sm dark:border-white/10 dark:bg-card/20 flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
           <p className="text-3xl font-light text-[#4682b4] dark:text-[#709dbd]">{paises.length}</p>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5"/> Países</p>
@@ -188,24 +188,28 @@ export function GeographyPage() {
           const isExpP = expandedPais.has(pais.idPais);
           return (
              <div key={pais.idPais} className="rounded-2xl bg-card/50 backdrop-blur-2xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden dark:border-white/10 dark:bg-card/20 transition-all">
-                <div className="flex items-center gap-4 p-4 md:px-6 cursor-pointer hover:bg-white/40 dark:hover:bg-white/5 transition-colors" onClick={() => togglePais(pais.idPais)}>
-                   <div className="w-10 h-10 rounded-xl bg-[#4682b4]/10 dark:bg-[#4682b4]/20 text-[#4682b4] dark:text-[#709dbd] shrink-0 flex items-center justify-center">
-                      <Globe className="w-5 h-5" />
+                <div className="flex items-center gap-4 p-4 md:px-5 cursor-pointer hover:bg-white/60 dark:hover:bg-white/10 transition-all duration-300" onClick={() => togglePais(pais.idPais)}>
+                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/20 text-[#4682b4] dark:text-[#709dbd] shrink-0 flex items-center justify-center border border-[#4682b4]/10">
+                      <Flag className="w-6 h-6" />
                    </div>
                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground text-lg truncate">{pais.nombre}</p>
-                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mt-0.5">{deps.length} {deps.length === 1 ? 'Departamento' : 'Departamentos'}</p>
+                      <p className="font-bold text-foreground text-base md:text-lg tracking-tight truncate">{pais.nombre}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                          <Badge variant="secondary" className="bg-[#4682b4]/5 text-[#4682b4] border-[#4682b4]/10 text-[9px] px-1.5 py-0 font-bold uppercase tracking-wider">
+                            {deps.length} {deps.length === 1 ? 'Depto' : 'Deptos'}
+                          </Badge>
+                      </div>
                    </div>
-                   <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-emerald-600 shrink-0 border border-emerald-500/20 bg-emerald-500/5 shadow-sm" onClick={() => openDialog("dep", "add", undefined, pais.idPais)} title="Agregar Departamento">
-                         <Plus className="w-4 h-4" />
+                   <div className="flex items-center gap-1 sm:gap-2" onClick={e => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 md:h-9 md:w-9 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-emerald-600 shrink-0 border border-emerald-500/20 bg-emerald-500/5 shadow-sm" onClick={() => openDialog("dep", "add", undefined, pais.idPais)} title="Agregar Departamento">
+                         <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       </Button>
-                      <div className="w-px h-6 bg-border/60 mx-1 hidden sm:block" />
-                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-foreground/70 shrink-0" onClick={() => openDialog("pais", "edit", pais.idPais)}>
-                         <Pencil className="w-4 h-4" />
+                      <div className="w-px h-6 bg-border/60 mx-0.5 sm:mx-1 hidden xs:block" />
+                      <Button variant="ghost" size="sm" className="h-8 w-8 md:h-9 md:w-9 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-foreground/70 shrink-0" onClick={() => openDialog("pais", "edit", pais.idPais)}>
+                         <Pencil className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-full hover:bg-destructive/10 text-destructive shrink-0" onClick={() => setConfirmDelete({ type: "pais", id: pais.idPais, name: pais.nombre })}>
-                         <Trash2 className="w-4 h-4" />
+                      <Button variant="ghost" size="sm" className="h-8 w-8 md:h-9 md:w-9 p-0 rounded-full hover:bg-destructive/10 text-destructive shrink-0" onClick={() => setConfirmDelete({ type: "pais", id: pais.idPais, name: pais.nombre })}>
+                         <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       </Button>
                    </div>
                    <div className="ml-1 sm:ml-2">
@@ -215,7 +219,12 @@ export function GeographyPage() {
 
                 {isExpP && (
                   <div className="bg-white/20 dark:bg-black/10 border-t border-white/20 dark:border-white/5">
-                    {deps.length === 0 && <p className="text-sm text-muted-foreground text-center py-6 italic">Sin departamentos registrados en este país.</p>}
+                    {deps.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-8 opacity-60">
+                        <MapPin className="w-8 h-8 text-muted-foreground/30 mb-2" />
+                        <p className="text-xs text-muted-foreground font-medium">Sin departamentos registrados</p>
+                      </div>
+                    )}
                     <div className="flex flex-col">
                       {deps.map(dep => {
                         const cius = ciudades.filter(c => c.idDepartamentoGeo === dep.idDepartamentoGeo);
@@ -223,23 +232,25 @@ export function GeographyPage() {
                         return (
                            <div key={dep.idDepartamentoGeo}>
                               <div className="flex items-center gap-4 py-3 px-4 md:px-6 md:pl-12 cursor-pointer hover:bg-white/40 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 last:border-0 transition-colors" onClick={() => toggleDep(dep.idDepartamentoGeo)}>
-                                 <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
-                                    <MapPin className="w-4 h-4" />
+                                 <div className="w-10 h-10 rounded-xl bg-violet-100/50 dark:bg-violet-900/20 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0 border border-violet-500/10">
+                                    <MapPin className="w-4.5 h-4.5" />
                                  </div>
                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-foreground/90 text-sm md:text-base truncate">{dep.nombre}</p>
-                                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-0.5">{cius.length} {cius.length === 1 ? 'Ciudad' : 'Ciudades'}</p>
+                                    <p className="font-semibold text-foreground/90 text-sm md:text-base truncate">{dep.nombre}</p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">{cius.length} {cius.length === 1 ? 'Ciudad' : 'Ciudades'}</span>
+                                     </div>
                                  </div>
-                                 <div className="flex items-center gap-1.5 md:gap-2" onClick={e => e.stopPropagation()}>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-emerald-600 shrink-0 border border-emerald-500/20 bg-emerald-500/5 shadow-sm" onClick={() => openDialog("ciudad", "add", undefined, dep.idDepartamentoGeo)} title="Agregar Ciudad">
-                                       <Plus className="w-3.5 h-3.5" />
+                                 <div className="flex items-center gap-1 md:gap-2" onClick={e => e.stopPropagation()}>
+                                    <Button variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-emerald-600 shrink-0 border border-emerald-500/20 bg-emerald-500/5 shadow-sm" onClick={() => openDialog("ciudad", "add", undefined, dep.idDepartamentoGeo)} title="Agregar Ciudad">
+                                       <Plus className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                     </Button>
-                                    <div className="w-px h-5 bg-border/60 mx-1 hidden sm:block" />
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-foreground/70 shrink-0" onClick={() => openDialog("dep", "edit", dep.idDepartamentoGeo)}>
-                                       <Pencil className="w-3.5 h-3.5" />
+                                    <div className="w-px h-5 bg-border/60 mx-0.5 sm:mx-1 hidden xs:block" />
+                                    <Button variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-foreground/70 shrink-0" onClick={() => openDialog("dep", "edit", dep.idDepartamentoGeo)}>
+                                       <Pencil className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                     </Button>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10 text-destructive shrink-0" onClick={() => setConfirmDelete({ type: "dep", id: dep.idDepartamentoGeo, name: dep.nombre })}>
-                                       <Trash2 className="w-3.5 h-3.5" />
+                                    <Button variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-full hover:bg-destructive/10 text-destructive shrink-0" onClick={() => setConfirmDelete({ type: "dep", id: dep.idDepartamentoGeo, name: dep.nombre })}>
+                                       <Trash2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                     </Button>
                                  </div>
                                  <div className="ml-2 w-5 flex justify-center">
@@ -255,12 +266,12 @@ export function GeographyPage() {
                                          <Building className="w-4 h-4 text-emerald-500/80 shrink-0" />
                                          <span className="text-sm font-medium text-foreground/80 truncate">{ci.nombre}</span>
                                        </div>
-                                       <div className="flex gap-1.5 pr-8">
+                                       <div className="flex gap-1 md:gap-1.5 pr-4 md:pr-8">
                                           <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-foreground/70 shrink-0" onClick={() => openDialog("ciudad", "edit", ci.idCiudad)}>
-                                             <Pencil className="w-3.5 h-3.5" />
+                                             <Pencil className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                           </Button>
                                           <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-full hover:bg-destructive/10 text-destructive shrink-0" onClick={() => setConfirmDelete({ type: "ciudad", id: ci.idCiudad, name: ci.nombre })}>
-                                             <Trash2 className="w-3.5 h-3.5" />
+                                             <Trash2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                           </Button>
                                        </div>
                                      </div>

@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       return jsonResponse(origin, { message: 'Unauthorized' }, 401)
     }
 
-    const { correo, nombres, apellidos, idIglesia, idRol, idSede } = await req.json()
+    const { correo, nombres, apellidos, idIglesia, idRol, idSede, idMinisterio, fechaNacimiento } = await req.json()
 
     if (!correo || !nombres || !apellidos || !idIglesia || !idRol) {
       return jsonResponse(origin, { message: 'Missing required fields' }, 400)
@@ -185,9 +185,14 @@ Deno.serve(async (req) => {
     const isSedeRole = sedeRequiredRoles.has(targetRole.nombre)
     const requiresMinisterio = targetRole.nombre === 'Líder' || targetRole.nombre === 'Servidor'
     const sedeId = Number(idSede)
+    const ministerioId = idMinisterio ? Number(idMinisterio) : null
 
     if (isSedeRole && (!sedeId || Number.isNaN(sedeId))) {
       return jsonResponse(origin, { message: 'Debes seleccionar una sede para este rol' }, 400)
+    }
+
+    if (requiresMinisterio && (!ministerioId || Number.isNaN(ministerioId))) {
+      return jsonResponse(origin, { message: 'Debes seleccionar un ministerio para este rol' }, 400)
     }
 
     // First, check if the app profile already exists to keep this flow idempotent.
@@ -203,10 +208,9 @@ Deno.serve(async (req) => {
     let profileReconciled = false
 
     if (!usuarioId) {
-      // Generar token custom para invitación
-      const crypto = await import('https://deno.land/std@0.208.0/crypto/mod.ts')
-      const token = crypto.getRandomValues(new Uint8Array(32))
-      const tokenString = Array.from(token, byte => byte.toString(16).padStart(2, '0')).join('')
+      // Generar token custom para invitación (crypto es global en Deno)
+      const tokenBytes = globalThis.crypto.getRandomValues(new Uint8Array(32))
+      const tokenString = Array.from(tokenBytes, (byte: number) => byte.toString(16).padStart(2, '0')).join('')
 
       // Insertar token en invite_tokens
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 días
@@ -220,6 +224,8 @@ Deno.serve(async (req) => {
           id_iglesia: idIglesia,
           id_rol: idRol,
           id_sede: isSedeRole ? sedeId : null,
+          id_ministerio: requiresMinisterio ? ministerioId : null,
+          fecha_nacimiento: fechaNacimiento || null,
           expires_at: expiresAt.toISOString(),
         })
         .select('id_invite_token')
@@ -256,7 +262,7 @@ Deno.serve(async (req) => {
       // Usar la función send-email para enviar el email
       const { error: emailError } = await supabaseAdmin.functions.invoke('send-email', {
         body: {
-          to: normalizedEmail,
+          email: normalizedEmail,
           subject: emailSubject,
           html: emailBody,
         },
@@ -270,62 +276,48 @@ Deno.serve(async (req) => {
       }
 
       inviteSent = true
+
+      // Early return for new users — role will be assigned when they accept the invite via complete-invite
+      return jsonResponse(origin, {
+        success: true,
+        inviteSent: true,
+        profileReconciled: false,
+        roleAssigned: false,
+        userAlreadyExisted: false,
+      })
     }
 
-    if (!usuarioId) {
-      throw new Error('No se pudo resolver el usuario objetivo')
-    }
-
-    if (requiresMinisterio) {
-      const { data: membership, error: membershipError } = await supabaseAdmin
-        .from('miembro_ministerio')
-        .select('id_miembro_ministerio, ministerio!inner(id_sede)')
+    // Existing user path — update fecha_nacimiento if provided
+    if (usuarioId && fechaNacimiento) {
+      const { error: updateError } = await supabaseAdmin
+        .from('usuario')
+        .update({ fecha_nacimiento: fechaNacimiento })
         .eq('id_usuario', usuarioId)
-        .is('fecha_salida', null)
-        .eq('ministerio.id_sede', sedeId)
-        .limit(1)
 
-      if (membershipError) throw membershipError
-      if (!membership || membership.length === 0) {
-        return jsonResponse(origin, { message: 'El usuario debe pertenecer a un ministerio de la sede para este rol' }, 400)
+      if (updateError) {
+        console.error('Error updating user fecha_nacimiento:', updateError)
       }
     }
 
-    const assignmentTable = isSedeRole ? 'usuario_rol_sede' : 'usuario_rol'
-    const assignmentIdColumn = isSedeRole ? 'id_usuario_rol_sede' : 'id_usuario_rol'
-
-    const { data: existingAssignment, error: assignmentCheckError } = await supabaseAdmin
-      .from(assignmentTable)
-      .select(assignmentIdColumn)
-      .eq('id_usuario', usuarioId)
-      .eq('id_rol', idRol)
-      .eq('id_iglesia', idIglesia)
-      .is('fecha_fin', null)
-      .maybeSingle()
-
-    if (assignmentCheckError) throw assignmentCheckError
-
-    let roleAssigned = false
-    if (!existingAssignment) {
-      const { error: rolError } = await supabaseAdmin
-        .from(assignmentTable)
-        .insert({
-          id_usuario: usuarioId,
-          id_rol: idRol,
-          id_iglesia: idIglesia,
-          id_sede: isSedeRole ? sedeId : null,
-          fecha_inicio: new Date().toISOString().split('T')[0],
-        })
-      if (rolError) throw rolError
-      roleAssigned = true
-    }
+    // Assign role directly via RPC
+    const { error: rpcError } = await supabaseAdmin.rpc(
+      'assign_role_with_ministerio',
+      {
+        p_id_usuario:    usuarioId,
+        p_id_rol:        idRol,
+        p_id_iglesia:    idIglesia,
+        p_id_sede:       isSedeRole ? sedeId : null,
+        p_id_ministerio: requiresMinisterio ? ministerioId : null,
+      }
+    )
+    if (rpcError) throw rpcError
 
     return jsonResponse(origin, {
       success: true,
-      inviteSent,
-      profileReconciled,
-      roleAssigned,
-      userAlreadyExisted: !inviteSent,
+      inviteSent: false,
+      profileReconciled: false,
+      roleAssigned: true,
+      userAlreadyExisted: true,
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'

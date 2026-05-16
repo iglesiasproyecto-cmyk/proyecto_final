@@ -114,8 +114,9 @@ async function verificarYMarcarModuloCompleto(idAulaInscripcion: number, idUsuar
   const { data: intento } = await supabase
     .from('aula_intento_evaluacion')
     .select('id_aula_evaluacion')
-    .eq('id_detalle_proceso_curso', idAulaInscripcion)
     .eq('id_usuario', idUsuario)
+    .order('iniciado_en', { ascending: false })
+    .limit(1)
     .single()
 
   if (!intento?.id_aula_evaluacion) return
@@ -148,15 +149,15 @@ async function verificarYMarcarModuloCompleto(idAulaInscripcion: number, idUsuar
   const { data: actividadesCompletadas } = await supabase
     .from('aula_progreso_actividad')
     .select('id_aula_progreso_actividad')
-    .eq('id_detalle_proceso_curso', idAulaInscripcion)
+    .eq('id_usuario', idUsuario)
     .in('id_aula_actividad', actividades?.map(a => a.id_aula_actividad) || [])
     .not('completada_en', 'is', null)
 
   const { data: evaluacionesAprobadas } = await supabase
     .from('aula_intento_evaluacion')
     .select('id_aula_intento_evaluacion')
-    .eq('id_detalle_proceso_curso', idAulaInscripcion)
-    .eq('estado', 'aprobado')
+    .eq('id_usuario', idUsuario)
+    .eq('aprobado', true)
 
   const elementosCompletados = (actividadesCompletadas?.length || 0) + (evaluacionesAprobadas?.length || 0)
 

@@ -3,7 +3,7 @@ import { LiderAulaPage } from './LiderAulaPage'
 import { ServidorAulaPage } from './ServidorAulaPage'
 import { AdminAulaPage } from './AdminAulaPage'
 import { Alert, AlertDescription } from '@/app/components/ui/alert'
-import { GraduationCap, Sparkles } from 'lucide-react'
+import { GraduationCap, Sparkles, ShieldCheck, BookOpenCheck } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useMemo } from 'react'
 import { Skeleton } from '@/app/components/ui/skeleton';
@@ -65,35 +65,59 @@ export function AulaPage() {
   }
 
   return (
-    <div className="relative min-h-full">
+    <div className="relative min-h-full px-4 sm:px-6 lg:px-8 pb-10">
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-[#4682b4]/10 rounded-full blur-[100px]" />
-        <div className="absolute top-[20%] -left-[10%] w-[30%] h-[30%] bg-[#709dbd]/10 rounded-full blur-[80px]" />
+        <div className="absolute -top-[12%] -right-[5%] w-[42%] h-[42%] bg-[#4682b4]/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[18%] -left-[12%] w-[32%] h-[32%] bg-[#709dbd]/10 rounded-full blur-[100px]" />
       </div>
 
       <motion.div
-        className="container mx-auto py-2 sm:py-6"
+        className="container mx-auto py-4 sm:py-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <GraduationCap className="h-5 w-5 text-primary" />
+        <div className="mb-8 rounded-[32px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-[0_20px_60px_rgb(0,0,0,0.06)] p-6 sm:p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-3xl space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="rounded-2xl bg-primary/10 p-2 text-primary">
+                  <GraduationCap className="h-5 w-5" />
+                </div>
+                <Badge variant="secondary" className="border-primary/10 bg-primary/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                  <Sparkles className="mr-1 h-3 w-3" />
+                  Plataforma de Formación
+                </Badge>
+                <Badge variant="outline" className="border-white/10 bg-background/50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">
+                  Aula virtual
+                </Badge>
               </div>
-              <Badge variant="secondary" className="bg-primary/5 text-primary border-primary/10 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
-                Plataforma de Formación
-              </Badge>
+              <div>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground">
+                  Aula <span className="text-primary">Virtual</span>
+                </h1>
+                <p className="mt-3 max-w-2xl text-sm sm:text-base font-medium leading-relaxed text-muted-foreground">
+                  Potenciando el crecimiento espiritual y técnico de nuestros ministerios a través del conocimiento.
+                </p>
+              </div>
             </div>
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-foreground">
-              Aula <span className="text-primary">Virtual</span>
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm md:text-base max-w-2xl font-medium">
-              Potenciando el crecimiento espiritual y técnico de nuestros ministerios a través del conocimiento.
-            </p>
+
+            <div className="grid w-full max-w-xl grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-primary/10 bg-background/55 px-4 py-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Acceso</p>
+                <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  {stableRole ? stableRole.replace('_', ' ') : 'Validando rol...'}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-primary/10 bg-background/55 px-4 py-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Enfoque</p>
+                <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <BookOpenCheck className="h-4 w-4 text-primary" />
+                  Progreso continuo
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

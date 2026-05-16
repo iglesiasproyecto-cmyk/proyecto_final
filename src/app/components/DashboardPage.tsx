@@ -180,22 +180,22 @@ function SuperAdminDashboard() {
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
       {/* Header unificado */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/10 shrink-0 text-white" style={{ backgroundImage: `linear-gradient(135deg, ${CARD_COLORS[0].from}, ${CARD_COLORS[0].to})` }}>
-            <Sparkles className="w-8 h-8" />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/10 shrink-0 text-white" style={{ backgroundImage: `linear-gradient(135deg, ${CARD_COLORS[0].from}, ${CARD_COLORS[0].to})` }}>
+            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
           <div>
-            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">S.E.I.</p>
-            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Panel de Control</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[8px] sm:text-[10px] mb-0.5">S.E.I.</p>
+            <h1 className="text-2xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">Panel de Control</h1>
           </div>
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard index={0} icon={<Building2 className="w-5 h-5" />} value={iglesias.length} label="Iglesias" sublabel={`${activeIglesias.length} activas`} onClick={() => navigate("/app/global/iglesias")} />
-        <StatCard index={1} icon={<Church className="w-5 h-5" />} value={sedes.length} label="Sedes" sublabel={`${activeSedes} activas`} onClick={() => navigate("/app/global/iglesias")} />
-        <StatCard index={2} icon={<Users className="w-5 h-5" />} value={usuarios.length} label="Usuarios" sublabel={`${activeUsers} activos`} onClick={() => navigate("/app/global/usuarios")} />
-        <StatCard index={3} icon={<UserCheck className="w-5 h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/global/iglesias")} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        <StatCard index={0} icon={<Building2 className="w-4 h-4 sm:w-5 sm:h-5" />} value={iglesias.length} label="Iglesias" sublabel={`${activeIglesias.length} activas`} onClick={() => navigate("/app/global/iglesias")} />
+        <StatCard index={1} icon={<Church className="w-4 h-4 sm:w-5 sm:h-5" />} value={sedes.length} label="Sedes" sublabel={`${activeSedes} activas`} onClick={() => navigate("/app/global/iglesias")} />
+        <StatCard index={2} icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />} value={usuarios.length} label="Usuarios" sublabel={`${activeUsers} activos`} onClick={() => navigate("/app/global/usuarios")} />
+        <StatCard index={3} icon={<UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/global/iglesias")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -387,14 +387,14 @@ function AdminIglesiaDashboard() {
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0">
-            <UserCheck className="w-8 h-8 text-white" />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-4 sm:p-5 relative overflow-hidden dark:border-white/10">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0">
+            <UserCheck className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
           <div>
-            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Administrador{iglesiaActual ? ` — ${iglesiaActual.nombre}` : ""}</p>
-            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[8px] sm:text-[10px] mb-0.5">Administrador{iglesiaActual ? ` — ${iglesiaActual.nombre}` : ""}</p>
+            <h1 className="text-2xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>
@@ -646,14 +646,14 @@ function LiderDashboard() {
   return (
     <div className="space-y-4 max-w-6xl mx-auto pb-10">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
-            <Users className="w-8 h-8" />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-4 sm:p-5 relative overflow-hidden dark:border-white/10">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
+            <Users className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
           <div>
-            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Líder de Ministerio{min ? ` — ${min.nombre}` : ""}</p>
-            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[8px] sm:text-[10px] mb-0.5">Líder de Ministerio{min ? ` — ${min.nombre}` : ""}</p>
+            <h1 className="text-2xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
       </motion.div>
