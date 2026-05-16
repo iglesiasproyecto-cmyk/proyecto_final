@@ -82,6 +82,7 @@ function getNavItemsForRole(
         { label: "Iglesias", path: "/app/global/iglesias", icon: <Building2 className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Sedes", path: "/app/global/sedes", icon: <Church className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Administrador", path: "/app/global/administrador", icon: <UserCheck className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Ministerios", path: "/app/global/ministerios", icon: <Settings2 className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Usuarios", path: "/app/global/usuarios", icon: <Users className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Cumpleaños", path: "/app/global/cumpleanos", icon: <Cake className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Geografía", path: "/app/global/geografia", icon: <Globe className="w-5 h-5" />, section: "Configuración" },
