@@ -269,10 +269,11 @@ Deno.serve(async (req) => {
       })
 
       if (emailError) {
-        console.error('Error sending email:', emailError)
-        // Limpiar token si falló el email
+        const errBody = (emailError as any)?.context ? await (emailError as any).context.json().catch(() => null) : null
+        const errDetail = errBody?.error ?? emailError?.message ?? 'Error desconocido'
+        console.error('Error sending email:', errDetail)
         await supabaseAdmin.from('invite_tokens').delete().eq('id_invite_token', inviteToken.id_invite_token)
-        return jsonResponse(origin, { message: 'Error enviando email de invitación' }, 500)
+        return jsonResponse(origin, { message: `Error enviando email: ${errDetail}` }, 500)
       }
 
       inviteSent = true
