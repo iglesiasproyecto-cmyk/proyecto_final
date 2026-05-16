@@ -124,6 +124,7 @@ function getNavItemsForRole(
     case "admin_sede":
       return [
         { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
+        { label: "Usuarios", path: `${t}/usuarios`, icon: <Users className="w-5 h-5" />, section: "Gestión" },
         { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Operaciones" },
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },

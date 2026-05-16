@@ -36,19 +36,21 @@ export function useMinisteriosEnriquecidos(idIglesia?: number) {
 }
 
 export function useMinisteriosPorSede(idSede?: number) {
+  const sedeId = idSede ?? 0
   return useQuery({
     queryKey: ['ministerios-por-sede', idSede],
-    queryFn: () => getMinisteriosPorSede(idSede as number),
-    enabled: !!idSede && idSede > 0,
+    queryFn: () => getMinisteriosPorSede(sedeId),
+    enabled: sedeId > 0,
     staleTime: 5 * 60 * 1000,
   })
 }
 
 export function useUsuariosActivosPorMinisterio(idMinisterio?: number) {
+  const ministerioId = idMinisterio ?? 0
   return useQuery({
     queryKey: ['usuarios-activos-ministerio', idMinisterio],
-    queryFn: () => getUsuariosActivosPorMinisterio(idMinisterio as number),
-    enabled: !!idMinisterio && idMinisterio > 0,
+    queryFn: () => getUsuariosActivosPorMinisterio(ministerioId),
+    enabled: ministerioId > 0,
     staleTime: 60 * 1000,
   })
 }
@@ -62,9 +64,10 @@ export function useMiembrosMinisterioEnriquecidos(idMinisterio?: number) {
 }
 
 export function useMinisteriosIdsDeUsuario(idUsuario?: number) {
+  const usuarioId = idUsuario ?? 0
   return useQuery({
     queryKey: ['ministerios-ids-usuario', idUsuario],
-    queryFn: () => getMinisteriosIdsDeUsuario(idUsuario as number),
+    queryFn: () => getMinisteriosIdsDeUsuario(usuarioId),
     enabled: !!idUsuario,
     staleTime: 5 * 60 * 1000,
   })

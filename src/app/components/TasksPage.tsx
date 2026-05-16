@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia, useArchiveTask, useUnarchiveTask } from "@/hooks/useEventos";
+import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useAssignUsuariosATarea, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia, useArchiveTask, useUnarchiveTask } from "@/hooks/useEventos";
 import { useDragDropTasks } from "@/hooks/useDragDropTasks";
 import type { TareaEnriquecida } from "@/services/eventos.service";
 import { useMinisteriosEnriquecidos, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
@@ -54,14 +54,16 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 export function TasksPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const idIglesiaNum = Number(idIglesia) || undefined;
-  const { usuarioActual, rolActual, iglesiaActual } = useApp();
+  const { usuarioActual, rolActual, iglesiaActual, sedesDelUsuario } = useApp();
   const { data: tareas = [], isLoading } = useTareasEnriquecidas(undefined, idIglesiaNum);
   const createTareaMutation = useCreateTarea();
   const updateEstadoMutation = useUpdateTareaEstado();
   const updateTareaMutation = useUpdateTarea();
   const deleteTareaMutation = useDeleteTarea();
   const createAsignadaMutation = useCreateTareaAsignada();
+  const assignUsuariosMutation = useAssignUsuariosATarea();
   const deleteAsignadaMutation = useDeleteTareaAsignada();
   const createEvidenciaMutation = useCreateTareaEvidencia();
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(idIglesiaNum);
@@ -85,7 +87,12 @@ export function TasksPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [sedeFilter, setSedeFilter] = useState<number>(0);
   const [selectedTask, setSelectedTask] = useState<number | null>(null);
-  const [assignUserId, setAssignUserId] = useState(0);
+  const [assignScope, setAssignScope] = useState({
+    idSede: 0,
+    idMinisterio: 0,
+    selectedUserIds: [] as number[],
+    assignAll: false,
+  });
   const [createForm, setCreateForm] = useState({
     titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as "baja" | "media" | "alta" | "urgente",
     idSede: 0, idMinisterio: 0, _hideSelectorFields: false,
@@ -106,6 +113,44 @@ export function TasksPage() {
 
   const task = selectedTask ? tareas.find(t => t.idTarea === selectedTask) : null;
   const { data: evidencias = [] } = useTareaEvidencias(task?.idTarea);
+  const isAdminIglesia = rolActual === "admin_iglesia" || rolActual === "super_admin";
+
+  const sedesDisponiblesAsignacion = useMemo(() => {
+    if (isAdminSede) return sedes.filter(s => sedesDelUsuario.some(sd => sd.id === s.idSede));
+    return sedes;
+  }, [isAdminSede, sedes, sedesDelUsuario]);
+
+  const ministeriosDisponiblesAsignacion = useMemo(() => {
+    if (isAdminIglesia) {
+      if (!assignScope.idSede) return [];
+      return ministerios.filter(m => m.idSede === assignScope.idSede);
+    }
+    if (isAdminSede) {
+      const sedeId = sedesDelUsuario[0]?.id ?? 0;
+      return ministerios.filter(m => m.idSede === sedeId);
+    }
+    if (isLider) {
+      return ministerios.filter(m => usuarioMinisterioIds.includes(m.idMinisterio));
+    }
+    return ministerios;
+  }, [assignScope.idSede, isAdminIglesia, isAdminSede, isLider, ministerios, sedesDelUsuario, usuarioMinisterioIds]);
+
+  const ministerioAsignacionId = useMemo(() => {
+    if (isLider && !assignScope.idMinisterio) return singleUserMinisterio?.idMinisterio ?? 0;
+    return assignScope.idMinisterio;
+  }, [assignScope.idMinisterio, isLider, singleUserMinisterio]);
+
+  const usuariosAsignables = useMemo(() => {
+    if (!ministerioAsignacionId) return [];
+    const ministerioObjetivo = ministerios.find(m => m.idMinisterio === ministerioAsignacionId);
+    if (!ministerioObjetivo) return [];
+
+    return usuariosDeIglesia.filter(u => {
+      const yaAsignado = (task?.asignados || []).some(a => a.idUsuario === u.idUsuario);
+      if (yaAsignado) return false;
+      return u.ministerios.includes(ministerioObjetivo.nombre);
+    });
+  }, [ministerioAsignacionId, ministerios, task?.asignados, usuariosDeIglesia]);
 
   // Archive and permission hooks
   const archiveMutation = useArchiveTask();
@@ -125,6 +170,30 @@ export function TasksPage() {
   }, [showCreate, singleUserMinisterio, isAdminSede, isLider, shouldShowSelectorFields, rolActual]);
 
   useEffect(() => {
+    if (!selectedTask) {
+      setAssignScope({ idSede: 0, idMinisterio: 0, selectedUserIds: [], assignAll: false });
+      return;
+    }
+
+    if (isAdminSede) {
+      const defaultSedeId = sedesDelUsuario[0]?.id ?? 0;
+      setAssignScope(prev => ({ ...prev, idSede: defaultSedeId }));
+    }
+
+    if (isLider && singleUserMinisterio?.idMinisterio) {
+      setAssignScope(prev => ({ ...prev, idMinisterio: singleUserMinisterio.idMinisterio }));
+    }
+  }, [selectedTask, isAdminSede, isLider, sedesDelUsuario, singleUserMinisterio]);
+
+  useEffect(() => {
+    setAssignScope(prev => ({ ...prev, idMinisterio: 0, selectedUserIds: [], assignAll: false }));
+  }, [assignScope.idSede]);
+
+  useEffect(() => {
+    setAssignScope(prev => ({ ...prev, selectedUserIds: [], assignAll: false }));
+  }, [assignScope.idMinisterio]);
+
+  useEffect(() => {
     if (!task) {
       setEditMode(false);
       return;
@@ -141,6 +210,21 @@ export function TasksPage() {
     if (createForm.idMinisterio || ministerios.length !== 1) return;
     setCreateForm(prev => ({ ...prev, idMinisterio: ministerios[0].idMinisterio }));
   }, [createForm.idMinisterio, ministerios]);
+
+  useEffect(() => {
+    const openTask = Number(searchParams.get("openTask") || 0);
+    if (!openTask) return;
+
+    if (tareas.some(t => t.idTarea === openTask)) {
+      setSelectedTask(openTask);
+    } else if (!isLoading) {
+      toast.error("La tarea ya no esta disponible");
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("openTask");
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams, tareas, isLoading]);
 
   const handleDeleteTarea = (id: number, titulo: string) => {
     setDeleteConfirm({ open: true, id, titulo });
@@ -610,7 +694,7 @@ export function TasksPage() {
       </DndProvider>
 
       {/* ── Task Detail Dialog ── */}
-      <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
+      <Dialog open={!!selectedTask} onOpenChange={() => { setSelectedTask(null); setAssignScope({ idSede: 0, idMinisterio: 0, selectedUserIds: [], assignAll: false }); }}>
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
             {task ? (
@@ -749,27 +833,119 @@ export function TasksPage() {
                 {canManageTasks && (
                   <div className="pt-2 border-t border-border/40">
                     <FieldLabel><span className="flex items-center gap-1.5"><UserPlus className="w-3 h-3" /> Asignar usuario</span></FieldLabel>
-                    <div className="flex gap-2">
-                      <select
-                        className="flex-1 h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-                        value={assignUserId}
-                        onChange={e => setAssignUserId(Number(e.target.value))}
-                      >
-                        <option value={0}>Seleccionar usuario...</option>
-                        {usuariosDeIglesia
-                          .filter(u => !(task?.asignados || []).some(a => a.idUsuario === u.idUsuario))
-                          .map(u => <option key={u.idUsuario} value={u.idUsuario}>{u.nombres} {u.apellidos} ({u.ministerios.join(', ')})</option>)
-                        }
-                      </select>
+                    <div className="space-y-2">
+                      {isAdminIglesia && (
+                        <select
+                          className="w-full h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                          value={assignScope.idSede}
+                          onChange={e => setAssignScope(prev => ({ ...prev, idSede: Number(e.target.value) }))}
+                        >
+                          <option value={0}>Seleccionar sede...</option>
+                          {sedesDisponiblesAsignacion.map(s => (
+                            <option key={s.idSede} value={s.idSede}>{s.nombre}</option>
+                          ))}
+                        </select>
+                      )}
+
+                      {(!isLider || userLeadMinisterios > 1) && (
+                        <select
+                          className="w-full h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                          value={ministerioAsignacionId}
+                          onChange={e => setAssignScope(prev => ({ ...prev, idMinisterio: Number(e.target.value) }))}
+                          disabled={isAdminIglesia && !assignScope.idSede}
+                        >
+                          <option value={0}>Seleccionar ministerio...</option>
+                          {ministeriosDisponiblesAsignacion.map(m => (
+                            <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>
+                          ))}
+                        </select>
+                      )}
+
+                      {isLider && userLeadMinisterios <= 1 && singleUserMinisterio && (
+                        <div className="h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 flex items-center">
+                          {singleUserMinisterio.nombre}
+                        </div>
+                      )}
+
+                      <label className="flex items-center gap-2 text-xs text-foreground/80">
+                        <input
+                          type="checkbox"
+                          checked={assignScope.assignAll}
+                          onChange={e => setAssignScope(prev => ({
+                            ...prev,
+                            assignAll: e.target.checked,
+                            selectedUserIds: e.target.checked ? usuariosAsignables.map(u => u.idUsuario) : [],
+                          }))}
+                          disabled={!ministerioAsignacionId || usuariosAsignables.length === 0}
+                        />
+                        Seleccionar todos ({usuariosAsignables.length})
+                      </label>
+
+                      <div className="max-h-36 overflow-y-auto space-y-1 border border-white/10 rounded-xl p-2 bg-background/30">
+                        {usuariosAsignables.length === 0 ? (
+                          <p className="text-[11px] text-muted-foreground">No hay usuarios en este ministerio.</p>
+                        ) : usuariosAsignables.map(u => (
+                          <label key={u.idUsuario} className="flex items-center gap-2 text-xs text-foreground/80">
+                            <input
+                              type="checkbox"
+                              checked={assignScope.selectedUserIds.includes(u.idUsuario)}
+                              onChange={e => {
+                                setAssignScope(prev => {
+                                  const selectedUserIds = e.target.checked
+                                    ? [...prev.selectedUserIds, u.idUsuario]
+                                    : prev.selectedUserIds.filter(id => id !== u.idUsuario);
+                                  return {
+                                    ...prev,
+                                    selectedUserIds,
+                                    assignAll: selectedUserIds.length === usuariosAsignables.length && usuariosAsignables.length > 0,
+                                  };
+                                });
+                              }}
+                            />
+                            {u.nombres} {u.apellidos}
+                          </label>
+                        ))}
+                      </div>
+
                       <Button
                         className="h-10 rounded-xl px-4"
-                        disabled={!assignUserId || createAsignadaMutation.isPending || !task}
-                        onClick={() => {
-                          if (!task || !assignUserId) return;
-                          createAsignadaMutation.mutate({ idTarea: task.idTarea, idUsuario: assignUserId }, { onSuccess: () => setAssignUserId(0) });
+                        disabled={assignUsuariosMutation.isPending || !task || assignScope.selectedUserIds.length === 0 || !ministerioAsignacionId}
+                        onClick={async () => {
+                          if (!task) return;
+                          if (isAdminIglesia && !assignScope.idSede) {
+                            toast.error("Selecciona una sede");
+                            return;
+                          }
+                          if (!ministerioAsignacionId) {
+                            toast.error("Selecciona un ministerio");
+                            return;
+                          }
+
+                          const idsToAssign = assignScope.assignAll
+                            ? usuariosAsignables.map(u => u.idUsuario)
+                            : assignScope.selectedUserIds;
+
+                          if (!idsToAssign.length) {
+                            toast.error("Selecciona al menos un usuario");
+                            return;
+                          }
+
+                          const result = await assignUsuariosMutation.mutateAsync({
+                            idTarea: task.idTarea,
+                            idMinisterioContexto: ministerioAsignacionId,
+                            idsUsuarios: idsToAssign,
+                          });
+
+                          if (result.assigned > 0 || result.duplicated > 0) {
+                            toast.success(`${result.assigned} asignados, ${result.duplicated} ya asignados, ${result.rejected} rechazados`);
+                            setAssignScope(prev => ({ ...prev, selectedUserIds: [], assignAll: false }));
+                            return;
+                          }
+
+                          toast.error("No se pudo asignar la tarea");
                         }}
                       >
-                        {createAsignadaMutation.isPending ? "..." : <UserPlus className="w-4 h-4" />}
+                        {assignUsuariosMutation.isPending ? "..." : <><UserPlus className="w-4 h-4 mr-1" /> Asignar</>}
                       </Button>
                     </div>
                   </div>

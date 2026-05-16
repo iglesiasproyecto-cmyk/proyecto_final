@@ -54,14 +54,30 @@ export interface UsuarioMinisterioAsignable {
   nombreCompleto: string
 }
 
-function mapMinisterioEnriquecidoRow(r: any): MinisterioEnriquecido {
+type LiderUsuarioRelacion = {
+  nombres: string | null
+  apellidos: string | null
+}
+
+type MinisterioMiembroRelacion = {
+  rol_en_ministerio: string | null
+  fecha_salida: string | null
+  usuario: LiderUsuarioRelacion | null
+}
+
+type MinisterioEnriquecidoRow = MinisterioRow & {
+  sede: { nombre: string | null } | null
+  miembro_ministerio: MinisterioMiembroRelacion[] | null
+}
+
+function normalizarRol(rol: string | null): string {
+  return `${rol ?? ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+function mapMinisterioEnriquecidoRow(r: MinisterioEnriquecidoRow): MinisterioEnriquecido {
   const miembros = Array.isArray(r.miembro_ministerio) ? r.miembro_ministerio : []
-  const miembrosActivos = miembros.filter((m: any) => !m.fecha_salida)
-  const lider = miembrosActivos.find((m: any) => {
-    const raw = `${m.rol_en_ministerio ?? ''}`
-    const normalized = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    return normalized.includes('lider')
-  })
+  const miembrosActivos = miembros.filter((m) => !m.fecha_salida)
+  const lider = miembrosActivos.find((m) => normalizarRol(m.rol_en_ministerio).includes('lider'))
 
   return {
     ...mapMinisterio(r),
@@ -92,7 +108,7 @@ export async function getMinisteriosEnriquecidos(idIglesia?: number): Promise<Mi
 
   const { data, error } = await q
   if (error) throw error
-  return (data as any[]).map(mapMinisterioEnriquecidoRow)
+  return (data as MinisterioEnriquecidoRow[]).map(mapMinisterioEnriquecidoRow)
 }
 
 export async function getMinisteriosPorSede(idSede: number): Promise<MinisterioEnriquecido[]> {
@@ -104,7 +120,17 @@ export async function getMinisteriosPorSede(idSede: number): Promise<MinisterioE
     .order('nombre')
 
   if (error) throw error
-  return (data as any[]).map(mapMinisterioEnriquecidoRow)
+  return (data as MinisterioEnriquecidoRow[]).map(mapMinisterioEnriquecidoRow)
+}
+
+type UsuarioMinisterioRelacion = {
+  nombres: string | null
+  apellidos: string | null
+}
+
+type UsuarioActivoPorMinisterioRow = {
+  id_usuario: number
+  usuario: UsuarioMinisterioRelacion | null
 }
 
 export async function getUsuariosActivosPorMinisterio(idMinisterio: number): Promise<UsuarioMinisterioAsignable[]> {
@@ -113,12 +139,14 @@ export async function getUsuariosActivosPorMinisterio(idMinisterio: number): Pro
     .select('id_usuario, usuario(nombres, apellidos)')
     .eq('id_ministerio', idMinisterio)
     .is('fecha_salida', null)
+    .order('id_usuario', { ascending: true })
 
   if (error) throw error
 
   const seen = new Set<number>()
+  const rows = (data as UsuarioActivoPorMinisterioRow[]) ?? []
 
-  return (data as any[])
+  return rows
     .filter((row) => {
       if (seen.has(row.id_usuario)) return false
       seen.add(row.id_usuario)
@@ -144,7 +172,23 @@ export async function getMiembrosMinisterioEnriquecidos(idMinisterio?: number): 
   if (idMinisterio !== undefined) q = q.eq('id_ministerio', idMinisterio)
   const { data, error } = await q
   if (error) throw error
-  return (data as any[]).map(r => {
+  type MiembroMinisterioUsuarioRelacion = {
+    nombres: string | null
+    apellidos: string | null
+    correo: string | null
+    telefono: string | null
+  }
+
+  type MiembroMinisterioNombreRelacion = {
+    nombre: string | null
+  }
+
+  type MiembroMinisterioEnriquecidoRow = MiembroRow & {
+    usuario: MiembroMinisterioUsuarioRelacion | null
+    ministerio: MiembroMinisterioNombreRelacion | null
+  }
+
+  return ((data as MiembroMinisterioEnriquecidoRow[]) ?? []).map(r => {
     const nombreCompleto = `${r.usuario?.nombres ?? ''} ${r.usuario?.apellidos ?? ''}`.trim()
     return {
       ...mapMiembro(r),
@@ -195,10 +239,7 @@ export async function getMinisteriosIdsDeUsuario(idUsuario: number): Promise<num
   if (error) throw error
 
   const rows = (data as Array<{ id_ministerio: number; rol_en_ministerio: string | null }>) ?? []
-  const isLider = (rol: string | null) => {
-    const n = (rol ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-    return n.includes('lider')
-  }
+  const isLider = (rol: string | null) => normalizarRol(rol).includes('lider')
   const liderRows = rows.filter((r) => isLider(r.rol_en_ministerio))
   const source = liderRows.length > 0 ? liderRows : rows
   return Array.from(new Set(source.map((r) => r.id_ministerio)))

@@ -7,6 +7,7 @@ import {
   createTarea, updateTareaEstado,
   updateEvento, deleteEvento, updateTarea, deleteTarea,
   createTareaAsignada, updateTareaAsignada, deleteTareaAsignada,
+  assignUsuariosATarea,
   getTareaEvidencias, createTareaEvidencia,
   getEventosPorMinisterio,
 } from '@/services/eventos.service'
@@ -234,6 +235,18 @@ export function useCreateTareaAsignada() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
       qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+    },
+  })
+}
+
+export function useAssignUsuariosATarea() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: assignUsuariosATarea,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      qc.invalidateQueries({ queryKey: ['notificaciones'] })
     },
   })
 }
