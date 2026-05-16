@@ -148,7 +148,7 @@ async function fetchUsuarioRaw(accessToken: string, authUserId: string): Promise
 async function fetchRolesRaw(accessToken: string): Promise<any[]> {
   try {
     const res = await fetchWithTimeout(
-      `${SUPABASE_URL}/rest/v1/rpc/get_user_ministerios`,
+      `${SUPABASE_URL}/rest/v1/rpc/get_my_roles`,
       {
         method: 'POST',
         headers: {
