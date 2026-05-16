@@ -1,5 +1,4 @@
-import logoImageDarkBg from "../../../imagenes/logo.png";
-import logoImageLightBg from "../../../imagenes/SEI-removebg-preview.png logo .png";
+import logoSei from "../../assets/logo-sei.png";
 
 interface SEILogoProps {
   className?: string;
@@ -7,15 +6,13 @@ interface SEILogoProps {
   variant?: "dark-bg" | "light-bg";
 }
 
-export function SEILogo({ className = "w-20 h-20", style, variant = "dark-bg" }: SEILogoProps) {
-  const imgSrc = variant === "light-bg" ? logoImageLightBg : logoImageDarkBg;
-
+export function SEILogo({ className = "w-20 h-20", style }: SEILogoProps) {
   return (
     <div className={`relative flex items-center justify-center ${className}`} style={style}>
       <img 
-        src={imgSrc} 
+        src={logoSei} 
         alt="S.E.I. Logo" 
-        className="w-full h-full object-contain scale-[2.2] transition-transform duration-500"
+        className="w-full h-full object-contain drop-shadow-2xl transition-transform duration-500"
         draggable={false}
       />
     </div>
