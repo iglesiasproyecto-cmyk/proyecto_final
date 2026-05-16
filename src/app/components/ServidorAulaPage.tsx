@@ -22,32 +22,39 @@ export function ServidorAulaPage() {
 
   return (
     <div className="space-y-8">
-      {/* Hero Welcome Section */}
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 p-8"
+        className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 sm:p-8 shadow-[0_20px_60px_rgb(0,0,0,0.06)]"
       >
         <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
           <BookOpen className="h-40 w-40 rotate-12" />
         </div>
-        <div className="relative z-10 max-w-2xl">
-          <Badge className="mb-4 bg-primary/20 text-primary hover:bg-primary/30 border-none px-4 py-1">
-            <Sparkles className="h-3 w-3 mr-2" />
-            ¡Bienvenido a tu crecimiento!
-          </Badge>
-          <h2 className="text-2xl md:text-3xl font-black mb-3">Tu Ruta de <span className="text-primary">Aprendizaje</span></h2>
-          <p className="text-muted-foreground font-medium leading-relaxed">
-            Aquí encontrarás todos tus cursos asignados, certificados obtenidos y la retroalimentación de tus líderes. 
-            ¡Sigue avanzando en tu propósito!
-          </p>
-          
-          <div className="flex flex-wrap gap-4 mt-6">
-            <div className="flex items-center gap-2 px-4 py-2 bg-background/50 backdrop-blur-sm rounded-2xl border border-border/50">
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="border-none bg-primary/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                <Sparkles className="mr-1 h-3 w-3" />
+                ¡Bienvenido a tu crecimiento!
+              </Badge>
+              <Badge variant="outline" className="border-white/15 bg-background/50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">
+                Ruta de aprendizaje
+              </Badge>
+            </div>
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight">Tu Ruta de <span className="text-primary">Aprendizaje</span></h2>
+              <p className="mt-3 max-w-2xl text-sm sm:text-base font-medium leading-relaxed text-muted-foreground">
+                Aquí encontrarás todos tus cursos asignados, certificados obtenidos y la retroalimentación de tus líderes. ¡Sigue avanzando en tu propósito!
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2 rounded-2xl border border-border/50 bg-background/55 px-4 py-2 backdrop-blur-sm">
               <TrendingUp className="h-4 w-4 text-green-500" />
               <span className="text-xs font-bold">Progreso Constante</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-background/50 backdrop-blur-sm rounded-2xl border border-border/50">
+            <div className="flex items-center gap-2 rounded-2xl border border-border/50 bg-background/55 px-4 py-2 backdrop-blur-sm">
               <Award className="h-4 w-4 text-amber-500" />
               <span className="text-xs font-bold">Certificaciones Oficiales</span>
             </div>
@@ -56,25 +63,25 @@ export function ServidorAulaPage() {
       </motion.div>
 
       <Tabs defaultValue="cursos" className="w-full">
-        <div className="flex items-center justify-between mb-6 overflow-x-auto pb-2 no-scrollbar">
-          <TabsList className="bg-muted/50 p-1.5 rounded-2xl border border-border/50 backdrop-blur-md inline-flex">
-            <TabsTrigger value="cursos" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-primary transition-all">
+        <div className="mb-6 flex items-center justify-between overflow-x-auto pb-2 no-scrollbar">
+          <TabsList className="inline-flex rounded-2xl border border-border/50 bg-muted/50 p-1.5 backdrop-blur-md">
+            <TabsTrigger value="cursos" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <BookOpen className="h-4 w-4 mr-2" />
               Cursos
             </TabsTrigger>
-            <TabsTrigger value="notificaciones" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-primary transition-all">
+            <TabsTrigger value="notificaciones" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <Bell className="h-4 w-4 mr-2" />
               Notificaciones
             </TabsTrigger>
-            <TabsTrigger value="comentarios" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-primary transition-all">
+            <TabsTrigger value="comentarios" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <MessageSquare className="h-4 w-4 mr-2" />
               Comentarios
             </TabsTrigger>
-            <TabsTrigger value="certificados" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-primary transition-all">
+            <TabsTrigger value="certificados" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <Award className="h-4 w-4 mr-2" />
               Certificados
             </TabsTrigger>
-            <TabsTrigger value="logros" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-lg data-[state=active]:text-primary transition-all">
+            <TabsTrigger value="logros" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <Star className="h-4 w-4 mr-2" />
               Mis Logros
             </TabsTrigger>

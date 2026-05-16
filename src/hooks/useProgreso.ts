@@ -7,13 +7,14 @@ async function emitirCertificadoAutomatico(idUsuario: number, idCurso: number) {
   // Usar upsert para prevenir duplicados (requiere constraint UNIQUE en BD)
   const { data, error } = await supabase
     .from('aula_certificado')
-    .upsert({
-      id_usuario: idUsuario,
-      id_aula_curso: idCurso,
-      emitido_en: new Date().toISOString()
-    }, {
-      onConflict: 'id_usuario,id_aula_curso'
-    })
+      .upsert({
+        id_usuario: idUsuario,
+        id_aula_curso: idCurso,
+        emitido_en: new Date().toISOString(),
+        fecha_certificacion: new Date().toISOString().slice(0, 10)
+      }, {
+        onConflict: 'id_usuario,id_aula_curso'
+      })
 
   if (error) {
     // Si hay error de duplicado, es porque ya existe (esperado)

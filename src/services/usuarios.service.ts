@@ -9,6 +9,7 @@ type UsuarioRolRow = Database['public']['Tables']['usuario_rol']['Row']
 type UsuarioRolSedeRow = Database['public']['Tables']['usuario_rol_sede']['Row']
 
 type UsuarioRolSource = 'usuario_rol' | 'usuario_rol_sede'
+const PROTECTED_SUPER_EMAIL = 'super@test.dev'
 
 function mapRol(r: RolRow): Rol {
   return {
@@ -118,7 +119,7 @@ export interface UsuarioEnriquecido extends Usuario {
     fechaFin: string | null
     source: UsuarioRolSource
   }[]
-  minNames: { nombre: string; rol: string }[]
+  minNames: { idMinisterio: number; nombre: string; rol: string }[]
 }
 
 export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
@@ -140,8 +141,9 @@ export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
       source: rol.source ?? 'usuario_rol',
     })),
     minNames: (r.ministerios ?? []).map((min: any) => ({
-      nombre: min.nombre ?? `Ministerio #${min.id_ministerio}`,
-      rol: min.rol ?? '',
+      idMinisterio: min.id_ministerio ?? 0,
+      nombre: min.ministerio_nombre ?? `Ministerio #${min.id_ministerio}`,
+      rol: min.rol_en_ministerio ?? '',
     })),
   }))
 }
@@ -176,6 +178,7 @@ export async function getUsuariosByIglesia(idIglesia: number): Promise<UsuarioEn
       source: rol.source ?? 'usuario_rol',
     })),
     minNames: (r.ministerios ?? []).map((mm: any) => ({
+      idMinisterio: mm.id_ministerio ?? 0,
       nombre: mm.ministerio_nombre ?? '',
       rol: mm.rol_en_ministerio ?? '',
     })),
@@ -202,7 +205,7 @@ export async function updateUsuario(
     .from('usuario')
     .update(patch)
     .eq('id_usuario', id)
-    .select()
+    .select('id_usuario,nombres,apellidos,correo,telefono,fecha_nacimiento,activo,ultimo_acceso,auth_user_id,creado_en,updated_at')
     .single()
   if (error) throw error
   return mapUsuario(result)
@@ -213,56 +216,46 @@ export async function assignRol(data: {
   idRol: number
   idIglesia: number
   idSede?: number | null
-}): Promise<{ success: boolean; message: string; id_usuario_rol?: number }> {
-  try {
-    const isSedeRole = [ROLE_IDS.ADMIN_SEDE, ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR].includes(data.idRol)
-
-    if (isSedeRole && !data.idSede) {
-      throw new Error('Debes seleccionar una sede para este rol')
-    }
-
-    const targetTable = isSedeRole ? 'usuario_rol_sede' : 'usuario_rol'
-
-    const { data: result, error } = await supabase
-      .from(targetTable)
-      .insert({
-        id_usuario: data.idUsuario,
-        id_rol: data.idRol,
-        id_iglesia: data.idIglesia,
-        id_sede: data.idSede ?? null,
-        fecha_inicio: new Date().toISOString().split('T')[0],
-        fecha_fin: null
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error assigning role:', error)
-      throw new Error(error.message || 'Error al asignar el rol')
-    }
-
-    return {
-      success: true,
-      message: 'Rol asignado correctamente',
-      id_usuario_rol: result.id_usuario_rol ?? result.id_usuario_rol_sede
-    }
-  } catch (error) {
-    console.error('Error in assignRol:', error)
-    if (error instanceof Error) {
-      throw new Error(error.message)
-    }
-    throw new Error('Error desconocido al asignar rol')
-  }
+  idMinisterio?: number | null
+}): Promise<{ success: boolean; message: string }> {
+  const { error } = await supabase.rpc('assign_role_with_ministerio', {
+    p_id_usuario:    data.idUsuario,
+    p_id_rol:        data.idRol,
+    p_id_iglesia:    data.idIglesia,
+    p_id_sede:       data.idSede ?? null,
+    p_id_ministerio: data.idMinisterio ?? null,
+  })
+  if (error) throw new Error(error.message || 'Error al asignar el rol')
+  return { success: true, message: 'Rol asignado correctamente' }
 }
 
 export async function removeRol(params: { idUsuarioRol: number; source: UsuarioRolSource }): Promise<void> {
   const table = params.source === 'usuario_rol_sede' ? 'usuario_rol_sede' : 'usuario_rol'
   const idColumn = params.source === 'usuario_rol_sede' ? 'id_usuario_rol_sede' : 'id_usuario_rol'
-  const { error } = await supabase
+
+  const { data: roleAssignment, error: roleAssignmentError } = await supabase
     .from(table)
-    .update({ fecha_fin: new Date().toISOString().split('T')[0] })
+    .select('id_usuario, rol:rol!inner(nombre), usuario:usuario!inner(correo)')
     .eq(idColumn, params.idUsuarioRol)
+    .maybeSingle()
+
+  if (roleAssignmentError) throw roleAssignmentError
+  const roleName = String((roleAssignment as any)?.rol?.nombre ?? '').trim().toLowerCase()
+  const userEmail = String((roleAssignment as any)?.usuario?.correo ?? '').trim().toLowerCase()
+  if (userEmail === PROTECTED_SUPER_EMAIL && roleName === 'super administrador') {
+    throw new Error('No se puede remover el rol Super Administrador de la cuenta protegida')
+  }
+
+  // Set fecha_fin to yesterday to ensure it's marked as removed
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const { data, error } = await supabase
+    .from(table)
+    .update({ fecha_fin: yesterday })
+    .eq(idColumn, params.idUsuarioRol)
+    .select(idColumn)
+    .single()
   if (error) throw error
+  if (!data) throw new Error('No se pudo actualizar el rol. Verifica permisos en la base de datos.')
 }
 
 export async function inviteUser(data: {
@@ -272,7 +265,9 @@ export async function inviteUser(data: {
   idIglesia: number
   idRol: number
   idSede?: number | null
-}): Promise<{ success: boolean; message: string }> {
+  idMinisterio?: number | null
+  fechaNacimiento?: string | null
+}): Promise<{ success: boolean; message?: string; inviteSent?: boolean; profileReconciled?: boolean; roleAssigned?: boolean; userAlreadyExisted?: boolean }> {
   try {
     console.log('[inviteUser] Starting invitation process for:', data.correo)
 

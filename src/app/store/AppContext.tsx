@@ -20,6 +20,7 @@ interface AppState {
   setIglesiaActual: (ig: { id: number; nombre: string } | null) => void
   iglesiasDelUsuario: { id: number; nombre: string }[]
   sedesDelUsuario: { id: number; nombre: string }[]
+  ministeriosDelUsuario: { id: number; nombre: string; idSede: number }[]
   rolActual: string
   sidebarOpen: boolean
   notificacionesCount: number
@@ -42,6 +43,7 @@ const AppContext = createContext<AppState | undefined>(undefined)
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+const PROTECTED_SUPER_EMAIL = 'super@test.dev'
 
 function normalizeAppRole(rawRoles: string[]): string {
   const normalized = rawRoles.map((name) =>
@@ -156,7 +158,7 @@ async function fetchRolesRaw(accessToken: string): Promise<any[]> {
         },
         body: '{}',
       },
-      5000
+      3000
     )
     if (res.ok) {
       const data = await res.json()
@@ -167,6 +169,34 @@ async function fetchRolesRaw(accessToken: string): Promise<any[]> {
     }
   } catch { /* skip */ }
   return []
+}
+
+/** Fetch ministerios where user is líder */
+async function fetchMinisteriosRaw(accessToken: string): Promise<any[] | null> {
+  const headers = {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${accessToken}`,
+  }
+
+  try {
+    console.log('[AUTH] Fetching ministerios where user is líder...')
+    const res = await fetchWithTimeout(
+      `${SUPABASE_URL}/rest/v1/rpc/get_my_ministerios`,
+      { method: 'POST', headers, body: '{}' },
+      5000
+    )
+    if (res.ok) {
+      const ministerios = await res.json()
+      console.log('[AUTH] Ministerios fetched:', ministerios.length)
+      return Array.isArray(ministerios) ? ministerios : []
+    }
+    console.warn('[AUTH] get_my_ministerios returned', res.status)
+    return []
+  } catch (err) {
+    console.warn('[AUTH] Failed to fetch ministerios:', err)
+    return []
+  }
 }
 
 /** Fetch unread notification count via RPC */
@@ -208,7 +238,7 @@ async function refreshTenantClaims(accessToken: string): Promise<void> {
         },
         body: '{}',
       },
-      8000
+      3000
     )
   } catch (err: any) {
     console.warn('[AUTH] set-tenant-claims failed:', err.message)
@@ -249,6 +279,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [iglesiaActual, setIglesiaActual] = useState<{ id: number; nombre: string } | null>(null)
   const [iglesiasDelUsuario, setIglesiasDelUsuario] = useState<{ id: number; nombre: string }[]>([])
   const [sedesDelUsuario, setSedesDelUsuario] = useState<{ id: number; nombre: string }[]>([])
+  const [ministeriosDelUsuario, setMinisteriosDelUsuario] = useState<{ id: number; nombre: string; idSede: number }[]>([])
   const [rolActual, setRolActual] = useState<string>('')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [notificacionesCount, setNotificacionesCount] = useState(0)
@@ -374,6 +405,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIglesiaActual(null)
     setIglesiasDelUsuario([])
     setSedesDelUsuario([])
+    setMinisteriosDelUsuario([])
     setRolActual('')
     setIsClaimsReady(false)
     setAuthError(null)
@@ -413,10 +445,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (flag === 'done') {
       reloadQueuedRef.current = true
     }
-    const logoutFlag = sessionStorage.getItem('post_logout_reload')
-    if (logoutFlag === 'pending') {
-      sessionStorage.setItem('post_logout_reload', 'done')
-    }
   }, [])
 
   useEffect(() => {
@@ -439,13 +467,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setAuthError(null)
     }
 
-    // Safety timeout: 8 seconds absolute max
+    // Safety timeout: 4 seconds absolute max
     const safetyTimeout = setTimeout(() => {
       if (!loadingResolved) {
-        console.warn('[AUTH] ⚠️ Safety timeout (8s) — forcing authLoading=false')
+        console.warn('[AUTH] ⚠️ Safety timeout (4s) — forcing authLoading=false')
         resolveLoading()
+        // Ensure claims are marked as ready so we can at least show the UI
+        setIsClaimsReady(true)
       }
-    }, 8000)
+    }, 4000)
 
     const hydrateSession = async (session: Session, cycleId: number) => {
       if (isHydratingRef.current && hydratingUserIdRef.current === session.user.id) {
@@ -482,6 +512,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             }
           }
         }
+      } catch (err: any) {
+        console.warn('[AUTH] Background claims refresh failed:', err.message)
       } finally {
         claimsRefreshInFlightRef.current = false
       }
@@ -522,16 +554,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           actualizadoEn: data.updated_at,
         })
 
-        const [notifCount, roles] = await Promise.all([
+        const [notifCount, roles, ministerios] = await Promise.all([
           fetchNotifCountRaw(token),
           fetchRolesRaw(token),
+          fetchMinisteriosRaw(token),
         ])
         if (cycleId !== authCycleRef.current) return
 
         setNotificacionesCount(notifCount)
 
+        const normalizedSessionEmail = String(session.user.email ?? '').trim().toLowerCase()
         const roleNames = roles.map((r: any) => String(r.rol_nombre ?? ''))
-        const derivedRol = normalizeAppRole(roleNames)
+        const derivedFromRoles = normalizeAppRole(roleNames)
+        const derivedRol = normalizedSessionEmail === PROTECTED_SUPER_EMAIL
+          ? 'super_admin'
+          : derivedFromRoles
+        if (roles.length === 0) {
+          console.warn('[AUTH] ⚠️ get_my_roles returned no active roles for user:', normalizedSessionEmail)
+        }
+        if (normalizedSessionEmail === PROTECTED_SUPER_EMAIL && derivedFromRoles !== 'super_admin') {
+          console.warn('[AUTH] ⚠️ Protected super account fallback activated; forcing super_admin in client state')
+        }
         setRolActual(derivedRol)
 
         const iglesiasMap = new Map<number, string>()
@@ -550,21 +593,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const sedes = Array.from(sedesMap.entries()).map(([id, nombre]) => ({ id, nombre }))
         setSedesDelUsuario(sedes)
 
+        const ministeriosData = (ministerios || []).map((m: any) => ({
+          id: m.idMinisterio,
+          nombre: m.ministerioNombre,
+          idSede: m.idSede,
+        }))
+        setMinisteriosDelUsuario(ministeriosData)
+
         console.log('[AUTH] ✅ Fully loaded — role:', derivedRol, '— iglesias:', iglesias.length)
         hydratedUserIdRef.current = authUserId
         hydratedTokenRef.current = token
         setIsClaimsReady(true)
-        if (typeof window !== 'undefined') {
-          const reloadFlag = sessionStorage.getItem('post_login_reload')
-          if (!reloadQueuedRef.current && reloadFlag !== 'pending' && reloadFlag !== 'done') {
-            reloadQueuedRef.current = true
-            sessionStorage.setItem('post_login_reload', 'done')
-            setTimeout(() => {
-              window.location.reload()
-            }, 0)
-            return
-          }
-        }
+        // window.location.reload() logic removed to prevent double load as requested
         resolveLoading()
       } catch (err) {
         console.error('[AUTH] Error loading user data:', err)
@@ -658,15 +698,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsMockMode(false)
     resetClientState('logout')
     try {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('post_logout_reload', 'pending')
-      }
       await supabase.auth.signOut({ scope: 'local' })
     } finally {
       logoutInProgressRef.current = false
-      if (typeof window !== 'undefined') {
-        window.location.reload()
-      }
     }
   }
 
@@ -718,6 +752,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIglesiaActual,
         iglesiasDelUsuario,
         sedesDelUsuario,
+        ministeriosDelUsuario,
         rolActual,
         sidebarOpen,
         notificacionesCount,

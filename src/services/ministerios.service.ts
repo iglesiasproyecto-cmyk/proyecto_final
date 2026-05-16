@@ -292,3 +292,62 @@ export async function getServidoresMinisterio(idMinisterio: number): Promise<Ser
   }))
 }
 
+// ── Usuarios de Iglesia (para asignación de tareas) ──
+
+export interface UsuarioEnriquecido {
+  idUsuario: number
+  nombres: string
+  apellidos: string
+  correo: string
+  telefono: string | null
+  ministerios: string[]
+  rol: string | null
+}
+
+export async function getUsuariosDeIglesia(idIglesia: number): Promise<UsuarioEnriquecido[]> {
+  // Single query: Include sede in select to enable filtering by ministerio.sede.id_iglesia
+  const { data, error } = await supabase
+    .from('miembro_ministerio')
+    .select('id_usuario, rol_en_ministerio, usuario(nombres, apellidos, correo, telefono), ministerio(nombre, id_sede, sede(id_iglesia))')
+    .eq('ministerio.sede.id_iglesia', idIglesia)
+    .is('fecha_salida', null)
+    .order('usuario(nombres)', { ascending: true })
+
+  if (error) {
+    console.error('[getUsuariosDeIglesia] Error:', error)
+    throw error
+  }
+
+  // Group by usuario and deduplicate ministerios using Set
+  const usuariosMap = new Map<number, UsuarioEnriquecido>()
+  const ministerios_sets = new Map<number, Set<string>>()
+
+  ;(data || []).forEach((row: any) => {
+    const idUsuario = row.id_usuario
+
+    if (!usuariosMap.has(idUsuario)) {
+      usuariosMap.set(idUsuario, {
+        idUsuario,
+        nombres: row.usuario?.nombres ?? '',
+        apellidos: row.usuario?.apellidos ?? '',
+        correo: row.usuario?.correo ?? '',
+        telefono: row.usuario?.telefono ?? null,
+        ministerios: [],
+        rol: row.rol_en_ministerio || null,
+      })
+      ministerios_sets.set(idUsuario, new Set())
+    }
+
+    const usuario = usuariosMap.get(idUsuario)!
+    const minSet = ministerios_sets.get(idUsuario)!
+
+    // Use Set for O(1) deduplication
+    if (row.ministerio?.nombre && !minSet.has(row.ministerio.nombre)) {
+      minSet.add(row.ministerio.nombre)
+      usuario.ministerios.push(row.ministerio.nombre)
+    }
+  })
+
+  return Array.from(usuariosMap.values())
+}
+

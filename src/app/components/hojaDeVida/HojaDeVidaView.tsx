@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/app/components/ui/card';
+import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import {
@@ -54,16 +55,16 @@ export function HojaDeVidaView({
     return (
       <Card className="w-full">
         <CardContent className="pt-6">
-          <p className="text-center text-gray-500">
-            No hay hoja de vida disponible. {puedeEditar && 'Crea una nueva.'}
+          <p className="text-center text-muted-foreground font-medium mb-6">
+            No hay información de perfil profesional disponible. {puedeEditar && 'Completa tu información para que los líderes puedan conocer mejor tus dones y talentos.'}
           </p>
           {puedeEditar && onEditar && (
-            <button
+            <Button
               onClick={onEditar}
-              className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+              className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white font-black uppercase tracking-widest shadow-2xl shadow-blue-900/30 transition-all hover:-translate-y-1"
             >
-              Crear Hoja de Vida
-            </button>
+              Crear Perfil Profesional
+            </Button>
           )}
         </CardContent>
       </Card>
@@ -108,12 +109,12 @@ export function HojaDeVidaView({
               </p>
             </div>
             {puedeEditar && onEditar && (
-              <button
+              <Button
                 onClick={onEditar}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                className="h-10 px-6 rounded-xl bg-gradient-to-r from-[#709dbd] to-[#4682b4] text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-900/20"
               >
                 Editar
-              </button>
+              </Button>
             )}
           </div>
         </CardHeader>

@@ -60,14 +60,16 @@ export async function subirArchivoModulo(
     .eq('id_aula_modulo', idModulo)
     .order('orden', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
   const { data, error } = await supabase
     .from('aula_modulo_archivo')
     .insert({
       id_aula_modulo: idModulo,
       nombre: file.name,
+      url: path,
       storage_path: path,
+      mime_type: file.type || null,
       tipo_mime: file.type || null,
       tamano_bytes: file.size,
       orden: (nextOrden?.orden ?? 0) + 1,
@@ -164,7 +166,7 @@ export async function agregarEnlaceModulo(
     .eq('id_aula_modulo', idModulo)
     .order('orden', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
   const { data, error } = await supabase
     .from('aula_modulo_enlace')

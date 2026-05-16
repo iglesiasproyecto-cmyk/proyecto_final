@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUpdateUsuario, useDeleteUsuarioAsSuperAdmin } from "@/hooks/useUsuarios";
 import { useIglesias, useSedesEnriquecidas } from "@/hooks/useIglesias";
+import { useMinisterios } from "@/hooks/useMinisterios";
 import { useApp } from "@/app/store/AppContext";
 import { ROLE_IDS } from "@/app/constants/roles";
 import { Card } from "./ui/card";
@@ -19,11 +20,21 @@ import { TableSkeleton } from "./loading/skeletons";
 import { Skeleton } from "./ui/skeleton";
 
 export function UsuariosPage() {
-  const { iglesiaActual, rolActual, iglesiasDelUsuario } = useApp();
+  const { iglesiaActual, rolActual, iglesiasDelUsuario, ministeriosDelUsuario, sedesDelUsuario } = useApp();
 
   const isSuperAdmin = rolActual === "super_admin";
   const isAdminIglesia = rolActual === "admin_iglesia";
-  const canManageUsers = isSuperAdmin || isAdminIglesia;
+  const isAdminSede = rolActual === "admin_sede";
+  const isLider = rolActual === "lider";
+  const canManageUsers = isSuperAdmin || isAdminIglesia || isAdminSede || isLider;
+
+  const canAssignRole = (idRol: number): boolean => {
+    if (isSuperAdmin) return true;
+    if (isAdminIglesia) return idRol !== ROLE_IDS.SUPER_ADMIN;
+    if (isAdminSede) return ![ROLE_IDS.SUPER_ADMIN, ROLE_IDS.ADMIN_IGLESIA].includes(idRol);
+    if (isLider) return idRol === ROLE_IDS.SERVIDOR;
+    return false;
+  };
 
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
@@ -33,6 +44,7 @@ export function UsuariosPage() {
   const [filterEstado, setFilterEstado] = useState("all");
   const [filterRol, setFilterRol] = useState("all");
   const [filterIglesia, setFilterIglesia] = useState<string>("all");
+  const [showTechnicalArchived, setShowTechnicalArchived] = useState(false);
   const [detail, setDetail] = useState<number | null>(null);
   const [showHojaDeVida, setShowHojaDeVida] = useState<number | null>(null);
   const [showInvite, setShowInvite] = useState(false);
@@ -55,24 +67,55 @@ export function UsuariosPage() {
     correo: "",
     nombres: "",
     apellidos: "",
+    fechaNacimiento: "",
     idIglesia: iglesiaActual?.id ?? 0,
     idRol: 0,
-    idSede: 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
-  const resetInviteForm = () => setInviteForm({ correo: "", nombres: "", apellidos: "", idIglesia: iglesiaActual?.id ?? 0, idRol: 0, idSede: 0 });
+  const resetInviteForm = () => setInviteForm({
+    correo: "",
+    nombres: "",
+    apellidos: "",
+    fechaNacimiento: "",
+    idIglesia: iglesiaActual?.id ?? 0,
+    idRol: 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0
+  });
 
   // Assign role form state
   const [assignForm, setAssignForm] = useState({
     idRol: 0,
     idIglesia: iglesiaActual?.id ?? 0,
-    idSede: 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
-  const resetAssignForm = () => setAssignForm({ idRol: 0, idIglesia: iglesiaActual?.id ?? 0, idSede: 0 });
+  const resetAssignForm = () => setAssignForm({
+    idRol: 0,
+    idIglesia: iglesiaActual?.id ?? 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
+  });
 
   const { data: sedesInvite = [] } = useSedesEnriquecidas(inviteForm.idIglesia || undefined);
   const { data: sedesAssign = [] } = useSedesEnriquecidas(assignForm.idIglesia || undefined);
+  const { data: ministeriosInvite = [] } = useMinisterios(inviteForm.idIglesia || undefined);
+  const { data: ministeriosAssign = [] } = useMinisterios(assignForm.idIglesia || undefined);
 
-  const roleNeedsSede = (idRol: number) => [ROLE_IDS.ADMIN_SEDE, ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR].includes(idRol);
+  const roleNeedsSede = (idRol: number) => ([ ROLE_IDS.ADMIN_SEDE, ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR] as number[]).includes(idRol);
+  const roleNeedsMinisterio = (idRol: number) => ([ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR] as number[]).includes(idRol);
+  const ministeriosInviteFiltered = ministeriosInvite.filter(m => inviteForm.idSede ? m.idSede === inviteForm.idSede : true);
+  const ministeriosFiltered = ministeriosAssign.filter(m => assignForm.idSede ? m.idSede === assignForm.idSede : true);
+
+  const isTechnicalArchivedUser = (correo: string, activo: boolean) => {
+    return !activo && /@local\.invalid$/i.test(String(correo).trim());
+  };
+
+  const archivedTechnicalCount = enriched.filter(u => isTechnicalArchivedUser(u.correo, u.activo)).length;
+  const usersForTable = showTechnicalArchived
+    ? enriched
+    : enriched.filter(u => !isTechnicalArchivedUser(u.correo, u.activo));
 
   if (isLoading) return (
     <div className="space-y-6 max-w-7xl mx-auto px-4">
@@ -87,11 +130,27 @@ export function UsuariosPage() {
     </div>
   );
 
-  const filtered = enriched.filter(u => {
+  const filtered = usersForTable.filter(u => {
     // If admin_iglesia, only show users from their iglesia and exclude super admins
     if (isAdminIglesia) {
       const hasRoleInMyIglesia = u.roleNames.some(rn => rn.idIglesia === iglesiaActual?.id && rn.rolNombre !== 'Super Administrador');
       if (!hasRoleInMyIglesia) return false;
+    }
+
+    // If admin_sede, only show users from their sede
+    if (isAdminSede) {
+      const mySede = sedesDelUsuario.find(s => s.id === iglesiaActual?.id);
+      if (!mySede) return false; // Security: no sede context, hide all
+      const hasRoleInMySede = u.roleNames.some(rn => rn.idSede === mySede.id);
+      if (!hasRoleInMySede) return false;
+    }
+
+    // If líder, only show users from their ministerios
+    if (isLider) {
+      const inMyMinisterios = u.minNames.some(mn =>
+        ministeriosDelUsuario.some(m => m.id === mn.idMinisterio)
+      );
+      if (!inMyMinisterios) return false;
     }
 
     if (search) {
@@ -132,8 +191,31 @@ export function UsuariosPage() {
       toast.error("Completa todos los campos obligatorios");
       return;
     }
+
+    // NEW: Validate user can assign this role
+    if (!canAssignRole(inviteForm.idRol)) {
+      toast.error("No tienes permiso para asignar este rol");
+      return;
+    }
+
+    // NEW: Validate sede requirement for admin_sede
+    if (isAdminSede && !inviteForm.idSede) {
+      toast.error("Debes seleccionar una sede");
+      return;
+    }
+
+    // NEW: Validate ministerio requirement for lider
+    if (isLider && !inviteForm.idMinisterio) {
+      toast.error("Debes seleccionar un ministerio");
+      return;
+    }
+
     if (roleNeedsSede(inviteForm.idRol) && !inviteForm.idSede) {
       toast.error("Debes seleccionar una sede para este rol");
+      return;
+    }
+    if (roleNeedsMinisterio(inviteForm.idRol) && !inviteForm.idMinisterio) {
+      toast.error("Debes seleccionar un ministerio para este rol");
       return;
     }
     inviteMutation.mutate(
@@ -141,9 +223,11 @@ export function UsuariosPage() {
         correo: inviteForm.correo.trim(),
         nombres: inviteForm.nombres.trim(),
         apellidos: inviteForm.apellidos.trim(),
+        fechaNacimiento: inviteForm.fechaNacimiento || null,
         idIglesia: inviteForm.idIglesia,
         idRol: inviteForm.idRol,
         idSede: inviteForm.idSede || null,
+        idMinisterio: inviteForm.idMinisterio || null,
       },
       {
         onSuccess: (result) => {
@@ -172,12 +256,17 @@ export function UsuariosPage() {
       toast.error("Debes seleccionar una sede para este rol");
       return;
     }
+    if (roleNeedsMinisterio(assignForm.idRol) && !assignForm.idMinisterio) {
+      toast.error("Debes seleccionar un ministerio para este rol");
+      return;
+    }
     assignRolMutation.mutate(
       {
         idUsuario: showAssignRol,
         idRol: assignForm.idRol,
         idIglesia: assignForm.idIglesia,
         idSede: assignForm.idSede || null,
+        idMinisterio: assignForm.idMinisterio || null,
       },
       {
         onSuccess: () => {
@@ -198,6 +287,9 @@ export function UsuariosPage() {
       onSuccess: () => {
         toast.success(`Rol "${confirmRemoveRol.rolNombre}" removido`);
         setConfirmRemoveRol({ isOpen: false, idUsuarioRol: 0, rolNombre: "", source: "usuario_rol" });
+      },
+      onError: (err: any) => {
+        toast.error(err?.message ?? "No se pudo remover el rol");
       },
     });
   };
@@ -313,10 +405,21 @@ export function UsuariosPage() {
             <span className="sm:hidden">Limpiar</span>
           </Button>
         </div>
-          <Button variant="ghost" className="h-10 rounded-xl text-xs whitespace-nowrap" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); }}>
-            <span className="hidden sm:inline">Limpiar filtros</span>
-            <span className="sm:hidden">Limpiar</span>
-          </Button>
+        {archivedTechnicalCount > 0 && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-300/50 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:border-amber-700/40 dark:bg-amber-950/30 dark:text-amber-200">
+            <p>
+              Se ocultaron <strong>{archivedTechnicalCount}</strong> registros archivados del sistema para mantener el listado limpio.
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 rounded-lg px-2 text-amber-900 hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-900/30"
+              onClick={() => setShowTechnicalArchived(v => !v)}
+            >
+              {showTechnicalArchived ? "Ocultar archivados" : "Ver archivados"}
+            </Button>
+          </div>
+        )}
         </div>
       </motion.div>
 
@@ -334,15 +437,18 @@ export function UsuariosPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map(u => (
+            {filtered.map(u => {
+              const technicalArchived = isTechnicalArchivedUser(u.correo, u.activo);
+              const displayName = technicalArchived ? "Usuario archivado" : `${u.nombres} ${u.apellidos}`;
+              return (
               <TableRow key={u.idUsuario}>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary shrink-0">{u.nombres[0]}{u.apellidos[0]}</div>
-                    <span className="text-sm">{u.nombres} {u.apellidos}</span>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary shrink-0">{technicalArchived ? "AR" : `${u.nombres[0] ?? ""}${u.apellidos[0] ?? ""}`}</div>
+                    <span className="text-sm">{displayName}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground">{u.correo}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{technicalArchived ? "Registro archivado" : u.correo}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {u.roleNames.length > 0 ? u.roleNames.map((rn) => (
@@ -364,12 +470,14 @@ export function UsuariosPage() {
                   {u.ultimoAcceso ? new Date(u.ultimoAcceso).toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" }) : "Nunca"}
                 </TableCell>
                 <TableCell>
-                  <Badge className={`text-xs ${u.activo ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : "bg-red-100 text-red-800"}`}>
-                    {u.activo ? "Activo" : "Inactivo"}
+                  <Badge className={`text-xs ${technicalArchived ? "bg-amber-100 text-amber-800 border-amber-200" : u.activo ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : "bg-red-100 text-red-800"}`}>
+                    {technicalArchived ? "Archivado" : (u.activo ? "Activo" : "Inactivo")}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex gap-1 justify-end">
+                    {!technicalArchived && (
+                      <>
                     <Button variant="ghost" size="sm" title="Ver Hoja de Vida" onClick={() => setShowHojaDeVida(u.idUsuario)}>
                       <FileText className="w-3.5 h-3.5 text-cyan-600" />
                     </Button>
@@ -382,7 +490,7 @@ export function UsuariosPage() {
                         <ShieldPlus className="w-3.5 h-3.5 text-[#4682b4] dark:text-[#709dbd]" />
                       </Button>
                     )}
-                    {canManageUsers && (
+                    {isSuperAdmin && (
                       <Button variant="ghost" size="sm" title="Eliminar usuario" onClick={() => openDeleteDialog(u.idUsuario)}>
                         <Trash2 className="w-3.5 h-3.5 text-red-600" />
                       </Button>
@@ -396,10 +504,15 @@ export function UsuariosPage() {
                     >
                       {u.activo ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                     </Button>
+                      </>
+                    )}
+                    {technicalArchived && (
+                      <span className="text-[11px] text-muted-foreground px-2 py-1">Solo referencia técnica</span>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            )})}
             {filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="py-10 text-center">
@@ -493,14 +606,28 @@ export function UsuariosPage() {
                 placeholder="correo@ejemplo.com"
                 className="bg-input-background"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Si el correo pertenece a un usuario archivado, se recupera el perfil y se reasigna el rol automáticamente.
+              </p>
             </div>
             <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Iglesia *</label>
+              <label className="text-sm text-muted-foreground mb-1 block">Fecha de Nacimiento</label>
+              <Input
+                type="date"
+                value={inviteForm.fechaNacimiento}
+                onChange={e => setInviteForm(p => ({ ...p, fechaNacimiento: e.target.value }))}
+                className="bg-input-background"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Opcional</p>
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Iglesia {isAdminIglesia && '(Tu iglesia)'} *</label>
               <Select
                 value={inviteForm.idIglesia ? String(inviteForm.idIglesia) : ""}
-                onValueChange={v => setInviteForm(p => ({ ...p, idIglesia: Number(v), idSede: 0 }))}
+                onValueChange={v => setInviteForm(p => ({ ...p, idIglesia: Number(v), idSede: 0, idMinisterio: 0 }))}
+                disabled={isAdminIglesia}
               >
-                <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar iglesia..." /></SelectTrigger>
+                <SelectTrigger className={`bg-input-background ${isAdminIglesia ? 'opacity-70 cursor-not-allowed' : ''}`}><SelectValue placeholder="Seleccionar iglesia..." /></SelectTrigger>
                 <SelectContent>
                   {iglesias.map(ig => (
                     <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>
@@ -510,42 +637,77 @@ export function UsuariosPage() {
                 </SelectContent>
               </Select>
             </div>
+            {inviteForm.idIglesia > 0 && (
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Sede{roleNeedsSede(inviteForm.idRol) ? ' *' : ''}</label>
+                {/* Show sede selector only if not admin_sede and not lider */}
+                {!isAdminSede && !isLider && (
+                  <Select
+                    value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
+                    onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
+                  >
+                    <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
+                    <SelectContent>
+                      {sedesInvite.map(sd => (
+                        <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {/* Show as text if admin_sede */}
+                {isAdminSede && (
+                  <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                    Sede: {sedesDelUsuario.find(s => s.id === inviteForm.idSede)?.nombre}
+                  </div>
+                )}
+              </div>
+            )}
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Rol inicial *</label>
               <Select
                 value={inviteForm.idRol ? String(inviteForm.idRol) : ""}
-                onValueChange={v => setInviteForm(p => ({ ...p, idRol: Number(v), idSede: 0 }))}
+                onValueChange={v => setInviteForm(p => ({ ...p, idRol: Number(v), idMinisterio: 0 }))}
               >
                 <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar rol..." /></SelectTrigger>
                 <SelectContent>
                   {roles
-                    .filter(r => {
-                      // Super Admin puede asignar cualquier rol
-                      if (isSuperAdmin) return true;
-                      // Admin Iglesia no puede asignar Super Admin
-                      return r.nombre !== 'Super Administrador';
-                    })
+                    .filter(role => canAssignRole(role.idRol))
                     .map(r => (
                       <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
                     ))}
                 </SelectContent>
               </Select>
             </div>
-            {roleNeedsSede(inviteForm.idRol) && (
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Sede *</label>
-                <Select
-                  value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
-                  onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v) }))}
-                >
-                  <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
-                  <SelectContent>
-                    {sedesInvite.map(sd => (
-                      <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-[11px] text-muted-foreground mt-1">
+            {roleNeedsMinisterio(inviteForm.idRol) && inviteForm.idSede && (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">Ministerio *</label>
+                  {/* Show ministerio selector only if not lider */}
+                  {!isLider && (
+                    <Select
+                      value={inviteForm.idMinisterio ? String(inviteForm.idMinisterio) : ""}
+                      onValueChange={v => setInviteForm(p => ({ ...p, idMinisterio: Number(v) }))}
+                    >
+                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
+                      <SelectContent>
+                        {ministeriosInviteFiltered.length > 0 ? (
+                          ministeriosInviteFiltered.map(m => (
+                            <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {/* Show as text if lider */}
+                  {isLider && (
+                    <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                      Ministerio: {ministeriosDelUsuario.find(m => m.id === inviteForm.idMinisterio)?.nombre}
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground bg-accent/30 px-2 py-1.5 rounded">
                   Para Lider/Servidor la persona debe pertenecer a un ministerio de la sede.
                 </p>
               </div>
@@ -553,7 +715,10 @@ export function UsuariosPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowInvite(false); resetInviteForm(); }}>Cancelar</Button>
-            <Button onClick={handleInvite} disabled={inviteMutation.isPending}>
+            <Button
+              onClick={handleInvite}
+              disabled={inviteMutation.isPending || !inviteForm.nombres.trim() || !inviteForm.apellidos.trim() || !inviteForm.correo.trim() || !inviteForm.idRol || !inviteForm.idIglesia || (roleNeedsSede(inviteForm.idRol) && !inviteForm.idSede) || (roleNeedsMinisterio(inviteForm.idRol) && !inviteForm.idMinisterio)}
+            >
               {inviteMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...</> : <><UserPlus className="w-4 h-4 mr-2" /> Enviar Invitación</>}
             </Button>
           </DialogFooter>
@@ -599,17 +764,12 @@ export function UsuariosPage() {
                     <label className="text-xs text-muted-foreground mb-1 block">Rol *</label>
                     <Select
                       value={assignForm.idRol ? String(assignForm.idRol) : ""}
-                      onValueChange={v => setAssignForm(p => ({ ...p, idRol: Number(v), idSede: 0 }))}
+                      onValueChange={v => setAssignForm(p => ({ ...p, idRol: Number(v), idMinisterio: 0 }))}
                     >
                       <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                       <SelectContent>
                         {roles
-                          .filter(r => {
-                            // Super Admin puede asignar cualquier rol
-                            if (isSuperAdmin) return true;
-                            // Admin Iglesia no puede asignar Super Admin
-                            return r.nombre !== 'Super Administrador';
-                          })
+                          .filter(role => canAssignRole(role.idRol))
                           .map(r => (
                             <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
                           ))}
@@ -617,12 +777,13 @@ export function UsuariosPage() {
                     </Select>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Iglesia *</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">Iglesia {isAdminIglesia && '(Tu iglesia)'} *</label>
                     <Select
                       value={assignForm.idIglesia ? String(assignForm.idIglesia) : ""}
-                      onValueChange={v => setAssignForm(p => ({ ...p, idIglesia: Number(v), idSede: 0 }))}
+                      onValueChange={v => setAssignForm(p => ({ ...p, idIglesia: Number(v), idSede: 0, idMinisterio: 0 }))}
+                      disabled={isAdminIglesia}
                     >
-                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                      <SelectTrigger className={`bg-input-background ${isAdminIglesia ? 'opacity-70 cursor-not-allowed' : ''}`}><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                       <SelectContent>
                         {iglesias.map(ig => (
                           <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>
@@ -633,21 +794,61 @@ export function UsuariosPage() {
                     </Select>
                   </div>
                 </div>
-                {roleNeedsSede(assignForm.idRol) && (
+                {assignForm.idIglesia > 0 && (
                   <div className="mt-3">
-                    <label className="text-xs text-muted-foreground mb-1 block">Sede *</label>
-                    <Select
-                      value={assignForm.idSede ? String(assignForm.idSede) : ""}
-                      onValueChange={v => setAssignForm(p => ({ ...p, idSede: Number(v) }))}
-                    >
-                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
-                      <SelectContent>
-                        {sedesAssign.map(sd => (
-                          <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-[11px] text-muted-foreground mt-1">
+                    <label className="text-xs text-muted-foreground mb-1 block">Sede{roleNeedsSede(assignForm.idRol) ? ' *' : ''}</label>
+                    {/* Show sede selector only if not admin_sede and not lider */}
+                    {!isAdminSede && !isLider && (
+                      <Select
+                        value={assignForm.idSede ? String(assignForm.idSede) : ""}
+                        onValueChange={v => setAssignForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
+                      >
+                        <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
+                        <SelectContent>
+                          {sedesAssign.map(sd => (
+                            <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {/* Show as text if admin_sede */}
+                    {isAdminSede && (
+                      <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                        Sede: {sedesDelUsuario.find(s => s.id === assignForm.idSede)?.nombre}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {roleNeedsMinisterio(assignForm.idRol) && assignForm.idSede && (
+                  <div className="mt-3 space-y-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Ministerio *</label>
+                      {/* Show ministerio selector only if not lider */}
+                      {!isLider && (
+                        <Select
+                          value={assignForm.idMinisterio ? String(assignForm.idMinisterio) : ""}
+                          onValueChange={v => setAssignForm(p => ({ ...p, idMinisterio: Number(v) }))}
+                        >
+                          <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
+                          <SelectContent>
+                            {ministeriosFiltered.length > 0 ? (
+                              ministeriosFiltered.map(m => (
+                                <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
+                              ))
+                            ) : (
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {/* Show as text if lider */}
+                      {isLider && (
+                        <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                          Ministerio: {ministeriosDelUsuario.find(m => m.id === assignForm.idMinisterio)?.nombre}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground bg-accent/30 px-2 py-1.5 rounded">
                       Para Lider/Servidor la persona debe pertenecer a un ministerio de la sede.
                     </p>
                   </div>

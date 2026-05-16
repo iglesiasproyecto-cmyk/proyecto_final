@@ -63,15 +63,14 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden font-sans">
       {/* Header Fijo */}
-      <header className="fixed top-0 w-full bg-[#0c2340]/95 backdrop-blur-md text-white py-1 z-50 shadow-xl">
+      <header className="fixed top-0 w-full bg-[#0c2340]/95 backdrop-blur-md text-white h-20 md:h-24 z-50 shadow-xl flex items-center">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <SEILogo className="w-20 h-20" />
-            <span className="font-bold text-xl tracking-tight">S.E.I.</span>
+          <div className="flex items-center -ml-16 md:-ml-12">
+            <SEILogo className="w-32 h-32 md:w-48 md:h-48" />
           </div>
           <Button 
             onClick={() => navigate("/login")} 
-            className="bg-[#2596be] hover:bg-[#1a7fa8] text-white px-8 rounded-full font-bold transition-all hover:scale-105"
+            className="bg-[#2596be] hover:bg-[#1a7fa8] text-white px-4 md:px-8 rounded-full font-bold transition-all hover:scale-105 text-sm md:text-base"
           >
             Iniciar Sesión
           </Button>

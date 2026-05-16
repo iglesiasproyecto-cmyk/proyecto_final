@@ -81,7 +81,10 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
   }, [ministeriosFiltrados.length])
 
   const onSubmit = async (data: FormData) => {
-    if (!user?.id || !internalUserId) return
+    if (!user?.id || !internalUserId) {
+      toast.error('Tu sesión aún se está inicializando. Intenta de nuevo en unos segundos.')
+      return
+    }
 
     setLoading(true)
     try {
@@ -101,7 +104,8 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
       onOpenChange(false)
     } catch (error) {
       console.error('Error creating course:', error)
-      toast.error('Error al crear el curso')
+      const message = error instanceof Error ? error.message : 'Error al crear el curso'
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -111,9 +115,9 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[560px] rounded-[28px] border-white/10 bg-card/95 backdrop-blur-2xl">
         <DialogHeader>
-          <DialogTitle>Crear Nuevo Curso</DialogTitle>
+          <DialogTitle className="text-xl font-black tracking-tight">Crear nuevo curso</DialogTitle>
           <DialogDescription>
             Crea un nuevo curso para tu ministerio. Podrás agregar módulos y contenido después.
           </DialogDescription>
@@ -128,11 +132,11 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nombre del Curso</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ej: Liderazgo Cristiano Básico" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                    <FormControl>
+                      <Input placeholder="Ej: Liderazgo Cristiano Básico" {...field} className="h-11 rounded-2xl bg-background/60" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
               )}
             />
 
@@ -142,22 +146,23 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Descripción</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe brevemente el contenido del curso..."
-                      {...field}
-                    />
-                  </FormControl>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describe brevemente el contenido del curso..."
+                        {...field}
+                        className="min-h-28 rounded-2xl bg-background/60"
+                      />
+                    </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
             {isAdminIglesia && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium leading-none">Tipo de Curso</p>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <div className="space-y-2 rounded-2xl border border-border/60 bg-muted/20 p-4">
+                  <p className="text-sm font-medium leading-none">Tipo de curso</p>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm">
                     <input
                       type="radio"
                       name="tipoCurso"
@@ -192,7 +197,7 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
                   <FormItem>
                     <FormLabel>Ministerio</FormLabel>
                     {ministeriosFiltrados.length <= 1 ? (
-                      <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted text-sm text-muted-foreground">
+                      <div className="flex h-11 items-center rounded-2xl border border-input bg-muted px-3 text-sm text-muted-foreground">
                         {ministeriosFiltrados.length === 1
                           ? ministeriosFiltrados[0].nombre
                           : 'Cargando ministerio...'}
@@ -200,7 +205,7 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
                     ) : (
                       <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="h-11 rounded-2xl bg-background/60">
                             <SelectValue placeholder="Selecciona un ministerio" />
                           </SelectTrigger>
                         </FormControl>
@@ -225,15 +230,16 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Duración Estimada (horas)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="Ej: 20"
-                      {...field}
-                      value={field.value ?? ''}
-                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                    />
-                  </FormControl>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Ej: 20"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        className="h-11 rounded-2xl bg-background/60"
+                      />
+                    </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -263,12 +269,13 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-2xl">
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={loading || (tipoCurso === 'ministerio' && ministeriosFiltrados.length === 0)}
+                className="rounded-2xl bg-[#4682b4] text-white hover:bg-[#4682b4]/90"
               >
                 {loading ? 'Creando...' : 'Crear Curso'}
               </Button>

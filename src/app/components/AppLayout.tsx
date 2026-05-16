@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { useApp } from "../store/AppContext";
 import { GlobalLoader } from "./GlobalLoader";
@@ -39,11 +39,11 @@ interface NavItem {
 
 const pageTitles: Record<string, string> = {
   "/app/global": "Dashboard Global",
-  "/app/global/iglesias": "Gestión de Iglesias",
-  "/app/global/sedes": "Gestión de Sedes",
+  "/app/global/iglesias": "Gesti├│n de Iglesias",
+  "/app/global/sedes": "Gesti├│n de Sedes",
   "/app/global/administradores": "Administradores de Iglesia",
   "/app/global/usuarios": "Usuarios",
-  "/app/global/geografia": "Geografía",
+  "/app/global/geografia": "Geograf├¡a",
   "/app/global/notificaciones": "Notificaciones",
   "/app/global/perfil": "Mi Perfil",
 };
@@ -58,7 +58,7 @@ function getDynamicPageTitle(pathname: string): string {
   if (pathname.match(/\/app\/\d+\/tareas/)) return "Tareas";
   if (pathname.match(/\/app\/\d+\/aula\/curso\/\d+\/servidor/)) return "Progreso Individual";
   if (pathname.match(/\/app\/\d+\/aula\/curso/)) return "Detalle del Curso";
-  if (pathname.match(/\/app\/\d+\/aula/)) return "Aula de Formación";
+  if (pathname.match(/\/app\/\d+\/aula/)) return "Aula de Formaci├│n";
   if (pathname.match(/\/app\/\d+\/mi-ministerio/)) return "Mi Ministerio";
   if (pathname.match(/\/app\/\d+\/notificaciones/)) return "Notificaciones";
   if (pathname.match(/\/app\/\d+\/perfil/)) return "Mi Perfil";
@@ -76,12 +76,12 @@ function getNavItemsForRole(
     case "super_admin":
       return [
         { label: "Dashboard", path: "/app/global", icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
-        { label: "Iglesias", path: "/app/global/iglesias", icon: <Building2 className="w-5 h-5" />, section: "Gestión Global" },
-        { label: "Sedes", path: "/app/global/sedes", icon: <Church className="w-5 h-5" />, section: "Gestión Global" },
-        { label: "Administradores", path: "/app/global/administradores", icon: <UserCheck className="w-5 h-5" />, section: "Gestión Global" },
-        { label: "Administradores de Sede", path: "/app/global/admin-sedes", icon: <Settings className="w-5 h-5" />, section: "Gestión Global" },
-        { label: "Usuarios", path: "/app/global/usuarios", icon: <Users className="w-5 h-5" />, section: "Gestión Global" },
-        { label: "Geografía", path: "/app/global/geografia", icon: <Globe className="w-5 h-5" />, section: "Configuración" },
+        { label: "Iglesias", path: "/app/global/iglesias", icon: <Building2 className="w-5 h-5" />, section: "Gesti├│n Global" },
+        { label: "Sedes", path: "/app/global/sedes", icon: <Church className="w-5 h-5" />, section: "Gesti├│n Global" },
+        { label: "Administradores", path: "/app/global/administradores", icon: <UserCheck className="w-5 h-5" />, section: "Gesti├│n Global" },
+        { label: "Administradores de Sede", path: "/app/global/admin-sedes", icon: <Settings className="w-5 h-5" />, section: "Gesti├│n Global" },
+        { label: "Usuarios", path: "/app/global/usuarios", icon: <Users className="w-5 h-5" />, section: "Gesti├│n Global" },
+        { label: "Geograf├¡a", path: "/app/global/geografia", icon: <Globe className="w-5 h-5" />, section: "Configuraci├│n" },
         { label: "Notificaciones", path: "/app/global/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: "/app/global/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
@@ -98,7 +98,7 @@ function getNavItemsForRole(
         { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
-        { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
+        { label: "Aula de Formaci├│n", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formaci├│n" },
         { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: `${t}/perfil`, icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
@@ -110,7 +110,7 @@ function getNavItemsForRole(
         { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Ministerio" },
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
-        { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
+        { label: "Aula de Formaci├│n", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formaci├│n" },
         { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: `${t}/perfil`, icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
@@ -121,7 +121,7 @@ function getNavItemsForRole(
         { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Operaciones" },
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
-        { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
+        { label: "Aula de Formaci├│n", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formaci├│n" },
         { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: `${t}/perfil`, icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
@@ -133,7 +133,7 @@ function getNavItemsForRole(
         { label: "Ministerios", path: `${t}/ministerios`, icon: <Settings2 className="w-5 h-5" />, section: "Ministerio" },
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Mis Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
-        { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
+        { label: "Aula de Formaci├│n", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formaci├│n" },
         { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: `${t}/perfil`, icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
@@ -188,7 +188,7 @@ export function AppLayout() {
   }
 
   if (!authResolved || isInitializing) {
-    return <GlobalLoader show={true} message="Cargando aplicación..." fullScreen={true} />
+    return <GlobalLoader show={true} message="Cargando aplicaci├│n..." fullScreen={true} />
   }
 
   if (!usuarioActual) {
@@ -196,7 +196,7 @@ export function AppLayout() {
   }
 
   if (!authReady) {
-    return <GlobalLoader show={true} message="Cargando aplicación..." fullScreen={true} />
+    return <GlobalLoader show={true} message="Cargando aplicaci├│n..." fullScreen={true} />
   }
 
   const rol = rolActual;
@@ -438,7 +438,7 @@ export function AppLayout() {
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5">
-                {isCollapsed ? "Expandir Menú" : "Ocultar Menú"}
+                {isCollapsed ? "Expandir Men├║" : "Ocultar Men├║"}
               </TooltipContent>
             </Tooltip>
           </div>
@@ -521,7 +521,7 @@ export function AppLayout() {
                     <LogOut className="w-5 h-5" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="text-xs font-bold">Cerrar Sesión</TooltipContent>
+                <TooltipContent className="text-xs font-bold">Cerrar Sesi├│n</TooltipContent>
               </Tooltip>
 
               <button
@@ -559,3 +559,4 @@ export function AppLayout() {
     </TooltipProvider>
   );
 }
+

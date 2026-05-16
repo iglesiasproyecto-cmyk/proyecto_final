@@ -12,7 +12,7 @@ export function useCursos(idMinisterio?: number) {
         .select(`
           *,
           ministerio:ministerio(nombre),
-          modulos:aula_modulo(count),
+          modulos:aula_modulo(id_aula_modulo),
           usuario_creador:usuario(nombres, apellidos)
         `)
 

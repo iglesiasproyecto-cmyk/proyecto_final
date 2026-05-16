@@ -8,6 +8,7 @@ import { Skeleton } from '@/app/components/ui/skeleton';
 import { ModuleSkeleton } from '@/app/components/loading/skeletons';
 import { ModuloEditorPanel } from './ModuloEditorPanel'
 import { getInternalUserId } from '@/lib/userHelpers'
+import { BookOpen, CheckCircle, Unlock, Lock } from 'lucide-react'
 
 interface ModulosNavegacionProps {
   idCurso: number
@@ -34,11 +35,11 @@ export function ModulosNavegacion({ idCurso }: ModulosNavegacionProps) {
 
   if (!modulos || modulos.length === 0) {
     return (
-      <Card>
+      <Card className="rounded-[28px] border border-dashed border-border/70 bg-muted/20">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No hay módulos disponibles</h3>
-          <p className="text-muted-foreground text-center">
+          <BookOpen className="mb-4 h-12 w-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-semibold">No hay módulos disponibles</h3>
+          <p className="text-center text-muted-foreground">
             El líder aún no ha creado módulos para este curso
           </p>
         </CardContent>
@@ -66,13 +67,16 @@ export function ModulosNavegacion({ idCurso }: ModulosNavegacionProps) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Módulos del Curso</h3>
+      <div className="rounded-[28px] border border-white/10 bg-card/55 p-5 backdrop-blur-2xl">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Ruta disponible</p>
+        <h3 className="mt-1 text-lg font-semibold">Módulos del Curso</h3>
+      </div>
 
       <div className="grid gap-3">
         {modulos.map((modulo) => (
           <div key={modulo.idModulo}>
             <Card
-              className={`transition-all ${getEstadoColor(modulo.estadoAcceso)} ${
+              className={`overflow-hidden rounded-[24px] border transition-all ${getEstadoColor(modulo.estadoAcceso)} ${
                 modulo.estadoAcceso === 'disponible' || modulo.estadoAcceso === 'completado' ? 'hover:shadow-md' : ''
               }`}
             >
@@ -97,6 +101,7 @@ export function ModulosNavegacion({ idCurso }: ModulosNavegacionProps) {
                   <Button
                     variant="outline"
                     size="sm"
+                    className="rounded-2xl"
                     onClick={() =>
                       setModuloAbierto(
                         moduloAbierto?.id === modulo.idModulo
@@ -120,7 +125,7 @@ export function ModulosNavegacion({ idCurso }: ModulosNavegacionProps) {
             </Card>
 
             {moduloAbierto?.id === modulo.idModulo && (
-              <div className="mt-2 rounded-2xl border border-white/10 bg-background/30 p-4">
+              <div className="mt-2 rounded-[24px] border border-white/10 bg-background/35 p-4">
                 <ModuloEditorPanel
                   idModulo={modulo.idModulo}
                   tituloModulo={modulo.titulo}

@@ -1,10 +1,15 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router";
-import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia } from "@/hooks/useEventos";
+import { DndProvider, useDrag, useDrop } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
+import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia, useArchiveTask, useUnarchiveTask } from "@/hooks/useEventos";
+import { useDragDropTasks } from "@/hooks/useDragDropTasks";
 import type { TareaEnriquecida } from "@/services/eventos.service";
-import { useMinisteriosEnriquecidos } from "@/hooks/useMinisterios";
+import { useMinisteriosEnriquecidos, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
+import { useUsuariosDeIglesia } from "@/hooks/useUsuariosDeIglesia";
+import { useTaskPermissions, useCanBulkUpdate } from "@/hooks/useTaskPermissions";
 import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service";
 import { filterAndSortTareas } from "@/lib/taskUtils";
 import { useApp } from "../store/AppContext";
@@ -23,6 +28,10 @@ import {
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { Skeleton } from "./ui/skeleton";
 import { TableSkeleton } from "./loading/skeletons";
+import { TasksSkeleton } from "./tasks/TasksSkeleton";
+import { TaskBulkActions } from "./tasks/TaskBulkActions";
+import { TaskArchiveIndicator } from "./tasks/TaskArchiveIndicator";
+import { TaskApprovalSection } from "./tasks/TaskApprovalSection";
 
 const statusConfig = {
   pendiente:   { label: "Pendiente",   color: "bg-amber-500/10 text-amber-400 border-amber-500/20",   dot: "bg-amber-400",   icon: <AlertCircle className="w-3.5 h-3.5" /> },
@@ -57,6 +66,21 @@ export function TasksPage() {
   const createEvidenciaMutation = useCreateTareaEvidencia();
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(idIglesiaNum);
   const { data: sedes = [] } = useSedesEnriquecidas(idIglesiaNum);
+  const { data: usuarioMinisterioIds = [] } = useMinisteriosIdsDeUsuario(rolActual === "lider" ? usuarioActual?.idUsuario : undefined);
+  const { data: usuariosDeIglesia = [] } = useUsuariosDeIglesia(idIglesiaNum);
+
+  const isAdminSede = rolActual === "admin_sede";
+  const isLider = rolActual === "lider";
+
+  // Count how many ministerios the current user leads (for conditional display)
+  const userLeadMinisterios = usuarioMinisterioIds.length;
+  const hasMultipleMinisterios = userLeadMinisterios >= 2;
+  const shouldShowSelectorFields = !isLider || hasMultipleMinisterios || rolActual === "admin_iglesia" || rolActual === "super_admin" || rolActual === "admin_sede";
+
+  // Get the first ministerio if user leads exactly one
+  const singleUserMinisterio = isLider && userLeadMinisterios === 1
+    ? ministerios.find(m => m.idMinisterio === usuarioMinisterioIds[0])
+    : null;
 
   const [showCreate, setShowCreate] = useState(false);
   const [sedeFilter, setSedeFilter] = useState<number>(0);
@@ -64,7 +88,7 @@ export function TasksPage() {
   const [assignUserId, setAssignUserId] = useState(0);
   const [createForm, setCreateForm] = useState({
     titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as "baja" | "media" | "alta" | "urgente",
-    idSede: 0, idMinisterio: 0,
+    idSede: 0, idMinisterio: 0, _hideSelectorFields: false,
   });
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; titulo: string }>({ open: false, id: 0, titulo: "" });
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,20 +102,27 @@ export function TasksPage() {
   const [editForm, setEditForm] = useState({
     titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as TareaEnriquecida['prioridad']
   });
+  const [selectedTareaIds, setSelectedTareaIds] = useState<Set<number>>(new Set());
 
   const task = selectedTask ? tareas.find(t => t.idTarea === selectedTask) : null;
   const { data: evidencias = [] } = useTareaEvidencias(task?.idTarea);
 
-  const usuariosDeIglesia = useMemo(() => {
-    const seen = new Set<number>();
-    return (ministerios || []).flatMap(m => m.miembros ?? []).filter(u => {
-      if (seen.has(u.idUsuario)) return false;
-      seen.add(u.idUsuario);
-      return u.activo !== false;
-    });
-  }, [ministerios]);
+  // Archive and permission hooks
+  const archiveMutation = useArchiveTask();
+  const unarchiveMutation = useUnarchiveTask();
+  const canBulkUpdate = useCanBulkUpdate();
+  const taskPerms = useTaskPermissions(task);
 
-  const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: 0 });
+  // Drag-drop hook
+  const { handleDropTask, isUpdating } = useDragDropTasks();
+
+  const resetCreateForm = () => setCreateForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: singleUserMinisterio?.idMinisterio ?? 0, idSede: 0, _hideSelectorFields: !shouldShowSelectorFields });
+
+  useEffect(() => {
+    if (showCreate) {
+      resetCreateForm();
+    }
+  }, [showCreate, singleUserMinisterio, isAdminSede, isLider, shouldShowSelectorFields, rolActual]);
 
   useEffect(() => {
     if (!task) {
@@ -199,6 +230,58 @@ export function TasksPage() {
     );
   };
 
+  const handleBulkUpdateEstado = (estado: string) => {
+    if (selectedTareaIds.size === 0) {
+      toast.error("No hay tareas seleccionadas");
+      return;
+    }
+    if (!canBulkUpdate) {
+      toast.error("No tienes permiso para actualizar múltiples tareas");
+      return;
+    }
+    // TODO: Implement bulk update RPC call
+    toast.success(`Actualizando ${selectedTareaIds.size} tareas a ${estado}`);
+    setSelectedTareaIds(new Set());
+  };
+
+  const handleBulkArchive = () => {
+    if (selectedTareaIds.size === 0) {
+      toast.error("No hay tareas seleccionadas");
+      return;
+    }
+    if (!canBulkUpdate) {
+      toast.error("No tienes permiso para archivar tareas");
+      return;
+    }
+    // TODO: Implement bulk archive
+    toast.success(`Archivando ${selectedTareaIds.size} tareas`);
+    setSelectedTareaIds(new Set());
+  };
+
+  const handleClearSelection = () => {
+    setSelectedTareaIds(new Set());
+  };
+
+  const handleToggleTaskSelect = (idTarea: number) => {
+    const newSet = new Set(selectedTareaIds);
+    if (newSet.has(idTarea)) {
+      newSet.delete(idTarea);
+    } else {
+      newSet.add(idTarea);
+    }
+    setSelectedTareaIds(newSet);
+  };
+
+  const handleArchiveTask = () => {
+    if (!task?.idTarea || !canBulkUpdate) return;
+    archiveMutation.mutate(task.idTarea);
+  };
+
+  const handleUnarchiveTask = () => {
+    if (!task?.idTarea || !canBulkUpdate) return;
+    unarchiveMutation.mutate(task.idTarea);
+  };
+
   const filteredAndSortedTareas = useMemo(() =>
     filterAndSortTareas(tareas, { searchQuery, dateFilter, sortOrder }),
     [tareas, searchQuery, dateFilter, sortOrder]
@@ -221,11 +304,10 @@ export function TasksPage() {
           <Skeleton className="h-4 w-32" />
         </div>
       </div>
-      <TableSkeleton rows={8} columns={5} />
+      <TasksSkeleton />
     </div>
   );
 
-  const isLider = rolActual === "lider";
   const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin" || rolActual === "admin_sede";
   const canManageTasks = isLider || isAdmin;
   const canShowCreateButton =
@@ -251,6 +333,149 @@ export function TasksPage() {
 
   const tasksByStatus = (status: string) => visibleTareas.filter(t => t.estado === status);
   const COLS = ["pendiente", "en_progreso", "en_revision", "completada"] as const;
+
+  // Draggable task card component
+  function DraggableTaskCard({ task: t, tIdx }: { task: typeof visibleTareas[0]; tIdx: number }) {
+    const prio = prioridadConfig[t.prioridad] ?? prioridadConfig.media;
+    const canServerAct = rolActual === "servidor" && !!t.asignados?.some(a => a.idUsuario === usuarioActual?.idUsuario);
+
+    const [{ isDragging }, drag] = useDrag(() => ({
+      type: 'task',
+      item: { id: t.idTarea, estado: t.estado },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+    }), [t.idTarea, t.estado]);
+
+    return (
+      <div ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }} className="cursor-grab active:cursor-grabbing">
+        <AnimatedCard
+          key={t.idTarea}
+          index={tIdx}
+          className="p-4 group cursor-pointer"
+          onClick={() => setSelectedTask(t.idTarea)}
+        >
+          <div className="relative z-10">
+            {/* Prioridad indicator */}
+            <div className="flex items-center justify-between mb-3">
+              <Badge variant="outline" className={`${prio.color} border-0 text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-lg`}>
+                {prio.label}
+              </Badge>
+              {t.fechaLimite && (
+                <span className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase bg-white/5 px-2 py-0.5 rounded-lg">
+                  <Calendar className="w-2.5 h-2.5" /> {t.fechaLimite}
+                </span>
+              )}
+            </div>
+
+            <h4 className="text-[14px] font-bold leading-snug tracking-tight group-hover:text-[#4682b4] transition-colors mb-2 uppercase italic">{t.titulo}</h4>
+
+            {t.ministerioNombre && (
+              <p className="text-[10px] font-bold text-primary/60 mb-2 truncate uppercase tracking-wider">
+                {t.ministerioNombre}
+              </p>
+            )}
+
+            {t.eventoNombre && (
+              <p className="text-[10px] font-bold text-[#4682b4]/70 mb-2 truncate uppercase tracking-wider">{t.eventoNombre}</p>
+            )}
+
+            {t.descripcion && (
+              <p className="text-[11px] text-muted-foreground mb-3 line-clamp-2 leading-relaxed">{t.descripcion}</p>
+            )}
+
+            <div className="flex items-center justify-between pt-3 border-t border-white/5">
+              <div className="flex -space-x-2">
+                {t.asignados && t.asignados.slice(0, 3).map(a => (
+                  <div key={a.idTareaAsignada} className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#709dbd] to-[#4682b4] border-2 border-card flex items-center justify-center text-[9px] text-white font-black shadow-sm" title={a.nombreCompleto}>
+                    {(a.nombreCompleto || "?").charAt(0).toUpperCase()}
+                  </div>
+                ))}
+                {t.asignados && t.asignados.length > 3 && (
+                  <div className="w-6 h-6 rounded-lg bg-white/10 border-2 border-card flex items-center justify-center text-[9px] text-muted-foreground font-black">+{t.asignados.length - 3}</div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1">
+                {canManageTasks && (
+                  <button
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                    onClick={e => { e.stopPropagation(); handleDeleteTarea(t.idTarea, t.titulo); }}
+                    disabled={deleteTareaMutation.isPending}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {(() => {
+                  const action = canServerAct ? getActionForServer(t.estado) : null;
+                  if (!action) return null;
+                  return (
+                    <button
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
+                      onClick={e => { e.stopPropagation(); updateEstadoMutation.mutate({ id: t.idTarea, estado: action.next }); }}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        </AnimatedCard>
+      </div>
+    );
+  }
+
+  // Droppable column component
+  function DroppableColumn({ status }: { status: typeof COLS[0] }) {
+    const cfg = statusConfig[status];
+    const statusTasks = tasksByStatus(status);
+
+    const [{ isOver }, drop] = useDrop(() => ({
+      accept: 'task',
+      drop: (item: { id: number; estado: string }) => {
+        if (item.estado !== status) {
+          handleDropTask(item.id, status);
+        }
+      },
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+      }),
+    }), [status, handleDropTask]);
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12 }}
+      >
+        <div className="w-[85vw] sm:w-[350px] lg:w-full shrink-0 snap-center">
+          {/* Column header */}
+          <div className={`flex items-center gap-2 px-4 py-3 rounded-t-2xl bg-card/60 backdrop-blur-xl border border-white/10 border-b-0`}>
+            <div className={`w-2 h-2 rounded-full ${cfg.dot} shadow-[0_0_6px_currentColor]`} />
+            <span className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/70">{cfg.label}</span>
+            <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.color} border`}>{statusTasks.length}</span>
+          </div>
+
+          {/* Cards - droppable area */}
+          <div ref={drop} className={`space-y-3 bg-white/5 dark:bg-black/20 backdrop-blur-xl rounded-b-3xl border border-white/5 border-t-0 p-3 min-h-[400px] transition-all ${isOver ? 'bg-primary/10 border-primary/50' : ''}`}>
+            <AnimatePresence>
+              {statusTasks.map((t, tIdx) => (
+                <DraggableTaskCard key={t.idTarea} task={t} tIdx={tIdx} />
+              ))}
+            </AnimatePresence>
+
+            {statusTasks.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
+                <Inbox className="w-7 h-7 opacity-20" />
+                <p className="text-xs">Sin tareas aquí</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
@@ -357,7 +582,17 @@ export function TasksPage() {
         </div>
       </motion.div>
 
+      {/* ── Bulk Actions ── */}
+      <TaskBulkActions
+        selectedCount={selectedTareaIds.size}
+        onBulkUpdateEstado={canBulkUpdate ? handleBulkUpdateEstado : undefined}
+        onBulkArchive={canBulkUpdate ? handleBulkArchive : undefined}
+        onClearSelection={handleClearSelection}
+        isLoading={false}
+      />
+
       {/* ── Kanban Board ── */}
+      <DndProvider backend={HTML5Backend}>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -368,121 +603,11 @@ export function TasksPage() {
           .hide-scrollbar::-webkit-scrollbar { display: none; }
           .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         `}} />
-        {COLS.map((status, colIdx) => {
-          const cfg = statusConfig[status];
-          const statusTasks = tasksByStatus(status);
-          return (
-            <motion.div
-              key={status}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.12 + colIdx * 0.06 }}
-            >
-              <div className="w-[85vw] sm:w-[350px] lg:w-full shrink-0 snap-center">
-                {/* Column header */}
-              <div className={`flex items-center gap-2 px-4 py-3 rounded-t-2xl bg-card/60 backdrop-blur-xl border border-white/10 border-b-0`}>
-                <div className={`w-2 h-2 rounded-full ${cfg.dot} shadow-[0_0_6px_currentColor]`} />
-                <span className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/70">{cfg.label}</span>
-                <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.color} border`}>{statusTasks.length}</span>
-              </div>
-
-              {/* Cards */}
-              <div className="space-y-3 bg-white/5 dark:bg-black/20 backdrop-blur-xl rounded-b-3xl border border-white/5 border-t-0 p-3 min-h-[400px]">
-                <AnimatePresence>
-                  {statusTasks.map((t, tIdx) => {
-                    const prio = prioridadConfig[t.prioridad] ?? prioridadConfig.media;
-                    const canServerAct = rolActual === "servidor" && !!t.asignados?.some(a => a.idUsuario === usuarioActual?.idUsuario);
-                    return (
-                      <AnimatedCard
-                        key={t.idTarea}
-                        index={tIdx}
-                        className="p-4 group cursor-pointer"
-                        onClick={() => setSelectedTask(t.idTarea)}
-                      >
-                        <div className="relative z-10">
-                          {/* Prioridad indicator */}
-                          <div className="flex items-center justify-between mb-3">
-                            <Badge variant="outline" className={`${prio.color} border-0 text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-lg`}>
-                              {prio.label}
-                            </Badge>
-                            {t.fechaLimite && (
-                              <span className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase bg-white/5 px-2 py-0.5 rounded-lg">
-                                <Calendar className="w-2.5 h-2.5" /> {t.fechaLimite}
-                              </span>
-                            )}
-                          </div>
-
-                          <h4 className="text-[14px] font-bold leading-snug tracking-tight group-hover:text-[#4682b4] transition-colors mb-2 uppercase italic">{t.titulo}</h4>
-                          
-                          {t.ministerioNombre && (
-                            <p className="text-[10px] font-bold text-primary/60 mb-2 truncate uppercase tracking-wider">
-                              {t.ministerioNombre}
-                            </p>
-                          )}
-
-                          {t.eventoNombre && (
-                            <p className="text-[10px] font-bold text-[#4682b4]/70 mb-2 truncate uppercase tracking-wider">{t.eventoNombre}</p>
-                          )}
-                          
-                          {t.descripcion && (
-                            <p className="text-[11px] text-muted-foreground mb-3 line-clamp-2 leading-relaxed">{t.descripcion}</p>
-                          )}
-
-                          <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                            <div className="flex -space-x-2">
-                              {t.asignados && t.asignados.slice(0, 3).map(a => (
-                                <div key={a.idTareaAsignada} className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#709dbd] to-[#4682b4] border-2 border-card flex items-center justify-center text-[9px] text-white font-black shadow-sm" title={a.nombreCompleto}>
-                                  {(a.nombreCompleto || "?").charAt(0).toUpperCase()}
-                                </div>
-                              ))}
-                              {t.asignados && t.asignados.length > 3 && (
-                                <div className="w-6 h-6 rounded-lg bg-white/10 border-2 border-card flex items-center justify-center text-[9px] text-muted-foreground font-black">+{t.asignados.length - 3}</div>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-1">
-                              {canManageTasks && (
-                                <button
-                                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                                  onClick={e => { e.stopPropagation(); handleDeleteTarea(t.idTarea, t.titulo); }}
-                                  disabled={deleteTareaMutation.isPending}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                              {(() => {
-                                const action = canServerAct ? getActionForServer(t.estado) : null;
-                                if (!action) return null;
-                                return (
-                                  <button
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
-                                    onClick={e => { e.stopPropagation(); updateEstadoMutation.mutate({ id: t.idTarea, estado: action.next }); }}
-                                  >
-                                    <ChevronRight className="w-4 h-4" />
-                                  </button>
-                                );
-                              })()}
-                            </div>
-                          </div>
-                        </div>
-                      </AnimatedCard>
-                    );
-                  })}
-                </AnimatePresence>
-
-
-                {statusTasks.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
-                    <Inbox className="w-7 h-7 opacity-20" />
-                    <p className="text-xs">Sin tareas aquí</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-          );
-        })}
+        {COLS.map((status) => (
+          <DroppableColumn key={status} status={status} />
+        ))}
       </motion.div>
+      </DndProvider>
 
       {/* ── Task Detail Dialog ── */}
       <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
@@ -549,7 +674,7 @@ export function TasksPage() {
                         <FieldLabel>Prioridad</FieldLabel>
                         <select
                           value={editForm.prioridad}
-                          onChange={e => setEditForm(p => ({ ...p, prioridad: e.target.value as any }))}
+                          onChange={e => setEditForm(p => ({ ...p, prioridad: e.target.value as "baja" | "media" | "alta" | "urgente" }))}
                           className="w-full h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none"
                         >
                           <option value="baja">Baja</option>
@@ -633,7 +758,7 @@ export function TasksPage() {
                         <option value={0}>Seleccionar usuario...</option>
                         {usuariosDeIglesia
                           .filter(u => !(task?.asignados || []).some(a => a.idUsuario === u.idUsuario))
-                          .map(u => <option key={u.idUsuario} value={u.idUsuario}>{u.nombres} {u.apellidos}</option>)
+                          .map(u => <option key={u.idUsuario} value={u.idUsuario}>{u.nombres} {u.apellidos} ({u.ministerios.join(', ')})</option>)
                         }
                       </select>
                       <Button
@@ -693,6 +818,25 @@ export function TasksPage() {
                       </div>
                     )}
                   </div>
+                )}
+
+                {/* Archive Indicator */}
+                {task && (
+                  <TaskArchiveIndicator
+                    archivedAt={task.archivedAt}
+                    onUnarchive={canBulkUpdate ? handleUnarchiveTask : undefined}
+                    isLoading={unarchiveMutation.isPending}
+                  />
+                )}
+
+                {/* Approval Section */}
+                {task && (
+                  <TaskApprovalSection
+                    task={task}
+                    onApprove={() => updateEstadoMutation.mutate({ id: task.idTarea, estado: 'completada' })}
+                    onReject={() => setConfirmCancel({ open: true, id: task.idTarea })}
+                    isLoading={updateEstadoMutation.isPending}
+                  />
                 )}
               </div>
 
@@ -796,20 +940,22 @@ export function TasksPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <SedeMinisterioSelector
-              sedes={sedes}
-              ministerios={ministerios}
-              selectedSedeId={createForm.idSede}
-              selectedMinisterioId={createForm.idMinisterio}
-              onSedeChange={(idSede, clearMinisterio) =>
-                setCreateForm((p) => ({ ...p, idSede, idMinisterio: clearMinisterio ? 0 : p.idMinisterio }))
-              }
-              onMinisterioChange={(idMinisterio, autoSedeId) =>
-                setCreateForm((p) => ({ ...p, idMinisterio, idSede: autoSedeId }))
-              }
-              sedeReadOnly={rolActual === "admin_sede" || rolActual === "lider"}
-              ministerioReadOnly={rolActual === "lider"}
-            />
+            {shouldShowSelectorFields && (
+              <SedeMinisterioSelector
+                sedes={sedes}
+                ministerios={ministerios}
+                selectedSedeId={createForm.idSede}
+                selectedMinisterioId={createForm.idMinisterio}
+                onSedeChange={(idSede, clearMinisterio) =>
+                  setCreateForm((p) => ({ ...p, idSede, idMinisterio: clearMinisterio ? 0 : p.idMinisterio }))
+                }
+                onMinisterioChange={(idMinisterio, autoSedeId) =>
+                  setCreateForm((p) => ({ ...p, idMinisterio, idSede: autoSedeId }))
+                }
+                sedeReadOnly={rolActual === "admin_sede" || rolActual === "lider"}
+                ministerioReadOnly={rolActual === "lider"}
+              />
+            )}
             <div>
               <FieldLabel>Título</FieldLabel>
               <Input value={createForm.titulo} onChange={e => setCreateForm(p => ({ ...p, titulo: e.target.value }))} placeholder="Ej. Preparar la reunión de líderes" className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
