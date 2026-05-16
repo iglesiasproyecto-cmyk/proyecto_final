@@ -335,16 +335,21 @@ export async function createTareaAsignada(data: {
   idTarea: number
   idUsuario: number
 }): Promise<void> {
-  const { data: result, error } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('tarea_asignada')
-    .upsert({ id_tarea: data.idTarea, id_usuario: data.idUsuario }, {
-      onConflict: 'id_tarea,id_usuario'
-    })
+    .select('id_tarea_asignada')
+    .eq('id_tarea', data.idTarea)
+    .eq('id_usuario', data.idUsuario)
+    .maybeSingle()
+
+  if (existingError) throw existingError
+  if (existing) throw new Error('Esta tarea ya está asignada a este usuario')
+
+  const { error } = await supabase
+    .from('tarea_asignada')
+    .insert({ id_tarea: data.idTarea, id_usuario: data.idUsuario })
 
   if (error) {
-    if (error.code === '23505') {
-      throw new Error('Esta tarea ya está asignada a este usuario')
-    }
     throw error
   }
 
@@ -356,12 +361,9 @@ export async function createTareaAsignada(data: {
     ])
 
     if (user && user.correo && task) {
-      await supabase.from('notificacion').insert({
-        id_usuario: data.idUsuario,
-        tipo: 'tarea',
-        titulo: 'Nueva tarea asignada',
-        mensaje: `Se te asigno la tarea: ${task.titulo} [TASK_ID:${data.idTarea}]`,
-        leida: false,
+      await supabase.rpc('create_task_assignment_notification', {
+        p_id_tarea: data.idTarea,
+        p_id_usuario: data.idUsuario,
       })
 
       await sendEmail({
@@ -468,15 +470,28 @@ export async function assignUsuariosATarea(input: AssignBatchInput): Promise<Ass
   let duplicated = 0
   let rejected = 0
 
+  const { data: existingRows } = await supabase
+    .from('tarea_asignada')
+    .select('id_usuario')
+    .eq('id_tarea', input.idTarea)
+    .in('id_usuario', uniqueUserIds)
+
+  const existingSet = new Set((existingRows || []).map((r: any) => r.id_usuario as number))
+
   for (const idUsuario of uniqueUserIds) {
     if (!allowedSet.has(idUsuario)) {
       rejected += 1
       continue
     }
 
+    if (existingSet.has(idUsuario)) {
+      duplicated += 1
+      continue
+    }
+
     const { error } = await supabase
       .from('tarea_asignada')
-      .upsert({ id_tarea: input.idTarea, id_usuario: idUsuario }, { onConflict: 'id_tarea,id_usuario' })
+      .insert({ id_tarea: input.idTarea, id_usuario: idUsuario })
 
     if (error) {
       if (error.code === '23505') duplicated += 1
@@ -486,12 +501,9 @@ export async function assignUsuariosATarea(input: AssignBatchInput): Promise<Ass
 
     assigned += 1
 
-    await supabase.from('notificacion').insert({
-      id_usuario: idUsuario,
-      tipo: 'tarea',
-      titulo: 'Nueva tarea asignada',
-      mensaje: `Se te asigno la tarea: ${taskRow.titulo} [TASK_ID:${input.idTarea}]`,
-      leida: false,
+    await supabase.rpc('create_task_assignment_notification', {
+      p_id_tarea: input.idTarea,
+      p_id_usuario: idUsuario,
     })
   }
 

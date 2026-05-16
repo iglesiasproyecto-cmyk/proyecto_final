@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useCreateTareaAsignada, useAssignUsuariosATarea, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia, useArchiveTask, useUnarchiveTask } from "@/hooks/useEventos";
+import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useAssignUsuariosATarea, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia, useArchiveTask, useUnarchiveTask } from "@/hooks/useEventos";
 import { useDragDropTasks } from "@/hooks/useDragDropTasks";
 import type { TareaEnriquecida } from "@/services/eventos.service";
 import { useMinisteriosEnriquecidos, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
@@ -62,7 +62,6 @@ export function TasksPage() {
   const updateEstadoMutation = useUpdateTareaEstado();
   const updateTareaMutation = useUpdateTarea();
   const deleteTareaMutation = useDeleteTarea();
-  const createAsignadaMutation = useCreateTareaAsignada();
   const assignUsuariosMutation = useAssignUsuariosATarea();
   const deleteAsignadaMutation = useDeleteTareaAsignada();
   const createEvidenciaMutation = useCreateTareaEvidencia();
@@ -1201,7 +1200,7 @@ export function TasksPage() {
       </Dialog>
 
       <ConfirmDialog
-        isOpen={confirmCancel.isOpen}
+        isOpen={confirmCancel.open}
         onClose={() => setConfirmCancel({ open: false, id: 0 })}
         onConfirm={() => {
           updateEstadoMutation.mutate({ id: confirmCancel.id, estado: 'cancelada' });
@@ -1213,7 +1212,7 @@ export function TasksPage() {
       />
 
       <ConfirmDialog
-        isOpen={confirmRemoveAssign.isOpen}
+        isOpen={confirmRemoveAssign.open}
         onClose={() => setConfirmRemoveAssign({ open: false, id: 0, nombre: "" })}
         onConfirm={() => {
           deleteAsignadaMutation.mutate(confirmRemoveAssign.id);

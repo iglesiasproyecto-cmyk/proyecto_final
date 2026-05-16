@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAulaCursoCompleto } from '@/services/aula.service'
+import { supabase } from '@/lib/supabaseClient'
 import {
   getEventos, getTareas, getTareasAsignadas,
   getEventosEnriquecidos, getTareasEnriquecidas,
