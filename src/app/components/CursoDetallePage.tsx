@@ -36,6 +36,7 @@ import { useProgresoGrupoCurso } from '@/hooks/useProgreso'
 import { ModulosGestion } from './ModulosGestion'
 import { AgregarPersonasCursoDialog } from '@/app/components/aula/AgregarPersonasCursoDialog'
 import { ModulosNavegacion } from './ModulosNavegacion'
+import { CrearEvaluacionDialog } from '@/app/components/CrearEvaluacionDialog'
 
 export function CursoDetallePage() {
   const { idCurso } = useParams<{ idCurso: string }>()
@@ -453,7 +454,11 @@ export function CursoDetallePage() {
 
 // Componente para la pestaña de evaluaciones
 function EvaluacionesTab({ idCurso }: { idCurso: number }) {
-  const { data: modulos } = useQuery({
+  const [moduloSeleccionado, setModuloSeleccionado] = useState<number | null>(null)
+  const [showCrearEvaluacion, setShowCrearEvaluacion] = useState(false)
+  const { canCreateModulos } = useEvaluacionPermissions(idCurso)
+
+  const { data: modulos, refetch } = useQuery({
     queryKey: ['modulos-evaluaciones', idCurso],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -473,44 +478,135 @@ function EvaluacionesTab({ idCurso }: { idCurso: number }) {
     }
   })
 
+  const handleCrearEvaluacion = (idModulo: number) => {
+    setModuloSeleccionado(idModulo)
+    setShowCrearEvaluacion(true)
+  }
+
+  const handleEvaluacionCreada = () => {
+    setShowCrearEvaluacion(false)
+    setModuloSeleccionado(null)
+    refetch()
+  }
+
+  if (!modulos || modulos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+        <ClipboardList className="w-12 h-12 opacity-20 mb-4" />
+        <p className="text-base font-semibold">No hay módulos aún</p>
+        <p className="text-sm">Crea módulos en la pestaña anterior para agregar evaluaciones</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-4">
-      {modulos?.map(mod => (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          key={mod.id_aula_modulo} 
-          className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-        >
-          <div className="p-5 border-b border-border/40 bg-card/20">
-            <h3 className="font-bold text-lg">{mod.titulo}</h3>
-          </div>
-          <div className="p-5">
-            {mod.evaluaciones?.length ? (
-              <div className="space-y-3">
-                {mod.evaluaciones.map((ev: any) => (
-                  <div key={ev.id_aula_evaluacion} className="flex items-center gap-3 p-3 bg-accent/20 rounded-xl border border-border/30">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                      <ClipboardList className="w-5 h-5" />
+    <>
+      <div className="space-y-4">
+        {modulos.map(mod => (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            key={mod.id_aula_modulo}
+            className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="p-5 border-b border-border/40 bg-card/20 flex items-center justify-between">
+              <h3 className="font-bold text-lg">{mod.titulo}</h3>
+              {canCreateModulos && (
+                <button
+                  onClick={() => handleCrearEvaluacion(mod.id_aula_modulo)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Crear
+                </button>
+              )}
+            </div>
+            <div className="p-5">
+              {mod.evaluaciones?.length ? (
+                <div className="space-y-3">
+                  {mod.evaluaciones.map((ev: any) => (
+                    <div key={ev.id_aula_evaluacion} className="flex items-center gap-3 p-3 bg-accent/20 rounded-xl border border-border/30">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                        <ClipboardList className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold">{ev.titulo}</p>
+                        <p className="text-xs text-muted-foreground">Mínimo para aprobar: {ev.puntaje_minimo}%</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold">{ev.titulo}</p>
-                      <p className="text-xs text-muted-foreground">Mínimo para aprobar: {ev.puntaje_minimo}%</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
-                <ClipboardList className="w-8 h-8 opacity-20 mb-2" />
-                <p className="text-sm">Sin evaluaciones</p>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      ))}
-    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                  <ClipboardList className="w-8 h-8 opacity-20 mb-2" />
+                  <p className="text-sm font-semibold mb-2">Sin evaluaciones</p>
+                  {canCreateModulos && (
+                    <button
+                      onClick={() => handleCrearEvaluacion(mod.id_aula_modulo)}
+                      className="text-xs font-semibold text-primary hover:underline mt-2"
+                    >
+                      + Crear evaluación
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {moduloSeleccionado && (
+        <CrearEvaluacionDialog
+          open={showCrearEvaluacion}
+          onOpenChange={setShowCrearEvaluacion}
+          idModulo={moduloSeleccionado}
+          onSuccess={handleEvaluacionCreada}
+        />
+      )}
+    </>
   )
+}
+
+function useEvaluacionPermissions(idCurso: number) {
+  const { user } = useAuth()
+  const [canCreateModulos, setCanCreateModulos] = useState(false)
+
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!user?.id) return
+      const internalId = await getInternalUserId(user.id)
+      if (!internalId) return
+
+      const { data: curso } = await supabase
+        .from('aula_curso')
+        .select('id_usuario_creador, id_ministerio')
+        .eq('id_aula_curso', idCurso)
+        .maybeSingle()
+
+      if (!curso) return
+
+      const isCreator = curso.id_usuario_creador === internalId
+
+      let isLider = false
+      if (curso.id_ministerio) {
+        const { data: liderData } = await supabase
+          .from('miembro_ministerio')
+          .select('id_usuario')
+          .eq('id_ministerio', curso.id_ministerio)
+          .eq('id_usuario', internalId)
+          .eq('rol_en_ministerio', 'lider')
+          .is('fecha_salida', null)
+          .maybeSingle()
+        isLider = !!liderData
+      }
+
+      setCanCreateModulos(isCreator || isLider)
+    }
+
+    checkPermissions()
+  }, [user?.id, idCurso])
+
+  return { canCreateModulos }
 }
 
 // Componente para la pestaña de progreso

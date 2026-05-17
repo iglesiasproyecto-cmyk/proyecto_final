@@ -32,6 +32,7 @@ interface CrearEvaluacionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   idModulo: number
+  onSuccess?: () => void
 }
 
 interface PreguntaForm {
@@ -50,7 +51,7 @@ interface FormData {
   preguntas: PreguntaForm[]
 }
 
-export function CrearEvaluacionDialog({ open, onOpenChange, idModulo }: CrearEvaluacionDialogProps) {
+export function CrearEvaluacionDialog({ open, onOpenChange, idModulo, onSuccess }: CrearEvaluacionDialogProps) {
   const [loading, setLoading] = useState(false)
 
   const form = useForm<FormData>({
@@ -131,6 +132,7 @@ export function CrearEvaluacionDialog({ open, onOpenChange, idModulo }: CrearEva
 
       toast.success('Evaluación creada exitosamente')
       form.reset()
+      onSuccess?.()
       onOpenChange(false)
     } catch (error) {
       console.error('Error creating evaluation:', error)
