@@ -176,6 +176,7 @@ export async function updateTareaEstado(id: number, estado: Tarea['estado']): Pr
 export interface EventoEnriquecido extends Evento {
   tipoEventoTexto: string | null
   cantidadTareas: number
+  iglesiaNombre?: string
 }
 
 export interface TareaEnriquecida extends Tarea {
@@ -183,6 +184,9 @@ export interface TareaEnriquecida extends Tarea {
   ministerioNombre: string
   asignadosCount: number
   asignados: (TareaAsignada & { nombreCompleto: string })[]
+  iglesiaId?: number
+  iglesiaNombre?: string
+  sedeNombre?: string
 }
 
 // â”€â”€ Enriched queries â”€â”€
@@ -190,7 +194,7 @@ export interface TareaEnriquecida extends Tarea {
 export async function getEventosEnriquecidos(idIglesia?: number): Promise<EventoEnriquecido[]> {
   let q = supabase
     .from('evento')
-    .select('*, tarea(count)')
+    .select('*, tarea(count), iglesia(nombre)')
     .order('fecha_inicio', { ascending: false })
   if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
   const { data, error } = await q;
@@ -202,6 +206,7 @@ export async function getEventosEnriquecidos(idIglesia?: number): Promise<Evento
     ...mapEvento(r),
     tipoEventoTexto: r.tipo_evento_texto ?? null,
     cantidadTareas: Array.isArray(r.tarea) ? r.tarea[0]?.count ?? 0 : 0,
+    iglesiaNombre: r.iglesia?.nombre ?? undefined,
   }))
 }
 
@@ -218,7 +223,7 @@ export async function getTareasEnriquecidas(
     .from('tarea')
     .select(`
       *,
-      ministerio!inner(nombre, sede!inner(id_iglesia)),
+      ministerio!inner(nombre, sede!inner(id_iglesia, nombre, iglesia(id_iglesia, nombre))),
       evento(nombre),
       ${asignadaSelect}
     `)
@@ -250,6 +255,9 @@ export async function getTareasEnriquecidas(
       ministerioNombre: r.ministerio?.nombre ?? '',
       asignadosCount: asignados.length,
       asignados,
+      iglesiaId: r.ministerio?.sede?.iglesia?.id_iglesia ?? undefined,
+      iglesiaNombre: r.ministerio?.sede?.iglesia?.nombre ?? undefined,
+      sedeNombre: r.ministerio?.sede?.nombre ?? undefined,
     }
   })
 }
