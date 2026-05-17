@@ -87,48 +87,70 @@ export function CursoDetallePage() {
   const { data: progresoGrupo } = useProgresoGrupoCurso(idCurso ? parseInt(idCurso) : undefined)
 
    // Verificar si el usuario es líder de este curso
-   const isLider = internalUserId !== null && curso?.id_usuario_creador === internalUserId
+   const isCreadorCurso = internalUserId !== null && curso?.id_usuario_creador === internalUserId
    const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin"
-   
+
     // Verificar si el usuario es un servidor inscrito en este curso
     const [isServidorInscrito, setIsServidorInscrito] = useState(false)
+    const [isLiderMinisterio, setIsLiderMinisterio] = useState(false)
     const [checkingAccess, setCheckingAccess] = useState(true)
    
     useEffect(() => {
-      if (internalUserId !== null && idCurso) {
+      if (internalUserId !== null && idCurso && curso) {
         setCheckingAccess(true)
-        const checkInscrito = async () => {
+        const checkAccess = async () => {
           try {
-             const { data, error } = await supabase
-               .from('aula_inscripcion')
-               .select('id_aula_inscripcion')
-               .eq('id_usuario', internalUserId)
-               .eq('id_aula_curso', Number(idCurso))
-               .eq('activo', true)
-               .maybeSingle()
+            // Verificar si es servidor inscrito
+            const { data: inscripcion, error: errorInscripcion } = await supabase
+              .from('aula_inscripcion')
+              .select('id_aula_inscripcion')
+              .eq('id_usuario', internalUserId)
+              .eq('id_aula_curso', Number(idCurso))
+              .eq('activo', true)
+              .maybeSingle()
 
-             if (error) {
-               console.error('Error checking enrollment:', error)
-               setIsServidorInscrito(false)
-               return
-             }
+            if (errorInscripcion) {
+              console.error('Error checking enrollment:', errorInscripcion)
+              setIsServidorInscrito(false)
+            } else {
+              setIsServidorInscrito(!!inscripcion)
+            }
 
-            setIsServidorInscrito(!!data)
+            // Verificar si es líder del ministerio
+            if (curso?.id_ministerio) {
+              const { data: liderMinisterio, error: errorMinisterio } = await supabase
+                .from('miembro_ministerio')
+                .select('id_miembro_ministerio')
+                .eq('id_usuario', internalUserId)
+                .eq('id_ministerio', curso.id_ministerio)
+                .eq('rol_en_ministerio', 'lider')
+                .eq('fecha_salida', null)
+                .maybeSingle()
+
+              if (errorMinisterio) {
+                console.error('Error checking ministerio leadership:', errorMinisterio)
+                setIsLiderMinisterio(false)
+              } else {
+                setIsLiderMinisterio(!!liderMinisterio)
+              }
+            }
           } catch (err) {
-            console.error('Error checking enrollment:', err)
+            console.error('Error checking access:', err)
             setIsServidorInscrito(false)
+            setIsLiderMinisterio(false)
           } finally {
             setCheckingAccess(false)
           }
         }
 
-        checkInscrito()
+        checkAccess()
       } else {
         setCheckingAccess(false)
       }
-    }, [internalUserId, idCurso])
-   
-    // Permitir acceso si es líder O si es servidor inscrito
+    }, [internalUserId, idCurso, curso])
+
+    // Permitir acceso si es: admin, creador del curso, líder del ministerio, o servidor inscrito
+    const isLider = isCreadorCurso || isLiderMinisterio
     const puedeAcceder = isAdmin || isLider || isServidorInscrito
 
     if (checkingAccess) {
