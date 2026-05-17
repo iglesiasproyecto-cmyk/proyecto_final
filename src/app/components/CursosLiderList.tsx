@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { useAuth } from '@/app/store/AppContext'
 import { getInternalUserId } from '@/lib/userHelpers'
 import { supabase } from '@/lib/supabaseClient'
@@ -18,6 +18,7 @@ import { AulaSkeleton } from '@/app/components/loading/skeletons';
 export function CursosLiderList() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { idIglesia } = useParams<{ idIglesia: string }>()
   const queryClient = useQueryClient()
   const [showCrearModulo, setShowCrearModulo] = useState(false)
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(null)
@@ -32,7 +33,21 @@ export function CursosLiderList() {
       const internalUserId = await getInternalUserId(user.id)
       if (!internalUserId) return []
 
-      const { data, error } = await supabase
+      // 1. Obtener ministerios donde el usuario es líder
+      const { data: ministerios, error: errorMinisterios } = await supabase
+        .from('miembro_ministerio')
+        .select('id_ministerio')
+        .eq('id_usuario', internalUserId)
+        .eq('rol_en_ministerio', 'lider')
+        .is('fecha_salida', null)
+
+      if (errorMinisterios) throw errorMinisterios
+
+      const ministerioIds = ministerios?.map(m => m.id_ministerio) ?? []
+
+      // 2. Obtener cursos: los que creó + los del ministerio que lidera
+      // Query 1: Cursos que creó
+      const { data: cursosCreados, error: errorCreados } = await supabase
         .from('aula_curso')
         .select(`
           *,
@@ -42,8 +57,33 @@ export function CursosLiderList() {
         .eq('id_usuario_creador', internalUserId)
         .order('creado_en', { ascending: false })
 
-      if (error) throw error
-      return data
+      if (errorCreados) throw errorCreados
+
+      let cursosMinisterio = []
+
+      // Query 2: Cursos del ministerio que lidera (si lidera algún ministerio)
+      if (ministerioIds.length > 0) {
+        const { data: cursosMinist, error: errorMinist } = await supabase
+          .from('aula_curso')
+          .select(`
+            *,
+            ministerio:ministerio(nombre),
+            modulos:aula_modulo(id_aula_modulo)
+          `)
+          .in('id_ministerio', ministerioIds)
+          .order('creado_en', { ascending: false })
+
+        if (errorMinist) throw errorMinist
+        cursosMinisterio = cursosMinist ?? []
+      }
+
+      // 3. Combinar resultados eliminando duplicados
+      const cursosMap = new Map()
+      ;[...(cursosCreados ?? []), ...cursosMinisterio].forEach(curso => {
+        cursosMap.set(curso.id_aula_curso, curso)
+      })
+
+      return Array.from(cursosMap.values())
     },
     enabled: !!user?.id,
   })
@@ -169,7 +209,7 @@ export function CursosLiderList() {
                     <Button
                       variant="default"
                       size="sm"
-                      onClick={() => navigate(`/app/aula/curso/${curso.id_aula_curso}`)}
+                      onClick={() => navigate(`/app/${idIglesia}/aula/curso/${curso.id_aula_curso}`)}
                       className="h-10 flex-1 rounded-2xl bg-[#4682b4] font-bold text-white shadow-md shadow-blue-900/10 hover:bg-[#4682b4]/90"
                     >
                       <Eye className="h-4 w-4 mr-2" />

@@ -77,49 +77,7 @@ export function AulaPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="mb-8 rounded-[32px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-[0_20px_60px_rgb(0,0,0,0.06)] p-6 sm:p-8">
-          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-3xl space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="rounded-2xl bg-primary/10 p-2 text-primary">
-                  <GraduationCap className="h-5 w-5" />
-                </div>
-                <Badge variant="secondary" className="border-primary/10 bg-primary/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-                  <Sparkles className="mr-1 h-3 w-3" />
-                  Plataforma de Formación
-                </Badge>
-                <Badge variant="outline" className="border-white/10 bg-background/50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">
-                  Aula virtual
-                </Badge>
-              </div>
-              <div>
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground">
-                  Aula <span className="text-primary">Virtual</span>
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm sm:text-base font-medium leading-relaxed text-muted-foreground">
-                  Potenciando el crecimiento espiritual y técnico de nuestros ministerios a través del conocimiento.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid w-full max-w-xl grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-primary/10 bg-background/55 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Acceso</p>
-                <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                  {stableRole ? stableRole.replace('_', ' ') : 'Validando rol...'}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-primary/10 bg-background/55 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Enfoque</p>
-                <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <BookOpenCheck className="h-4 w-4 text-primary" />
-                  Progreso continuo
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        
 
         <div className="relative">
           <motion.div

@@ -6,12 +6,9 @@ import { GlobalLoader } from './GlobalLoader'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { SEILogo } from './SEILogo'
-import {
-  Eye, EyeOff, LogIn, Shield,
-  User, Activity, Layers, Globe
-} from 'lucide-react'
+import { Eye, EyeOff, LogIn, User, AlertCircle, ArrowLeft } from 'lucide-react'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -69,13 +66,12 @@ export function LoginPage() {
     if (authError) {
       console.error('Login error:', authError)
       
-      // Mensajes de error más descriptivos
       if (authError.message.includes('Email not confirmed')) {
-        setError('Por favor verifica tu email antes de continuar. Revisa tu bandeja de entrada.')
+        setError('Por favor verifica tu email antes de continuar.')
       } else if (authError.message.includes('Invalid login credentials')) {
         setError('Correo o contraseña incorrectos.')
       } else if (authError.message.includes('User not found')) {
-        setError('El usuario no existe. Por favor regístrate primero.')
+        setError('El usuario no existe.')
       } else {
         setError(authError.message || 'Error al iniciar sesión.')
       }
@@ -87,226 +83,142 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-background overflow-hidden selection:bg-primary/30">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#020617] relative overflow-hidden p-4 sm:p-6">
       
-      {/* ── SECCIÓN IZQUIERDA: Branding & Animaciones ── */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-[50%] relative flex-col justify-center p-12 bg-[#0c2340] overflow-hidden group">
-        
-        {/* Luces de Fondo Animadas (Orbs) */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] mix-blend-overlay" />
+      {/* Floating Back to Home Button */}
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2.5 rounded-xl backdrop-blur-xl bg-slate-900/40 hover:bg-slate-900/60 border border-white/5 hover:border-white/10 text-slate-300 hover:text-white text-xs font-bold transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.5)] group hover:-translate-x-0.5 active:scale-95 cursor-pointer"
+      >
+        <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+        Volver al inicio
+      </button>
+      {/* Spectacular Cyberpunk/Mesh Gradient Backgrounds */}
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-sky-500/10 to-transparent blur-[130px] pointer-events-none animate-pulse" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-full bg-gradient-to-tr from-indigo-500/10 to-transparent blur-[150px] pointer-events-none" />
+      <div className="absolute top-[30%] left-[25%] w-[40%] h-[40%] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none" />
+
+      {/* Modern Dotted Grid Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-40" />
+
+      {/* Centered Glassmorphic Login Card */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-[440px] backdrop-blur-2xl bg-slate-950/40 border border-white/10 rounded-3xl p-8 sm:p-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.7)] flex flex-col"
+      >
+        {/* Glow effect at the card top */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[2px] bg-gradient-to-r from-transparent via-sky-400 to-transparent opacity-50" />
+
+        {/* Logo */}
+        <div className="mb-6 flex justify-center">
+          <SEILogo className="w-40 h-40" />
         </div>
 
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative z-10 flex justify-center w-full -mt-40 -mb-20"
-        >
-          <SEILogo className="w-[750px] h-[750px] xl:w-[950px] xl:h-[950px] filter drop-shadow-[0_0_120px_rgba(255,255,255,0.3)]" />
-        </motion.div>
-
-        {/* Contenido Central */}
-        <div className="relative z-10 -mt-20">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="max-w-3xl mx-auto flex flex-col items-center text-center"
-          >
-
-            <h2 className="text-white text-6xl xl:text-8xl font-black tracking-tight leading-[0.9] mb-12 text-center">
-              Liderazgo con <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-white/40">Visión Técnica.</span>
-            </h2>
-            <p className="text-slate-400 text-xl leading-relaxed mb-16 max-w-xl text-center">
-              La plataforma definitiva para unificar la formación, operaciones y crecimiento de tu iglesia local.
-            </p>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-3 gap-8">
-              {[
-                { n: "24/7", l: "Soporte", icon: <Globe className="w-6 h-6" /> },
-                { n: "Admin", l: "Módulos", icon: <Layers className="w-6 h-6" /> },
-                { n: "Total", l: "Seguridad", icon: <Shield className="w-6 h-6" /> },
-              ].map((stat, i) => (
-                <motion.div
-                  key={stat.l}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.6 + i * 0.1 }}
-                  className="bg-white/[0.03] backdrop-blur-md rounded-3xl p-8 border border-white/[0.05] hover:bg-white/[0.06] hover:border-white/10 transition-all group/stat"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover/stat:scale-110 transition-transform">
-                    {stat.icon}
-                  </div>
-                  <p className="text-white text-2xl font-bold">{stat.n}</p>
-                  <p className="text-slate-500 text-[11px] uppercase font-bold tracking-widest mt-2">{stat.l}</p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-white mb-1">
+            Iniciar Sesión
+          </h1>
+          <p className="text-slate-400 text-xs">
+            Ingresa tus credenciales para acceder a Lumen
+          </p>
         </div>
 
-        {/* Footer info */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="relative z-10 flex items-center justify-between mt-auto pt-24"
+        <motion.form 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          onSubmit={handleSubmit} 
+          className="space-y-4"
         >
-          <p className="text-white/20 text-[11px] font-bold uppercase tracking-widest">IglesiaBD &middot; 2026</p>
-          <div className="flex gap-4">
-            <div className="w-2 h-2 rounded-full bg-primary/40" />
-            <div className="w-2 h-2 rounded-full bg-white/10" />
-          </div>
-        </motion.div>
-      </div>
-
-      {/* ── SECCIÓN DERECHA: Formulario de Login ── */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-16 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
-
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="w-full max-w-[480px] relative z-10"
-        >
-          
-          <div className="mb-12 sm:mb-16 text-center lg:text-left px-2 sm:px-0">
-            <motion.h2 
-              initial={{ opacity: 0, scale: 0.9, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight leading-[0.85] text-foreground"
-            >
-              Bienvenido<span className="text-primary">.</span><br />
-              <span className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary/40 leading-tight">
-                Nos alegra verte.
-              </span>
-            </motion.h2>
-            <motion.p 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-muted-foreground text-xl sm:text-2xl mt-8 sm:mt-10 font-medium max-w-md"
-            >
-              Identifícate para gestionar tu ministerio y equipo hoy.
-            </motion.p>
+          <div>
+            <label className="text-xs font-semibold text-slate-300 ml-1 block mb-1.5">Correo electrónico</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-3 flex items-center text-slate-400/60 pointer-events-none">
+                <User className="w-4 h-4" />
+              </div>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="correo@ejemplo.com"
+                className="bg-slate-950/60 border-white/5 hover:border-white/10 focus:border-sky-500/50 text-white h-11 pl-10 rounded-xl text-sm placeholder-slate-600 focus:ring-0 transition-all duration-300"
+                disabled={isLoading}
+              />
+            </div>
           </div>
 
-          {/* Login Form */}
-          <motion.form 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            onSubmit={handleSubmit} 
-            className="space-y-4"
-          >
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Correo Electrónico</label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-1 py-1 w-10 flex items-center justify-center text-muted-foreground/40 group-focus-within:text-primary transition-colors">
-                  <User className="w-4 h-4" />
-                </div>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="bg-accent/30 border-white/5 h-16 sm:h-20 pl-16 rounded-2xl focus:ring-primary/20 transition-all text-xl"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Contraseña</label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-1 py-1 w-10 flex items-center justify-center text-muted-foreground/40 group-focus-within:text-primary transition-colors">
-                  <Activity className="w-4 h-4" />
-                </div>
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="bg-accent/30 border-white/5 h-16 sm:h-20 pl-16 rounded-2xl focus:ring-primary/20 transition-all text-xl"
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-foreground hover:bg-white/10 transition-all"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[11px] font-bold"
-                >
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  {error}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <Button type="submit" className="w-full h-16 sm:h-20 rounded-2xl shadow-xl shadow-primary/20 font-black text-xl transition-all active:scale-[0.98] mt-4" disabled={isLoading}>
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Validando...</span>
-                </div>
-              ) : (
-                <>
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Acceder al Sistema
-                </>
-              )}
-            </Button>
-
-            {/* Forgot Password Link */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              className="text-center pt-2"
-            >
+          <div>
+            <label className="text-xs font-semibold text-slate-300 ml-1 block mb-1.5">Contraseña</label>
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="bg-slate-950/60 border-white/5 hover:border-white/10 focus:border-sky-500/50 text-white h-11 pr-10 rounded-xl text-sm placeholder-slate-600 focus:ring-0 transition-all duration-300"
+                disabled={isLoading}
+              />
               <button
                 type="button"
-                onClick={() => navigate("/forgot-password")}
-                className="text-xs text-muted-foreground hover:text-primary transition-colors underline underline-offset-2"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400/60 hover:text-white transition-colors"
               >
-                ¿Olvidaste tu contraseña?
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
-            </motion.div>
-          </motion.form>
+            </div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.7 }}
-            className="mt-10 text-center"
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="flex items-center gap-2.5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <Button 
+            type="submit" 
+            className="w-full h-11 rounded-xl bg-gradient-to-r from-sky-500 via-sky-400 to-indigo-600 hover:opacity-95 text-white font-bold text-sm shadow-[0_8px_24px_rgba(56,189,248,0.2)] transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95 duration-200" 
+            disabled={isLoading}
           >
-            <p className="text-[10px] text-muted-foreground/40 uppercase font-bold tracking-[0.2em]">
-              Soporte Estructural &copy; MMXXVI
-            </p>
-          </motion.div>
-        </motion.div>
-      </div>
-    </div>
-  );
-}
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Validando...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <LogIn className="w-4 h-4" />
+                Iniciar sesión
+              </span>
+            )}
+          </Button>
 
-function AlertCircle(props: any) {
-  return (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-  );
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
+              className="text-xs text-slate-400 hover:text-sky-400 transition-colors font-medium"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+        </motion.form>
+
+        <div className="mt-8 pt-6 border-t border-white/5 text-center">
+          <p className="text-[10px] text-slate-600 tracking-wider">
+            © 2026 Lumen &middot; Todos los derechos reservados
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  )
 }

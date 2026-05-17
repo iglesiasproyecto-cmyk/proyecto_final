@@ -32,6 +32,75 @@ export interface FormacionAcademica {
   estado: 'en_progreso' | 'completado';
 }
 
+export interface EtiquetaPerfil {
+  id_etiqueta: number;
+  nombre: string;
+  categoria: string;
+}
+
+export interface RevisionHojaDeVida {
+  id_revision: number;
+  id_hoja_de_vida: number;
+  id_revisor: number;
+  rol_revisor: string;
+  estado_revision: 'pendiente' | 'aprobada' | 'observada';
+  observaciones: string | null;
+  revisado_en: string;
+}
+
+export interface DisponibilidadPerfil {
+  id_disponibilidad: number;
+  id_hoja_de_vida: number;
+  id_sede: number | null;
+  id_ministerio: number | null;
+  dias_semana: string[];
+  franja_horaria: string | null;
+  modalidad: 'presencial' | 'virtual' | 'mixta';
+  activo: boolean;
+}
+
+export interface HojaDeVidaCompletaV2 {
+  id_hoja_de_vida: number;
+  id_usuario: number;
+  titulo_profesional: string | null;
+  resumen_profesional: string | null;
+  experiencia_laboral: string | null;
+  habilidades: Habilidad[];
+  formacion_academica: FormacionAcademica[];
+  otros_datos: Record<string, unknown>;
+  foto_perfil_url: string | null;
+  completa: boolean;
+  completada_en: string | null;
+  creado_en: string;
+  actualizado_en: string;
+  usuario: { nombres: string; apellidos: string; correo: string };
+  certificados: Array<{
+    id_aula_certificado: number;
+    id_aula_curso: number;
+    titulo_curso: string;
+    fecha_emision: string;
+    numero_certificado: string;
+  }>;
+  etiquetas: EtiquetaPerfil[];
+  disponibilidad: DisponibilidadPerfil[];
+  ultima_revision: RevisionHojaDeVida | null;
+}
+
+export interface HojaDeVidaListItem {
+  id_hoja_de_vida: number;
+  id_usuario: number;
+  nombres: string;
+  apellidos: string;
+  correo: string;
+  titulo_profesional: string | null;
+  completa: boolean;
+  completada_en: string | null;
+  actualizado_en: string;
+  cantidad_certificados: number;
+  ultima_revision: { estado_revision: string; revisado_en: string } | null;
+  etiquetas: string[];
+}
+
 /**
  * Obtiene la hoja de vida completa del usuario actual con certificados
  */
@@ -313,5 +382,170 @@ export async function buscarHojasPorHabilidades(
   } catch (error) {
     console.error('Error searching hojas de vida:', error);
     return [];
+  }
+}
+
+// ── v2 RPC calls para Perfil Profesional ──
+
+export async function getPerfilProfesionalCompletaV2(): Promise<HojaDeVidaCompletaV2 | null> {
+  const { data, error } = await supabase.rpc('get_hoja_de_vida_completa_v2' as any)
+  if (error) throw error
+  if (!data) return null
+  const raw = data as any
+  return {
+    ...raw,
+    habilidades: (raw.habilidades as Habilidad[]) ?? [],
+    formacion_academica: (raw.formacion_academica as FormacionAcademica[]) ?? [],
+    otros_datos: (raw.otros_datos as Record<string, unknown>) ?? {},
+  }
+}
+
+export async function getPerfilProfesionalCompletaV2PorUsuario(
+  idUsuario: number
+): Promise<HojaDeVidaCompletaV2 | null> {
+  const { data, error } = await supabase.rpc('get_hoja_de_vida_completa_v2' as any, {
+    p_id_usuario: idUsuario,
+  })
+  if (error) throw error
+  if (!data) return null
+  const raw = data as any
+  return {
+    ...raw,
+    habilidades: (raw.habilidades as Habilidad[]) ?? [],
+    formacion_academica: (raw.formacion_academica as FormacionAcademica[]) ?? [],
+    otros_datos: (raw.otros_datos as Record<string, unknown>) ?? {},
+  }
+}
+
+export async function listarPerfilesProfesionalesScoped(filtros?: {
+  idIglesia?: number
+  idSede?: number
+  idMinisterio?: number
+  soloCompletas?: boolean
+  estadoRevision?: 'pendiente' | 'aprobada' | 'observada'
+  etiquetaIds?: number[]
+}): Promise<HojaDeVidaListItem[]> {
+  const { data, error } = await supabase.rpc('listar_hojas_de_vida_scoped' as any, {
+    p_id_iglesia:     filtros?.idIglesia     ?? null,
+    p_id_sede:        filtros?.idSede        ?? null,
+    p_id_ministerio:  filtros?.idMinisterio  ?? null,
+    p_solo_completas: filtros?.soloCompletas ?? null,
+    p_estado_revision:filtros?.estadoRevision?? null,
+    p_etiqueta_ids:   filtros?.etiquetaIds   ?? null,
+  })
+  if (error) throw error
+  return (data as HojaDeVidaListItem[]) ?? []
+}
+
+// ── Revisiones ──
+
+export async function crearRevision(input: {
+  idHojaDeVida: number
+  idRevisor: number
+  rolRevisor: string
+  estadoRevision: 'pendiente' | 'aprobada' | 'observada'
+  observaciones?: string | null
+}): Promise<RevisionHojaDeVida> {
+  const { data, error } = await supabase
+    .from('hoja_de_vida_revision')
+    .insert({
+      id_hoja_de_vida: input.idHojaDeVida,
+      id_revisor: input.idRevisor,
+      rol_revisor: input.rolRevisor,
+      estado_revision: input.estadoRevision,
+      observaciones: input.observaciones ?? null,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data as unknown as RevisionHojaDeVida
+}
+
+// ── Etiquetas ──
+
+export async function getEtiquetas(): Promise<EtiquetaPerfil[]> {
+  const { data, error } = await supabase
+    .from('hoja_de_vida_etiqueta')
+    .select('id_etiqueta, nombre, categoria')
+    .eq('activa', true)
+    .order('categoria')
+    .order('nombre')
+  if (error) throw error
+  return data as EtiquetaPerfil[]
+}
+
+export async function asignarEtiqueta(input: {
+  idHojaDeVida: number
+  idEtiqueta: number
+  asignadaPor: number
+}): Promise<void> {
+  const { error } = await supabase
+    .from('hoja_de_vida_etiqueta_usuario')
+    .insert({
+      id_hoja_de_vida: input.idHojaDeVida,
+      id_etiqueta: input.idEtiqueta,
+      asignada_por: input.asignadaPor,
+    })
+  if (error && error.code !== '23505') throw error  // ignore duplicate
+}
+
+export async function removerEtiqueta(input: {
+  idHojaDeVida: number
+  idEtiqueta: number
+}): Promise<void> {
+  const { error } = await supabase
+    .from('hoja_de_vida_etiqueta_usuario')
+    .delete()
+    .eq('id_hoja_de_vida', input.idHojaDeVida)
+    .eq('id_etiqueta', input.idEtiqueta)
+  if (error) throw error
+}
+
+// ── Disponibilidad ──
+
+export async function upsertDisponibilidad(input: {
+  idHojaDeVida: number
+  idSede?: number | null
+  idMinisterio?: number | null
+  diasSemana: string[]
+  franjaHoraria?: string | null
+  modalidad: 'presencial' | 'virtual' | 'mixta'
+}): Promise<DisponibilidadPerfil> {
+  // one active disponibilidad record per perfil — upsert by idHojaDeVida match
+  const existing = await supabase
+    .from('hoja_de_vida_disponibilidad')
+    .select('id_disponibilidad')
+    .eq('id_hoja_de_vida', input.idHojaDeVida)
+    .eq('activo', true)
+    .maybeSingle()
+
+  const patch = {
+    id_hoja_de_vida: input.idHojaDeVida,
+    id_sede: input.idSede ?? null,
+    id_ministerio: input.idMinisterio ?? null,
+    dias_semana: input.diasSemana,
+    franja_horaria: input.franjaHoraria ?? null,
+    modalidad: input.modalidad,
+    activo: true,
+    actualizado_en: new Date().toISOString(),
+  }
+
+  if (existing.data?.id_disponibilidad) {
+    const { data, error } = await supabase
+      .from('hoja_de_vida_disponibilidad')
+      .update(patch)
+      .eq('id_disponibilidad', existing.data.id_disponibilidad)
+      .select()
+      .single()
+    if (error) throw error
+    return data as unknown as DisponibilidadPerfil
+  } else {
+    const { data, error } = await supabase
+      .from('hoja_de_vida_disponibilidad')
+      .insert(patch)
+      .select()
+      .single()
+    if (error) throw error
+    return data as unknown as DisponibilidadPerfil
   }
 }

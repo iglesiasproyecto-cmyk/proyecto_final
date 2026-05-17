@@ -19,7 +19,7 @@ export function NoChurchAssignedPage() {
           <Button onClick={() => navigate("/login")} variant="outline">
             Volver al login
           </Button>
-          <Button onClick={() => { logout().then(() => navigate("/login", { replace: true })) }}>
+          <Button onClick={logout}>
             Cerrar sesion
           </Button>
         </div>

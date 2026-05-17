@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { useNotificaciones, useMarkNotificacionRead, useMarkAllNotificacionesRead } from "@/hooks/useNotificaciones";
 import { useApp } from "../store/AppContext";
+import { extractTaskIdFromNotificationMessage } from "@/services/notificaciones.service";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -14,21 +16,40 @@ import { Skeleton } from "./ui/skeleton";
 import { NotificationSkeleton } from "./loading/skeletons";
 
 const typeConfig: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  evento: { label: "Evento", color: "text-[#4682b4] dark:text-[#709dbd]", bg: "bg-[#4682b4]/10", icon: <CalendarDays className="w-5 h-5" /> },
+  evento: { label: "Evento", color: "text-primary", bg: "bg-primary/10", icon: <CalendarDays className="w-5 h-5" /> },
   tarea: { label: "Tarea", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-500/10", icon: <ListTodo className="w-5 h-5" /> },
-  curso: { label: "Curso", color: "text-[#4682b4] dark:text-[#709dbd]", bg: "bg-[#4682b4]/10", icon: <BookOpen className="w-5 h-5" /> },
+  curso: { label: "Curso", color: "text-primary", bg: "bg-primary/10", icon: <BookOpen className="w-5 h-5" /> },
   alerta: { label: "Alerta", color: "text-red-700 dark:text-red-400", bg: "bg-red-500/10", icon: <AlertTriangle className="w-5 h-5" /> },
   informacion: { label: "Info", color: "text-indigo-700 dark:text-indigo-400", bg: "bg-indigo-600/10", icon: <Info className="w-5 h-5" /> },
 };
 
 export function NotificationsPage() {
-  const { usuarioActual } = useApp();
+  const { usuarioActual, iglesiaActual } = useApp();
+  const navigate = useNavigate();
   const { data: notificaciones = [], isLoading } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
   const [activeTab, setActiveTab] = useState("todas");
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
   const markReadMutation = useMarkNotificacionRead();
   const markAllReadMutation = useMarkAllNotificacionesRead();
+
+  const handleOpenNotification = (n: any) => {
+    if (!n.leida) markReadMutation.mutate(n.idNotificacion);
+
+    if (n.tipo !== "tarea") {
+      setSelectedNotification(n);
+      return;
+    }
+
+    const taskId = extractTaskIdFromNotificationMessage(n.mensaje || "");
+    if (!taskId) {
+      setSelectedNotification(n);
+      return;
+    }
+
+    const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}/tareas` : "/app/tareas";
+    navigate(`${basePath}?openTask=${taskId}`);
+  };
 
   if (isLoading) return (
     <div className="space-y-6 max-w-4xl mx-auto px-4">
@@ -63,8 +84,8 @@ export function NotificationsPage() {
     <div className="space-y-6 max-w-4xl mx-auto pb-10">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 overflow-hidden">
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-3xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/30 shrink-0">
-            <Bell className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-3xl bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center shadow-lg shadow-primary/30 shrink-0">
+            <Bell className="w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" />
           </div>
           <div>
             <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[8px] sm:text-[10px] mb-0.5">Mi Bandeja</p>
@@ -75,7 +96,7 @@ export function NotificationsPage() {
           </div>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" onClick={() => usuarioActual && markAllReadMutation.mutate(usuarioActual.idUsuario)} disabled={markAllReadMutation.isPending} className="shrink-0 rounded-xl bg-card/40 backdrop-blur-xl border-[#4682b4]/40 text-[#4682b4] hover:bg-[#4682b4]/10 font-bold shadow-sm transition-all pb-1 pt-1 h-auto">
+          <Button variant="outline" onClick={() => usuarioActual && markAllReadMutation.mutate(usuarioActual.idUsuario)} disabled={markAllReadMutation.isPending} className="shrink-0 rounded-xl bg-card/40 backdrop-blur-xl border-primary/40 text-primary hover:bg-primary/10 font-bold shadow-sm transition-all pb-1 pt-1 h-auto">
             <CheckCheck className="w-4 h-4 mr-2" /> Marcar todas
           </Button>
         )}
@@ -84,15 +105,15 @@ export function NotificationsPage() {
       <div className="overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-card/40 backdrop-blur-xl border border-white/10 p-1 h-auto rounded-2xl inline-flex shadow-xl shadow-black/5 whitespace-nowrap">
-            <TabsTrigger value="todas" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Todas</TabsTrigger>
-            <TabsTrigger value="no_leidas" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+            <TabsTrigger value="todas" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/80 data-[state=active]:to-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">Todas</TabsTrigger>
+            <TabsTrigger value="no_leidas" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/80 data-[state=active]:to-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
               Sin leer
               {unreadCount > 0 && (
                 <span className="ml-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-4.5 flex items-center justify-center px-1 shadow-sm">{unreadCount}</span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="evento" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Eventos</TabsTrigger>
-            <TabsTrigger value="tarea" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Tareas</TabsTrigger>
+            <TabsTrigger value="evento" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/80 data-[state=active]:to-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">Eventos</TabsTrigger>
+            <TabsTrigger value="tarea" className="rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/80 data-[state=active]:to-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">Tareas</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -111,12 +132,9 @@ export function NotificationsPage() {
               >
                 <div
                   className={`group flex items-start gap-3 sm:gap-4 p-4 sm:p-5 rounded-3xl backdrop-blur-2xl border transition-all duration-300 cursor-pointer hover:-translate-y-1 ${
-                    !n.leida ? "bg-[#4682b4]/5 border-[#4682b4]/20 shadow-lg shadow-blue-900/5" : "bg-card/40 border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl"
+                    !n.leida ? "bg-primary/5 border-primary/20 shadow-lg shadow-primary/5" : "bg-card/40 border-white/10 dark:border-white/5 shadow-xl hover:shadow-2xl"
                   }`}
-                  onClick={() => {
-                    setSelectedNotification(n);
-                    if (!n.leida) markReadMutation.mutate(n.idNotificacion);
-                  }}
+                  onClick={() => handleOpenNotification(n)}
                 >
                   <div className={`w-12 h-12 rounded-2xl ${cfg.bg} flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform ${cfg.color}`}>
                     {cfg.icon}
@@ -124,11 +142,11 @@ export function NotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className={`text-[15px] tracking-tight ${!n.leida ? "font-bold text-foreground" : "font-semibold text-foreground/80 group-hover:text-[#4682b4] transition-colors"}`}>{n.titulo}</p>
+                        <p className={`text-[15px] tracking-tight ${!n.leida ? "font-bold text-foreground" : "font-semibold text-foreground/80 group-hover:text-primary transition-colors"}`}>{n.titulo}</p>
                         <p className={`text-[13px] mt-1 leading-relaxed ${!n.leida ? "font-medium text-foreground/90" : "text-muted-foreground"}`}>{n.mensaje}</p>
                       </div>
                       {!n.leida && (
-                        <div className="w-3 h-3 rounded-full bg-[#4682b4] shadow-[0_0_10px_rgba(70,130,180,0.5)] animate-pulse" />
+                        <div className="w-3 h-3 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)] animate-pulse" />
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-4 pt-3 border-t border-white/5">
@@ -136,7 +154,7 @@ export function NotificationsPage() {
                       <span className="text-[11px] font-medium text-muted-foreground">{formatDate(n.creadoEn)}</span>
                       {n.leida && (
                         <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-auto tracking-widest uppercase">
-                          <Check className="w-3 h-3 text-[#4682b4]" /> Leida
+                          <Check className="w-3 h-3 text-primary" /> Leida
                         </span>
                       )}
                     </div>
@@ -151,8 +169,8 @@ export function NotificationsPage() {
       {filtered.length === 0 && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
           <div className="p-16 text-center rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-xl">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#709dbd]/10 to-[#4682b4]/5 flex items-center justify-center mx-auto mb-6">
-              <Inbox className="w-10 h-10 text-[#4682b4]/50" />
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-6">
+              <Inbox className="w-10 h-10 text-primary/50" />
             </div>
             <h3 className="text-lg font-bold text-foreground/90 tracking-tight mb-2">Bandeja Vacía</h3>
             <p className="text-[13px] font-bold text-muted-foreground">
@@ -202,7 +220,7 @@ export function NotificationsPage() {
 
               <Button 
                 onClick={() => setSelectedNotification(null)}
-                className="w-full rounded-xl h-10 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white font-semibold"
+                className="w-full rounded-xl h-10 bg-gradient-to-r from-primary/80 to-primary hover:opacity-90 text-primary-foreground font-semibold"
               >
                 Cerrar
               </Button>

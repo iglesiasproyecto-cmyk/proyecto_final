@@ -33,7 +33,12 @@ import { GeographyPage } from "./components/GeographyPage";
 import { UsuariosPage } from "./components/UsuariosPage";
 import { SitemapPage } from "./components/SitemapPage";
 import { CumpleanosPage } from "./components/CumpleanosPage";
+import { StatisticsPage } from "./components/StatisticsPage";
 import { NoChurchAssignedPage } from "./components/NoChurchAssignedPage";
+import { GlobalMinisteriosPage } from "./components/GlobalMinisteriosPage";
+import { GlobalEventosPage } from "./components/GlobalEventosPage";
+import { GlobalTareasPage } from "./components/GlobalTareasPage";
+import { GlobalAulaPage } from "./components/GlobalAulaPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
 
 export const router = createBrowserRouter([
@@ -74,6 +79,11 @@ export const router = createBrowserRouter([
               { path: "cumpleanos", Component: CumpleanosPage, ErrorBoundary: ErrorPage },
               { path: "sitemap", Component: SitemapPage, ErrorBoundary: ErrorPage },
               { path: "administrador", Component: AdministradorPage, ErrorBoundary: ErrorPage },
+              { path: "estadisticas", Component: StatisticsPage, ErrorBoundary: ErrorPage },
+              { path: "ministerios", Component: GlobalMinisteriosPage, ErrorBoundary: ErrorPage },
+              { path: "eventos", Component: GlobalEventosPage, ErrorBoundary: ErrorPage },
+              { path: "tareas", Component: GlobalTareasPage, ErrorBoundary: ErrorPage },
+              { path: "aula", Component: GlobalAulaPage, ErrorBoundary: ErrorPage },
             ],
           },
 
@@ -100,6 +110,7 @@ export const router = createBrowserRouter([
               { path: "notificaciones", Component: NotificationsPage, ErrorBoundary: ErrorPage },
               { path: "perfil", Component: ProfilePage, ErrorBoundary: ErrorPage },
               { path: "cumpleanos", Component: CumpleanosPage, ErrorBoundary: ErrorPage },
+              { path: "estadisticas", Component: StatisticsPage, ErrorBoundary: ErrorPage },
             ],
           },
         ],

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAulaCursoCompleto } from '@/services/aula.service'
+import { supabase } from '@/lib/supabaseClient'
 import {
   getEventos, getTareas, getTareasAsignadas,
   getEventosEnriquecidos, getTareasEnriquecidas,
@@ -7,6 +8,7 @@ import {
   createTarea, updateTareaEstado,
   updateEvento, deleteEvento, updateTarea, deleteTarea,
   createTareaAsignada, updateTareaAsignada, deleteTareaAsignada,
+  assignUsuariosATarea,
   getTareaEvidencias, createTareaEvidencia,
   getEventosPorMinisterio,
 } from '@/services/eventos.service'
@@ -86,6 +88,22 @@ export function useTareasEnriquecidas(idEvento?: number, idIglesia?: number, idU
   return useQuery({
     queryKey: ['tareas-enriquecidas', idEvento, idIglesia, idUsuario],
     queryFn: () => getTareasEnriquecidas(idEvento, idIglesia, idUsuario),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useEventosGlobal() {
+  return useQuery({
+    queryKey: ['eventos-enriquecidos', 'global'],
+    queryFn: () => getEventosEnriquecidos(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useTareasGlobal() {
+  return useQuery({
+    queryKey: ['tareas-enriquecidas', 'global'],
+    queryFn: () => getTareasEnriquecidas(),
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -234,6 +252,18 @@ export function useCreateTareaAsignada() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
       qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+    },
+  })
+}
+
+export function useAssignUsuariosATarea() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: assignUsuariosATarea,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      qc.invalidateQueries({ queryKey: ['notificaciones'] })
     },
   })
 }

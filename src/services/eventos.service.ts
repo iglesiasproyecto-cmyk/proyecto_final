@@ -176,6 +176,7 @@ export async function updateTareaEstado(id: number, estado: Tarea['estado']): Pr
 export interface EventoEnriquecido extends Evento {
   tipoEventoTexto: string | null
   cantidadTareas: number
+  iglesiaNombre?: string
 }
 
 export interface TareaEnriquecida extends Tarea {
@@ -183,6 +184,9 @@ export interface TareaEnriquecida extends Tarea {
   ministerioNombre: string
   asignadosCount: number
   asignados: (TareaAsignada & { nombreCompleto: string })[]
+  iglesiaId?: number
+  iglesiaNombre?: string
+  sedeNombre?: string
 }
 
 // â”€â”€ Enriched queries â”€â”€
@@ -190,7 +194,7 @@ export interface TareaEnriquecida extends Tarea {
 export async function getEventosEnriquecidos(idIglesia?: number): Promise<EventoEnriquecido[]> {
   let q = supabase
     .from('evento')
-    .select('*, tarea(count)')
+    .select('*, tarea(count), iglesia(nombre)')
     .order('fecha_inicio', { ascending: false })
   if (idIglesia !== undefined) q = q.eq('id_iglesia', idIglesia)
   const { data, error } = await q;
@@ -202,6 +206,7 @@ export async function getEventosEnriquecidos(idIglesia?: number): Promise<Evento
     ...mapEvento(r),
     tipoEventoTexto: r.tipo_evento_texto ?? null,
     cantidadTareas: Array.isArray(r.tarea) ? r.tarea[0]?.count ?? 0 : 0,
+    iglesiaNombre: r.iglesia?.nombre ?? undefined,
   }))
 }
 
@@ -218,7 +223,7 @@ export async function getTareasEnriquecidas(
     .from('tarea')
     .select(`
       *,
-      ministerio!inner(nombre, sede!inner(id_iglesia)),
+      ministerio!inner(nombre, sede!inner(id_iglesia, nombre, iglesia(id_iglesia, nombre))),
       evento(nombre),
       ${asignadaSelect}
     `)
@@ -250,6 +255,9 @@ export async function getTareasEnriquecidas(
       ministerioNombre: r.ministerio?.nombre ?? '',
       asignadosCount: asignados.length,
       asignados,
+      iglesiaId: r.ministerio?.sede?.iglesia?.id_iglesia ?? undefined,
+      iglesiaNombre: r.ministerio?.sede?.iglesia?.nombre ?? undefined,
+      sedeNombre: r.ministerio?.sede?.nombre ?? undefined,
     }
   })
 }
@@ -335,20 +343,25 @@ export async function createTareaAsignada(data: {
   idTarea: number
   idUsuario: number
 }): Promise<void> {
-  const { data: result, error } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('tarea_asignada')
-    .upsert({ id_tarea: data.idTarea, id_usuario: data.idUsuario }, {
-      onConflict: 'id_tarea,id_usuario'
-    })
+    .select('id_tarea_asignada')
+    .eq('id_tarea', data.idTarea)
+    .eq('id_usuario', data.idUsuario)
+    .maybeSingle()
+
+  if (existingError) throw existingError
+  if (existing) throw new Error('Esta tarea ya está asignada a este usuario')
+
+  const { error } = await supabase
+    .from('tarea_asignada')
+    .insert({ id_tarea: data.idTarea, id_usuario: data.idUsuario })
 
   if (error) {
-    if (error.code === '23505') {
-      throw new Error('Esta tarea ya está asignada a este usuario')
-    }
     throw error
   }
 
-  // Notificar por correo
+  // Notificar por correo + in-app
   try {
     const [{ data: user }, { data: task }] = await Promise.all([
       supabase.from('usuario').select('correo, nombres').eq('id_usuario', data.idUsuario).single(),
@@ -356,6 +369,11 @@ export async function createTareaAsignada(data: {
     ])
 
     if (user && user.correo && task) {
+      await supabase.rpc('create_task_assignment_notification', {
+        p_id_tarea: data.idTarea,
+        p_id_usuario: data.idUsuario,
+      })
+
       await sendEmail({
         to: user.correo,
         subject: 'Nueva tarea asignada',
@@ -374,6 +392,130 @@ export async function createTareaAsignada(data: {
   } catch (err) {
     console.error('[createTareaAsignada] Error enviando correo:', err)
   }
+}
+
+export interface AssignBatchInput {
+  idTarea: number
+  idMinisterioContexto: number
+  idsUsuarios: number[]
+}
+
+export interface AssignBatchResult {
+  assigned: number
+  duplicated: number
+  rejected: number
+}
+
+export async function assignUsuariosATarea(input: AssignBatchInput): Promise<AssignBatchResult> {
+  const { data: authData } = await supabase.auth.getUser()
+  const authUserId = authData.user?.id
+  if (!authUserId) throw new Error('No autenticado')
+
+  const { data: actor, error: actorError } = await supabase
+    .from('usuario')
+    .select('id_usuario')
+    .eq('auth_user_id', authUserId)
+    .single()
+  if (actorError || !actor) throw new Error('No se pudo resolver el usuario actual')
+
+  const [{ data: roles }, { data: taskRow, error: taskError }] = await Promise.all([
+    supabase
+      .from('usuario_rol')
+      .select('id_sede, id_iglesia, fecha_fin, rol:rol(nombre)')
+      .eq('id_usuario', actor.id_usuario)
+      .is('fecha_fin', null),
+    supabase
+      .from('tarea')
+      .select('id_tarea, id_ministerio, titulo, ministerio(id_sede, sede(id_iglesia))')
+      .eq('id_tarea', input.idTarea)
+      .single(),
+  ])
+
+  if (taskError || !taskRow) throw new Error('Tarea no encontrada')
+  if (!taskRow.id_ministerio || taskRow.id_ministerio !== input.idMinisterioContexto) {
+    throw new Error('Contexto de ministerio invalido')
+  }
+
+  const roleNames = ((roles || []) as any[]).map(r => `${r.rol?.nombre || ''}`.toLowerCase())
+  const isSuper = roleNames.some(n => n.includes('super'))
+  const isAdminIglesia = isSuper || roleNames.some(n => n.includes('iglesia'))
+  const isAdminSede = roleNames.some(n => n.includes('sede'))
+
+  const taskSedeId = (taskRow as any).ministerio?.id_sede as number | undefined
+  const taskIglesiaId = (taskRow as any).ministerio?.sede?.id_iglesia as number | undefined
+
+  const hasScope = isSuper || (isAdminIglesia && (roles || []).some((r: any) => !r.id_iglesia || r.id_iglesia === taskIglesiaId)) ||
+    (isAdminSede && (roles || []).some((r: any) => r.id_sede && r.id_sede === taskSedeId))
+
+  let isLiderDelMinisterio = false
+  if (!hasScope) {
+    const { data: liderRows } = await supabase
+      .from('miembro_ministerio')
+      .select('rol_en_ministerio')
+      .eq('id_usuario', actor.id_usuario)
+      .eq('id_ministerio', input.idMinisterioContexto)
+      .is('fecha_salida', null)
+    isLiderDelMinisterio = (liderRows || []).some((r: any) => `${r.rol_en_ministerio || ''}`.toLowerCase().includes('lider'))
+  }
+
+  if (!hasScope && !isLiderDelMinisterio) {
+    throw new Error('403: no autorizado para asignar en este ministerio')
+  }
+
+  const uniqueUserIds = Array.from(new Set(input.idsUsuarios.filter(Boolean)))
+  if (uniqueUserIds.length === 0) return { assigned: 0, duplicated: 0, rejected: 0 }
+
+  const { data: miembros } = await supabase
+    .from('miembro_ministerio')
+    .select('id_usuario')
+    .eq('id_ministerio', input.idMinisterioContexto)
+    .is('fecha_salida', null)
+    .in('id_usuario', uniqueUserIds)
+
+  const allowedSet = new Set((miembros || []).map((m: any) => m.id_usuario as number))
+
+  let assigned = 0
+  let duplicated = 0
+  let rejected = 0
+
+  const { data: existingRows } = await supabase
+    .from('tarea_asignada')
+    .select('id_usuario')
+    .eq('id_tarea', input.idTarea)
+    .in('id_usuario', uniqueUserIds)
+
+  const existingSet = new Set((existingRows || []).map((r: any) => r.id_usuario as number))
+
+  for (const idUsuario of uniqueUserIds) {
+    if (!allowedSet.has(idUsuario)) {
+      rejected += 1
+      continue
+    }
+
+    if (existingSet.has(idUsuario)) {
+      duplicated += 1
+      continue
+    }
+
+    const { error } = await supabase
+      .from('tarea_asignada')
+      .insert({ id_tarea: input.idTarea, id_usuario: idUsuario })
+
+    if (error) {
+      if (error.code === '23505') duplicated += 1
+      else rejected += 1
+      continue
+    }
+
+    assigned += 1
+
+    await supabase.rpc('create_task_assignment_notification', {
+      p_id_tarea: input.idTarea,
+      p_id_usuario: idUsuario,
+    })
+  }
+
+  return { assigned, duplicated, rejected }
 }
 
 export async function updateTareaAsignada(
@@ -472,4 +614,3 @@ export async function getEventosPorMinisterio(idMinisterio: number): Promise<Eve
   if (error) throw error
   return data.map(mapEvento)
 }
-

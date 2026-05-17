@@ -1,10 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="IGLESIABD">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Lumen">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1a7fa8"/>
-      <stop offset="100%" stop-color="#0c2340"/>
+    <linearGradient id="lumen-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0c2340" />
     </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
   </defs>
-  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#g)"/>
-  <path d="M32 16l10 8h-5v20h-10V24h-5z" fill="#f5efe6"/>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#lumen-grad)" />
+  <circle cx="32" cy="32" r="20" fill="none" stroke="white" stroke-width="1.5" stroke-opacity="0.15" />
+  <!-- A beautiful modern geometric L styled like a beam of light -->
+  <g filter="url(#glow)">
+    <path d="M26 18 V42 H40" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M26 18 V42 H40" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
 </svg>

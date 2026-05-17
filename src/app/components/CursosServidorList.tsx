@@ -4,17 +4,19 @@ import { supabase } from '@/lib/supabaseClient'
 import { getInternalUserId } from '@/lib/userHelpers'
 import { useQuery } from '@tanstack/react-query'
 import { useProgresoCurso } from '@/hooks/useProgreso'
+import { useCertificadosUsuario } from '@/hooks/useCertificados'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Badge } from '@/app/components/ui/badge'
-import { Plus, BookOpen, TrendingUp, GraduationCap, ShieldCheck, Sparkles, Users, Clock, ArrowRight, Award } from 'lucide-react'
+import { Plus, BookOpen, TrendingUp, GraduationCap, ShieldCheck, Sparkles, Users, Clock, ArrowRight, Award, CheckCircle } from 'lucide-react'
 import { BarraProgreso } from './BarraProgreso'
 import { motion } from 'motion/react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { Skeleton } from '@/app/components/ui/skeleton';
 import { AulaSkeleton } from '@/app/components/loading/skeletons';
 
 export function CursosServidorList() {
   const { user } = useAuth()
+  const { idIglesia } = useParams<{ idIglesia: string }>()
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
   const [internalUserLoading, setInternalUserLoading] = useState(false)
 
@@ -122,18 +124,21 @@ export function CursosServidorList() {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {cursos.map((curso, index) => (
-        <CursoCard key={curso.id_curso} curso={curso} userId={internalUserId} index={index} />
+        <CursoCard key={curso.id_curso} curso={curso} userId={internalUserId} index={index} idIglesia={idIglesia} />
       ))}
     </div>
   )
 }
 
-function CursoCard({ curso, userId, index }: { curso: any, userId?: number, index: number }) {
+function CursoCard({ curso, userId, index, idIglesia }: { curso: any, userId?: number, index: number, idIglesia?: string }) {
   const navigate = useNavigate()
   const { data: progreso } = useProgresoCurso({
     idUsuario: userId,
     idCurso: curso.id_curso
   })
+
+  const { data: certificados } = useCertificadosUsuario(userId)
+  const tieneCertificado = certificados?.some(c => c.id_aula_curso === curso.id_curso)
 
   const colors = [
     'from-blue-500/20 to-indigo-500/10',
@@ -149,7 +154,7 @@ function CursoCard({ curso, userId, index }: { curso: any, userId?: number, inde
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
       whileHover={{ y: -8 }}
-      onClick={() => navigate(`/app/aula/curso/${curso.id_curso}`)}
+      onClick={() => navigate(`/app/${idIglesia}/aula/curso/${curso.id_curso}`)}
       className="group relative cursor-pointer"
     >
       <Card className="h-full overflow-hidden rounded-[28px] border border-white/10 bg-background/55 backdrop-blur-2xl transition-all duration-500 group-hover:-translate-y-1 group-hover:border-primary/30 group-hover:shadow-2xl group-hover:shadow-primary/10">
@@ -162,10 +167,17 @@ function CursoCard({ curso, userId, index }: { curso: any, userId?: number, inde
           <div className="absolute -bottom-6 -left-6 opacity-10 transition-transform duration-700 group-hover:scale-110 group-hover:rotate-12">
             <BookOpen className="h-32 w-32" />
           </div>
-          {progreso?.porcentaje === 100 && (
+          {tieneCertificado && (
+            <div className="absolute top-4 left-4">
+              <div className="p-1.5 bg-amber-500 rounded-full shadow-lg animate-pulse">
+                <Award className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          )}
+          {progreso?.porcentaje === 100 && !tieneCertificado && (
             <div className="absolute top-4 left-4">
               <div className="p-1.5 bg-green-500 rounded-full shadow-lg">
-                <Award className="h-4 w-4 text-white" />
+                <CheckCircle className="h-4 w-4 text-white" />
               </div>
             </div>
           )}

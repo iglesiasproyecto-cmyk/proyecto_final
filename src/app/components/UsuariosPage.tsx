@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUpdateUsuario, useDeleteUsuarioAsSuperAdmin } from "@/hooks/useUsuarios";
 import { useIglesias, useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { useMinisterios } from "@/hooks/useMinisterios";
@@ -12,7 +12,8 @@ import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
-import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, Phone, UserPlus, ShieldPlus, Pencil, X, Loader2, Trash2, AlertTriangle, FileText } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
+import { Users, Search, ToggleLeft, ToggleRight, Eye, ShieldCheck, Clock, Mail, Phone, UserPlus, ShieldPlus, Pencil, X, Loader2, Trash2, AlertTriangle, FileText, Check, ChevronRight, ArrowLeft, Send, Calendar, Building2, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { HojaDeVidaModal } from "./hojaDeVida/HojaDeVidaModal";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
@@ -31,7 +32,7 @@ export function UsuariosPage() {
   const canAssignRole = (idRol: number): boolean => {
     if (isSuperAdmin) return true;
     if (isAdminIglesia) return idRol !== ROLE_IDS.SUPER_ADMIN;
-    if (isAdminSede) return ![ROLE_IDS.SUPER_ADMIN, ROLE_IDS.ADMIN_IGLESIA].includes(idRol);
+    if (isAdminSede) return idRol !== ROLE_IDS.SUPER_ADMIN && idRol !== ROLE_IDS.ADMIN_IGLESIA;
     if (isLider) return idRol === ROLE_IDS.SERVIDOR;
     return false;
   };
@@ -44,10 +45,13 @@ export function UsuariosPage() {
   const [filterEstado, setFilterEstado] = useState("all");
   const [filterRol, setFilterRol] = useState("all");
   const [filterIglesia, setFilterIglesia] = useState<string>("all");
+  const [filterMinisterio, setFilterMinisterio] = useState<string>("all");
   const [showTechnicalArchived, setShowTechnicalArchived] = useState(false);
   const [detail, setDetail] = useState<number | null>(null);
   const [showHojaDeVida, setShowHojaDeVida] = useState<number | null>(null);
   const [showInvite, setShowInvite] = useState(false);
+  const [inviteStep, setInviteStep] = useState<1 | 2>(1);
+  const [inviteStepDir, setInviteStepDir] = useState<'forward' | 'back'>('forward');
   const [showAssignRol, setShowAssignRol] = useState<number | null>(null);
   const [editUser, setEditUser] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ nombres: "", apellidos: "", telefono: "" });
@@ -69,32 +73,36 @@ export function UsuariosPage() {
     apellidos: "",
     fechaNacimiento: "",
     idIglesia: iglesiaActual?.id ?? 0,
-    idRol: 0,
-    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
     idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
-  const resetInviteForm = () => setInviteForm({
-    correo: "",
-    nombres: "",
-    apellidos: "",
-    fechaNacimiento: "",
-    idIglesia: iglesiaActual?.id ?? 0,
-    idRol: 0,
-    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
-    idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0
-  });
+  const resetInviteForm = () => {
+    setInviteForm({
+      correo: "",
+      nombres: "",
+      apellidos: "",
+      fechaNacimiento: "",
+      idIglesia: iglesiaActual?.id ?? 0,
+      idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
+      idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
+      idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0
+    });
+    setInviteStep(1);
+    setInviteStepDir('forward');
+  };
 
   // Assign role form state
   const [assignForm, setAssignForm] = useState({
-    idRol: 0,
+    idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
     idIglesia: iglesiaActual?.id ?? 0,
-    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
     idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
   const resetAssignForm = () => setAssignForm({
-    idRol: 0,
+    idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
     idIglesia: iglesiaActual?.id ?? 0,
-    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
     idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
 
@@ -139,8 +147,8 @@ export function UsuariosPage() {
 
     // If admin_sede, only show users from their sede
     if (isAdminSede) {
-      const mySede = sedesDelUsuario.find(s => s.id === iglesiaActual?.id);
-      if (!mySede) return false; // Security: no sede context, hide all
+      if (sedesDelUsuario.length === 0) return false; // Security: no sede assigned, hide all
+      const mySede = sedesDelUsuario[0]; // Use admin's assigned sede
       const hasRoleInMySede = u.roleNames.some(rn => rn.idSede === mySede.id);
       if (!hasRoleInMySede) return false;
     }
@@ -168,8 +176,21 @@ export function UsuariosPage() {
     if (filterEstado === "inactivo" && u.activo) return false;
     if (filterRol !== "all" && !u.roleNames.some(rn => rn.rolNombre.toLowerCase().includes(filterRol.toLowerCase()))) return false;
     if (filterIglesia !== "all" && !u.roleNames.some(rn => String(rn.idIglesia) === filterIglesia)) return false;
+    if (filterMinisterio !== "all" && !u.minNames.some(mn => String(mn.idMinisterio) === filterMinisterio)) return false;
     return true;
   });
+
+  // Ministerios disponibles para el filtro según el rol actual
+  const ministeriosParaFiltro = isAdminSede
+    ? ministeriosInvite.filter(m => m.idSede === sedesDelUsuario[0]?.id)
+    : isLider
+    ? ministeriosDelUsuario.map(m => ({ idMinisterio: m.id, nombre: m.nombre }))
+    : [];
+
+  // Roles disponibles para el filtro (acotados por lo que cada rol puede ver)
+  const rolesParaFiltro = (isLider || isAdminSede)
+    ? roles.filter(r => r.idRol === ROLE_IDS.LIDER || r.idRol === ROLE_IDS.SERVIDOR)
+    : roles;
 
   const detailUser = detail ? enriched.find(u => u.idUsuario === detail) : null;
   const assignUser = showAssignRol ? enriched.find(u => u.idUsuario === showAssignRol) : null;
@@ -189,6 +210,11 @@ export function UsuariosPage() {
   const handleInvite = () => {
     if (!inviteForm.correo.trim() || !inviteForm.nombres.trim() || !inviteForm.apellidos.trim() || !inviteForm.idRol || !inviteForm.idIglesia) {
       toast.error("Completa todos los campos obligatorios");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(inviteForm.correo.trim())) {
+      toast.error("El correo electrónico no es válido");
       return;
     }
 
@@ -258,6 +284,10 @@ export function UsuariosPage() {
     }
     if (roleNeedsMinisterio(assignForm.idRol) && !assignForm.idMinisterio) {
       toast.error("Debes seleccionar un ministerio para este rol");
+      return;
+    }
+    if (!canAssignRole(assignForm.idRol)) {
+      toast.error("No tienes permiso para asignar este rol");
       return;
     }
     assignRolMutation.mutate(
@@ -383,28 +413,41 @@ export function UsuariosPage() {
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="activo">Activos</SelectItem>
-              <SelectItem value="inactivo">Inactivos</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterRol} onValueChange={setFilterRol}>
-            <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Rol" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los roles</SelectItem>
-              {roles.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filterIglesia} onValueChange={setFilterIglesia}>
-            <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Iglesia" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las iglesias</SelectItem>
-              {iglesias.map(ig => <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Button variant="ghost" className="h-10 rounded-xl text-xs whitespace-nowrap" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); }}>
-            <span className="hidden sm:inline">Limpiar filtros</span>
-            <span className="sm:hidden">Limpiar</span>
-          </Button>
-        </div>
+                <SelectItem value="inactivo">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterRol} onValueChange={setFilterRol}>
+              <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Rol" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los roles</SelectItem>
+                {rolesParaFiltro.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {/* Filtro de Iglesia: solo para super_admin y admin_iglesia */}
+            {!isAdminSede && !isLider && (
+              <Select value={filterIglesia} onValueChange={setFilterIglesia}>
+                <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Iglesia" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las iglesias</SelectItem>
+                  {iglesias.map(ig => <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {/* Filtro de Ministerio: para admin_sede y lider (si tiene varios) */}
+            {(isAdminSede || (isLider && ministeriosDelUsuario.length > 1)) && ministeriosParaFiltro.length > 0 && (
+              <Select value={filterMinisterio} onValueChange={setFilterMinisterio}>
+                <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Ministerio" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los ministerios</SelectItem>
+                  {ministeriosParaFiltro.map(m => <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            <Button variant="ghost" className="h-10 rounded-xl text-xs whitespace-nowrap" onClick={() => { setSearch(""); setFilterEstado("all"); setFilterRol("all"); setFilterIglesia("all"); setFilterMinisterio("all"); }}>
+              <span className="hidden sm:inline">Limpiar filtros</span>
+              <span className="sm:hidden">Limpiar</span>
+            </Button>
+          </div>
         {archivedTechnicalCount > 0 && (
           <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-300/50 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:border-amber-700/40 dark:bg-amber-950/30 dark:text-amber-200">
             <p>
@@ -571,159 +614,352 @@ export function UsuariosPage() {
       </Dialog>
 
       {/* ── Invite Dialog ── */}
-      <Dialog open={showInvite} onOpenChange={o => { if (!o) { setShowInvite(false); resetInviteForm(); } }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><UserPlus className="w-5 h-5" /> Invitar Usuario</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Nombres *</label>
-                <Input
-                  value={inviteForm.nombres}
-                  onChange={e => setInviteForm(p => ({ ...p, nombres: e.target.value }))}
-                  placeholder="Nombres"
-                  className="bg-input-background"
-                />
+      <Sheet open={showInvite} onOpenChange={o => { if (!o) { setShowInvite(false); resetInviteForm(); } }}>
+        <SheetContent side="right" className="w-full sm:max-w-[460px] p-0 flex flex-col gap-0">
+          {/* Header */}
+          <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1a7fa8] to-[#0c5a7a] flex items-center justify-center shadow-md shadow-[#1a7fa8]/20 shrink-0">
+                <UserPlus className="w-4 h-4 text-white" />
               </div>
               <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Apellidos *</label>
-                <Input
-                  value={inviteForm.apellidos}
-                  onChange={e => setInviteForm(p => ({ ...p, apellidos: e.target.value }))}
-                  placeholder="Apellidos"
-                  className="bg-input-background"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Correo electrónico *</label>
-              <Input
-                type="email"
-                value={inviteForm.correo}
-                onChange={e => setInviteForm(p => ({ ...p, correo: e.target.value }))}
-                placeholder="correo@ejemplo.com"
-                className="bg-input-background"
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Si el correo pertenece a un usuario archivado, se recupera el perfil y se reasigna el rol automáticamente.
-              </p>
-            </div>
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Fecha de Nacimiento</label>
-              <Input
-                type="date"
-                value={inviteForm.fechaNacimiento}
-                onChange={e => setInviteForm(p => ({ ...p, fechaNacimiento: e.target.value }))}
-                className="bg-input-background"
-              />
-              <p className="text-xs text-muted-foreground mt-1">Opcional</p>
-            </div>
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Iglesia {isAdminIglesia && '(Tu iglesia)'} *</label>
-              <Select
-                value={inviteForm.idIglesia ? String(inviteForm.idIglesia) : ""}
-                onValueChange={v => setInviteForm(p => ({ ...p, idIglesia: Number(v), idSede: 0, idMinisterio: 0 }))}
-                disabled={isAdminIglesia}
-              >
-                <SelectTrigger className={`bg-input-background ${isAdminIglesia ? 'opacity-70 cursor-not-allowed' : ''}`}><SelectValue placeholder="Seleccionar iglesia..." /></SelectTrigger>
-                <SelectContent>
-                  {iglesias.map(ig => (
-                    <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>
-                      {ig.nombre}{ig.estado !== 'activa' ? ' (Inactiva)' : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {inviteForm.idIglesia > 0 && (
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Sede{roleNeedsSede(inviteForm.idRol) ? ' *' : ''}</label>
-                {/* Show sede selector only if not admin_sede and not lider */}
-                {!isAdminSede && !isLider && (
-                  <Select
-                    value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
-                    onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
-                  >
-                    <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
-                    <SelectContent>
-                      {sedesInvite.map(sd => (
-                        <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-                {/* Show as text if admin_sede */}
-                {isAdminSede && (
-                  <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
-                    Sede: {sedesDelUsuario.find(s => s.id === inviteForm.idSede)?.nombre}
-                  </div>
-                )}
-              </div>
-            )}
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Rol inicial *</label>
-              <Select
-                value={inviteForm.idRol ? String(inviteForm.idRol) : ""}
-                onValueChange={v => setInviteForm(p => ({ ...p, idRol: Number(v), idMinisterio: 0 }))}
-              >
-                <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar rol..." /></SelectTrigger>
-                <SelectContent>
-                  {roles
-                    .filter(role => canAssignRole(role.idRol))
-                    .map(r => (
-                      <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {roleNeedsMinisterio(inviteForm.idRol) && inviteForm.idSede && (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">Ministerio *</label>
-                  {/* Show ministerio selector only if not lider */}
-                  {!isLider && (
-                    <Select
-                      value={inviteForm.idMinisterio ? String(inviteForm.idMinisterio) : ""}
-                      onValueChange={v => setInviteForm(p => ({ ...p, idMinisterio: Number(v) }))}
-                    >
-                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
-                      <SelectContent>
-                        {ministeriosInviteFiltered.length > 0 ? (
-                          ministeriosInviteFiltered.map(m => (
-                            <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
-                          ))
-                        ) : (
-                          <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {/* Show as text if lider */}
-                  {isLider && (
-                    <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
-                      Ministerio: {ministeriosDelUsuario.find(m => m.id === inviteForm.idMinisterio)?.nombre}
-                    </div>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground bg-accent/30 px-2 py-1.5 rounded">
-                  Para Lider/Servidor la persona debe pertenecer a un ministerio de la sede.
+                <SheetTitle className="text-base font-semibold leading-tight">Invitar Usuario</SheetTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {inviteStep === 1 ? 'Datos personales del nuevo miembro' : 'Asignación de iglesia y rol'}
                 </p>
               </div>
+            </div>
+
+            {/* Stepper */}
+            <div className="flex items-center mt-4">
+              {/* Step 1 */}
+              <button
+                onClick={() => { if (inviteStep === 2) { setInviteStepDir('back'); setInviteStep(1); } }}
+                className="flex flex-col items-center gap-1.5 group"
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  inviteStep === 1
+                    ? 'bg-[#1a7fa8] text-white shadow-md shadow-[#1a7fa8]/30 ring-4 ring-[#1a7fa8]/15'
+                    : 'bg-[#1a7fa8] text-white'
+                }`}>
+                  {inviteStep === 2 ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : '1'}
+                </div>
+                <span className={`text-[10px] font-semibold tracking-wide whitespace-nowrap transition-colors ${inviteStep === 1 ? 'text-[#1a7fa8]' : 'text-[#1a7fa8]/70'}`}>
+                  PERSONALES
+                </span>
+              </button>
+
+              {/* Line */}
+              <div className="flex-1 mx-3 mb-4 h-[2px] rounded-full overflow-hidden bg-border">
+                <motion.div
+                  className="h-full bg-[#1a7fa8] rounded-full"
+                  initial={{ width: inviteStep === 2 ? '100%' : '0%' }}
+                  animate={{ width: inviteStep === 2 ? '100%' : '0%' }}
+                  transition={{ duration: 0.4, ease: 'easeInOut' }}
+                />
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  inviteStep === 2
+                    ? 'bg-[#1a7fa8] text-white shadow-md shadow-[#1a7fa8]/30 ring-4 ring-[#1a7fa8]/15'
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  2
+                </div>
+                <span className={`text-[10px] font-semibold tracking-wide whitespace-nowrap transition-colors ${inviteStep === 2 ? 'text-[#1a7fa8]' : 'text-muted-foreground'}`}>
+                  ASIGNACIÓN
+                </span>
+              </div>
+            </div>
+          </SheetHeader>
+
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            <AnimatePresence mode="wait" initial={false}>
+              {inviteStep === 1 ? (
+                <motion.div
+                  key="step1"
+                  initial={{ x: inviteStepDir === 'forward' ? -24 : 24, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: inviteStepDir === 'forward' ? -24 : 24, opacity: 0 }}
+                  transition={{ duration: 0.22, ease: 'easeInOut' }}
+                  className="space-y-4"
+                >
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nombres *</label>
+                      <Input
+                        value={inviteForm.nombres}
+                        onChange={e => setInviteForm(p => ({ ...p, nombres: e.target.value }))}
+                        placeholder="Ej: Juan Carlos"
+                        className="bg-input-background h-10"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Apellidos *</label>
+                      <Input
+                        value={inviteForm.apellidos}
+                        onChange={e => setInviteForm(p => ({ ...p, apellidos: e.target.value }))}
+                        placeholder="Ej: García López"
+                        className="bg-input-background h-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Correo electrónico *</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
+                      <Input
+                        type="email"
+                        value={inviteForm.correo}
+                        onChange={e => setInviteForm(p => ({ ...p, correo: e.target.value }))}
+                        placeholder="correo@ejemplo.com"
+                        className={`bg-input-background h-10 pl-9 ${inviteForm.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteForm.correo) ? 'border-red-400 focus-visible:ring-red-400/30' : ''}`}
+                      />
+                    </div>
+                    {inviteForm.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteForm.correo) && (
+                      <p className="text-[11px] text-red-500 font-medium">Correo inválido — verifica que incluya @ y un dominio (ej: .com)</p>
+                    )}
+                    {(!inviteForm.correo || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteForm.correo)) && (
+                      <p className="text-[11px] text-muted-foreground leading-snug">
+                        Si pertenece a un usuario archivado, se recupera y reasigna el rol.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" /> Fecha de nacimiento
+                      <span className="normal-case font-normal text-muted-foreground/60">(opcional)</span>
+                    </label>
+                    <Input
+                      type="date"
+                      value={inviteForm.fechaNacimiento}
+                      onChange={e => setInviteForm(p => ({ ...p, fechaNacimiento: e.target.value }))}
+                      className="bg-input-background h-10"
+                    />
+                  </div>
+
+                  {/* Preview card */}
+                  {(inviteForm.nombres.trim() || inviteForm.apellidos.trim() || inviteForm.correo.trim()) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-2 p-3 rounded-xl bg-[#1a7fa8]/8 border border-[#1a7fa8]/20 flex items-center gap-3"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1a7fa8] to-[#0c5a7a] flex items-center justify-center text-white text-sm font-bold shrink-0">
+                        {(inviteForm.nombres[0] ?? '?').toUpperCase()}{(inviteForm.apellidos[0] ?? '').toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">
+                          {[inviteForm.nombres, inviteForm.apellidos].filter(Boolean).join(' ') || '—'}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">{inviteForm.correo || '—'}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="step2"
+                  initial={{ x: inviteStepDir === 'forward' ? 24 : -24, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: inviteStepDir === 'forward' ? 24 : -24, opacity: 0 }}
+                  transition={{ duration: 0.22, ease: 'easeInOut' }}
+                  className="space-y-4"
+                >
+                  {/* Resumen del paso 1 */}
+                  <div className="p-3 rounded-xl bg-muted/40 border border-border/50 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a7fa8] to-[#0c5a7a] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                      {(inviteForm.nombres[0] ?? '?').toUpperCase()}{(inviteForm.apellidos[0] ?? '').toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold truncate">{inviteForm.nombres} {inviteForm.apellidos}</p>
+                      <p className="text-xs text-muted-foreground truncate">{inviteForm.correo}</p>
+                    </div>
+                    <Check className="w-4 h-4 text-[#1a7fa8] shrink-0" />
+                  </div>
+
+                  {/* Iglesia */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5" /> Iglesia *
+                    </label>
+                    {(isAdminIglesia || isLider) ? (
+                      <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-muted/40 border border-border/50">
+                        <Building2 className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+                        <span className="text-sm text-foreground/80">{iglesiaActual?.nombre ?? '—'}</span>
+                        <span className="ml-auto text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Tu iglesia</span>
+                      </div>
+                    ) : (
+                      <Select
+                        value={inviteForm.idIglesia ? String(inviteForm.idIglesia) : ""}
+                        onValueChange={v => setInviteForm(p => ({ ...p, idIglesia: Number(v), idSede: 0, idMinisterio: 0 }))}
+                      >
+                        <SelectTrigger className="bg-input-background h-10"><SelectValue placeholder="Seleccionar iglesia..." /></SelectTrigger>
+                        <SelectContent>
+                          {iglesias.map(ig => (
+                            <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>
+                              {ig.nombre}{ig.estado !== 'activa' ? ' (Inactiva)' : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+
+                  {/* Sede */}
+                  {inviteForm.idIglesia > 0 && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Sede{roleNeedsSede(inviteForm.idRol) ? ' *' : ' (opcional)'}
+                      </label>
+                      {isAdminSede ? (
+                        <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-muted/40 border border-border/50">
+                          <span className="text-sm text-foreground/80">{sedesDelUsuario.find(s => s.id === inviteForm.idSede)?.nombre ?? '—'}</span>
+                          <span className="ml-auto text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Tu sede</span>
+                        </div>
+                      ) : isLider ? (
+                        <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-muted/40 border border-border/50">
+                          <span className="text-sm text-foreground/80">{sedesInvite.find(s => s.idSede === inviteForm.idSede)?.nombre ?? '—'}</span>
+                        </div>
+                      ) : (
+                        <Select
+                          value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
+                          onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
+                        >
+                          <SelectTrigger className="bg-input-background h-10"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
+                          <SelectContent>
+                            {sedesInvite.map(sd => (
+                              <SelectItem key={sd.idSede} value={String(sd.idSede)}>{sd.nombre}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Rol */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5" /> Rol inicial *
+                    </label>
+                    {isLider ? (
+                      <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-muted/40 border border-border/50">
+                        <Shield className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+                        <span className="text-sm text-foreground/80">Servidor</span>
+                        <span className="ml-auto text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Asignado</span>
+                      </div>
+                    ) : (
+                      <Select
+                        value={inviteForm.idRol ? String(inviteForm.idRol) : ""}
+                        onValueChange={v => setInviteForm(p => ({ ...p, idRol: Number(v), idMinisterio: 0 }))}
+                      >
+                        <SelectTrigger className="bg-input-background h-10"><SelectValue placeholder="Seleccionar rol..." /></SelectTrigger>
+                        <SelectContent>
+                          {roles.filter(role => canAssignRole(role.idRol)).map(r => (
+                            <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+
+                  {/* Ministerio */}
+                  {roleNeedsMinisterio(inviteForm.idRol) && inviteForm.idSede && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ministerio *</label>
+                      {!isLider ? (
+                        <Select
+                          value={inviteForm.idMinisterio ? String(inviteForm.idMinisterio) : ""}
+                          onValueChange={v => setInviteForm(p => ({ ...p, idMinisterio: Number(v) }))}
+                        >
+                          <SelectTrigger className="bg-input-background h-10"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
+                          <SelectContent>
+                            {ministeriosInviteFiltered.length > 0 ? (
+                              ministeriosInviteFiltered.map(m => (
+                                <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
+                              ))
+                            ) : (
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground">Sin ministerios en esta sede</div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      ) : ministeriosDelUsuario.length > 1 ? (
+                        <Select
+                          value={inviteForm.idMinisterio ? String(inviteForm.idMinisterio) : ""}
+                          onValueChange={v => {
+                            const min = ministeriosDelUsuario.find(m => m.id === Number(v));
+                            setInviteForm(p => ({ ...p, idMinisterio: Number(v), idSede: min?.idSede ?? p.idSede }));
+                          }}
+                        >
+                          <SelectTrigger className="bg-input-background h-10"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
+                          <SelectContent>
+                            {ministeriosDelUsuario.map(m => (
+                              <SelectItem key={m.id} value={String(m.id)}>{m.nombre}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-muted/40 border border-border/50">
+                          <span className="text-sm text-foreground/80">{ministeriosDelUsuario.find(m => m.id === inviteForm.idMinisterio)?.nombre ?? '—'}</span>
+                        </div>
+                      )}
+                      <p className="text-[11px] text-muted-foreground bg-accent/30 px-2.5 py-1.5 rounded-lg leading-snug">
+                        Para Líder/Servidor la persona debe pertenecer a un ministerio de la sede.
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t bg-background/80 backdrop-blur-sm shrink-0 flex items-center justify-between gap-3">
+            {inviteStep === 1 ? (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => { setShowInvite(false); resetInviteForm(); }} className="text-muted-foreground">
+                  Cancelar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => { setInviteStepDir('forward'); setInviteStep(2); }}
+                  disabled={!inviteForm.nombres.trim() || !inviteForm.apellidos.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteForm.correo.trim())}
+                  className="bg-[#1a7fa8] hover:bg-[#15709a] text-white gap-2 px-5"
+                >
+                  Siguiente <ChevronRight className="w-4 h-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={() => { setInviteStepDir('back'); setInviteStep(1); }} className="gap-2">
+                  <ArrowLeft className="w-4 h-4" /> Atrás
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleInvite}
+                  disabled={
+                    inviteMutation.isPending ||
+                    !inviteForm.idRol || !inviteForm.idIglesia ||
+                    (roleNeedsSede(inviteForm.idRol) && !inviteForm.idSede) ||
+                    (roleNeedsMinisterio(inviteForm.idRol) && !inviteForm.idMinisterio)
+                  }
+                  className="bg-[#1a7fa8] hover:bg-[#15709a] text-white gap-2 px-5"
+                >
+                  {inviteMutation.isPending
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>
+                    : <><Send className="w-4 h-4" /> Enviar Invitación</>}
+                </Button>
+              </>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowInvite(false); resetInviteForm(); }}>Cancelar</Button>
-            <Button
-              onClick={handleInvite}
-              disabled={inviteMutation.isPending || !inviteForm.nombres.trim() || !inviteForm.apellidos.trim() || !inviteForm.correo.trim() || !inviteForm.idRol || !inviteForm.idIglesia || (roleNeedsSede(inviteForm.idRol) && !inviteForm.idSede) || (roleNeedsMinisterio(inviteForm.idRol) && !inviteForm.idMinisterio)}
-            >
-              {inviteMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...</> : <><UserPlus className="w-4 h-4 mr-2" /> Enviar Invitación</>}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* ── Assign Role Dialog ── */}
       <Dialog open={!!showAssignRol} onOpenChange={o => { if (!o) { setShowAssignRol(null); resetAssignForm(); } }}>
@@ -762,28 +998,34 @@ export function UsuariosPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Rol *</label>
-                    <Select
-                      value={assignForm.idRol ? String(assignForm.idRol) : ""}
-                      onValueChange={v => setAssignForm(p => ({ ...p, idRol: Number(v), idMinisterio: 0 }))}
-                    >
-                      <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                      <SelectContent>
-                        {roles
-                          .filter(role => canAssignRole(role.idRol))
-                          .map(r => (
-                            <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                    {isLider ? (
+                      <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md opacity-70">
+                        Servidor
+                      </div>
+                    ) : (
+                      <Select
+                        value={assignForm.idRol ? String(assignForm.idRol) : ""}
+                        onValueChange={v => setAssignForm(p => ({ ...p, idRol: Number(v), idMinisterio: 0 }))}
+                      >
+                        <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                        <SelectContent>
+                          {roles
+                            .filter(role => canAssignRole(role.idRol))
+                            .map(r => (
+                              <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Iglesia {isAdminIglesia && '(Tu iglesia)'} *</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">Iglesia {(isAdminIglesia || isLider) && '(Tu iglesia)'} *</label>
                     <Select
                       value={assignForm.idIglesia ? String(assignForm.idIglesia) : ""}
                       onValueChange={v => setAssignForm(p => ({ ...p, idIglesia: Number(v), idSede: 0, idMinisterio: 0 }))}
-                      disabled={isAdminIglesia}
+                      disabled={isAdminIglesia || isLider}
                     >
-                      <SelectTrigger className={`bg-input-background ${isAdminIglesia ? 'opacity-70 cursor-not-allowed' : ''}`}><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                      <SelectTrigger className={`bg-input-background ${(isAdminIglesia || isLider) ? 'opacity-70 cursor-not-allowed' : ''}`}><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                       <SelectContent>
                         {iglesias.map(ig => (
                           <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>
@@ -817,6 +1059,12 @@ export function UsuariosPage() {
                         Sede: {sedesDelUsuario.find(s => s.id === assignForm.idSede)?.nombre}
                       </div>
                     )}
+                    {/* Show as text if lider */}
+                    {isLider && (
+                      <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                        Sede: {sedesAssign.find(s => s.idSede === assignForm.idSede)?.nombre ?? "—"}
+                      </div>
+                    )}
                   </div>
                 )}
                 {roleNeedsMinisterio(assignForm.idRol) && assignForm.idSede && (
@@ -841,10 +1089,26 @@ export function UsuariosPage() {
                           </SelectContent>
                         </Select>
                       )}
-                      {/* Show as text if lider */}
-                      {isLider && (
+                      {/* Lider: selector si tiene varios ministerios, texto si solo uno */}
+                      {isLider && ministeriosDelUsuario.length > 1 && (
+                        <Select
+                          value={assignForm.idMinisterio ? String(assignForm.idMinisterio) : ""}
+                          onValueChange={v => {
+                            const min = ministeriosDelUsuario.find(m => m.id === Number(v));
+                            setAssignForm(p => ({ ...p, idMinisterio: Number(v), idSede: min?.idSede ?? p.idSede }));
+                          }}
+                        >
+                          <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
+                          <SelectContent>
+                            {ministeriosDelUsuario.map(m => (
+                              <SelectItem key={m.id} value={String(m.id)}>{m.nombre}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {isLider && ministeriosDelUsuario.length <= 1 && (
                         <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
-                          Ministerio: {ministeriosDelUsuario.find(m => m.id === assignForm.idMinisterio)?.nombre}
+                          Ministerio: {ministeriosDelUsuario.find(m => m.id === assignForm.idMinisterio)?.nombre ?? "—"}
                         </div>
                       )}
                     </div>
@@ -958,6 +1222,7 @@ export function UsuariosPage() {
                 : "Usuario"
             : "Usuario"
         }
+        puedeRevisar={rolActual === 'super_admin' || rolActual === 'admin_iglesia' || rolActual === 'admin_sede' || rolActual === 'lider'}
       />
 
       <ConfirmDialog

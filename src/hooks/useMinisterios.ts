@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getMinisterios, getMiembrosMinisterio,
   getMinisteriosEnriquecidos, getMiembrosMinisterioEnriquecidos,
+  getMinisteriosPorSede, getUsuariosActivosPorMinisterio,
   getMinisteriosIdsDeUsuario,
   createMinisterio, updateMinisterio, toggleMinisterioEstado,
   createMiembroMinisterio,
@@ -34,6 +35,34 @@ export function useMinisteriosEnriquecidos(idIglesia?: number) {
   })
 }
 
+export function useMinisteriosGlobal() {
+  return useQuery({
+    queryKey: ['ministerios-enriquecidos', 'global'],
+    queryFn: () => getMinisteriosEnriquecidos(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useMinisteriosPorSede(idSede?: number) {
+  const sedeId = idSede ?? 0
+  return useQuery({
+    queryKey: ['ministerios-por-sede', idSede],
+    queryFn: () => getMinisteriosPorSede(sedeId),
+    enabled: sedeId > 0,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useUsuariosActivosPorMinisterio(idMinisterio?: number) {
+  const ministerioId = idMinisterio ?? 0
+  return useQuery({
+    queryKey: ['usuarios-activos-ministerio', idMinisterio],
+    queryFn: () => getUsuariosActivosPorMinisterio(ministerioId),
+    enabled: ministerioId > 0,
+    staleTime: 60 * 1000,
+  })
+}
+
 export function useMiembrosMinisterioEnriquecidos(idMinisterio?: number) {
   return useQuery({
     queryKey: ['miembros-ministerio-enriquecidos', idMinisterio],
@@ -43,9 +72,10 @@ export function useMiembrosMinisterioEnriquecidos(idMinisterio?: number) {
 }
 
 export function useMinisteriosIdsDeUsuario(idUsuario?: number) {
+  const usuarioId = idUsuario ?? 0
   return useQuery({
     queryKey: ['ministerios-ids-usuario', idUsuario],
-    queryFn: () => getMinisteriosIdsDeUsuario(idUsuario as number),
+    queryFn: () => getMinisteriosIdsDeUsuario(usuarioId),
     enabled: !!idUsuario,
     staleTime: 5 * 60 * 1000,
   })

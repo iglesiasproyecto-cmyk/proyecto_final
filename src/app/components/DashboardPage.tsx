@@ -3,7 +3,7 @@ import { useApp } from "../store/AppContext";
 import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
 import { useIglesias, usePastores, useSedes, useSedesEnriquecidas, useSedePastores, usePastoresEnriquecidos } from "@/hooks/useIglesias";
 import { useEventos } from "@/hooks/useEventos";
-import { useMinisterios, useMiembrosMinisterio } from "@/hooks/useMinisterios";
+import { useMinisterios, useMiembrosMinisterioEnriquecidos } from "@/hooks/useMinisterios";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useTareas } from "@/hooks/useEventos";
 import { useCursos } from "@/hooks/useCursos";
@@ -17,6 +17,7 @@ import { Badge } from "./ui/badge";
 import { motion } from "motion/react";
 import { SimpleBarChart, SimpleDonutChart } from "./SimpleCharts";
 import { StatCard } from "./ui/StatCard";
+import { StatisticsSummaryCard } from "./StatisticsSummaryCard";
 import {
   Building2, Users, CalendarDays, ListTodo, BookOpen, ClipboardCheck, Bell,
   ArrowRight, CheckCircle2, Clock, AlertCircle, Globe,
@@ -198,6 +199,10 @@ function SuperAdminDashboard() {
         <StatCard index={3} icon={<UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/global/iglesias")} />
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <StatisticsSummaryCard statsPath="/app/global/estadisticas" index={4} />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <AnimatedCard index={4} className="p-4 lg:col-span-2">
           <SectionHeader icon={<Activity className="w-5 h-5" />} title="Recursos por Iglesia" action={() => navigate("/app/global/iglesias")} actionLabel="Gestionar" />
@@ -311,7 +316,7 @@ function AdminIglesiaDashboard() {
   const navigate = useNavigate();
   const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : '/app';
   const { data: ministerios = [] } = useMinisterios(iglesiaActual?.id);
-  const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(ministerios[0]?.idMinisterio ?? 0);
+  const { data: miembrosMinisterio = [] } = useMiembrosMinisterioEnriquecidos(ministerios[0]?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: notificaciones = [] } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
   const { data: sedes = [] } = useSedesEnriquecidas(iglesiaActual?.id);
@@ -406,8 +411,12 @@ function AdminIglesiaDashboard() {
         <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate(`${basePath}/notificaciones`)} />
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <StatisticsSummaryCard statsPath={`${basePath}/estadisticas`} index={4} />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AnimatedCard index={4} className="p-4">
+        <AnimatedCard index={5} className="p-4">
           <SectionHeader icon={<Settings className="w-5 h-5" />} title="Ministerios" action={() => navigate(`${basePath}/ministerios`)} />
           {minChartData.length > 0 && (
             <div className="mb-4">
@@ -584,6 +593,10 @@ function AdminSedeDashboard() {
         </AnimatedCard>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <StatisticsSummaryCard statsPath={`${basePath}/estadisticas`} index={4} compact />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <AnimatedCard index={4} className="lg:col-span-2 p-6">
           <SectionHeader icon={<TrendingUp className="w-4 h-4" />} title="Accesos Rápidos" />
@@ -625,7 +638,7 @@ function LiderDashboard() {
   const navigate = useNavigate();
   const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : '/app';
   const { data: ministerios = [] } = useMinisterios();
-  const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(ministerios[0]?.idMinisterio ?? 0);
+  const { data: miembrosMinisterio = [] } = useMiembrosMinisterioEnriquecidos(ministerios[0]?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: tareas = [] } = useTareas();
   const { data: cursos } = useCursos(ministerios[0]?.idMinisterio ?? 0);
@@ -663,6 +676,10 @@ function LiderDashboard() {
         <StatCard index={1} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate(`${basePath}/tareas`)} />
         <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate(`${basePath}/eventos`)} />
         <StatCard index={3} icon={<BookOpen className="w-5 h-5" />} value={cursos?.filter(c => c.estado === 'activo').length || 0} label="Cursos activos" onClick={() => navigate(`${basePath}/aula`)} />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <StatisticsSummaryCard statsPath={`${basePath}/estadisticas`} index={4} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -810,8 +827,12 @@ function ServidorDashboard() {
         <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate(`${basePath}/notificaciones`)} />
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <StatisticsSummaryCard statsPath={`${basePath}/estadisticas`} index={4} />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AnimatedCard index={4} className="p-4">
+        <AnimatedCard index={5} className="p-4">
           <SectionHeader icon={<ListTodo className="w-5 h-5" />} title="Mis Tareas" action={() => navigate(`${basePath}/tareas`)} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {myTareas.slice(0, 5).map((t) => (

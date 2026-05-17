@@ -148,7 +148,7 @@ async function fetchUsuarioRaw(accessToken: string, authUserId: string): Promise
 async function fetchRolesRaw(accessToken: string): Promise<any[]> {
   try {
     const res = await fetchWithTimeout(
-      `${SUPABASE_URL}/rest/v1/rpc/get_user_ministerios`,
+      `${SUPABASE_URL}/rest/v1/rpc/get_my_roles`,
       {
         method: 'POST',
         headers: {
@@ -443,6 +443,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return
     }
     if (flag === 'done') {
+      sessionStorage.removeItem('post_login_reload')
       reloadQueuedRef.current = true
     }
   }, [])
@@ -593,6 +594,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIsClaimsReady(true)
         setAuthError(null)
         resolveLoading()
+        if (sessionStorage.getItem('post_login_reload') !== 'done') {
+          sessionStorage.setItem('post_login_reload', 'pending')
+          window.location.reload()
+        }
 
       } catch (err) {
         console.error('[AUTH] Error loading user data:', err)
@@ -697,6 +702,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     resetClientState('logout')
     try {
       await supabase.auth.signOut({ scope: 'local' })
+      window.location.replace('/login')
     } finally {
       logoutInProgressRef.current = false
     }

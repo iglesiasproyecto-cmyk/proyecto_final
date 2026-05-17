@@ -45,14 +45,17 @@ export async function getAvancesDeDetalle(idAulaInscripcion: number): Promise<Av
 }
 
 export async function getAvanceCursoByUsuario(idUsuario: number): Promise<AvanceCursoDetalle[]> {
-  // Get inscriptions for the user
+  // Get inscriptions with course and module information
   const { data: inscriptions, error } = await supabase
     .from('aula_inscripcion')
     .select(`
       id_aula_inscripcion,
       id_aula_curso,
       aula_curso:aula_curso(
-        aula_modulo(id_aula_modulo)
+        aula_modulo(
+          id_aula_modulo,
+          aula_actividad(id_aula_actividad)
+        )
       )
     `)
     .eq('id_usuario', idUsuario)
@@ -60,13 +63,43 @@ export async function getAvanceCursoByUsuario(idUsuario: number): Promise<Avance
 
   if (error) throw error
 
-  return (inscriptions ?? []).map((inscription) => ({
-    idAulaInscripcion: inscription.id_aula_inscripcion,
-    idUsuario: idUsuario,
-    idCurso: inscription.id_aula_curso,
-    modulosPublicados: Array.isArray(inscription.aula_curso?.aula_modulo) ? inscription.aula_curso.aula_modulo.length ?? 0 : 0,
-    modulosCompletados: 0, // TODO: calculate based on completed activities
-  }))
+  // For each inscription, calculate completed modules by checking activity progress
+  const results = await Promise.all(
+    (inscriptions ?? []).map(async (inscription) => {
+      const modules = Array.isArray(inscription.aula_curso?.aula_modulo)
+        ? inscription.aula_curso.aula_modulo
+        : []
+
+      // Count modules where all activities are completed
+      let modulosCompletados = 0
+      for (const module of modules) {
+        const activities = Array.isArray(module.aula_actividad) ? module.aula_actividad : []
+        if (activities.length === 0) continue
+
+        // Check if all activities in this module are completed
+        const { data: completedActivities, error: progError } = await supabase
+          .from('aula_progreso_actividad')
+          .select('id_aula_actividad')
+          .eq('id_usuario', idUsuario)
+          .eq('completada', true)
+          .in('id_aula_actividad', activities.map(a => a.id_aula_actividad))
+
+        if (!progError && completedActivities?.length === activities.length) {
+          modulosCompletados++
+        }
+      }
+
+      return {
+        idAulaInscripcion: inscription.id_aula_inscripcion,
+        idUsuario: idUsuario,
+        idCurso: inscription.id_aula_curso,
+        modulosPublicados: modules.length,
+        modulosCompletados,
+      }
+    })
+  )
+
+  return results
 }
 
 export async function finalizarCicloCurso(idProceso: number): Promise<void> {

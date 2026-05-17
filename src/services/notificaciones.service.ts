@@ -58,6 +58,13 @@ export async function createNotificacion(notificacion: any) {
   return data
 }
 
+export function extractTaskIdFromNotificationMessage(message: string): number | null {
+  const match = message.match(/\[TASK_ID:(\d+)\]/)
+  if (!match) return null
+  const id = Number(match[1])
+  return Number.isFinite(id) ? id : null
+}
+
 export async function crearNotificacionNuevoContenido(
   idCurso: number,
   tipoContenido: 'actividad' | 'evaluacion' | 'modulo',

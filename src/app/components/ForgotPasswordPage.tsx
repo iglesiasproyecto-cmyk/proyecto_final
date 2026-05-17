@@ -50,8 +50,8 @@ export function ForgotPasswordPage() {
 
     setIsLoading(true)
     try {
-      const { data, error } = await supabase.functions.invoke('reset-password-request', {
-        body: { email: email.toLowerCase().trim() }
+      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), {
+        redirectTo: `${window.location.origin}/auth/reset-password`
       })
 
       if (error) {
@@ -60,14 +60,10 @@ export function ForgotPasswordPage() {
         return
       }
 
-      if (data.success) {
-        setStep('verification')
-        toast.success('Enlace de recuperación enviado a tu correo.')
-      } else {
-        setError(data.message || 'Error al enviar el enlace de recuperación.')
-      }
-    } catch (err) {
-      setError('Error en el servidor. Intenta más tarde.')
+      setStep('verification')
+      toast.success('Enlace de recuperación enviado a tu correo.')
+    } catch (err: any) {
+      setError(err.message || 'Error en el servidor. Intenta más tarde.')
     } finally {
       setIsLoading(false)
     }
@@ -247,7 +243,7 @@ export function ForgotPasswordPage() {
 
                 {/* Mostrar Email Verificando */}
                 <div className="p-4 rounded-lg bg-[#1a7fa8]/10 border-2 border-[#1a7fa8]/30">
-                  <p className="text-sm text-slate-600 font-medium">Enlace enviado a:</p>
+                  <p className="text-sm text-slate-600 font-medium">Correo de recuperación enviado a:</p>
                   <p className="text-lg font-bold text-[#0c2340] mt-1">{email}</p>
                 </div>
 
@@ -256,15 +252,15 @@ export function ForgotPasswordPage() {
                   <div className="flex items-start gap-3 p-4 rounded-lg bg-green-100 border border-green-300">
                     <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-green-700 font-medium">¡Enlace enviado exitosamente!</p>
+                      <p className="text-sm text-green-700 font-medium">¡Correo enviado exitosamente!</p>
                       <p className="text-sm text-green-700 mt-1">
-                        Revisa tu bandeja de entrada y haz clic en el enlace "Restablecer Contraseña" para continuar.
+                        Revisa tu bandeja de entrada. Encontrarás un enlace para restablecer tu contraseña. El enlace expira en 1 hora.
                       </p>
                     </div>
                   </div>
 
                   <p className="text-sm text-slate-600 leading-relaxed">
-                    Si no encuentras el correo, revisa tu carpeta de spam o correo no deseado.
+                    Si no encuentras el correo, revisa tu carpeta de spam o correo no deseado e intenta de nuevo.
                   </p>
                 </div>
 

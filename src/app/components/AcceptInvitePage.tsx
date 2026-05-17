@@ -28,6 +28,7 @@ export function AcceptInvitePage() {
   const [inviteData, setInviteData] = useState<InviteData | null>(null)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [telefono, setTelefono] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,8 +52,8 @@ export function AcceptInvitePage() {
 
       if (error) throw error
 
-      if (!data.valid) {
-        setError(data.message || 'Token inválido')
+      if (!data?.valid) {
+        setError(data?.error || data?.message || 'Token inválido o expirado')
         return
       }
 
@@ -85,14 +86,22 @@ export function AcceptInvitePage() {
 
     try {
       const { data, error } = await supabase.functions.invoke('complete-invite', {
-        body: { token, password }
+        body: { token, password, telefono: telefono.trim() || null }
       })
 
-      if (error) throw error
+      if (error) {
+        // Extraer mensaje real de la Edge Function si está disponible
+        try {
+          const errBody = await (error as any).context?.json?.()
+          if (errBody?.error) throw new Error(errBody.error)
+        } catch (parseErr) {
+          if ((parseErr as Error)?.message) throw parseErr
+        }
+        throw error
+      }
 
-      if (data.success) {
+      if (data?.success) {
         setSuccess(true)
-        // Redirigir al login después de 3 segundos
         setTimeout(() => {
           navigate('/login', {
             state: {
@@ -102,11 +111,11 @@ export function AcceptInvitePage() {
           })
         }, 3000)
       } else {
-        setError(data.error || 'Error completando invitación')
+        setError(data?.error || 'Error completando invitación')
       }
     } catch (err) {
       console.error('Error completing invite:', err)
-      setError('Error completando invitación')
+      setError(err instanceof Error ? err.message : 'Error completando invitación')
     } finally {
       setSubmitting(false)
     }
@@ -155,13 +164,13 @@ export function AcceptInvitePage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-center text-green-600">¡Cuenta Creada!</CardTitle>
+            <CardTitle className="text-center text-green-600">¡Bienvenido a Lumen!</CardTitle>
           </CardHeader>
           <CardContent>
-            <Alert>
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
-                Tu cuenta ha sido creada exitosamente. Serás redirigido al login en unos segundos...
+            <Alert className="border-green-200 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                {inviteData ? `¡Hola ${inviteData.nombres}! ` : ''}Tu cuenta ha sido creada exitosamente. Serás redirigido al inicio de sesión en unos segundos...
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -176,7 +185,7 @@ export function AcceptInvitePage() {
         <CardHeader>
           <CardTitle>Aceptar Invitación</CardTitle>
           <CardDescription>
-            Completa tu registro para IGLESIABD
+            Completa tu registro para Lumen
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -194,6 +203,17 @@ export function AcceptInvitePage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="telefono">Teléfono <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+              <Input
+                id="telefono"
+                type="tel"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                placeholder="+502 5555-0000"
+              />
+            </div>
+
             <div>
               <Label htmlFor="password">Contraseña</Label>
               <Input

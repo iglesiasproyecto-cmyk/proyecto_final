@@ -11,9 +11,10 @@ import {
   Church, LayoutDashboard, Building2, Users, CalendarDays, ListTodo,
   Bell, User, LogOut, Menu, X, ChevronDown,
   Settings, FolderHeart, Globe, UserCheck, Settings2,
-  PanelLeftClose, PanelLeftOpen, Moon, Sun, BookOpen, Cake
+  PanelLeftClose, PanelLeftOpen, Moon, Sun, BookOpen, Cake, BarChart3
 } from "lucide-react";
-import logoSei from "../../assets/logo-sei.png";
+import logoLight from "../../assets/logo-light.png";
+import logoDark from "../../assets/logo-dark.png";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -47,6 +48,9 @@ const pageTitles: Record<string, string> = {
   "/app/global/geografia": "Geografía",
   "/app/global/notificaciones": "Notificaciones",
   "/app/global/perfil": "Mi Perfil",
+  "/app/global/eventos": "Eventos Globales",
+  "/app/global/tareas": "Tareas Globales",
+  "/app/global/aula": "Aula Virtual Global",
 };
 
 function getDynamicPageTitle(pathname: string): string {
@@ -81,8 +85,13 @@ function getNavItemsForRole(
         { label: "Iglesias", path: "/app/global/iglesias", icon: <Building2 className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Sedes", path: "/app/global/sedes", icon: <Church className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Administrador", path: "/app/global/administrador", icon: <UserCheck className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Ministerios", path: "/app/global/ministerios", icon: <Settings2 className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Eventos", path: "/app/global/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Tareas", path: "/app/global/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Aula Virtual", path: "/app/global/aula", icon: <BookOpen className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Usuarios", path: "/app/global/usuarios", icon: <Users className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Cumpleaños", path: "/app/global/cumpleanos", icon: <Cake className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Estadísticas", path: "/app/global/estadisticas", icon: <BarChart3 className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Geografía", path: "/app/global/geografia", icon: <Globe className="w-5 h-5" />, section: "Configuración" },
         { label: "Notificaciones", path: "/app/global/notificaciones", icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: "/app/global/perfil", icon: <User className="w-5 h-5" />, section: "Personal" },
@@ -100,6 +109,7 @@ function getNavItemsForRole(
         { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Mi Iglesia" },
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Estadísticas", path: `${t}/estadisticas`, icon: <BarChart3 className="w-5 h-5" />, section: "Operaciones" },
         { label: "Cumpleaños", path: `${t}/cumpleanos`, icon: <Cake className="w-5 h-5" />, section: "Operaciones" },
         { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
         { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
@@ -110,9 +120,11 @@ function getNavItemsForRole(
       return [
         { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
         { label: "Mi Ministerio", path: `${t}/mi-ministerio`, icon: <FolderHeart className="w-5 h-5" />, section: "Ministerio" },
+        { label: "Usuarios", path: `${t}/usuarios`, icon: <Users className="w-5 h-5" />, section: "Ministerio" },
         { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Ministerio" },
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Estadísticas", path: `${t}/estadisticas`, icon: <BarChart3 className="w-5 h-5" />, section: "Operaciones" },
         { label: "Cumpleaños", path: `${t}/cumpleanos`, icon: <Cake className="w-5 h-5" />, section: "Operaciones" },
         { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
         { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
@@ -122,9 +134,11 @@ function getNavItemsForRole(
     case "admin_sede":
       return [
         { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
+        { label: "Usuarios", path: `${t}/usuarios`, icon: <Users className="w-5 h-5" />, section: "Gestión" },
         { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Operaciones" },
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Estadísticas", path: `${t}/estadisticas`, icon: <BarChart3 className="w-5 h-5" />, section: "Operaciones" },
         { label: "Cumpleaños", path: `${t}/cumpleanos`, icon: <Cake className="w-5 h-5" />, section: "Operaciones" },
         { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
         { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
@@ -138,6 +152,7 @@ function getNavItemsForRole(
         { label: "Ministerios", path: `${t}/ministerios`, icon: <Settings2 className="w-5 h-5" />, section: "Ministerio" },
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Mis Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Estadísticas", path: `${t}/estadisticas`, icon: <BarChart3 className="w-5 h-5" />, section: "Operaciones" },
         { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
         { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: `${t}/perfil`, icon: <User className="w-5 h-5" />, section: "Personal" },
@@ -194,7 +209,7 @@ export function AppLayout() {
   const { data: usuarios = [] } = useUsuariosEnriquecidos();
 
   const cumpleanosHoy = usuarios.filter((u) => {
-    if (!u.fechaNacimiento) return false;
+    if (!u.activo || !u.fechaNacimiento) return false;
     const today = new Date();
     const [, month, day] = u.fechaNacimiento.split("-").map(Number);
     return today.getMonth() === month - 1 && today.getDate() === day;
@@ -209,7 +224,7 @@ export function AppLayout() {
 
   useEffect(() => {
     const title = pageTitles[location.pathname] ?? getDynamicPageTitle(location.pathname);
-    document.title = `${title} | IGLESIABD`;
+    document.title = `${title} | Lumen`;
   }, [location.pathname]);
 
   if (authError) {
@@ -269,8 +284,8 @@ export function AppLayout() {
           }`}
         >
           {/* Sidebar Header */}
-          <div className="h-40 flex items-center justify-center border-b border-sidebar-border/30 shrink-0 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-b from-[#709dbd]/10 to-transparent pointer-events-none" />
+          <div className="h-28 flex items-center px-4 border-b border-sidebar-border/30 shrink-0 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/10 to-transparent pointer-events-none" />
             <AnimatePresence mode="wait">
               {isExpanded ? (
                 <motion.div 
@@ -280,11 +295,7 @@ export function AppLayout() {
                   exit={{ opacity: 0, x: -10 }}
                   className="flex items-center justify-center flex-1 min-w-0 relative z-10 w-full h-full"
                 >
-                  <img 
-                    src={logoSei} 
-                    alt="SEI Logo" 
-                    className="h-[140px] w-auto max-w-full object-contain drop-shadow-[0_0_40px_rgba(255,255,255,0.35)] group-hover:scale-105 transition-transform duration-500 brightness-125 contrast-110" 
-                  />
+                  <img src={darkMode ? logoLight : logoDark} alt="SEI Logo" className="h-22 w-auto max-w-[90%] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
                 </motion.div>
               ) : (
                 <motion.div 
@@ -294,11 +305,7 @@ export function AppLayout() {
                   exit={{ opacity: 0, scale: 0.8 }}
                   className="w-full h-full flex justify-center items-center"
                 >
-                  <img 
-                    src={logoSei} 
-                    alt="SEI Logo" 
-                    className="h-28 w-auto max-w-[95%] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:scale-105 transition-transform duration-500 brightness-110" 
-                  />
+                  <img src={darkMode ? logoLight : logoDark} alt="SEI Logo" className="h-22 w-auto max-w-[85%] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -387,7 +394,7 @@ export function AppLayout() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
-                      className="text-[10px] font-black uppercase tracking-[0.3em] text-[#709dbd] px-3 mb-3"
+                      className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400/50 px-3 mb-3"
                     >
                       {group.section}
                     </motion.p>
@@ -421,8 +428,8 @@ export function AppLayout() {
                                 }}
                                 className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative overflow-hidden focus:outline-none ${
                                   isActive 
-                                    ? "text-white bg-gradient-to-br from-[#709dbd] to-[#4682b4] shadow-[0_8px_20px_rgba(70,130,180,0.3)]" 
-                                    : "text-sidebar-foreground/40 hover:text-[#709dbd] hover:bg-white/[0.05]"
+                                    ? "text-white bg-gradient-to-br from-sidebar-primary to-blue-600 shadow-[0_8px_20px_rgba(26,127,168,0.4)]" 
+                                    : "text-sidebar-foreground/40 hover:text-cyan-400 hover:bg-white/[0.05]"
                                 }`}
                               >
                                 <span className={`relative z-10 transition-transform duration-500 ${isActive ? "scale-110" : "group-hover/nav:scale-110"}`}>
@@ -462,7 +469,7 @@ export function AppLayout() {
                         {isActive && (
                           <motion.div
                             layoutId="active-nav-bg"
-                            className="absolute inset-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] z-0"
+                            className="absolute inset-0 bg-gradient-to-r from-sidebar-primary to-blue-600 z-0"
                             initial={false}
                             transition={{ type: "spring", stiffness: 400, damping: 30 }}
                           />
@@ -470,7 +477,7 @@ export function AppLayout() {
                         {!isActive && (
                           <div className="absolute inset-0 bg-white/[0.03] opacity-0 group-hover/nav:opacity-100 transition-opacity duration-300 z-0" />
                         )}
-                        <span className={`relative z-10 shrink-0 transition-all duration-500 ${isActive ? "scale-110 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : "group-hover/nav:scale-110 group-hover/nav:text-[#709dbd]"}`}>
+                        <span className={`relative z-10 shrink-0 transition-all duration-500 ${isActive ? "scale-110 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : "group-hover/nav:scale-110 group-hover/nav:text-cyan-400"}`}>
                           {item.icon}
                         </span>
                         <span className={`relative z-10 flex-1 text-left truncate transition-all duration-300 ${isActive ? "font-black tracking-tight" : "font-bold tracking-tight group-hover/nav:translate-x-1"}`}>
@@ -593,7 +600,6 @@ export function AppLayout() {
                   <button
                     onClick={async () => {
                       await logout();
-                      navigate("/login", { replace: true });
                     }}
                     className="p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-red-500 transition-colors"
                   >
@@ -638,4 +644,3 @@ export function AppLayout() {
     </TooltipProvider>
   );
 }
-

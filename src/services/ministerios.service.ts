@@ -36,6 +36,8 @@ export interface MinisterioEnriquecido extends Ministerio {
   cantidadMiembros: number
   sedeNombre: string
   liderNombre: string
+  iglesiaId?: number
+  iglesiaNombre?: string
 }
 
 export interface MiembroMinisterioEnriquecido extends MiembroMinisterio {
@@ -47,10 +49,58 @@ export interface MiembroMinisterioEnriquecido extends MiembroMinisterio {
   correo: string
 }
 
+export interface UsuarioMinisterioAsignable {
+  idUsuario: number
+  nombres: string
+  apellidos: string
+  nombreCompleto: string
+}
+
+type LiderUsuarioRelacion = {
+  nombres: string | null
+  apellidos: string | null
+}
+
+type MinisterioMiembroRelacion = {
+  rol_en_ministerio: string | null
+  fecha_salida: string | null
+  usuario: LiderUsuarioRelacion | null
+}
+
+type MinisterioEnriquecidoRow = MinisterioRow & {
+  sede: {
+    nombre: string | null
+    id_iglesia: number | null
+    iglesia: { id_iglesia: number | null; nombre: string | null } | null
+  } | null
+  miembro_ministerio: MinisterioMiembroRelacion[] | null
+}
+
+function normalizarRol(rol: string | null): string {
+  return `${rol ?? ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+function mapMinisterioEnriquecidoRow(r: MinisterioEnriquecidoRow): MinisterioEnriquecido {
+  const miembros = Array.isArray(r.miembro_ministerio) ? r.miembro_ministerio : []
+  const miembrosActivos = miembros.filter((m) => !m.fecha_salida)
+  const lider = miembrosActivos.find((m) => normalizarRol(m.rol_en_ministerio).includes('lider'))
+
+  return {
+    ...mapMinisterio(r),
+    cantidadMiembros: miembrosActivos.length,
+    sedeNombre: r.sede?.nombre ?? '',
+    liderNombre: lider?.usuario
+      ? `${lider.usuario.nombres ?? ''} ${lider.usuario.apellidos ?? ''}`.trim()
+      : '',
+    iglesiaId: r.sede?.id_iglesia ?? undefined,
+    iglesiaNombre: r.sede?.iglesia?.nombre ?? undefined,
+  }
+}
+
 export async function getMinisteriosEnriquecidos(idIglesia?: number): Promise<MinisterioEnriquecido[]> {
   let q = supabase
     .from('ministerio')
-    .select('*, sede(nombre), miembro_ministerio(rol_en_ministerio, fecha_salida, usuario(nombres, apellidos))')
+    .select('*, sede(nombre, id_iglesia, iglesia(id_iglesia, nombre)), miembro_ministerio(rol_en_ministerio, fecha_salida, usuario(nombres, apellidos))')
     .eq('estado', 'activo')
     .order('nombre')
 
@@ -66,23 +116,60 @@ export async function getMinisteriosEnriquecidos(idIglesia?: number): Promise<Mi
 
   const { data, error } = await q
   if (error) throw error
-  return (data as any[]).map(r => {
-    const miembros = Array.isArray(r.miembro_ministerio) ? r.miembro_ministerio : []
-    const miembrosActivos = miembros.filter((m: any) => !m.fecha_salida)
-    const lider = miembrosActivos.find((m: any) => {
-      const raw = `${m.rol_en_ministerio ?? ''}`
-      const normalized = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      return normalized.includes('lider')
+  return (data as MinisterioEnriquecidoRow[]).map(mapMinisterioEnriquecidoRow)
+}
+
+export async function getMinisteriosPorSede(idSede: number): Promise<MinisterioEnriquecido[]> {
+  const { data, error } = await supabase
+    .from('ministerio')
+    .select('*, sede(nombre), miembro_ministerio(rol_en_ministerio, fecha_salida, usuario(nombres, apellidos))')
+    .eq('id_sede', idSede)
+    .eq('estado', 'activo')
+    .order('nombre')
+
+  if (error) throw error
+  return (data as MinisterioEnriquecidoRow[]).map(mapMinisterioEnriquecidoRow)
+}
+
+type UsuarioMinisterioRelacion = {
+  nombres: string | null
+  apellidos: string | null
+}
+
+type UsuarioActivoPorMinisterioRow = {
+  id_usuario: number
+  usuario: UsuarioMinisterioRelacion | null
+}
+
+export async function getUsuariosActivosPorMinisterio(idMinisterio: number): Promise<UsuarioMinisterioAsignable[]> {
+  const { data, error } = await supabase
+    .from('miembro_ministerio')
+    .select('id_usuario, usuario(nombres, apellidos)')
+    .eq('id_ministerio', idMinisterio)
+    .is('fecha_salida', null)
+    .order('id_usuario', { ascending: true })
+
+  if (error) throw error
+
+  const seen = new Set<number>()
+  const rows = (data as UsuarioActivoPorMinisterioRow[]) ?? []
+
+  return rows
+    .filter((row) => {
+      if (seen.has(row.id_usuario)) return false
+      seen.add(row.id_usuario)
+      return true
     })
-    return {
-      ...mapMinisterio(r),
-      cantidadMiembros: miembrosActivos.length,
-      sedeNombre: r.sede?.nombre ?? '',
-      liderNombre: lider?.usuario
-        ? `${lider.usuario.nombres ?? ''} ${lider.usuario.apellidos ?? ''}`.trim()
-        : '',
-    }
-  })
+    .map((row) => {
+      const nombres = row.usuario?.nombres ?? ''
+      const apellidos = row.usuario?.apellidos ?? ''
+      return {
+        idUsuario: row.id_usuario,
+        nombres,
+        apellidos,
+        nombreCompleto: `${nombres} ${apellidos}`.trim(),
+      }
+    })
 }
 
 export async function getMiembrosMinisterioEnriquecidos(idMinisterio?: number): Promise<MiembroMinisterioEnriquecido[]> {
@@ -93,7 +180,23 @@ export async function getMiembrosMinisterioEnriquecidos(idMinisterio?: number): 
   if (idMinisterio !== undefined) q = q.eq('id_ministerio', idMinisterio)
   const { data, error } = await q
   if (error) throw error
-  return (data as any[]).map(r => {
+  type MiembroMinisterioUsuarioRelacion = {
+    nombres: string | null
+    apellidos: string | null
+    correo: string | null
+    telefono: string | null
+  }
+
+  type MiembroMinisterioNombreRelacion = {
+    nombre: string | null
+  }
+
+  type MiembroMinisterioEnriquecidoRow = MiembroRow & {
+    usuario: MiembroMinisterioUsuarioRelacion | null
+    ministerio: MiembroMinisterioNombreRelacion | null
+  }
+
+  return ((data as MiembroMinisterioEnriquecidoRow[]) ?? []).map(r => {
     const nombreCompleto = `${r.usuario?.nombres ?? ''} ${r.usuario?.apellidos ?? ''}`.trim()
     return {
       ...mapMiembro(r),
@@ -144,10 +247,7 @@ export async function getMinisteriosIdsDeUsuario(idUsuario: number): Promise<num
   if (error) throw error
 
   const rows = (data as Array<{ id_ministerio: number; rol_en_ministerio: string | null }>) ?? []
-  const isLider = (rol: string | null) => {
-    const n = (rol ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-    return n.includes('lider')
-  }
+  const isLider = (rol: string | null) => normalizarRol(rol).includes('lider')
   const liderRows = rows.filter((r) => isLider(r.rol_en_ministerio))
   const source = liderRows.length > 0 ? liderRows : rows
   return Array.from(new Set(source.map((r) => r.id_ministerio)))
@@ -282,7 +382,6 @@ export async function getServidoresMinisterio(idMinisterio: number): Promise<Ser
     .from('miembro_ministerio')
     .select('id_usuario, rol_en_ministerio, usuario(nombres, apellidos)')
     .eq('id_ministerio', idMinisterio)
-    .not('rol_en_ministerio', 'ilike', '%lider%')
     .is('fecha_salida', null)
   if (error) throw error
   return (data as any[]).map(r => ({
@@ -350,4 +449,3 @@ export async function getUsuariosDeIglesia(idIglesia: number): Promise<UsuarioEn
 
   return Array.from(usuariosMap.values())
 }
-
