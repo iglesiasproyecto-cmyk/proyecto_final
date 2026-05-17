@@ -164,7 +164,7 @@ export function AcceptInvitePage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-center text-green-600">¡Bienvenido a IGLESIABD!</CardTitle>
+            <CardTitle className="text-center text-green-600">¡Bienvenido a Lumen!</CardTitle>
           </CardHeader>
           <CardContent>
             <Alert className="border-green-200 bg-green-50">
@@ -185,7 +185,7 @@ export function AcceptInvitePage() {
         <CardHeader>
           <CardTitle>Aceptar Invitación</CardTitle>
           <CardDescription>
-            Completa tu registro para IGLESIABD
+            Completa tu registro para Lumen
           </CardDescription>
         </CardHeader>
         <CardContent>

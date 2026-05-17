@@ -427,7 +427,7 @@ export function LandingPage() {
                 <span className="text-blue-500">vivo y fluido.</span>
               </motion.h2>
               <p className="text-slate-400 text-base md:text-lg leading-relaxed font-medium">
-                S.E.I. no es una aplicación estática. Es un organismo digital que crece, conecta y coordina cada célula de tu organización.
+                Lumen no es una aplicación estática. Es un organismo digital que crece, conecta y coordina cada célula de tu organización.
               </p>
               
               <div className="grid sm:grid-cols-2 gap-4 md:gap-6">
@@ -529,7 +529,7 @@ export function LandingPage() {
           <div className="order-1 lg:order-2 space-y-6">
             <Compass className="w-10 h-10 md:w-16 md:h-16 text-blue-400" />
             <h2 className="text-2xl md:text-4xl font-black leading-tight">Expansión Territorial <br /><span className="text-blue-500">Geolocalizada.</span></h2>
-            <p className="text-slate-400 text-base leading-relaxed">Visualiza el alcance real de tus misiones y sedes con una precisión quirúrgica. S.E.I. mapea tu crecimiento para una mejor cobertura pastoral.</p>
+            <p className="text-slate-400 text-base leading-relaxed">Visualiza el alcance real de tus misiones y sedes con una precisión quirúrgica. Lumen mapea tu crecimiento para una mejor cobertura pastoral.</p>
             <Button className="rounded-full px-6 md:px-8 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold h-10 md:h-12 text-sm">EXPLORAR MAPA</Button>
           </div>
         </div>
@@ -569,7 +569,7 @@ export function LandingPage() {
             <a href="#" className="hover:text-blue-400">Contacto</a>
           </div>
           <p className="text-[8px] md:text-[10px] font-bold text-slate-500 tracking-[0.3em] md:tracking-[0.5em] uppercase">
-            © 2026 S.E.I. &middot; THE INTELLIGENT OPERATING SYSTEM
+            © 2026 Lumen &middot; THE INTELLIGENT OPERATING SYSTEM
           </p>
         </div>
       </footer>

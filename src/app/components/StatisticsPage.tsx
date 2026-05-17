@@ -262,7 +262,7 @@ export function StatisticsPage() {
           </div>
           <div>
             <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">
-              S.E.I. {iglesiaActual ? `— ${iglesiaActual.nombre}` : '— Global'}
+              Lumen {iglesiaActual ? `— ${iglesiaActual.nombre}` : '— Global'}
             </p>
             <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Estadísticas</h1>
           </div>

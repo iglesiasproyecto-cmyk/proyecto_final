@@ -40,7 +40,7 @@ async function generatePDF(dataset: ReportDataset): Promise<Blob> {
   doc.setFontSize(24);
   doc.text('Reporte Ejecutivo', margin, 30);
   doc.setFontSize(12);
-  doc.text('IGLESIABD', margin, 40);
+  doc.text('Lumen', margin, 40);
   doc.setFontSize(10);
   const domainLabel: Record<string, string> = {
     iglesia: 'Iglesia', ministerios: 'Ministerios',
