@@ -7,10 +7,11 @@ import { Button } from '@/app/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { motion } from 'motion/react'
-import { GraduationCap, BookOpen, TrendingUp, Building2, ChevronDown } from 'lucide-react'
-import { CursosAdminList } from './CursosAdminList'
+import { GraduationCap, BookOpen, TrendingUp, Building2, ChevronDown, Eye } from 'lucide-react'
+import { useNavigate } from 'react-router'
 
 export function GlobalAulaPage() {
+  const navigate = useNavigate()
   const [expandedIglesia, setExpandedIglesia] = useState<number | null>(null)
 
   // Fetch all courses globally
@@ -200,8 +201,55 @@ export function GlobalAulaPage() {
                 <div key={i} className="h-32 bg-muted rounded-xl" />
               ))}
             </div>
+          ) : allCursos.length === 0 ? (
+            <Card>
+              <CardContent className="pt-8">
+                <div className="text-center text-muted-foreground">
+                  No hay cursos disponibles
+                </div>
+              </CardContent>
+            </Card>
           ) : (
-            <CursosAdminList cursos={allCursos} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {allCursos.map(curso => (
+                <motion.div
+                  key={curso.idCurso}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate(`/app/${curso.idCurso}`)}>
+                    <CardHeader>
+                      <CardTitle className="line-clamp-2 text-base">{curso.titulo}</CardTitle>
+                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                        {curso.descripcion || 'Sin descripción'}
+                      </p>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Badge variant="outline" className="text-xs">
+                          {curso.estado}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {curso.iglesiaNombre}
+                        </Badge>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full rounded-lg"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(`/app/${curso.idCurso}`)
+                        }}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Ver detalles
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
           )}
         </TabsContent>
       </Tabs>
