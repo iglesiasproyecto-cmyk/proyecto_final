@@ -19,7 +19,7 @@ export function useCursosGlobal(idIglesia: number | undefined) {
           id_iglesia,
           id_ministerio,
           creado_en,
-          actualizado_en,
+          updated_at,
           usuario_creador:id_usuario_creador(nombres, apellidos)
         `)
         .eq('id_iglesia', idIglesia)
@@ -50,7 +50,7 @@ export function useCursosPorMinisterio(idMinisterio: number | undefined) {
           id_iglesia,
           id_ministerio,
           creado_en,
-          actualizado_en,
+          updated_at,
           usuario_creador:id_usuario_creador(nombres, apellidos)
         `)
         .eq('id_ministerio', idMinisterio)
@@ -81,7 +81,7 @@ export function useCursoDetalle(idCurso: number | undefined) {
           id_ministerio,
           id_usuario_creador,
           creado_en,
-          actualizado_en,
+          updated_at,
           usuario_creador:id_usuario_creador(id_usuario, nombres, apellidos),
           iglesia:id_iglesia(id_iglesia, nombre),
           ministerio:id_ministerio(id_ministerio, nombre),
@@ -113,7 +113,7 @@ export function useEditCurso(idCurso: number) {
           titulo: params.titulo,
           descripcion: params.descripcion,
           estado: params.estado,
-          actualizado_en: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .eq('id_aula_curso', idCurso)
         .select()
