@@ -294,15 +294,24 @@ export function GlobalAulaDetailPanel({
                     <p className="text-xs text-muted-foreground line-clamp-3">{curso.descripcion}</p>
                   )}
 
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    <Badge
-                      className={`text-[10px] uppercase font-bold tracking-widest ${
-                        estadoBadgeColor[curso.estado as keyof typeof estadoBadgeColor] ||
-                        'bg-gray-100 text-gray-700 dark:bg-gray-900/30'
-                      }`}
-                    >
-                      {curso.estado}
-                    </Badge>
+                  <div className="flex gap-2 pt-4">
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground mb-1">Estado</p>
+                      <Badge
+                        className={`text-[10px] uppercase font-bold tracking-widest ${
+                          estadoBadgeColor[curso.estado as keyof typeof estadoBadgeColor] ||
+                          'bg-gray-100 text-gray-700 dark:bg-gray-900/30'
+                        }`}
+                      >
+                        {curso.estado}
+                      </Badge>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground mb-1">Tipo</p>
+                      <Badge variant="secondary" className="text-[10px] uppercase font-bold tracking-widest">
+                        {curso.id_iglesia ? 'Iglesia' : 'Ministerio'}
+                      </Badge>
+                    </div>
                   </div>
 
                   {(curso.iglesia || curso.ministerio || curso.usuario_creador) && (
