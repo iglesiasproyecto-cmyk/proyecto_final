@@ -382,7 +382,6 @@ export async function getServidoresMinisterio(idMinisterio: number): Promise<Ser
     .from('miembro_ministerio')
     .select('id_usuario, rol_en_ministerio, usuario(nombres, apellidos)')
     .eq('id_ministerio', idMinisterio)
-    .not('rol_en_ministerio', 'ilike', '%lider%')
     .is('fecha_salida', null)
   if (error) throw error
   return (data as any[]).map(r => ({

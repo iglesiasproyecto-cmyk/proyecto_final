@@ -3,7 +3,7 @@ import { useApp } from "../store/AppContext";
 import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
 import { useIglesias, usePastores, useSedes, useSedesEnriquecidas, useSedePastores, usePastoresEnriquecidos } from "@/hooks/useIglesias";
 import { useEventos } from "@/hooks/useEventos";
-import { useMinisterios, useMiembrosMinisterio } from "@/hooks/useMinisterios";
+import { useMinisterios, useMiembrosMinisterioEnriquecidos } from "@/hooks/useMinisterios";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useTareas } from "@/hooks/useEventos";
 import { useCursos } from "@/hooks/useCursos";
@@ -316,7 +316,7 @@ function AdminIglesiaDashboard() {
   const navigate = useNavigate();
   const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : '/app';
   const { data: ministerios = [] } = useMinisterios(iglesiaActual?.id);
-  const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(ministerios[0]?.idMinisterio ?? 0);
+  const { data: miembrosMinisterio = [] } = useMiembrosMinisterioEnriquecidos(ministerios[0]?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: notificaciones = [] } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
   const { data: sedes = [] } = useSedesEnriquecidas(iglesiaActual?.id);
@@ -638,7 +638,7 @@ function LiderDashboard() {
   const navigate = useNavigate();
   const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : '/app';
   const { data: ministerios = [] } = useMinisterios();
-  const { data: miembrosMinisterio = [] } = useMiembrosMinisterio(ministerios[0]?.idMinisterio ?? 0);
+  const { data: miembrosMinisterio = [] } = useMiembrosMinisterioEnriquecidos(ministerios[0]?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
   const { data: tareas = [] } = useTareas();
   const { data: cursos } = useCursos(ministerios[0]?.idMinisterio ?? 0);

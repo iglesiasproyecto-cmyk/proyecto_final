@@ -1,5 +1,5 @@
 import React from "react";
-import { useMinisterios, useMiembrosMinisterio } from "@/hooks/useMinisterios";
+import { useMinisterios, useMiembrosMinisterioEnriquecidos } from "@/hooks/useMinisterios";
 import { useEventos } from "@/hooks/useEventos";
 import { useApp } from "../store/AppContext";
 import { useProgresoCurso } from "@/hooks/useProgreso";
@@ -17,7 +17,7 @@ import {
   Users, Mail, CalendarDays, Crown, User,
   Plus, Clock, FolderHeart, ChevronRight, BookOpen, GraduationCap, Award,
 } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 const rolLabels: Record<string, string> = { lider: "Líder", servidor: "Servidor" };
 const rolColors: Record<string, string> = {
@@ -38,11 +38,12 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function MyDepartmentPage() {
+  const { idIglesia } = useParams<{ idIglesia: string }>();
   const { usuarioActual, rolActual } = useApp();
   const navigate = useNavigate();
   const { data: ministerios = [], isLoading } = useMinisterios();
   const min = ministerios[0] ?? null;
-  const { data: minMembers = [] } = useMiembrosMinisterio(min?.idMinisterio ?? 0);
+  const { data: minMembers = [] } = useMiembrosMinisterioEnriquecidos(min?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos();
 
   // Determinar si el usuario es líder del ministerio actual
