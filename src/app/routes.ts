@@ -38,6 +38,7 @@ import { NoChurchAssignedPage } from "./components/NoChurchAssignedPage";
 import { GlobalMinisteriosPage } from "./components/GlobalMinisteriosPage";
 import { GlobalEventosPage } from "./components/GlobalEventosPage";
 import { GlobalTareasPage } from "./components/GlobalTareasPage";
+import { GlobalAulaPage } from "./components/GlobalAulaPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
 
 export const router = createBrowserRouter([
@@ -82,6 +83,7 @@ export const router = createBrowserRouter([
               { path: "ministerios", Component: GlobalMinisteriosPage, ErrorBoundary: ErrorPage },
               { path: "eventos", Component: GlobalEventosPage, ErrorBoundary: ErrorPage },
               { path: "tareas", Component: GlobalTareasPage, ErrorBoundary: ErrorPage },
+              { path: "aula", Component: GlobalAulaPage, ErrorBoundary: ErrorPage },
             ],
           },
 

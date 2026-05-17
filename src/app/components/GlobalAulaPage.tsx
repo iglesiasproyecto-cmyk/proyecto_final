@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { getCursosEnriquecidos } from '@/services/cursos.service'
+import { supabase } from '@/lib/supabaseClient'
 import { useQuery } from '@tanstack/react-query'
+import type { AulaCursoEnriquecido } from '@/services/aula.service'
 import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
@@ -12,20 +13,44 @@ import { CursosAdminList } from './CursosAdminList'
 export function GlobalAulaPage() {
   const [expandedIglesia, setExpandedIglesia] = useState<number | null>(null)
 
-  // Fetch all courses globally (no iglesia filter)
+  // Fetch all courses globally
   const { data: allCursos = [], isLoading } = useQuery({
-    queryKey: ['cursos-enriquecidos-global'],
-    queryFn: () => getCursosEnriquecidos(undefined),
+    queryKey: ['aula-cursos-global'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('aula_curso')
+        .select(`
+          id_aula_curso,
+          titulo,
+          descripcion,
+          estado,
+          ministerio:ministerio(nombre),
+          iglesia:iglesia(nombre)
+        `)
+        .eq('estado', 'activo')
+        .order('titulo')
+
+      if (error) throw error
+
+      return (data || []).map(curso => ({
+        idCurso: curso.id_aula_curso,
+        titulo: curso.titulo,
+        descripcion: curso.descripcion,
+        estado: curso.estado,
+        ministerioNombre: (curso.ministerio as any)?.nombre,
+        iglesiaNombre: (curso.iglesia as any)?.nombre || 'Global',
+      }))
+    },
     staleTime: 5 * 60 * 1000,
   })
 
   // Group courses by iglesia
   const cursosPorIglesia = allCursos.reduce((acc, curso) => {
-    const key = curso.iglesiaNombre || 'Sin iglesia'
+    const key = curso.iglesiaNombre || 'Global'
     if (!acc[key]) acc[key] = []
     acc[key].push(curso)
     return acc
-  }, {} as Record<string, typeof allCursos>)
+  }, {} as Record<string, any[]>)
 
   const iglesias = Object.entries(cursosPorIglesia)
 
