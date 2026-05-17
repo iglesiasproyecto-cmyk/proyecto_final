@@ -32,6 +32,75 @@ export interface FormacionAcademica {
   estado: 'en_progreso' | 'completado';
 }
 
+export interface EtiquetaPerfil {
+  id_etiqueta: number;
+  nombre: string;
+  categoria: string;
+}
+
+export interface RevisionHojaDeVida {
+  id_revision: number;
+  id_hoja_de_vida: number;
+  id_revisor: number;
+  rol_revisor: string;
+  estado_revision: 'pendiente' | 'aprobada' | 'observada';
+  observaciones: string | null;
+  revisado_en: string;
+}
+
+export interface DisponibilidadPerfil {
+  id_disponibilidad: number;
+  id_hoja_de_vida: number;
+  id_sede: number | null;
+  id_ministerio: number | null;
+  dias_semana: string[];
+  franja_horaria: string | null;
+  modalidad: 'presencial' | 'virtual' | 'mixta';
+  activo: boolean;
+}
+
+export interface HojaDeVidaCompletaV2 {
+  id_hoja_de_vida: number;
+  id_usuario: number;
+  titulo_profesional: string | null;
+  resumen_profesional: string | null;
+  experiencia_laboral: string | null;
+  habilidades: Habilidad[];
+  formacion_academica: FormacionAcademica[];
+  otros_datos: Record<string, unknown>;
+  foto_perfil_url: string | null;
+  completa: boolean;
+  completada_en: string | null;
+  creado_en: string;
+  actualizado_en: string;
+  usuario: { nombres: string; apellidos: string; correo: string };
+  certificados: Array<{
+    id_aula_certificado: number;
+    id_aula_curso: number;
+    titulo_curso: string;
+    fecha_emision: string;
+    numero_certificado: string;
+  }>;
+  etiquetas: EtiquetaPerfil[];
+  disponibilidad: DisponibilidadPerfil[];
+  ultima_revision: RevisionHojaDeVida | null;
+}
+
+export interface HojaDeVidaListItem {
+  id_hoja_de_vida: number;
+  id_usuario: number;
+  nombres: string;
+  apellidos: string;
+  correo: string;
+  titulo_profesional: string | null;
+  completa: boolean;
+  completada_en: string | null;
+  actualizado_en: string;
+  cantidad_certificados: number;
+  ultima_revision: { estado_revision: string; revisado_en: string } | null;
+  etiquetas: string[];
+}
+
 /**
  * Obtiene la hoja de vida completa del usuario actual con certificados
  */
