@@ -13,6 +13,14 @@ DROP POLICY IF EXISTS "Lider can manage cursos in their ministerios" ON public.a
 DROP POLICY IF EXISTS "Servidor can read cursos they are enrolled in" ON public.aula_curso;
 DROP POLICY IF EXISTS "aula_curso super admin" ON public.aula_curso;
 DROP POLICY IF EXISTS "aula_curso_admin_sede_all" ON public.aula_curso;
+DROP POLICY IF EXISTS "aula_curso_super_admin_all" ON public.aula_curso;
+DROP POLICY IF EXISTS "aula_curso_admin_sede_select" ON public.aula_curso;
+DROP POLICY IF EXISTS "aula_curso_admin_sede_insert" ON public.aula_curso;
+DROP POLICY IF EXISTS "aula_curso_admin_sede_update" ON public.aula_curso;
+DROP POLICY IF EXISTS "aula_curso_admin_sede_delete" ON public.aula_curso;
+DROP POLICY IF EXISTS "aula_curso_creator_all" ON public.aula_curso;
+DROP POLICY IF EXISTS "aula_curso_lider_select" ON public.aula_curso;
+DROP POLICY IF EXISTS "aula_curso_servidor_enrolled" ON public.aula_curso;
 
 -- Super admin: full access
 CREATE POLICY "aula_curso_super_admin_all" ON public.aula_curso
@@ -96,6 +104,14 @@ DROP POLICY IF EXISTS "aula_modulo_select_tenant" ON public.aula_modulo;
 DROP POLICY IF EXISTS "aula_modulo_insert_tenant" ON public.aula_modulo;
 DROP POLICY IF EXISTS "aula_modulo_update_tenant" ON public.aula_modulo;
 DROP POLICY IF EXISTS "aula_modulo_delete_tenant" ON public.aula_modulo;
+DROP POLICY IF EXISTS "aula_modulo_super_admin_all" ON public.aula_modulo;
+DROP POLICY IF EXISTS "aula_modulo_admin_sede_select" ON public.aula_modulo;
+DROP POLICY IF EXISTS "aula_modulo_admin_sede_insert" ON public.aula_modulo;
+DROP POLICY IF EXISTS "aula_modulo_admin_sede_update" ON public.aula_modulo;
+DROP POLICY IF EXISTS "aula_modulo_admin_sede_delete" ON public.aula_modulo;
+DROP POLICY IF EXISTS "aula_modulo_creator_all" ON public.aula_modulo;
+DROP POLICY IF EXISTS "aula_modulo_lider_all" ON public.aula_modulo;
+DROP POLICY IF EXISTS "aula_modulo_servidor_enrolled" ON public.aula_modulo;
 
 -- Super admin: full access
 CREATE POLICY "aula_modulo_super_admin_all" ON public.aula_modulo
@@ -207,6 +223,9 @@ CREATE POLICY "aula_modulo_servidor_enrolled" ON public.aula_modulo
 -- Drop all existing policies on aula_evaluacion if any exist
 DROP POLICY IF EXISTS "Super admin can manage all evaluaciones" ON public.aula_evaluacion;
 DROP POLICY IF EXISTS "Lider can manage evaluaciones in their modulos" ON public.aula_evaluacion;
+DROP POLICY IF EXISTS "aula_evaluacion_super_admin_all" ON public.aula_evaluacion;
+DROP POLICY IF EXISTS "aula_evaluacion_course_admin_all" ON public.aula_evaluacion;
+DROP POLICY IF EXISTS "aula_evaluacion_servidor_read" ON public.aula_evaluacion;
 
 -- Super admin: full access
 CREATE POLICY "aula_evaluacion_super_admin_all" ON public.aula_evaluacion
