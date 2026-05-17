@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as hojaDeVidaService from '@/services/hojaDeVida.service';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -317,4 +318,82 @@ export function useHojaDeVidaPorUsuario(idUsuario: number | null) {
   }, [idUsuario, fetchHoja]);
 
   return state;
+}
+
+// ── TanStack Query hooks para Perfil Profesional v2 ──
+
+export function usePerfilProfesionalCompletaV2() {
+  return useQuery({
+    queryKey: ['perfil-profesional-v2', 'me'],
+    queryFn: () => hojaDeVidaService.getPerfilProfesionalCompletaV2(),
+    staleTime: 2 * 60 * 1000,
+  })
+}
+
+export function usePerfilProfesionalCompletaV2PorUsuario(idUsuario: number | null | undefined) {
+  return useQuery({
+    queryKey: ['perfil-profesional-v2', idUsuario],
+    queryFn: () => hojaDeVidaService.getPerfilProfesionalCompletaV2PorUsuario(idUsuario!),
+    enabled: !!idUsuario,
+    staleTime: 2 * 60 * 1000,
+  })
+}
+
+export function useListarPerfilesProfesionalesScoped(filtros?: Parameters<typeof hojaDeVidaService.listarPerfilesProfesionalesScoped>[0]) {
+  return useQuery({
+    queryKey: ['perfiles-profesionales-scoped', filtros],
+    queryFn: () => hojaDeVidaService.listarPerfilesProfesionalesScoped(filtros),
+    staleTime: 2 * 60 * 1000,
+  })
+}
+
+export function useEtiquetasPerfil() {
+  return useQuery({
+    queryKey: ['etiquetas-perfil'],
+    queryFn: hojaDeVidaService.getEtiquetas,
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export function useCrearRevision() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: hojaDeVidaService.crearRevision,
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['perfil-profesional-v2', variables.idHojaDeVida] })
+      qc.invalidateQueries({ queryKey: ['perfiles-profesionales-scoped'] })
+    },
+  })
+}
+
+export function useAsignarEtiqueta() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: hojaDeVidaService.asignarEtiqueta,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['perfil-profesional-v2'] })
+      qc.invalidateQueries({ queryKey: ['perfiles-profesionales-scoped'] })
+    },
+  })
+}
+
+export function useRemoverEtiqueta() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: hojaDeVidaService.removerEtiqueta,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['perfil-profesional-v2'] })
+      qc.invalidateQueries({ queryKey: ['perfiles-profesionales-scoped'] })
+    },
+  })
+}
+
+export function useUpsertDisponibilidad() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: hojaDeVidaService.upsertDisponibilidad,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['perfil-profesional-v2'] })
+    },
+  })
 }
