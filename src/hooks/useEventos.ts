@@ -92,6 +92,22 @@ export function useTareasEnriquecidas(idEvento?: number, idIglesia?: number, idU
   })
 }
 
+export function useEventosGlobal() {
+  return useQuery({
+    queryKey: ['eventos-enriquecidos', 'global'],
+    queryFn: () => getEventosEnriquecidos(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useTareasGlobal() {
+  return useQuery({
+    queryKey: ['tareas-enriquecidas', 'global'],
+    queryFn: () => getTareasEnriquecidas(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 export function useTareaEvidencias(idTarea?: number) {
   return useQuery({
     queryKey: ['tarea-evidencias', idTarea],
