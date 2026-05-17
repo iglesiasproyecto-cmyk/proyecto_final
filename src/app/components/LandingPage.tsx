@@ -403,7 +403,7 @@ export function LandingPage() {
               className="group relative bg-white text-black hover:bg-slate-100 rounded-[40px] px-12 md:px-24 h-20 md:h-32 text-2xl md:text-4xl font-black shadow-[0_40px_100px_rgba(255,255,255,0.1)] border-0 overflow-hidden"
             >
               <span className="relative z-10 flex items-center gap-4 md:gap-6">
-                COMENZAR <ArrowRight className="w-8 h-8 md:w-12 md:h-12 group-hover:translate-x-4 transition-transform" />
+                INICIAR SESIÓN <ArrowRight className="w-8 h-8 md:w-12 md:h-12 group-hover:translate-x-4 transition-transform" />
               </span>
               <motion.div 
                 className="absolute inset-0 bg-gradient-to-r from-slate-200 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
@@ -551,7 +551,7 @@ export function LandingPage() {
             onClick={() => navigate("/login")}
             className="bg-white text-black hover:bg-slate-100 rounded-[30px] px-10 md:px-20 h-16 md:h-24 text-xl md:text-2xl font-black shadow-[0_40px_100px_rgba(255,255,255,0.1)] active:scale-95 transition-all w-full max-w-sm md:max-w-none"
           >
-            COMENZAR LA TRANSFORMACIÓN
+            INICIAR SESIÓN
           </Button>
         </motion.div>
       </section>
