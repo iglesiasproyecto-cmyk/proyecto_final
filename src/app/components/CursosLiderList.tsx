@@ -38,34 +38,51 @@ export function CursosLiderList() {
         .select('id_ministerio')
         .eq('id_usuario', internalUserId)
         .eq('rol_en_ministerio', 'lider')
-        .eq('fecha_salida', null)
+        .is('fecha_salida', null)
 
       if (errorMinisterios) throw errorMinisterios
 
       const ministerioIds = ministerios?.map(m => m.id_ministerio) ?? []
 
-      // 2. Obtener cursos donde el usuario es creador O es líder del ministerio
-      let query = supabase
+      // 2. Obtener cursos: los que creó + los del ministerio que lidera
+      // Query 1: Cursos que creó
+      const { data: cursosCreados, error: errorCreados } = await supabase
         .from('aula_curso')
         .select(`
           *,
           ministerio:ministerio(nombre),
           modulos:aula_modulo(id_aula_modulo)
         `)
+        .eq('id_usuario_creador', internalUserId)
         .order('creado_en', { ascending: false })
 
-      // Si hay ministerios donde es líder, incluir esos cursos también
+      if (errorCreados) throw errorCreados
+
+      let cursosMinisterio = []
+
+      // Query 2: Cursos del ministerio que lidera (si lidera algún ministerio)
       if (ministerioIds.length > 0) {
-        query = query.or(`id_usuario_creador.eq.${internalUserId},id_ministerio.in.(${ministerioIds.join(',')})`)
-      } else {
-        // Si no lidera ningún ministerio, solo mostrar los que creó
-        query = query.eq('id_usuario_creador', internalUserId)
+        const { data: cursosMinist, error: errorMinist } = await supabase
+          .from('aula_curso')
+          .select(`
+            *,
+            ministerio:ministerio(nombre),
+            modulos:aula_modulo(id_aula_modulo)
+          `)
+          .in('id_ministerio', ministerioIds)
+          .order('creado_en', { ascending: false })
+
+        if (errorMinist) throw errorMinist
+        cursosMinisterio = cursosMinist ?? []
       }
 
-      const { data, error } = await query
+      // 3. Combinar resultados eliminando duplicados
+      const cursosMap = new Map()
+      ;[...(cursosCreados ?? []), ...cursosMinisterio].forEach(curso => {
+        cursosMap.set(curso.id_aula_curso, curso)
+      })
 
-      if (error) throw error
-      return data
+      return Array.from(cursosMap.values())
     },
     enabled: !!user?.id,
   })

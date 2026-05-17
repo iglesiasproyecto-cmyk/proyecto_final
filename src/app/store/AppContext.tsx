@@ -443,6 +443,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return
     }
     if (flag === 'done') {
+      sessionStorage.removeItem('post_login_reload')
       reloadQueuedRef.current = true
     }
   }, [])
@@ -593,6 +594,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIsClaimsReady(true)
         setAuthError(null)
         resolveLoading()
+        if (sessionStorage.getItem('post_login_reload') !== 'done') {
+          sessionStorage.setItem('post_login_reload', 'pending')
+          window.location.reload()
+        }
 
       } catch (err) {
         console.error('[AUTH] Error loading user data:', err)

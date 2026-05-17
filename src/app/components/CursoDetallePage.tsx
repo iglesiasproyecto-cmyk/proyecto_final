@@ -124,7 +124,7 @@ export function CursoDetallePage() {
                 .eq('id_usuario', internalUserId)
                 .eq('id_ministerio', curso.id_ministerio)
                 .eq('rol_en_ministerio', 'lider')
-                .eq('fecha_salida', null)
+                .is('fecha_salida', null)
                 .maybeSingle()
 
               if (errorMinisterio) {
