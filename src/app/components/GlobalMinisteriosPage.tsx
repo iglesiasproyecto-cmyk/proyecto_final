@@ -12,6 +12,7 @@ import type { Iglesia } from "@/types/app.types";
 import { Sheet, SheetContent } from "./ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -243,6 +244,7 @@ export function GlobalMinisteriosPage() {
   const [selectedMin, setSelectedMin] = useState<MinisterioEnriquecido | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; nombre: string } | null>(null);
 
   const toggleMutation = useToggleMinisterioEstado();
   const deleteMutation = useDeleteMinisterio();
@@ -272,11 +274,7 @@ export function GlobalMinisteriosPage() {
   };
 
   const handleDelete = (id: number, nombre: string) => {
-    if (!confirm(`¿Eliminar ministry "${nombre}"? Esta acción no se puede deshacer.`)) return;
-    deleteMutation.mutate(id, {
-      onSuccess: () => toast.success(`Ministerio "${nombre}" eliminado`),
-      onError: (e: any) => toast.error(`Error: ${e.message}`),
-    });
+    setConfirmDelete({ id, nombre });
   };
 
   if (isLoading) {
@@ -455,6 +453,22 @@ export function GlobalMinisteriosPage() {
         open={showCreate}
         onClose={() => setShowCreate(false)}
         iglesias={iglesias}
+      />
+
+      <ConfirmDialog
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (!confirmDelete) return;
+          deleteMutation.mutate(confirmDelete.id, {
+            onSuccess: () => { toast.success(`Ministerio "${confirmDelete.nombre}" eliminado`); setConfirmDelete(null); },
+            onError: (e: any) => { toast.error(`Error: ${e.message}`); setConfirmDelete(null); },
+          });
+        }}
+        title="Eliminar Ministerio"
+        description={`¿Estás seguro de que deseas eliminar el ministerio "${confirmDelete?.nombre}"? Esta acción no se puede deshacer.`}
+        confirmText={deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
+        isDestructive
       />
     </div>
   );

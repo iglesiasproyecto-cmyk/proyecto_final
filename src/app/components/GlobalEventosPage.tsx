@@ -6,6 +6,7 @@ import type { EventoEnriquecido } from "@/services/eventos.service";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -404,6 +405,7 @@ export function GlobalEventosPage() {
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedEvento, setSelectedEvento] = useState<EventoEnriquecido | null>(null);
+  const [confirmDeleteEvento, setConfirmDeleteEvento] = useState<EventoEnriquecido | null>(null);
 
   const filtered = useMemo(() => {
     return eventos.filter(ev => {
@@ -426,10 +428,14 @@ export function GlobalEventosPage() {
   }, [filtered]);
 
   const handleDelete = (ev: EventoEnriquecido) => {
-    if (!confirm(`¿Eliminar evento "${ev.nombre}"? Esta acción no se puede deshacer.`)) return;
-    deleteMutation.mutate(ev.idEvento, {
-      onSuccess: () => toast.success(`Evento "${ev.nombre}" eliminado`),
-      onError: (e: any) => toast.error(`Error al eliminar: ${e.message}`),
+    setConfirmDeleteEvento(ev);
+  };
+
+  const executeDelete = () => {
+    if (!confirmDeleteEvento) return;
+    deleteMutation.mutate(confirmDeleteEvento.idEvento, {
+      onSuccess: () => { toast.success(`Evento "${confirmDeleteEvento.nombre}" eliminado`); setConfirmDeleteEvento(null); },
+      onError: (e: any) => { toast.error(`Error al eliminar: ${e.message}`); setConfirmDeleteEvento(null); },
     });
   };
 
@@ -509,6 +515,16 @@ export function GlobalEventosPage() {
       </Sheet>
 
       <CreateEventoDialog open={showCreate} onClose={() => setShowCreate(false)} />
+
+      <ConfirmDialog
+        isOpen={!!confirmDeleteEvento}
+        onClose={() => setConfirmDeleteEvento(null)}
+        onConfirm={executeDelete}
+        title="Eliminar Evento"
+        description={`¿Estás seguro de que deseas eliminar el evento "${confirmDeleteEvento?.nombre}"? Esta acción no se puede deshacer.`}
+        confirmText={deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
+        isDestructive
+      />
     </div>
   );
 }

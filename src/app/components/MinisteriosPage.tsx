@@ -15,6 +15,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { motion } from "motion/react";
 import { Users, Plus, Search, Power, PowerOff, BookOpen, UserCog, UsersRound, Trash2, Settings } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
@@ -35,6 +36,7 @@ export function MinisteriosPage() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedMin, setSelectedMin] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; nombre: string } | null>(null);
 
   const toggleEstadoMutation = useToggleMinisterioEstado();
   const createMinisterioMutation = useCreateMinisterio();
@@ -42,10 +44,20 @@ export function MinisteriosPage() {
   const canManageMinisterios = useCanManageMinisterio(null);
 
   function handleDeleteMinisterio(id: number, nombre: string) {
-    if (!confirm(`¿Eliminar ministerio "${nombre}"? Esta acción no se puede deshacer.`)) return;
-    deleteMinisterioMutation.mutate(id, {
-      onSuccess: () => toast.success(`Ministerio "${nombre}" eliminado exitosamente`),
-      onError: (error: any) => toast.error(`Error al eliminar ministerio: ${error.message}`)
+    setConfirmDelete({ id, nombre });
+  }
+
+  function executeDeleteMinisterio() {
+    if (!confirmDelete) return;
+    deleteMinisterioMutation.mutate(confirmDelete.id, {
+      onSuccess: () => {
+        toast.success(`Ministerio "${confirmDelete.nombre}" eliminado exitosamente`);
+        setConfirmDelete(null);
+      },
+      onError: (error: any) => {
+        toast.error(`Error al eliminar ministerio: ${error.message}`);
+        setConfirmDelete(null);
+      }
     });
   }
   const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", idSede: "" });
@@ -268,6 +280,16 @@ export function MinisteriosPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={executeDeleteMinisterio}
+        title="Eliminar Ministerio"
+        description={`¿Estás seguro de que deseas eliminar el ministerio "${confirmDelete?.nombre}"? Esta acción no se puede deshacer.`}
+        confirmText={deleteMinisterioMutation.isPending ? "Eliminando..." : "Eliminar"}
+        isDestructive
+      />
     </div>
   );
 }
