@@ -221,7 +221,7 @@ export function LoginPage() {
 
           <div className="mt-8 text-center">
             <p className="text-[10px] text-muted-foreground/40">
-              © 2026 IglesiaBD
+              © 2026 Lumen
             </p>
           </div>
         </motion.div>

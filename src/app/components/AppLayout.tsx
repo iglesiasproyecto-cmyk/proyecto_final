@@ -222,7 +222,7 @@ export function AppLayout() {
 
   useEffect(() => {
     const title = pageTitles[location.pathname] ?? getDynamicPageTitle(location.pathname);
-    document.title = `${title} | IGLESIABD`;
+    document.title = `${title} | Lumen`;
   }, [location.pathname]);
 
   if (authError) {

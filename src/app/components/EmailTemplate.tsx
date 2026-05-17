@@ -3,7 +3,7 @@ export const EmailTemplate = `
   <div style="text-align: center; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
     <div style="display: inline-block; padding: 10px 20px; background-color: #ffffff; border-radius: 50%; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
       <h1 style="color: #1a7fa8; font-size: 28px; margin: 0; font-weight: bold;">
-        IGLESIABD
+        Lumen
       </h1>
     </div>
     <p style="color: #64748b; margin: 12px 0 0; font-size: 16px;">
@@ -17,7 +17,7 @@ export const EmailTemplate = `
     </h2>
     
     <p style="color: #334155; line-height: 1.6; margin-bottom: 24px; font-size: 16px;">
-      <strong>¡Hola {{firstName}}!</strong> Has sido invitado a unirte a <strong>IGLESIABD</strong>. 
+      <strong>¡Hola {{firstName}}!</strong> Has sido invitado a unirte a <strong>Lumen</strong>. 
       Haz clic en el siguiente enlace para aceptar la invitación y crear tu contraseña:
     </p>
     
@@ -36,7 +36,7 @@ export const EmailTemplate = `
   
   <div style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 30px; 
        padding-top: 20px; border-top: 1px solid #e2e8f0;">
-    IGLESIABD — Sistema de Gestión Eclesiástica<br/>
+    Lumen — Sistema de Gestión Eclesiástica<br/>
     © ${new Date().getFullYear()} - Todos los derechos reservados
   </div>
 </div>
