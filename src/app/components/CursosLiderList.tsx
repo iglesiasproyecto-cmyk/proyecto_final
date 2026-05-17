@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { useAuth } from '@/app/store/AppContext'
 import { getInternalUserId } from '@/lib/userHelpers'
 import { supabase } from '@/lib/supabaseClient'
@@ -18,6 +18,7 @@ import { AulaSkeleton } from '@/app/components/loading/skeletons';
 export function CursosLiderList() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { idIglesia } = useParams<{ idIglesia: string }>()
   const queryClient = useQueryClient()
   const [showCrearModulo, setShowCrearModulo] = useState(false)
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(null)
@@ -208,7 +209,7 @@ export function CursosLiderList() {
                     <Button
                       variant="default"
                       size="sm"
-                      onClick={() => navigate(`/app/aula/curso/${curso.id_aula_curso}`)}
+                      onClick={() => navigate(`/app/${idIglesia}/aula/curso/${curso.id_aula_curso}`)}
                       className="h-10 flex-1 rounded-2xl bg-[#4682b4] font-bold text-white shadow-md shadow-blue-900/10 hover:bg-[#4682b4]/90"
                     >
                       <Eye className="h-4 w-4 mr-2" />
