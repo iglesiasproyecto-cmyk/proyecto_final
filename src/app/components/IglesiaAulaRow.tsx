@@ -1,10 +1,9 @@
-import { useState } from 'react';
 import { Badge } from './ui/badge';
 import { CursoListItem } from './CursoListItem';
 import { MinisterioRow } from './MinisterioRow';
 import { ChevronDown, Building2 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
-import { useCursosGlobal, useCursosPorMinisterio } from '@/hooks/useGlobalAula';
+import { useCursosGlobal } from '@/hooks/useGlobalAula';
 import { useMinisterios } from '@/hooks/useMinisterios';
 import type { Tables } from '@/types/database.types';
 
