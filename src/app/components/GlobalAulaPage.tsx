@@ -1,257 +1,189 @@
 import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
-import { useQuery } from '@tanstack/react-query'
-import type { AulaCursoEnriquecido } from '@/services/aula.service'
+import { useAuth } from '@/app/store/AppContext'
+import { useIglesias } from '@/hooks/useIglesias'
+import { IglesiaAulaRow } from './IglesiaAulaRow'
+import { GlobalAulaDetailPanel } from './GlobalAulaDetailPanel'
+import { Alert, AlertDescription } from '@/app/components/ui/alert'
 import { Badge } from '@/app/components/ui/badge'
-import { Button } from '@/app/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
-import { motion } from 'motion/react'
-import { GraduationCap, BookOpen, TrendingUp, Building2, ChevronDown, Eye } from 'lucide-react'
-import { useNavigate } from 'react-router'
+import { Card } from '@/app/components/ui/card'
+import { Skeleton } from '@/app/components/ui/skeleton'
+import { GraduationCap, Sparkles, AlertCircle } from 'lucide-react'
+import { motion, AnimatePresence } from 'motion/react'
+import type { Tables } from '@/types/database.types'
 
 export function GlobalAulaPage() {
-  const navigate = useNavigate()
-  const [expandedIglesia, setExpandedIglesia] = useState<number | null>(null)
+  const { rolActual } = useAuth()
 
-  // Fetch all courses globally
-  const { data: allCursos = [], isLoading } = useQuery({
-    queryKey: ['aula-cursos-global'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('aula_curso')
-        .select(`
-          id_aula_curso,
-          titulo,
-          descripcion,
-          estado,
-          ministerio:ministerio(nombre),
-          iglesia:iglesia(nombre)
-        `)
-        .order('titulo')
+  // State Management
+  const [expandedIglesias, setExpandedIglesias] = useState<Set<number>>(new Set())
+  const [expandedMinisterios, setExpandedMinisterios] = useState<Set<number>>(new Set())
+  const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null)
+  const [detailPanelOpen, setDetailPanelOpen] = useState(false)
 
-      if (error) throw error
+  // Fetch iglesias
+  const { data: iglesias = [], isLoading, isError } = useIglesias()
 
-      return (data || []).map(curso => ({
-        idCurso: curso.id_aula_curso,
-        titulo: curso.titulo,
-        descripcion: curso.descripcion,
-        estado: curso.estado,
-        ministerioNombre: (curso.ministerio as any)?.nombre,
-        iglesiaNombre: (curso.iglesia as any)?.nombre || 'Global',
-      }))
-    },
-    staleTime: 5 * 60 * 1000,
-  })
+  // Permission check
+  if (rolActual !== 'super_admin') {
+    return (
+      <div className="relative min-h-full px-4 sm:px-6 lg:px-8 pb-10">
+        <Alert variant="destructive" className="max-w-2xl mx-auto mt-8">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Solo super_admin puede acceder a la Aula Global. Tu rol es: {rolActual}
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
 
-  // Group courses by iglesia
-  const cursosPorIglesia = allCursos.reduce((acc, curso) => {
-    const key = curso.iglesiaNombre || 'Global'
-    if (!acc[key]) acc[key] = []
-    acc[key].push(curso)
-    return acc
-  }, {} as Record<string, any[]>)
+  // Toggle handlers
+  const handleToggleIglesia = (idIglesia: number) => {
+    setExpandedIglesias(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(idIglesia)) {
+        newSet.delete(idIglesia)
+      } else {
+        newSet.add(idIglesia)
+      }
+      return newSet
+    })
+  }
 
-  const iglesias = Object.entries(cursosPorIglesia)
+  const handleToggleMinisterio = (idMinisterio: number) => {
+    setExpandedMinisterios(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(idMinisterio)) {
+        newSet.delete(idMinisterio)
+      } else {
+        newSet.add(idMinisterio)
+      }
+      return newSet
+    })
+  }
 
-  // Calculate global stats
-  const totalCursos = allCursos.length
-  const totalIglesias = iglesias.length
-  const cursosActivos = allCursos.filter(c => c.estado !== 'finalizado').length
+  const handleSelectCurso = (curso: Tables<'aula_curso'> & {
+    usuario_creador?: { nombres: string; apellidos: string } | null;
+  }) => {
+    setSelectedCursoId(curso.id_aula_curso)
+    setDetailPanelOpen(true)
+  }
+
+  const handleCloseDetailPanel = () => {
+    setDetailPanelOpen(false)
+    setSelectedCursoId(null)
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="relative min-h-full px-4 sm:px-6 lg:px-8 pb-10">
+      {/* Background with overlays */}
+      <div className="pointer-events-none -z-10 absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 right-0 h-80 w-80 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl opacity-20" />
+        <div className="absolute bottom-0 left-0 h-60 w-60 bg-gradient-to-tr from-primary/15 to-transparent rounded-full blur-3xl opacity-15" />
+      </div>
+
+      {/* Header Section */}
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#4682b4]/15 via-[#709dbd]/5 to-transparent p-6 sm:p-8 shadow-[0_20px_60px_rgb(0,0,0,0.06)]"
+        transition={{ duration: 0.4 }}
+        className="relative overflow-hidden rounded-[32px] border border-white/10 bg-card/55 backdrop-blur-2xl p-8 sm:p-10 mb-8 shadow-[0_20px_60px_rgb(0,0,0,0.06)]"
       >
-        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-          <GraduationCap className="h-40 w-40 -rotate-12" />
-        </div>
-        <div className="relative z-10 space-y-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge className="border-none bg-[#4682b4]/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#4682b4]">
-              <GraduationCap className="mr-1 h-3.5 w-3.5" />
-              Gestión académica global
+        {/* Decorative gradient divs */}
+        <div className="absolute top-0 right-0 h-64 w-64 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl opacity-30 pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 h-48 w-48 bg-gradient-to-tr from-primary/5 to-transparent rounded-full blur-3xl opacity-20 pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col gap-6">
+          {/* Icon and Badges */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <GraduationCap className="h-5 w-5 text-primary" />
+            </div>
+            <Badge className="border-none bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+              Plataforma de Formación
+            </Badge>
+            <Badge variant="outline" className="border-white/10 bg-transparent px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Aula Global
             </Badge>
           </div>
-          <div>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
-              Aula <span className="text-[#4682b4]">Virtual Global</span>
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm sm:text-base font-medium leading-relaxed text-muted-foreground">
-              Supervisión de cursos, inscripciones y progreso de aprendizaje en todas las iglesias.
-            </p>
-          </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-4 pt-4">
-            <div className="rounded-xl bg-background/50 border border-border/50 p-4">
-              <div className="text-2xl font-bold text-foreground">{totalCursos}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-widest">Cursos totales</div>
-            </div>
-            <div className="rounded-xl bg-background/50 border border-border/50 p-4">
-              <div className="text-2xl font-bold text-foreground">{totalIglesias}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-widest">Iglesias</div>
-            </div>
-            <div className="rounded-xl bg-background/50 border border-border/50 p-4">
-              <div className="text-2xl font-bold text-foreground">{cursosActivos}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-widest">Activos</div>
-            </div>
+          {/* Title and Subtitle */}
+          <div className="space-y-2">
+            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground">
+              Aula <span className="text-primary">Global</span>
+            </h1>
+            <p className="text-sm sm:text-base font-medium text-muted-foreground max-w-3xl leading-relaxed">
+              Administra cursos en todas las iglesias y ministerios desde un único lugar.
+            </p>
           </div>
         </div>
       </motion.div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="iglesias" className="w-full">
-        <div className="mb-6 flex items-center overflow-x-auto pb-2 no-scrollbar">
-          <TabsList className="inline-flex rounded-2xl border border-border/50 bg-muted/50 p-1.5 backdrop-blur-md">
-            <TabsTrigger
-              value="iglesias"
-              className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-[#4682b4] data-[state=active]:shadow-lg"
-            >
-              <BookOpen className="h-4 w-4 mr-2" />
-              Por iglesia
-            </TabsTrigger>
-            <TabsTrigger
-              value="todos"
-              className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-[#4682b4] data-[state=active]:shadow-lg"
-            >
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Todos los cursos
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      {/* Content Section */}
+      <div className="mx-auto max-w-4xl">
+        {/* Error State */}
+        {isError && (
+          <Alert variant="destructive" className="mb-8">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Error al cargar iglesias. Intenta recargar la página.
+            </AlertDescription>
+          </Alert>
+        )}
 
-        {/* Tab: Por iglesia */}
-        <TabsContent value="iglesias" className="space-y-4">
-          {isLoading ? (
-            <div className="animate-pulse space-y-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-24 bg-muted rounded-xl" />
-              ))}
-            </div>
-          ) : iglesias.length === 0 ? (
-            <Card>
-              <CardContent className="pt-8">
-                <div className="text-center text-muted-foreground">
-                  No hay cursos disponibles
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            iglesias.map(([iglesiaNombre, cursos]) => (
-              <motion.div
-                key={iglesiaNombre}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <Card
-                  className="cursor-pointer transition-all hover:border-primary/50"
-                  onClick={() => setExpandedIglesia(expandedIglesia === iglesias.indexOf([iglesiaNombre, cursos]) ? null : iglesias.indexOf([iglesiaNombre, cursos]))}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Building2 className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <CardTitle className="text-lg">{iglesiaNombre}</CardTitle>
-                          <p className="text-xs text-muted-foreground">{cursos.length} cursos</p>
-                        </div>
-                      </div>
-                      <ChevronDown
-                        className={`h-5 w-5 transition-transform ${
-                          expandedIglesia === iglesias.indexOf([iglesiaNombre, cursos]) ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </div>
-                  </CardHeader>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="space-y-6">
+            <Skeleton className="h-20 rounded-lg" />
+            <Skeleton className="h-20 rounded-lg" />
+            <Skeleton className="h-20 rounded-lg" />
+          </div>
+        )}
 
-                  {expandedIglesia === iglesias.indexOf([iglesiaNombre, cursos]) && (
-                    <CardContent className="pt-0">
-                      <div className="space-y-2 border-t border-border/50 pt-4">
-                        {cursos.map(curso => (
-                          <div
-                            key={curso.idCurso}
-                            className="flex items-center justify-between rounded-lg bg-background/50 p-3 text-sm"
-                          >
-                            <span className="font-medium">{curso.titulo}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {curso.estado}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              </motion.div>
-            ))
-          )}
-        </TabsContent>
-
-        {/* Tab: Todos los cursos */}
-        <TabsContent value="todos">
-          {isLoading ? (
-            <div className="animate-pulse space-y-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-32 bg-muted rounded-xl" />
-              ))}
-            </div>
-          ) : allCursos.length === 0 ? (
-            <Card>
-              <CardContent className="pt-8">
-                <div className="text-center text-muted-foreground">
-                  No hay cursos disponibles
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {allCursos.map(curso => (
+        {/* Data State */}
+        {!isLoading && iglesias && iglesias.length > 0 && (
+          <motion.div className="space-y-6">
+            <AnimatePresence mode="popLayout">
+              {iglesias.map((iglesia, index) => (
                 <motion.div
-                  key={curso.idCurso}
-                  initial={{ opacity: 0, y: 10 }}
+                  key={iglesia.id_iglesia}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
                 >
-                  <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate(`/app/${curso.idCurso}`)}>
-                    <CardHeader>
-                      <CardTitle className="line-clamp-2 text-base">{curso.titulo}</CardTitle>
-                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                        {curso.descripcion || 'Sin descripción'}
-                      </p>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-xs">
-                          {curso.estado}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {curso.iglesiaNombre}
-                        </Badge>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full rounded-lg"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          navigate(`/app/${curso.idCurso}`)
-                        }}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Ver detalles
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <IglesiaAulaRow
+                    iglesia={iglesia}
+                    onCursoSelect={handleSelectCurso}
+                    expandedIglesias={expandedIglesias}
+                    onToggleIglesia={handleToggleIglesia}
+                    expandedMinisterios={expandedMinisterios}
+                    onToggleMinisterio={handleToggleMinisterio}
+                  />
                 </motion.div>
               ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+            </AnimatePresence>
+          </motion.div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && (!iglesias || iglesias.length === 0) && !isError && (
+          <Card className="p-8 text-center border-dashed">
+            <GraduationCap className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+            <p className="text-muted-foreground font-medium">
+              No hay iglesias disponibles
+            </p>
+          </Card>
+        )}
+      </div>
+
+      {/* Detail Panel */}
+      <GlobalAulaDetailPanel
+        open={detailPanelOpen}
+        cursoId={selectedCursoId}
+        onClose={handleCloseDetailPanel}
+      />
     </div>
   )
 }
