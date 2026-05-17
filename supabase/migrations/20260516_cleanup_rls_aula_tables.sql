@@ -31,12 +31,24 @@ CREATE POLICY "aula_curso_admin_sede_select" ON public.aula_curso
     )
   );
 
-CREATE POLICY "aula_curso_admin_sede_modify" ON public.aula_curso
-  FOR INSERT, UPDATE, DELETE USING (
+CREATE POLICY "aula_curso_admin_sede_insert" ON public.aula_curso
+  FOR INSERT WITH CHECK (
+    is_admin_sede()
+    AND id_iglesia = get_my_tenant_id()
+  );
+
+CREATE POLICY "aula_curso_admin_sede_update" ON public.aula_curso
+  FOR UPDATE USING (
     is_admin_sede()
     AND id_iglesia = get_my_tenant_id()
   )
   WITH CHECK (
+    is_admin_sede()
+    AND id_iglesia = get_my_tenant_id()
+  );
+
+CREATE POLICY "aula_curso_admin_sede_delete" ON public.aula_curso
+  FOR DELETE USING (
     is_admin_sede()
     AND id_iglesia = get_my_tenant_id()
   );
@@ -101,8 +113,17 @@ CREATE POLICY "aula_modulo_admin_sede_select" ON public.aula_modulo
     )
   );
 
-CREATE POLICY "aula_modulo_admin_sede_modify" ON public.aula_modulo
-  FOR INSERT, UPDATE, DELETE USING (
+CREATE POLICY "aula_modulo_admin_sede_insert" ON public.aula_modulo
+  FOR INSERT WITH CHECK (
+    is_admin_sede()
+    AND id_aula_curso IN (
+      SELECT ac.id_aula_curso FROM aula_curso ac
+      WHERE ac.id_iglesia = get_my_tenant_id()
+    )
+  );
+
+CREATE POLICY "aula_modulo_admin_sede_update" ON public.aula_modulo
+  FOR UPDATE USING (
     is_admin_sede()
     AND id_aula_curso IN (
       SELECT ac.id_aula_curso FROM aula_curso ac
@@ -110,6 +131,15 @@ CREATE POLICY "aula_modulo_admin_sede_modify" ON public.aula_modulo
     )
   )
   WITH CHECK (
+    is_admin_sede()
+    AND id_aula_curso IN (
+      SELECT ac.id_aula_curso FROM aula_curso ac
+      WHERE ac.id_iglesia = get_my_tenant_id()
+    )
+  );
+
+CREATE POLICY "aula_modulo_admin_sede_delete" ON public.aula_modulo
+  FOR DELETE USING (
     is_admin_sede()
     AND id_aula_curso IN (
       SELECT ac.id_aula_curso FROM aula_curso ac
