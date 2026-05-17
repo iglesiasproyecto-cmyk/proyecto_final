@@ -44,9 +44,8 @@ export function IglesiaAulaRow({
     isError: errorMinisterios,
   } = useMinisterios(isExpanded ? iglesia.id_iglesia : undefined);
 
-  const totalCursos =
-    cursosIglesia.length +
-    (ministerios || []).reduce((sum, m) => sum + (m.cursos?.length || 0), 0);
+  // Total curso count: iglesia-level cursos only (ministerio cursos counted separately in MinisterioRow)
+  const totalCursos = cursosIglesia.length;
 
   return (
     <div className="space-y-3 border-l-2 border-primary/30 pl-4">

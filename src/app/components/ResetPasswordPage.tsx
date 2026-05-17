@@ -31,43 +31,43 @@ export function ResetPasswordPage() {
     if (!authLoading && session) navigate("/app")
   }, [authLoading, session, navigate])
 
-  // Validar token al cargar la página
+  // Validar token/sesión al cargar la página
   useEffect(() => {
-    const tokenParam = searchParams.get('token')
-    if (!tokenParam) {
-      setError('Token de recuperación no encontrado.')
-      setIsValidating(false)
-      return
-    }
+    const validateHash = async () => {
+      try {
+        // Supabase envía el token en el hash (#token=...)
+        const tokenParam = searchParams.get('token')
+        const typeParam = searchParams.get('type')
 
-    setToken(tokenParam)
-    validateToken(tokenParam)
-  }, [searchParams])
+        if (!tokenParam || typeParam !== 'recovery') {
+          setError('Token de recuperación no encontrado.')
+          setIsValidating(false)
+          return
+        }
 
-  const validateToken = async (tokenToValidate: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('validate-reset-token', {
-        body: { token: tokenToValidate }
-      })
+        setToken(tokenParam)
 
-      if (error) {
-        setError('Token inválido o expirado.')
-        setIsValidating(false)
-        return
-      }
+        // Obtener la sesión actual (Supabase maneja la validación automáticamente)
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
-      if (data.valid) {
+        if (sessionError || !session) {
+          setError('Token inválido o expirado.')
+          setIsValidating(false)
+          return
+        }
+
+        // El token es válido si hay una sesión
         setTokenValid(true)
-        setEmail(data.email)
-      } else {
-        setError('Token inválido o expirado.')
+        setEmail(session.user?.email || '')
+      } catch (err: any) {
+        setError('Error al validar el token: ' + err.message)
+      } finally {
+        setIsValidating(false)
       }
-    } catch (err) {
-      setError('Error al validar el token.')
-    } finally {
-      setIsValidating(false)
     }
-  }
+
+    validateHash()
+  }, [searchParams])
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,11 +90,8 @@ export function ResetPasswordPage() {
 
     setIsLoading(true)
     try {
-      const { data, error } = await supabase.functions.invoke('complete-password-reset', {
-        body: {
-          token: token,
-          newPassword: newPassword
-        }
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
       })
 
       if (error) {
@@ -103,14 +100,10 @@ export function ResetPasswordPage() {
         return
       }
 
-      if (data.success) {
-        toast.success('¡Contraseña actualizada exitosamente!')
-        setTimeout(() => navigate('/login'), 1500)
-      } else {
-        setError(data.message || 'Error al cambiar la contraseña.')
-      }
-    } catch (err) {
-      setError('Error al actualizar la contraseña.')
+      toast.success('¡Contraseña actualizada exitosamente!')
+      setTimeout(() => navigate('/login'), 1500)
+    } catch (err: any) {
+      setError(err.message || 'Error al actualizar la contraseña.')
     } finally {
       setIsLoading(false)
     }
