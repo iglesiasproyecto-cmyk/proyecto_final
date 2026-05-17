@@ -32,15 +32,37 @@ export function CursosLiderList() {
       const internalUserId = await getInternalUserId(user.id)
       if (!internalUserId) return []
 
-      const { data, error } = await supabase
+      // 1. Obtener ministerios donde el usuario es líder
+      const { data: ministerios, error: errorMinisterios } = await supabase
+        .from('miembro_ministerio')
+        .select('id_ministerio')
+        .eq('id_usuario', internalUserId)
+        .eq('rol_en_ministerio', 'lider')
+        .eq('fecha_salida', null)
+
+      if (errorMinisterios) throw errorMinisterios
+
+      const ministerioIds = ministerios?.map(m => m.id_ministerio) ?? []
+
+      // 2. Obtener cursos donde el usuario es creador O es líder del ministerio
+      let query = supabase
         .from('aula_curso')
         .select(`
           *,
           ministerio:ministerio(nombre),
           modulos:aula_modulo(id_aula_modulo)
         `)
-        .eq('id_usuario_creador', internalUserId)
         .order('creado_en', { ascending: false })
+
+      // Si hay ministerios donde es líder, incluir esos cursos también
+      if (ministerioIds.length > 0) {
+        query = query.or(`id_usuario_creador.eq.${internalUserId},id_ministerio.in.(${ministerioIds.join(',')})`)
+      } else {
+        // Si no lidera ningún ministerio, solo mostrar los que creó
+        query = query.eq('id_usuario_creador', internalUserId)
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
       return data
