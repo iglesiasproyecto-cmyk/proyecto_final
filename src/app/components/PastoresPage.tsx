@@ -69,6 +69,7 @@ export function PastoresPage() {
   const [formA, setFormA] = useState({ idSede: 0, idPastor: 0, esPrincipal: false, fechaInicio: "", observaciones: "" });
   const [formSolicitud, setFormSolicitud] = useState({ idPastorActual: 0, idSede: 0, idPastorNuevo: 0, esPrincipal: false, motivo: "" });
   const [confirmDeleteAsign, setConfirmDeleteAsign] = useState<{ id: number; pastorName: string; iglesiaName: string } | null>(null);
+  const [confirmDeletePastor, setConfirmDeletePastor] = useState<{ id: number; nombre: string } | null>(null);
   const [selectedPastor, setSelectedPastor] = useState<number | null>(null);
 
   const createPastorMutation = useCreatePastor();
@@ -92,11 +93,7 @@ export function PastoresPage() {
   );
 
   const handleDeletePastor = (id: number, nombre: string) => {
-    if (!confirm(`¿Eliminar pastor "${nombre}"? Esta acción es irreversible.`)) return;
-    deletePastorMutation.mutate(id, {
-      onSuccess: () => toast.success(`Pastor "${nombre}" eliminado exitosamente`),
-      onError: (error: any) => toast.error(`Error al eliminar pastor: ${error.message}`)
-    });
+    setConfirmDeletePastor({ id, nombre });
   };
 
   const openAddPastor = () => { setFormP({ nombres: "", apellidos: "", correo: "", telefono: "", idUsuario: 0 }); setEditingPastor(null); setDialogPastor(true); };
@@ -764,6 +761,33 @@ return (
               className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm"
             >
               Remover Asignación
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmDeletePastor} onOpenChange={(open) => !open && setConfirmDeletePastor(null)}>
+        <AlertDialogContent className="rounded-2xl border border-white/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl">Eliminar Pastor</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              ¿Estás seguro de que deseas eliminar al pastor <strong className="text-foreground">{confirmDeletePastor?.nombre}</strong>? Esta acción es irreversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-2">
+            <AlertDialogCancel className="rounded-full">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDeletePastor) {
+                  deletePastorMutation.mutate(confirmDeletePastor.id, {
+                    onSuccess: () => { toast.success(`Pastor "${confirmDeletePastor.nombre}" eliminado exitosamente`); setConfirmDeletePastor(null); },
+                    onError: (error: any) => { toast.error(`Error al eliminar pastor: ${error.message}`); setConfirmDeletePastor(null); }
+                  });
+                }
+              }}
+              className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm"
+            >
+              Eliminar Pastor
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

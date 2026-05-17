@@ -199,9 +199,9 @@ export function ProgresoIndividualPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`${aulaBasePath}/curso/${idCurso}`)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
+            Volver al curso
           </Button>
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">

@@ -8,6 +8,7 @@ import { useApp } from "../store/AppContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -197,12 +198,12 @@ function TareaSheet({ tarea, onClose }: { tarea: TareaEnriquecida; onClose: () =
   const updateEstadoMutation = useUpdateTareaEstado();
   const deleteMutation = useDeleteTarea();
   const overdue = isOverdue(tarea.fechaLimite) && tarea.estado !== "completada";
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleDelete = () => {
-    if (!confirm(`¿Eliminar tarea "${tarea.titulo}"?`)) return;
     deleteMutation.mutate(tarea.idTarea, {
-      onSuccess: () => { toast.success("Tarea eliminada"); onClose(); },
-      onError: (e: any) => toast.error(`Error: ${e.message}`),
+      onSuccess: () => { toast.success("Tarea eliminada"); setConfirmDelete(false); onClose(); },
+      onError: (e: any) => { toast.error(`Error al eliminar: ${e.message}`); setConfirmDelete(false); },
     });
   };
 
@@ -283,11 +284,26 @@ function TareaSheet({ tarea, onClose }: { tarea: TareaEnriquecida; onClose: () =
         )}
 
         <div className="pt-4 border-t border-border/50">
-          <Button variant="destructive" className="w-full rounded-xl" onClick={handleDelete} disabled={deleteMutation.isPending}>
+          <Button
+            variant="destructive"
+            className="w-full rounded-xl"
+            onClick={() => setConfirmDelete(true)}
+            disabled={deleteMutation.isPending}
+          >
             {deleteMutation.isPending ? "Eliminando..." : "Eliminar Tarea"}
           </Button>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title="Eliminar Tarea"
+        description={`¿Estás seguro de que deseas eliminar la tarea "${tarea.titulo}"? Esta acción no se puede deshacer.`}
+        confirmText={deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
+        isDestructive
+      />
     </SheetContent>
   );
 }
