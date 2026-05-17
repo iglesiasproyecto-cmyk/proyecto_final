@@ -24,7 +24,8 @@ import {
   TrendingUp,
   UserCheck,
   AlertCircle,
-  UserPlus
+  UserPlus,
+  ClipboardList
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabaseClient'
@@ -358,6 +359,10 @@ export function CursoDetallePage() {
               <BookOpen className="h-4 w-4 mr-2" />
               Módulos
             </TabsTrigger>
+            <TabsTrigger value="evaluaciones" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
+              <ClipboardList className="h-4 w-4 mr-2" />
+              Evaluaciones
+            </TabsTrigger>
             <TabsTrigger value="progreso" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <BarChart3 className="h-4 w-4 mr-2" />
               Progreso
@@ -381,6 +386,20 @@ export function CursoDetallePage() {
           )}
         </TabsContent>
 
+        <TabsContent value="evaluaciones">
+          {(isLider || isAdmin) ? (
+            <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
+              <CardContent className="py-8 px-6">
+                <p className="text-muted-foreground">
+                  Los líderes pueden configurar evaluaciones en cada módulo desde la pestaña "Módulos".
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <EvaluacionesTab idCurso={parseInt(idCurso!)} />
+          )}
+        </TabsContent>
+
         <TabsContent value="progreso">
           <ProgresoCursoTab progresoGrupo={progresoGrupo || []} />
         </TabsContent>
@@ -397,6 +416,54 @@ export function CursoDetallePage() {
           idAulaCurso={Number(idCurso)}
         />
       )}
+    </div>
+  )
+}
+
+// Componente para la pestaña de evaluaciones
+function EvaluacionesTab({ idCurso }: { idCurso: number }) {
+  const { data: modulos } = useQuery({
+    queryKey: ['modulos-evaluaciones', idCurso],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('aula_modulo')
+        .select(`
+          id_aula_modulo,
+          titulo,
+          evaluaciones:aula_evaluacion(
+            id_aula_evaluacion,
+            titulo,
+            puntaje_minimo
+          )
+        `)
+        .eq('id_aula_curso', idCurso)
+      if (error) throw error
+      return data || []
+    }
+  })
+
+  return (
+    <div className="space-y-4">
+      {modulos?.map(mod => (
+        <Card key={mod.id_aula_modulo} className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
+          <CardHeader>
+            <CardTitle className="text-lg">{mod.titulo}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {mod.evaluaciones?.length ? (
+              <div className="space-y-2">
+                {mod.evaluaciones.map((ev: any) => (
+                  <p key={ev.id_aula_evaluacion} className="text-sm">
+                    📝 {ev.titulo} (Mín. {ev.puntaje_minimo}%)
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Sin evaluaciones</p>
+            )}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   )
 }
