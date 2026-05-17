@@ -1348,6 +1348,121 @@ export type Database = {
           },
         ]
       }
+      hoja_de_vida_revision: {
+        Row: {
+          id_revision: number
+          id_hoja_de_vida: number
+          id_revisor: number
+          rol_revisor: string
+          estado_revision: 'pendiente' | 'aprobada' | 'observada'
+          observaciones: string | null
+          revisado_en: string
+          creado_en: string
+          actualizado_en: string
+        }
+        Insert: {
+          id_revision?: number
+          id_hoja_de_vida: number
+          id_revisor: number
+          rol_revisor: string
+          estado_revision?: 'pendiente' | 'aprobada' | 'observada'
+          observaciones?: string | null
+          revisado_en?: string
+          creado_en?: string
+          actualizado_en?: string
+        }
+        Update: {
+          estado_revision?: 'pendiente' | 'aprobada' | 'observada'
+          observaciones?: string | null
+          revisado_en?: string
+          actualizado_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hdv_revision_id_hoja_de_vida_fkey"
+            columns: ["id_hoja_de_vida"]
+            isOneToOne: false
+            referencedRelation: "hoja_de_vida"
+            referencedColumns: ["id_hoja_de_vida"]
+          },
+        ]
+      }
+      hoja_de_vida_etiqueta: {
+        Row: {
+          id_etiqueta: number
+          nombre: string
+          categoria: string
+          activa: boolean
+          creado_en: string
+        }
+        Insert: {
+          id_etiqueta?: number
+          nombre: string
+          categoria: string
+          activa?: boolean
+          creado_en?: string
+        }
+        Update: {
+          nombre?: string
+          categoria?: string
+          activa?: boolean
+        }
+        Relationships: []
+      }
+      hoja_de_vida_etiqueta_usuario: {
+        Row: {
+          id_hoja_de_vida: number
+          id_etiqueta: number
+          asignada_por: number | null
+          creado_en: string
+        }
+        Insert: {
+          id_hoja_de_vida: number
+          id_etiqueta: number
+          asignada_por?: number | null
+          creado_en?: string
+        }
+        Update: {
+          asignada_por?: number | null
+        }
+        Relationships: []
+      }
+      hoja_de_vida_disponibilidad: {
+        Row: {
+          id_disponibilidad: number
+          id_hoja_de_vida: number
+          id_sede: number | null
+          id_ministerio: number | null
+          dias_semana: string[]
+          franja_horaria: string | null
+          modalidad: 'presencial' | 'virtual' | 'mixta'
+          activo: boolean
+          creado_en: string
+          actualizado_en: string
+        }
+        Insert: {
+          id_disponibilidad?: number
+          id_hoja_de_vida: number
+          id_sede?: number | null
+          id_ministerio?: number | null
+          dias_semana?: string[]
+          franja_horaria?: string | null
+          modalidad?: 'presencial' | 'virtual' | 'mixta'
+          activo?: boolean
+          creado_en?: string
+          actualizado_en?: string
+        }
+        Update: {
+          id_sede?: number | null
+          id_ministerio?: number | null
+          dias_semana?: string[]
+          franja_horaria?: string | null
+          modalidad?: 'presencial' | 'virtual' | 'mixta'
+          activo?: boolean
+          actualizado_en?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       evaluacion_detalle: {
