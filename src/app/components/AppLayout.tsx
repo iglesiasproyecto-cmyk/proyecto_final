@@ -50,6 +50,7 @@ const pageTitles: Record<string, string> = {
   "/app/global/perfil": "Mi Perfil",
   "/app/global/eventos": "Eventos Globales",
   "/app/global/tareas": "Tareas Globales",
+  "/app/global/aula": "Aula Virtual Global",
 };
 
 function getDynamicPageTitle(pathname: string): string {
@@ -87,6 +88,7 @@ function getNavItemsForRole(
         { label: "Ministerios", path: "/app/global/ministerios", icon: <Settings2 className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Eventos", path: "/app/global/eventos", icon: <CalendarDays className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Tareas", path: "/app/global/tareas", icon: <ListTodo className="w-5 h-5" />, section: "Gestión Global" },
+        { label: "Aula Virtual", path: "/app/global/aula", icon: <BookOpen className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Usuarios", path: "/app/global/usuarios", icon: <Users className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Cumpleaños", path: "/app/global/cumpleanos", icon: <Cake className="w-5 h-5" />, section: "Gestión Global" },
         { label: "Estadísticas", path: "/app/global/estadisticas", icon: <BarChart3 className="w-5 h-5" />, section: "Gestión Global" },
