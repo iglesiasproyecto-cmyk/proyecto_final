@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   Sheet,
@@ -70,7 +70,7 @@ export function GlobalAulaDetailPanel({
   const editMutation = useEditCurso(cursoId || 0);
   const enrollMutation = useManageEnrollments(cursoId || 0);
 
-  const { register, handleSubmit, reset, watch } = useForm<{
+  const { register, handleSubmit, reset, watch, setValue } = useForm<{
     titulo: string;
     descripcion: string | null;
     estado: string;
@@ -83,7 +83,7 @@ export function GlobalAulaDetailPanel({
   });
 
   // Update form when curso data changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (curso) {
       reset({
         titulo: curso.titulo,
@@ -126,18 +126,10 @@ export function GlobalAulaDetailPanel({
   const handleAddUserFromDialog = (userIds: number[]) => {
     if (!cursoId || userIds.length === 0) return;
 
-    // Add first user, then close dialog
+    // Close dialog immediately and let mutations complete in background
+    setEnrollDialogOpen(false);
     userIds.forEach((userId) => {
-      enrollMutation.mutate(
-        { action: 'add', idUsuario: userId },
-        {
-          onSuccess: () => {
-            if (userIds[0] === userId) {
-              setEnrollDialogOpen(false);
-            }
-          },
-        }
-      );
+      enrollMutation.mutate({ action: 'add', idUsuario: userId });
     });
   };
 
@@ -251,7 +243,7 @@ export function GlobalAulaDetailPanel({
                     <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2 block">
                       Estado
                     </label>
-                    <Select defaultValue={watch('estado')} onValueChange={(value) => register('estado').onChange({ target: { value } })}>
+                    <Select value={watch('estado')} onValueChange={(value) => setValue('estado', value)}>
                       <SelectTrigger className="h-10 bg-background/50 border-white/10 rounded-lg text-sm">
                         <SelectValue />
                       </SelectTrigger>
@@ -316,20 +308,20 @@ export function GlobalAulaDetailPanel({
 
                   {(curso.iglesia || curso.ministerio || curso.usuario_creador) && (
                     <div className="space-y-1.5 pt-2 text-xs text-muted-foreground">
-                      {(curso.iglesia as any)?.nombre && (
+                      {curso.iglesia?.nombre && (
                         <p>
-                          <span className="font-semibold text-foreground">Iglesia:</span> {(curso.iglesia as any).nombre}
+                          <span className="font-semibold text-foreground">Iglesia:</span> {curso.iglesia.nombre}
                         </p>
                       )}
-                      {(curso.ministerio as any)?.nombre && (
+                      {curso.ministerio?.nombre && (
                         <p>
-                          <span className="font-semibold text-foreground">Ministerio:</span> {(curso.ministerio as any).nombre}
+                          <span className="font-semibold text-foreground">Ministerio:</span> {curso.ministerio.nombre}
                         </p>
                       )}
-                      {(curso.usuario_creador as any)?.nombres && (
+                      {curso.usuario_creador?.nombres && (
                         <p>
-                          <span className="font-semibold text-foreground">Creado por:</span> {(curso.usuario_creador as any).nombres}{' '}
-                          {(curso.usuario_creador as any).apellidos}
+                          <span className="font-semibold text-foreground">Creado por:</span> {curso.usuario_creador.nombres}{' '}
+                          {curso.usuario_creador.apellidos}
                         </p>
                       )}
                     </div>
@@ -361,18 +353,16 @@ export function GlobalAulaDetailPanel({
                 </div>
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {inscripciones.map((inscripcion) => {
-                    const usuario = (inscripcion.usuario as any);
-                    return (
+                  {inscripciones.map((inscripcion) => (
                       <div
                         key={inscripcion.id_usuario}
                         className="flex items-center justify-between gap-3 p-2 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors group"
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium truncate">
-                            {usuario?.nombres || '?'} {usuario?.apellidos || ''}
+                            {inscripcion.usuario?.nombres ?? '?'} {inscripcion.usuario?.apellidos ?? ''}
                           </p>
-                          <p className="text-[10px] text-muted-foreground truncate">{usuario?.correo || 'N/A'}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{inscripcion.usuario?.correo ?? 'N/A'}</p>
                         </div>
                         <button
                           onClick={() => setRemoveUserDialog({ open: true, userId: inscripcion.id_usuario })}
@@ -382,8 +372,7 @@ export function GlobalAulaDetailPanel({
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                    );
-                  })}
+                    ))}
                 </div>
               )}
             </div>
