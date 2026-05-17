@@ -26,7 +26,9 @@ CREATE POLICY "aula_curso_admin_sede_select" ON public.aula_curso
     AND (
       id_iglesia = get_my_tenant_id()
       OR id_ministerio IN (
-        SELECT m.id_ministerio FROM ministerio m WHERE m.id_iglesia = get_my_tenant_id()
+        SELECT m.id_ministerio FROM ministerio m
+        JOIN sede s ON s.id_sede = m.id_sede
+        WHERE s.id_iglesia = get_my_tenant_id()
       )
     )
   );
@@ -108,7 +110,9 @@ CREATE POLICY "aula_modulo_admin_sede_select" ON public.aula_modulo
       SELECT ac.id_aula_curso FROM aula_curso ac
       WHERE ac.id_iglesia = get_my_tenant_id()
         OR ac.id_ministerio IN (
-          SELECT m.id_ministerio FROM ministerio m WHERE m.id_iglesia = get_my_tenant_id()
+          SELECT m.id_ministerio FROM ministerio m
+          JOIN sede s ON s.id_sede = m.id_sede
+          WHERE s.id_iglesia = get_my_tenant_id()
         )
     )
   );
