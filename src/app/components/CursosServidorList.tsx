@@ -4,9 +4,10 @@ import { supabase } from '@/lib/supabaseClient'
 import { getInternalUserId } from '@/lib/userHelpers'
 import { useQuery } from '@tanstack/react-query'
 import { useProgresoCurso } from '@/hooks/useProgreso'
+import { useCertificadosUsuario } from '@/hooks/useCertificados'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Badge } from '@/app/components/ui/badge'
-import { Plus, BookOpen, TrendingUp, GraduationCap, ShieldCheck, Sparkles, Users, Clock, ArrowRight, Award } from 'lucide-react'
+import { Plus, BookOpen, TrendingUp, GraduationCap, ShieldCheck, Sparkles, Users, Clock, ArrowRight, Award, CheckCircle } from 'lucide-react'
 import { BarraProgreso } from './BarraProgreso'
 import { motion } from 'motion/react'
 import { useNavigate } from 'react-router'
@@ -135,6 +136,9 @@ function CursoCard({ curso, userId, index }: { curso: any, userId?: number, inde
     idCurso: curso.id_curso
   })
 
+  const { data: certificados } = useCertificadosUsuario(userId)
+  const tieneCertificado = certificados?.some(c => c.id_aula_curso === curso.id_curso)
+
   const colors = [
     'from-blue-500/20 to-indigo-500/10',
     'from-emerald-500/20 to-teal-500/10',
@@ -162,10 +166,17 @@ function CursoCard({ curso, userId, index }: { curso: any, userId?: number, inde
           <div className="absolute -bottom-6 -left-6 opacity-10 transition-transform duration-700 group-hover:scale-110 group-hover:rotate-12">
             <BookOpen className="h-32 w-32" />
           </div>
-          {progreso?.porcentaje === 100 && (
+          {tieneCertificado && (
+            <div className="absolute top-4 left-4">
+              <div className="p-1.5 bg-amber-500 rounded-full shadow-lg animate-pulse">
+                <Award className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          )}
+          {progreso?.porcentaje === 100 && !tieneCertificado && (
             <div className="absolute top-4 left-4">
               <div className="p-1.5 bg-green-500 rounded-full shadow-lg">
-                <Award className="h-4 w-4 text-white" />
+                <CheckCircle className="h-4 w-4 text-white" />
               </div>
             </div>
           )}
