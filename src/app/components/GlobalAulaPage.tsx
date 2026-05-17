@@ -142,7 +142,7 @@ export function GlobalAulaPage() {
         )}
 
         {/* Data State */}
-        {!isLoading && iglesias && iglesias.length > 0 && (
+        {!isLoading && iglesias.length > 0 && (
           <motion.div className="space-y-6">
             <AnimatePresence mode="popLayout">
               {iglesias.map((iglesia, index) => (

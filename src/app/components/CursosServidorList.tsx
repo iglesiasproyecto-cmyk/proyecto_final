@@ -10,12 +10,13 @@ import { Badge } from '@/app/components/ui/badge'
 import { Plus, BookOpen, TrendingUp, GraduationCap, ShieldCheck, Sparkles, Users, Clock, ArrowRight, Award, CheckCircle } from 'lucide-react'
 import { BarraProgreso } from './BarraProgreso'
 import { motion } from 'motion/react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { Skeleton } from '@/app/components/ui/skeleton';
 import { AulaSkeleton } from '@/app/components/loading/skeletons';
 
 export function CursosServidorList() {
   const { user } = useAuth()
+  const { idIglesia } = useParams<{ idIglesia: string }>()
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
   const [internalUserLoading, setInternalUserLoading] = useState(false)
 
@@ -123,13 +124,13 @@ export function CursosServidorList() {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {cursos.map((curso, index) => (
-        <CursoCard key={curso.id_curso} curso={curso} userId={internalUserId} index={index} />
+        <CursoCard key={curso.id_curso} curso={curso} userId={internalUserId} index={index} idIglesia={idIglesia} />
       ))}
     </div>
   )
 }
 
-function CursoCard({ curso, userId, index }: { curso: any, userId?: number, index: number }) {
+function CursoCard({ curso, userId, index, idIglesia }: { curso: any, userId?: number, index: number, idIglesia?: string }) {
   const navigate = useNavigate()
   const { data: progreso } = useProgresoCurso({
     idUsuario: userId,
@@ -153,7 +154,7 @@ function CursoCard({ curso, userId, index }: { curso: any, userId?: number, inde
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
       whileHover={{ y: -8 }}
-      onClick={() => navigate(`/app/aula/curso/${curso.id_curso}`)}
+      onClick={() => navigate(`/app/${idIglesia}/aula/curso/${curso.id_curso}`)}
       className="group relative cursor-pointer"
     >
       <Card className="h-full overflow-hidden rounded-[28px] border border-white/10 bg-background/55 backdrop-blur-2xl transition-all duration-500 group-hover:-translate-y-1 group-hover:border-primary/30 group-hover:shadow-2xl group-hover:shadow-primary/10">
