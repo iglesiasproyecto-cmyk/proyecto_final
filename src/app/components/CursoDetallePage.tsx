@@ -43,6 +43,8 @@ export function CursoDetallePage() {
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
   const [showAgregarPersonas, setShowAgregarPersonas] = useState(false)
 
+  console.log('[CursoDetallePage] Loaded with:', { idCurso, rolActual, iglesiaActualId: iglesiaActual?.id, aulaBasePath, userEmail: user?.email })
+
   useEffect(() => {
     if (user?.id) {
       getInternalUserId(user.id).then(setInternalUserId)
@@ -152,6 +154,19 @@ export function CursoDetallePage() {
     // Permitir acceso si es: admin, creador del curso, líder del ministerio, o servidor inscrito
     const isLider = isCreadorCurso || isLiderMinisterio
     const puedeAcceder = isAdmin || isLider || isServidorInscrito
+
+    console.log('[CursoDetallePage] Access check:', {
+      isAdmin,
+      isCreadorCurso,
+      isLiderMinisterio,
+      isServidorInscrito,
+      isLider,
+      puedeAcceder,
+      cursoId: curso?.id_aula_curso,
+      cursoCreador: curso?.id_usuario_creador,
+      internalUserId,
+      ministerioId: curso?.id_ministerio
+    })
 
     if (checkingAccess) {
       return (
