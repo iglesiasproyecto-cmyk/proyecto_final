@@ -1222,6 +1222,7 @@ export function UsuariosPage() {
                 : "Usuario"
             : "Usuario"
         }
+        puedeRevisar={rolActual === 'super_admin' || rolActual === 'admin_iglesia' || rolActual === 'admin_sede' || rolActual === 'lider'}
       />
 
       <ConfirmDialog
