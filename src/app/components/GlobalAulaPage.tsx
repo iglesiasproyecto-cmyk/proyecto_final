@@ -28,7 +28,6 @@ export function GlobalAulaPage() {
           ministerio:ministerio(nombre),
           iglesia:iglesia(nombre)
         `)
-        .eq('estado', 'activo')
         .order('titulo')
 
       if (error) throw error
