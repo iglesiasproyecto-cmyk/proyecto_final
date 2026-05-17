@@ -13,7 +13,10 @@ import {
 } from '@/app/components/ui/select';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Plus, Trash2, Save, X } from 'lucide-react';
+import { toast } from 'sonner';
 import * as hojaDeVidaService from '@/services/hojaDeVida.service';
+import { useUpsertDisponibilidad } from '@/hooks/useHojaDeVida';
+import type { DisponibilidadPerfil } from '@/services/hojaDeVida.service';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +39,101 @@ interface HojaDeVidaFormProps {
   onMarcarCompleta?: () => Promise<any>;
   isUpdating?: boolean;
   onCancel?: () => void;
+}
+
+const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
+function DisponibilidadSection({
+  idHojaDeVida,
+  current,
+}: {
+  idHojaDeVida: number
+  current: DisponibilidadPerfil | undefined
+}) {
+  const upsert = useUpsertDisponibilidad()
+  const [dias, setDias] = React.useState<string[]>(current?.dias_semana ?? [])
+  const [franja, setFranja] = React.useState(current?.franja_horaria ?? '')
+  const [modalidad, setModalidad] = React.useState<'presencial' | 'virtual' | 'mixta'>(
+    current?.modalidad ?? 'presencial'
+  )
+
+  const toggleDia = (dia: string) =>
+    setDias(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia])
+
+  const handleSave = () => {
+    upsert.mutate(
+      { idHojaDeVida, diasSemana: dias, franjaHoraria: franja || null, modalidad },
+      {
+        onSuccess: () => toast.success('Disponibilidad guardada'),
+        onError: (e: any) => toast.error(`Error: ${e.message}`),
+      }
+    )
+  }
+
+  return (
+    <div className="space-y-4 pt-4 border-t border-border/50">
+      <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-widest">
+        Disponibilidad
+      </h3>
+      <div>
+        <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">
+          Días disponibles
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {DIAS.map(dia => (
+            <button
+              key={dia}
+              type="button"
+              onClick={() => toggleDia(dia)}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                dias.includes(dia)
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background/50 text-muted-foreground border-border/40 hover:border-primary/40'
+              }`}
+            >
+              {dia}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+            Franja horaria
+          </label>
+          <input
+            className="w-full h-10 rounded-xl border border-border/40 bg-background/50 px-3 text-sm"
+            placeholder="Ej. Mañanas 8-12, Tardes"
+            value={franja}
+            onChange={e => setFranja(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+            Modalidad
+          </label>
+          <select
+            className="w-full h-10 rounded-xl border border-border/40 bg-background/50 px-3 text-sm"
+            value={modalidad}
+            onChange={e => setModalidad(e.target.value as typeof modalidad)}
+          >
+            <option value="presencial">Presencial</option>
+            <option value="virtual">Virtual</option>
+            <option value="mixta">Mixta</option>
+          </select>
+        </div>
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        className="rounded-xl"
+        onClick={handleSave}
+        disabled={upsert.isPending}
+      >
+        {upsert.isPending ? 'Guardando...' : 'Guardar disponibilidad'}
+      </Button>
+    </div>
+  )
 }
 
 export function HojaDeVidaForm({
@@ -349,6 +447,18 @@ export function HojaDeVidaForm({
           )}
         </CardContent>
       </Card>
+
+      {/* Disponibilidad Section */}
+      {hojaActual?.id_hoja_de_vida && (
+        <Card className="border-border/40">
+          <CardContent className="pt-6">
+            <DisponibilidadSection
+              idHojaDeVida={hojaActual.id_hoja_de_vida}
+              current={hojaActual.disponibilidad?.[0]}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Action Buttons */}
       <div className="flex gap-3">
