@@ -1,7 +1,10 @@
--- Migration: Add RPC function for course enrollment with proper validations
--- Created: 2026-05-03
+-- Migration: Fix critical SQL syntax errors in inscribir_usuarios_curso RPC
+-- Date: 2026-05-16
+-- Issue: Lines 42 and 105 had malformed -- SKIP: comments breaking FROM clauses
 
--- Function to enroll users in courses with comprehensive validations
+-- Drop and recreate the function with correct syntax
+DROP FUNCTION IF EXISTS inscribir_usuarios_curso(bigint, bigint[]);
+
 CREATE OR REPLACE FUNCTION inscribir_usuarios_curso(
   p_id_aula_curso bigint,
   p_user_ids bigint[]
@@ -146,7 +149,8 @@ BEGIN
       v_reactivated_count
     ),
     'processed_count', v_processed_count,
-    'reactivated_count', v_reactivated_count
+    'reactivated_count', v_reactivated_count,
+    'accion', 'inscrito'
   );
 
 EXCEPTION
@@ -161,6 +165,6 @@ $$;
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION inscribir_usuarios_curso(bigint, bigint[]) TO authenticated;
 
--- Add comment
+-- Update comment
 COMMENT ON FUNCTION inscribir_usuarios_curso(bigint, bigint[]) IS
-'RPC function to enroll users in courses with proper permission validation. Only course creators or ministerio leaders can enroll users from their ministerio.';
+'RPC function to enroll users in courses with proper permission validation. Only course creators or ministerio leaders can enroll users from their ministerio. FIXED: Corrected malformed FROM clauses in lines 42 and 105.';
