@@ -1156,7 +1156,85 @@ git commit -m "feat: integrate StatisticsSummaryCard into all role dashboards"
 
 ---
 
-### Task 11: Build verification
+### Task 11: Add date range filter to StatisticsPage
+
+**Files:**
+- Modify: `src/app/components/StatisticsPage.tsx`
+
+- [ ] **Add date range selector with presets**
+
+Add import for `CalendarDays` to existing lucide imports.
+
+Add this state and handler before the `handleExport` function:
+
+```typescript
+import { format as formatDateFns } from 'date-fns';
+
+const datePresets = [
+  { label: 'Este mes', range: () => { const now = new Date(); return { start: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(), end: now.toISOString() }; } },
+  { label: 'Últimos 3 meses', range: () => { const now = new Date(); const start = new Date(now); start.setMonth(start.getMonth() - 3); return { start: start.toISOString(), end: now.toISOString() }; } },
+  { label: 'Últimos 12 meses', range: () => { const now = new Date(); const start = new Date(now); start.setFullYear(start.getFullYear() - 1); return { start: start.toISOString(), end: now.toISOString() }; } },
+  { label: 'Todo', range: () => ({ start: null, end: null }) },
+];
+
+function DateRangeSelector({ value, onChange }: { value: string; onChange: (preset: string, range: { start: string | null; end: string | null }) => void }) {
+  return (
+    <div className="flex items-center gap-1.5 bg-muted/50 rounded-xl p-1 border border-border/30">
+      <CalendarDays className="w-4 h-4 text-muted-foreground ml-2" />
+      {datePresets.map((p) => (
+        <button
+          key={p.label}
+          onClick={() => onChange(p.label, p.range())}
+          className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all uppercase tracking-widest ${
+            value === p.label
+              ? 'bg-card text-foreground shadow-sm border border-border/50'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+          }`}
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+```
+
+Update `StatisticsPage` to use it:
+
+```typescript
+export function StatisticsPage() {
+  const { iglesiaActual } = useApp();
+  const [activeDomain, setActiveDomain] = useState<StatisticsDomain>('iglesia');
+  const [activePreset, setActivePreset] = useState('Este mes');
+  const [dateRange, setDateRange] = useState(() => datePresets[0].range());
+
+  const { data: allData, scope, isReady } = useStatistics(activeDomain, dateRange);
+  const [exporting, setExporting] = useState<'xlsx' | 'pdf' | null>(null);
+
+  const handlePresetChange = useCallback((label: string, range: { start: string | null; end: string | null }) => {
+    setActivePreset(label);
+    setDateRange(range);
+  }, []);
+  
+  // ... rest stays the same
+```
+
+Add the `DateRangeSelector` in the header next to the title area (before the export buttons):
+
+```tsx
+<DateRangeSelector value={activePreset} onChange={handlePresetChange} />
+```
+
+- [ ] **Commit**
+
+```bash
+git add src/app/components/StatisticsPage.tsx
+git commit -m "feat: add date range filter presets to statistics page"
+```
+
+---
+
+### Task 12: Build verification
 
 - [ ] **Run production build**
 
