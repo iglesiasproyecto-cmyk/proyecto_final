@@ -111,10 +111,9 @@ export function LoginPage() {
         {/* Glow effect at the card top */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[2px] bg-gradient-to-r from-transparent via-sky-400 to-transparent opacity-50" />
 
-        {/* Dynamic Logo with pulse glow */}
-        <div className="relative mb-6 flex justify-center group">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 opacity-20 blur-xl group-hover:opacity-40 transition-opacity duration-700 animate-pulse" />
-          <SEILogo className="w-40 h-40 relative z-10 drop-shadow-[0_12px_24px_rgba(56,189,248,0.35)]" />
+        {/* Logo */}
+        <div className="mb-6 flex justify-center">
+          <SEILogo className="w-40 h-40" />
         </div>
 
         <div className="mb-6 text-center">
