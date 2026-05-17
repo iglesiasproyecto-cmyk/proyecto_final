@@ -50,8 +50,8 @@ export function ForgotPasswordPage() {
 
     setIsLoading(true)
     try {
-      const { data, error } = await supabase.functions.invoke('reset-password-request', {
-        body: { email: email.toLowerCase().trim() }
+      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), {
+        redirectTo: `${window.location.origin}/auth/reset-password`
       })
 
       if (error) {
@@ -60,14 +60,10 @@ export function ForgotPasswordPage() {
         return
       }
 
-      if (data.success) {
-        setStep('verification')
-        toast.success('Enlace de recuperación enviado a tu correo.')
-      } else {
-        setError(data.message || 'Error al enviar el enlace de recuperación.')
-      }
-    } catch (err) {
-      setError('Error en el servidor. Intenta más tarde.')
+      setStep('verification')
+      toast.success('Enlace de recuperación enviado a tu correo.')
+    } catch (err: any) {
+      setError(err.message || 'Error en el servidor. Intenta más tarde.')
     } finally {
       setIsLoading(false)
     }
