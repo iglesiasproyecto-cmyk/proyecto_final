@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '@/app/store/AppContext';
 import { useStatistics } from '@/hooks/useStatistics';
 import { downloadReport } from '@/services/statisticsExport.service';
@@ -9,7 +9,7 @@ import { Badge } from '@/app/components/ui/badge';
 import { Skeleton } from '@/app/components/ui/skeleton';
 import { SimpleBarChart, SimpleDonutChart } from '@/app/components/SimpleCharts';
 import {
-  Building2, Users, UserCheck, Church, Settings2, CalendarDays, ListTodo,
+  Building2, Users, UserCheck, Church, Settings2, ListTodo,
   CheckCircle2, AlertCircle, BookOpen, FileEdit, Award,
   FileSpreadsheet, FileText, TrendingUp, CalendarDays as CalendarDaysIcon
 } from 'lucide-react';

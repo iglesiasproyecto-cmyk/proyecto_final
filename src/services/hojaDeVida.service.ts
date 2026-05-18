@@ -101,15 +101,38 @@ export interface HojaDeVidaListItem {
   etiquetas: string[];
 }
 
+function mapV2ToLegacy(v2: any): HojaDeVidaCompleta | null {
+  if (!v2 || !v2.id_hoja_de_vida) return null;
+  return {
+    id_hoja_de_vida: v2.id_hoja_de_vida,
+    id_usuario: v2.id_usuario,
+    perfil_profesional: v2.resumen_profesional,
+    experiencia_laboral: v2.experiencia_laboral,
+    formacion_academica: (v2.formacion_academica ?? []) as any,
+    habilidades: (v2.habilidades ?? []) as any,
+    creado_en: v2.creado_en,
+    updated_at: v2.actualizado_en,
+    resumen_profesional: v2.resumen_profesional,
+    foto_perfil_url: v2.foto_perfil_url,
+    completa: v2.completa,
+    completada_en: v2.completada_en,
+    actualizado_en: v2.actualizado_en,
+    usuario_nombres: v2.usuario_nombres,
+    usuario_apellidos: v2.usuario_apellidos,
+    usuario_correo: v2.usuario_correo,
+    certificados: (v2.certificados ?? []) as any,
+  } as HojaDeVidaCompleta;
+}
+
 /**
  * Obtiene la hoja de vida completa del usuario actual con certificados
  */
 export async function getHojaDeVidaActual(): Promise<HojaDeVidaCompleta | null> {
   try {
-    const { data, error } = await supabase.rpc('get_hoja_de_vida_completa');
+    const { data, error } = await supabase.rpc('get_hoja_de_vida_completa_v2' as any);
 
     if (error) throw error;
-    return data?.[0] || null;
+    return mapV2ToLegacy(data);
   } catch (error) {
     console.error('Error fetching hoja de vida actual:', error);
     return null;
@@ -121,12 +144,12 @@ export async function getHojaDeVidaActual(): Promise<HojaDeVidaCompleta | null> 
  */
 export async function getHojaDeVidaPorUsuario(idUsuario: number): Promise<HojaDeVidaCompleta | null> {
   try {
-    const { data, error } = await supabase.rpc('get_hoja_de_vida_completa', {
+    const { data, error } = await supabase.rpc('get_hoja_de_vida_completa_v2' as any, {
       p_id_usuario: idUsuario,
     });
 
     if (error) throw error;
-    return data?.[0] || null;
+    return mapV2ToLegacy(data);
   } catch (error) {
     console.error('Error fetching hoja de vida:', error);
     return null;
@@ -425,16 +448,34 @@ export async function listarPerfilesProfesionalesScoped(filtros?: {
   estadoRevision?: 'pendiente' | 'aprobada' | 'observada'
   etiquetaIds?: number[]
 }): Promise<HojaDeVidaListItem[]> {
+  const payload: Record<string, unknown> = {}
+  if (filtros?.idSede) payload.id_sede = filtros.idSede
+  if (filtros?.idMinisterio) payload.id_ministerio = filtros.idMinisterio
+  if (typeof filtros?.soloCompletas === 'boolean') payload.completa = filtros.soloCompletas
+  if (filtros?.estadoRevision) payload.estado_revision = filtros.estadoRevision
+  if (filtros?.etiquetaIds?.length) payload.id_etiqueta = filtros.etiquetaIds[0]
+
   const { data, error } = await supabase.rpc('listar_hojas_de_vida_scoped' as any, {
-    p_id_iglesia:     filtros?.idIglesia     ?? null,
-    p_id_sede:        filtros?.idSede        ?? null,
-    p_id_ministerio:  filtros?.idMinisterio  ?? null,
-    p_solo_completas: filtros?.soloCompletas ?? null,
-    p_estado_revision:filtros?.estadoRevision?? null,
-    p_etiqueta_ids:   filtros?.etiquetaIds   ?? null,
+    filtros: payload,
   })
   if (error) throw error
-  return (data as HojaDeVidaListItem[]) ?? []
+  const rows = (data as any[]) ?? []
+  return rows.map((r) => ({
+    id_hoja_de_vida: r.id_hoja_de_vida,
+    id_usuario: r.id_usuario,
+    nombres: r.usuario_nombres,
+    apellidos: r.usuario_apellidos,
+    correo: r.usuario_correo,
+    titulo_profesional: r.resumen_profesional ?? null,
+    completa: !!r.completa,
+    completada_en: r.completada_en ?? null,
+    actualizado_en: r.actualizado_en,
+    cantidad_certificados: Array.isArray(r.certificados) ? r.certificados.length : 0,
+    ultima_revision: Array.isArray(r.revisiones) && r.revisiones.length > 0
+      ? { estado_revision: r.revisiones[0].estado_revision, revisado_en: r.revisiones[0].revisado_en }
+      : null,
+    etiquetas: Array.isArray(r.etiquetas) ? r.etiquetas.map((e: any) => e.nombre) : [],
+  }))
 }
 
 // ── Revisiones ──

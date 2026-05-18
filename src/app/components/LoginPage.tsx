@@ -6,7 +6,7 @@ import { GlobalLoader } from './GlobalLoader'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { SEILogo } from './SEILogo'
 import { Eye, EyeOff, LogIn, User, AlertCircle, ArrowLeft } from 'lucide-react'
 

@@ -2,15 +2,18 @@ import { Outlet } from "react-router";
 import { AppProvider } from "../store/AppContext";
 import { LoadingProvider, useLoading } from "../store/LoadingContext";
 import { GlobalLoader } from "./GlobalLoader";
-import React from "react";
+import React, { Suspense } from "react";
+import LoadingSpinner from "./LoadingSpinner";
 
 function RootContent() {
   const { loadingState } = useLoading();
-  
+
   return (
     <>
       <GlobalLoader show={loadingState.isLoading} message={loadingState.message} />
-      <Outlet />
+      <Suspense fallback={<LoadingSpinner />}>
+        <Outlet />
+      </Suspense>
     </>
   );
 }

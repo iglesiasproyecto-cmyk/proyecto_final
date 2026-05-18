@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { useApp } from "../store/AppContext";
 import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
@@ -7,6 +7,7 @@ import { AuthRecovery } from "./AuthRecovery";
 import { Badge } from "./ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { motion, AnimatePresence } from "motion/react";
+import LoadingSpinner from "./LoadingSpinner";
 import {
   Church, LayoutDashboard, Building2, Users, CalendarDays, ListTodo,
   Bell, User, LogOut, Menu, X, ChevronDown,
@@ -134,6 +135,7 @@ function getNavItemsForRole(
     case "admin_sede":
       return [
         { label: "Dashboard", path: t, icon: <LayoutDashboard className="w-5 h-5" />, section: "Principal" },
+        { label: "Ministerios", path: `${t}/ministerios`, icon: <Settings2 className="w-5 h-5" />, section: "Gestión" },
         { label: "Usuarios", path: `${t}/usuarios`, icon: <Users className="w-5 h-5" />, section: "Gestión" },
         { label: "Miembros", path: `${t}/miembros`, icon: <Users className="w-5 h-5" />, section: "Operaciones" },
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
@@ -524,7 +526,9 @@ export function AppLayout() {
           <main className="flex-1 overflow-y-auto">
             <div className="flex justify-center px-4 md:px-6 lg:px-8 min-h-full">
               <div className="w-full max-w-7xl py-4 md:py-6 lg:py-8">
-                <Outlet />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Outlet />
+                </Suspense>
               </div>
             </div>
           </main>

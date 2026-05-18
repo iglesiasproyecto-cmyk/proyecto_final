@@ -5,6 +5,7 @@ import {
 } from "@/hooks/useMinisterios";
 import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
 import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
+import { useApp } from "@/app/store/AppContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import type { MinisterioEnriquecido } from "@/services/ministerios.service";
 import { Card } from "./ui/card";
@@ -37,14 +38,24 @@ export function MinisterioDetailPanel({
 }) {
   const { data: minMembers = [] } = useMiembrosMinisterioEnriquecidos(min.idMinisterio);
   const { data: allUsers = [] } = useUsuariosEnriquecidos();
+  const { rolActual, sedesDelUsuario } = useApp();
   const [showAddMember, setShowAddMember] = useState(false);
   const [memberForm, setMemberForm] = useState({ idUsuario: "", rolEnMinisterio: "servidor" });
   const createMemberMutation = useCreateMiembroMinisterio();
   const canManageMembers = useCanManageMinisterio(min.idMinisterio);
 
-  const availableUsers = allUsers.filter(
-    (user) => !minMembers.some((member) => member.idUsuario === user.idUsuario)
-  );
+  const availableUsers = allUsers.filter((user) => {
+    // Exclude users already in this ministerio
+    if (minMembers.some((member) => member.idUsuario === user.idUsuario)) return false;
+    // Exclude archived/technical users (@local.invalid)
+    if (/@local\.invalid$/i.test(user.correo)) return false;
+    // Exclude inactive users
+    if (!user.activo) return false;
+
+    // Strict Sede Filtering: Only show users assigned to the specific sede of this ministry
+    if (rolActual === 'super_admin') return true;
+    return user.roleNames.some((rn: any) => rn.idSede === min.idSede);
+  });
 
   const handleAddMember = () => {
     if (!memberForm.idUsuario) { toast.error('Por favor selecciona un usuario'); return; }

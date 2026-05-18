@@ -27,13 +27,18 @@ import {
   UserPlus,
   ClipboardList
 } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabaseClient'
 import { useCursos } from '@/hooks/useCursos'
 import { useProgresoGrupoCurso } from '@/hooks/useProgreso'
 import { ModulosGestion } from './ModulosGestion'
 import { AgregarPersonasCursoDialog } from '@/app/components/aula/AgregarPersonasCursoDialog'
 import { ModulosNavegacion } from './ModulosNavegacion'
+import { CrearEvaluacionDialog } from '@/app/components/CrearEvaluacionDialog'
+import { EditarEvaluacionDialog } from '@/app/components/EditarEvaluacionDialog'
+import { CalificacionesTab } from '@/app/components/CalificacionesTab'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog'
 
 export function CursoDetallePage() {
   const { idCurso } = useParams<{ idCurso: string }>()
@@ -400,6 +405,12 @@ export function CursoDetallePage() {
               <ClipboardList className="h-4 w-4 mr-2" />
               Evaluaciones
             </TabsTrigger>
+            {(isLider || isAdmin) && (
+              <TabsTrigger value="calificaciones" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
+                <Award className="h-4 w-4 mr-2" />
+                Calificaciones
+              </TabsTrigger>
+            )}
             <TabsTrigger value="progreso" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <BarChart3 className="h-4 w-4 mr-2" />
               Progreso
@@ -424,18 +435,14 @@ export function CursoDetallePage() {
         </TabsContent>
 
         <TabsContent value="evaluaciones">
-          {(isLider || isAdmin) ? (
-            <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
-              <CardContent className="py-8 px-6">
-                <p className="text-muted-foreground">
-                  Los líderes pueden configurar evaluaciones en cada módulo desde la pestaña "Módulos".
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <EvaluacionesTab idCurso={parseInt(idCurso!)} />
-          )}
+          <EvaluacionesTab idCurso={parseInt(idCurso!)} isAdmin={isAdmin} isLider={isLider} />
         </TabsContent>
+
+        {(isLider || isAdmin) && (
+          <TabsContent value="calificaciones">
+            <CalificacionesTab idCurso={parseInt(idCurso!)} />
+          </TabsContent>
+        )}
 
         <TabsContent value="progreso">
           <ProgresoCursoTab progresoGrupo={progresoGrupo || []} />
@@ -458,8 +465,14 @@ export function CursoDetallePage() {
 }
 
 // Componente para la pestaña de evaluaciones
-function EvaluacionesTab({ idCurso }: { idCurso: number }) {
-  const { data: modulos } = useQuery({
+function EvaluacionesTab({ idCurso, isAdmin, isLider }: { idCurso: number; isAdmin: boolean; isLider: boolean }) {
+  const queryClient = useQueryClient()
+  const [moduloSeleccionado, setModuloSeleccionado] = useState<number | null>(null)
+  const [showCrearEvaluacion, setShowCrearEvaluacion] = useState(false)
+  const [evaluacionEditar, setEvaluacionEditar] = useState<any | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState({ id: 0, titulo: '', isOpen: false })
+
+  const { data: modulos, isLoading } = useQuery({
     queryKey: ['modulos-evaluaciones', idCurso],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -470,37 +483,174 @@ function EvaluacionesTab({ idCurso }: { idCurso: number }) {
           evaluaciones:aula_evaluacion(
             id_aula_evaluacion,
             titulo,
-            puntaje_minimo
+            descripcion,
+            puntaje_minimo,
+            max_intentos
           )
         `)
         .eq('id_aula_curso', idCurso)
+        .order('orden', { ascending: true })
       if (error) throw error
       return data || []
     }
   })
 
+  const deleteEvaluacionMutation = useMutation({
+    mutationFn: async (idEvaluacion: number) => {
+      const { data, error } = await supabase.rpc('eliminar_evaluacion', { p_id_evaluacion: idEvaluacion })
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      toast.success("Evaluación eliminada correctamente")
+      queryClient.invalidateQueries({ queryKey: ['modulos-evaluaciones', idCurso] })
+      setConfirmDelete({ id: 0, titulo: '', isOpen: false })
+    },
+    onError: (error) => {
+      console.error('Error al eliminar evaluación:', error)
+      toast.error("Error al eliminar la evaluación")
+    }
+  })
+
+  if (isLoading) return <div className="space-y-4"><CardSkeleton /><CardSkeleton /></div>
+
+  const canEdit = isAdmin || isLider
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {modulos?.map(mod => (
-        <Card key={mod.id_aula_modulo} className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
-          <CardHeader>
-            <CardTitle className="text-lg">{mod.titulo}</CardTitle>
+        <Card key={mod.id_aula_modulo} className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl overflow-hidden">
+          <CardHeader className="bg-primary/5 pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <CardTitle className="text-xl font-bold">{mod.titulo}</CardTitle>
+              {canEdit && (
+                <Button 
+                  size="sm" 
+                  className="rounded-xl font-semibold shadow-md"
+                  onClick={() => {
+                    setModuloSeleccionado(mod.id_aula_modulo)
+                    setShowCrearEvaluacion(true)
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-1.5" /> Crear Evaluación
+                </Button>
+              )}
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-5">
             {mod.evaluaciones?.length ? (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {mod.evaluaciones.map((ev: any) => (
-                  <p key={ev.id_aula_evaluacion} className="text-sm">
-                    📝 {ev.titulo} (Mín. {ev.puntaje_minimo}%)
-                  </p>
+                  <div key={ev.id_aula_evaluacion} className="group relative bg-background/50 border border-white/5 rounded-2xl p-4 hover:bg-background/80 transition-all hover:shadow-lg">
+                    <div className="flex justify-between items-start gap-4">
+                      <div>
+                        <h4 className="font-bold text-base flex items-center gap-2">
+                          <ClipboardList className="w-4 h-4 text-primary" /> {ev.titulo}
+                        </h4>
+                        {ev.descripcion && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{ev.descripcion}</p>}
+                        <div className="flex items-center gap-3 mt-3">
+                          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                            Mín. {ev.puntaje_minimo}%
+                          </Badge>
+                          <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                            <Settings className="w-3 h-3" /> {ev.max_intentos} Intentos
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {canEdit && (
+                        <div className="flex flex-col gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 rounded-lg text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+                            onClick={() => setEvaluacionEditar(ev)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+                            onClick={() => setConfirmDelete({ id: ev.id_aula_evaluacion, titulo: ev.titulo, isOpen: true })}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Sin evaluaciones</p>
+              <div className="text-center py-6 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                <p className="text-muted-foreground text-sm font-medium">No hay evaluaciones en este módulo.</p>
+              </div>
             )}
           </CardContent>
         </Card>
       ))}
+
+      {canEdit && showCrearEvaluacion && moduloSeleccionado && (
+        <CrearEvaluacionDialog
+          open={showCrearEvaluacion}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowCrearEvaluacion(false)
+              setModuloSeleccionado(null)
+            }
+          }}
+          idModulo={moduloSeleccionado}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['modulos-evaluaciones', idCurso] })
+            setShowCrearEvaluacion(false)
+            setModuloSeleccionado(null)
+          }}
+        />
+      )}
+
+      {canEdit && evaluacionEditar && (
+        <EditarEvaluacionDialog
+          open={!!evaluacionEditar}
+          onOpenChange={(open) => { if (!open) setEvaluacionEditar(null) }}
+          idEvaluacion={evaluacionEditar.id_aula_evaluacion}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['modulos-evaluaciones', idCurso] })
+            setEvaluacionEditar(null)
+          }}
+        />
+      )}
+
+      {canEdit && confirmDelete.isOpen && (
+        <Dialog open={confirmDelete.isOpen} onOpenChange={(open) => !open && setConfirmDelete({ id: 0, titulo: '', isOpen: false })}>
+          <DialogContent className="sm:max-w-[425px] rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold flex items-center gap-2 text-rose-500">
+                <AlertCircle className="w-5 h-5" /> Eliminar Evaluación
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground">
+                ¿Estás seguro de que deseas eliminar la evaluación <span className="font-bold text-foreground">"{confirmDelete.titulo}"</span>?
+                Esta acción eliminará permanentemente todas sus preguntas, opciones y los intentos registrados de los alumnos. No se puede deshacer.
+              </p>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="ghost" className="rounded-xl font-semibold" onClick={() => setConfirmDelete({ id: 0, titulo: '', isOpen: false })}>
+                Cancelar
+              </Button>
+              <Button 
+                variant="destructive" 
+                className="rounded-xl font-bold px-6 shadow-md"
+                disabled={deleteEvaluacionMutation.isPending}
+                onClick={() => deleteEvaluacionMutation.mutate(confirmDelete.id)}
+              >
+                {deleteEvaluacionMutation.isPending ? "Eliminando..." : "Sí, eliminar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

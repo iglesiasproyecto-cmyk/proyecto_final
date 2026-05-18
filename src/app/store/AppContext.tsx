@@ -677,22 +677,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(handleSessionEvent)
 
-    // Fallback: if onAuthStateChange doesn't fire within 2s
-    const fallbackTimeout = setTimeout(() => {
-      if (authCycleRef.current === 0) {
-        console.log('[AUTH] Fallback: getSession after 2s')
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (authCycleRef.current === 0) {
-            handleSessionEvent('INITIAL_SESSION', session)
-          }
-        }).catch(() => resolveLoading())
-      }
-    }, 2000)
-
     return () => {
       subscription.unsubscribe()
       clearTimeout(safetyTimeout)
-      clearTimeout(fallbackTimeout)
     }
   }, [resetClientState])
 

@@ -17,7 +17,7 @@ function getDefaultDateRange(): DateRange {
 }
 
 export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) {
-  const { usuarioActual, rolActual, iglesiaActual } = useApp();
+  const { usuarioActual, rolActual, iglesiaActual, sedesDelUsuario } = useApp();
   const range = dateRange ?? getDefaultDateRange();
 
   const scope = useMemo<StatisticsScope>(() => {
@@ -27,20 +27,20 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
       case 'admin_iglesia':
         return { type: 'iglesia', idIglesia: iglesiaActual?.id };
       case 'admin_sede':
-        return { type: 'sede', idIglesia: iglesiaActual?.id };
+        return { type: 'sede', idIglesia: iglesiaActual?.id, idSede: sedesDelUsuario[0]?.id };
       case 'lider':
       case 'servidor':
         return { type: 'personal', idIglesia: iglesiaActual?.id, idUsuario: usuarioActual?.idUsuario };
       default:
         return { type: 'global' };
     }
-  }, [rolActual, iglesiaActual, usuarioActual]);
+  }, [rolActual, iglesiaActual, usuarioActual, sedesDelUsuario]);
 
   const { data: usuarios = [] } = useUsuarios();
   const { data: enrichedUsuarios = [] } = useUsuariosEnriquecidos();
   const { data: sedes = [] } = useSedes();
   const { data: eventos = [] } = useEventos(scope.idIglesia);
-  const { data: tareas = [] } = useTareas(scope.idIglesia);
+  const { data: tareas = [] } = useTareas();
   const { data: ministerios = [] } = useMinisterios(scope.idIglesia);
   const { data: miembrosMinisterio = [] } = useMiembrosMinisterio();
 

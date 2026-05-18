@@ -23,7 +23,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar,
-  ChevronRight, Inbox, Trash2, UserPlus, X, Paperclip, Pencil,
+  ChevronRight, Inbox, Trash2, UserPlus, X, Paperclip, Pencil, Search
 } from "lucide-react";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { Skeleton } from "./ui/skeleton";
@@ -694,38 +694,71 @@ export function TasksPage() {
       </DndProvider>
 
       {/* ── Task Detail Dialog ── */}
-      <Dialog open={!!selectedTask} onOpenChange={() => { setSelectedTask(null); setAssignScope({ idSede: 0, idMinisterio: 0, selectedUserIds: [], assignAll: false }); }}>
-        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
-          <DialogHeader>
-            {task ? (
-              <div className="flex items-start justify-between w-full">
-                <div className="flex items-start gap-3">
-                  <div className={`w-9 h-9 rounded-xl ${statusConfig[task.estado]?.color} border flex items-center justify-center shrink-0 mt-0.5`}>
+      <Dialog 
+        open={!!selectedTask} 
+        onOpenChange={(open) => { 
+          if (!open) { 
+            setSelectedTask(null); 
+            setAssignScope({ idSede: 0, idMinisterio: 0, selectedUserIds: [], assignAll: false }); 
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-0 overflow-hidden flex flex-col max-h-[90vh]">
+          {task ? (
+            <>
+              {/* ── Header ── */}
+              <div className="relative p-6 pb-5 bg-gradient-to-b from-primary/10 to-transparent border-b border-white/5 shrink-0">
+                <div className="absolute top-0 right-0 p-5">
+                  {isAdmin && (
+                    <button 
+                      onClick={() => setEditMode(!editMode)}
+                      className={`p-2 rounded-xl transition-all shadow-sm ${editMode ? 'bg-primary text-white shadow-primary/20' : 'bg-background border border-white/10 text-primary hover:bg-primary/10'}`}
+                      title={editMode ? "Cancelar Edición" : "Editar Tarea"}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                
+                <div className="flex items-start gap-4 pr-12">
+                  <div className={`w-12 h-12 rounded-2xl ${statusConfig[task.estado]?.color} border flex items-center justify-center shrink-0 shadow-sm mt-0.5`}>
                     {statusConfig[task.estado]?.icon}
                   </div>
                   <div>
-                    <DialogTitle className="text-lg font-bold tracking-tight leading-snug">{task.titulo}</DialogTitle>
-                    {task.ministerioNombre && <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest mt-1">{task.ministerioNombre}</p>}
-                    {task.eventoNombre && <p className="text-[11px] text-primary/40">{task.eventoNombre}</p>}
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <Badge variant="outline" className={`${prioridadConfig[task.prioridad]?.color} border-0 text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-md`}>
+                        {prioridadConfig[task.prioridad]?.label}
+                      </Badge>
+                      {task.fechaLimite && (
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground uppercase bg-white/5 px-2 py-0.5 rounded-md">
+                          <Calendar className="w-3 h-3" /> {task.fechaLimite}
+                        </span>
+                      )}
+                    </div>
+                    <DialogTitle className="text-xl font-bold tracking-tight leading-tight text-foreground">{task.titulo}</DialogTitle>
                   </div>
                 </div>
-                {isAdmin && (
-                  <button 
-                    onClick={() => setEditMode(!editMode)}
-                    className={`p-2 rounded-lg transition-colors ${editMode ? 'bg-primary text-white' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+
+                {(task.ministerioNombre || task.eventoNombre) && (
+                  <div className="flex flex-col gap-1.5 mt-4 pt-4 border-t border-white/5">
+                    {task.ministerioNombre && (
+                      <div className="flex items-center gap-2 text-[11px] font-bold tracking-wide uppercase text-primary/80">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+                        {task.ministerioNombre}
+                      </div>
+                    )}
+                    {task.eventoNombre && (
+                      <div className="flex items-center gap-2 text-[10px] font-semibold text-muted-foreground uppercase">
+                        <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+                        {task.eventoNombre}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
-            ) : (
-              <DialogTitle className="text-lg font-bold tracking-tight leading-snug">Detalle de Tarea</DialogTitle>
-            )}
-          </DialogHeader>
-          {task && (
-            <>
 
-              <div className="space-y-5 py-1">
+              {/* ── Body ── */}
+              <div className="p-6 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
                 {editMode ? (
                   <div className="space-y-4">
                     <div>
@@ -771,52 +804,48 @@ export function TasksPage() {
                   </div>
                 ) : (
                   <>
-                    {task.descripcion && (
-                      <div>
-                        <FieldLabel>Descripción</FieldLabel>
-                        <p className="text-sm text-foreground/80 leading-relaxed bg-background/40 rounded-xl p-3 border border-white/5">{task.descripcion}</p>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <FieldLabel>Estado</FieldLabel>
-                        <Badge variant="outline" className={`${statusConfig[task.estado]?.color} border text-[10px] uppercase font-bold tracking-wider w-full justify-center py-1`}>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white/5 dark:bg-black/20 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-2">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Estado Actual</span>
+                        <Badge variant="outline" className={`${statusConfig[task.estado]?.color} border-0 text-xs px-3 py-1 font-bold rounded-lg w-full justify-center`}>
                           {statusConfig[task.estado]?.label}
                         </Badge>
                       </div>
-                      <div>
-                        <FieldLabel>Prioridad</FieldLabel>
-                        <Badge variant="outline" className={`${prioridadConfig[task.prioridad]?.color} border text-[10px] uppercase font-bold tracking-wider w-full justify-center py-1`}>
-                          {prioridadConfig[task.prioridad]?.label}
-                        </Badge>
+                      <div className="bg-white/5 dark:bg-black/20 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-2">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Personas Asig.</span>
+                        <div className="text-xl font-light text-foreground">{task.asignados?.length || 0}</div>
                       </div>
-                      {task.fechaLimite && (
-                        <div>
-                          <FieldLabel>Fecha Límite</FieldLabel>
-                          <div className="flex items-center gap-1 text-xs text-foreground/70 bg-background/40 rounded-xl px-2 py-1.5 border border-white/5">
-                            <Calendar className="w-3 h-3 text-primary/50 shrink-0" /> {task.fechaLimite}
-                          </div>
-                        </div>
-                      )}
                     </div>
+
+                    {task.descripcion && (
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                          <ListTodo className="w-3 h-3" /> Descripción
+                        </span>
+                        <p className="text-[13px] text-foreground/80 leading-relaxed bg-white/5 dark:bg-black/20 rounded-2xl p-4 border border-white/5 whitespace-pre-wrap">
+                          {task.descripcion}
+                        </p>
+                      </div>
+                    )}
                   </>
                 )}
 
                 {/* Assigned users */}
-                {task.asignados && task.asignados.length > 0 && (
-                  <div>
-                    <FieldLabel>Personas asignadas</FieldLabel>
+                {!editMode && task.asignados && task.asignados.length > 0 && (
+                  <div className="space-y-3">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                      <UserPlus className="w-3 h-3" /> Personas Asignadas
+                    </span>
                     <div className="flex flex-wrap gap-2">
                       {task.asignados.map(a => (
-                        <div key={a.idTareaAsignada} className="flex items-center gap-2 bg-background/50 border border-white/10 rounded-xl px-3 py-1.5">
-                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 flex items-center justify-center text-[9px] text-primary font-bold">
+                        <div key={a.idTareaAsignada} className="flex items-center gap-2 bg-background border border-white/10 shadow-sm rounded-xl py-1.5 pl-1.5 pr-3 group">
+                          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
                             {(a.nombreCompleto || "?").charAt(0).toUpperCase()}
                           </div>
-                          <span className="text-xs font-medium">{a.nombreCompleto}</span>
+                          <span className="text-[11px] font-bold tracking-tight truncate max-w-[120px]">{a.nombreCompleto}</span>
                           {canManageTasks && (
                             <button
-                              className="text-muted-foreground/40 hover:text-rose-400 transition-colors ml-0.5"
+                              className="w-5 h-5 rounded-md flex items-center justify-center text-muted-foreground/40 hover:text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0 ml-1 opacity-0 group-hover:opacity-100 focus:opacity-100"
                               onClick={() => setConfirmRemoveAssign({ open: true, id: a.idTareaAsignada, nombre: a.nombreCompleto || "" })}
                               disabled={deleteAsignadaMutation.isPending}
                             >
@@ -829,18 +858,21 @@ export function TasksPage() {
                   </div>
                 )}
 
-                {/* Assign user */}
-                {canManageTasks && (
-                  <div className="pt-2 border-t border-border/40">
-                    <FieldLabel><span className="flex items-center gap-1.5"><UserPlus className="w-3 h-3" /> Asignar usuario</span></FieldLabel>
-                    <div className="space-y-2">
+                {/* Assign user Panel */}
+                {!editMode && canManageTasks && (
+                  <div className="bg-white/5 dark:bg-black/20 rounded-2xl border border-white/5 p-5 space-y-4">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground flex items-center gap-1.5 mb-2">
+                      <UserPlus className="w-3.5 h-3.5 text-primary" /> Agregar Asignación
+                    </span>
+                    
+                    <div className="grid grid-cols-1 gap-3">
                       {isAdminIglesia && (
                         <select
-                          className="w-full h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                          className="w-full h-10 rounded-xl border border-white/10 bg-background/80 px-3 text-xs font-semibold text-foreground/80 outline-none focus:ring-2 focus:ring-primary/30 transition-all cursor-pointer"
                           value={assignScope.idSede}
                           onChange={e => setAssignScope(prev => ({ ...prev, idSede: Number(e.target.value) }))}
                         >
-                          <option value={0}>Seleccionar sede...</option>
+                          <option value={0}>Seleccionar Sede...</option>
                           {sedesDisponiblesAsignacion.map(s => (
                             <option key={s.idSede} value={s.idSede}>{s.nombre}</option>
                           ))}
@@ -849,12 +881,12 @@ export function TasksPage() {
 
                       {(!isLider || userLeadMinisterios > 1) && (
                         <select
-                          className="w-full h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                          className="w-full h-10 rounded-xl border border-white/10 bg-background/80 px-3 text-xs font-semibold text-foreground/80 outline-none focus:ring-2 focus:ring-primary/30 transition-all cursor-pointer"
                           value={ministerioAsignacionId}
                           onChange={e => setAssignScope(prev => ({ ...prev, idMinisterio: Number(e.target.value) }))}
                           disabled={isAdminIglesia && !assignScope.idSede}
                         >
-                          <option value={0}>Seleccionar ministerio...</option>
+                          <option value={0}>Seleccionar Ministerio...</option>
                           {ministeriosDisponiblesAsignacion.map(m => (
                             <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>
                           ))}
@@ -862,14 +894,17 @@ export function TasksPage() {
                       )}
 
                       {isLider && userLeadMinisterios <= 1 && singleUserMinisterio && (
-                        <div className="h-10 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 flex items-center">
+                        <div className="w-full h-10 rounded-xl border border-white/10 bg-background/40 px-3 text-xs font-semibold text-foreground/60 flex items-center">
                           {singleUserMinisterio.nombre}
                         </div>
                       )}
+                    </div>
 
-                      <label className="flex items-center gap-2 text-xs text-foreground/80">
+                    <div className="space-y-2 mt-2">
+                      <label className="flex items-center gap-2 text-xs font-bold text-foreground/80 cursor-pointer w-fit">
                         <input
                           type="checkbox"
+                          className="rounded border-white/20 text-primary focus:ring-primary/30 bg-background"
                           checked={assignScope.assignAll}
                           onChange={e => setAssignScope(prev => ({
                             ...prev,
@@ -878,16 +913,17 @@ export function TasksPage() {
                           }))}
                           disabled={!ministerioAsignacionId || usuariosAsignables.length === 0}
                         />
-                        Seleccionar todos ({usuariosAsignables.length})
+                        Seleccionar todos los disponibles ({usuariosAsignables.length})
                       </label>
 
-                      <div className="max-h-36 overflow-y-auto space-y-1 border border-white/10 rounded-xl p-2 bg-background/30">
+                      <div className="max-h-40 overflow-y-auto space-y-1 bg-background/60 border border-white/10 rounded-xl p-2 custom-scrollbar">
                         {usuariosAsignables.length === 0 ? (
-                          <p className="text-[11px] text-muted-foreground">No hay usuarios en este ministerio.</p>
+                          <p className="text-[10px] text-muted-foreground text-center py-2">No hay usuarios disponibles en este ministerio.</p>
                         ) : usuariosAsignables.map(u => (
-                          <label key={u.idUsuario} className="flex items-center gap-2 text-xs text-foreground/80">
+                          <label key={u.idUsuario} className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer text-xs font-medium text-foreground/80">
                             <input
                               type="checkbox"
+                              className="rounded border-white/20 text-primary focus:ring-primary/30 bg-background"
                               checked={assignScope.selectedUserIds.includes(u.idUsuario)}
                               onChange={e => {
                                 setAssignScope(prev => {
@@ -906,91 +942,79 @@ export function TasksPage() {
                           </label>
                         ))}
                       </div>
-
-                      <Button
-                        className="h-10 rounded-xl px-4"
-                        disabled={assignUsuariosMutation.isPending || !task || assignScope.selectedUserIds.length === 0 || !ministerioAsignacionId}
-                        onClick={async () => {
-                          if (!task) return;
-                          if (isAdminIglesia && !assignScope.idSede) {
-                            toast.error("Selecciona una sede");
-                            return;
-                          }
-                          if (!ministerioAsignacionId) {
-                            toast.error("Selecciona un ministerio");
-                            return;
-                          }
-
-                          const idsToAssign = assignScope.assignAll
-                            ? usuariosAsignables.map(u => u.idUsuario)
-                            : assignScope.selectedUserIds;
-
-                          if (!idsToAssign.length) {
-                            toast.error("Selecciona al menos un usuario");
-                            return;
-                          }
-
-                          const result = await assignUsuariosMutation.mutateAsync({
-                            idTarea: task.idTarea,
-                            idMinisterioContexto: ministerioAsignacionId,
-                            idsUsuarios: idsToAssign,
-                          });
-
-                          if (result.assigned > 0 || result.duplicated > 0) {
-                            toast.success(`${result.assigned} asignados, ${result.duplicated} ya asignados, ${result.rejected} rechazados`);
-                            setAssignScope(prev => ({ ...prev, selectedUserIds: [], assignAll: false }));
-                            return;
-                          }
-
-                          toast.error("No se pudo asignar la tarea");
-                        }}
-                      >
-                        {assignUsuariosMutation.isPending ? "..." : <><UserPlus className="w-4 h-4 mr-1" /> Asignar</>}
-                      </Button>
                     </div>
+
+                    <Button
+                      className="w-full h-10 rounded-xl shadow-md bg-primary hover:bg-primary/90 text-white transition-all font-semibold"
+                      disabled={assignUsuariosMutation.isPending || !task || assignScope.selectedUserIds.length === 0 || !ministerioAsignacionId}
+                      onClick={async () => {
+                        if (!task) return;
+                        if (isAdminIglesia && !assignScope.idSede) { toast.error("Selecciona una sede"); return; }
+                        if (!ministerioAsignacionId) { toast.error("Selecciona un ministerio"); return; }
+
+                        const idsToAssign = assignScope.assignAll ? usuariosAsignables.map(u => u.idUsuario) : assignScope.selectedUserIds;
+                        if (!idsToAssign.length) { toast.error("Selecciona al menos un usuario"); return; }
+
+                        const result = await assignUsuariosMutation.mutateAsync({
+                          idTarea: task.idTarea,
+                          idMinisterioContexto: ministerioAsignacionId,
+                          idsUsuarios: idsToAssign,
+                        });
+
+                        if (result.assigned > 0 || result.duplicated > 0) {
+                          toast.success(`${result.assigned} asignados, ${result.duplicated} ya asignados`);
+                          setAssignScope(prev => ({ ...prev, selectedUserIds: [], assignAll: false }));
+                          return;
+                        }
+                        toast.error("No se pudo asignar la tarea");
+                      }}
+                    >
+                      {assignUsuariosMutation.isPending ? "Asignando..." : <><UserPlus className="w-4 h-4 mr-2" /> Confirmar Asignación</>}
+                    </Button>
                   </div>
                 )}
 
                 {/* Evidencias */}
-                {(evidencias.length > 0 || canActAsServidor) && (
-                  <div className="pt-2 border-t border-border/40">
-                    <FieldLabel><span className="flex items-center gap-1.5"><Paperclip className="w-3 h-3" /> Evidencias</span></FieldLabel>
+                {!editMode && (evidencias.length > 0 || canActAsServidor) && (
+                  <div className="space-y-3">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                      <Paperclip className="w-3 h-3" /> Evidencias
+                    </span>
                     {evidencias.length > 0 && (
-                      <div className="space-y-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {evidencias.map(ev => (
-                          <div key={ev.idTareaEvidencia} className="flex items-center justify-between gap-3 bg-background/40 border border-white/10 rounded-xl px-3 py-2">
+                          <div key={ev.idTareaEvidencia} className="flex items-center justify-between gap-3 bg-white/5 dark:bg-black/20 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors group">
                             <div className="min-w-0">
-                              <p className="text-xs font-semibold truncate">{ev.nombreArchivo}</p>
+                              <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{ev.nombreArchivo}</p>
                               {ev.nombreCompleto && (
-                                <p className="text-[10px] text-muted-foreground truncate">{ev.nombreCompleto}</p>
+                                <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider truncate mt-0.5">{ev.nombreCompleto}</p>
                               )}
                             </div>
-                            <Button
-                              variant="ghost"
-                              className="h-8 px-3 rounded-lg"
-                              onClick={() => handleOpenEvidence(ev.objectPath)}
-                            >
-                              Ver
-                            </Button>
+                            <Button variant="secondary" size="sm" className="h-7 text-[10px] font-bold rounded-lg shrink-0" onClick={() => handleOpenEvidence(ev.objectPath)}>Ver</Button>
                           </div>
                         ))}
                       </div>
                     )}
                     {canActAsServidor && (
-                      <div className="mt-3">
-                        <input
-                          type="file"
-                          className="w-full text-xs text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-[#4682b4]/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#4682b4] hover:file:bg-[#4682b4]/20"
-                          disabled={evidenceUploading}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleUploadEvidence(file);
-                            e.currentTarget.value = "";
-                          }}
-                        />
-                        {evidenceUploading && (
-                          <p className="text-[10px] text-muted-foreground mt-1">Subiendo evidencia...</p>
-                        )}
+                      <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 flex flex-col items-center justify-center border-dashed gap-2 hover:bg-primary/10 transition-colors">
+                        <label className="cursor-pointer text-center w-full h-full">
+                          <input
+                            type="file"
+                            className="hidden"
+                            disabled={evidenceUploading}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleUploadEvidence(file);
+                              e.currentTarget.value = "";
+                            }}
+                          />
+                          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center mb-2">
+                            <Paperclip className="w-4 h-4" />
+                          </div>
+                          <p className="text-xs font-bold text-primary">Subir nueva evidencia</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">Formatos soportados (PDF, Imágenes)</p>
+                        </label>
+                        {evidenceUploading && <p className="text-[10px] font-bold text-amber-500 animate-pulse mt-2">Subiendo archivo...</p>}
                       </div>
                     )}
                   </div>
@@ -1016,12 +1040,13 @@ export function TasksPage() {
                 )}
               </div>
 
-              <DialogFooter className="border-t border-border/50 pt-4 gap-2">
+              {/* ── Footer ── */}
+              <div className="p-5 border-t border-white/5 bg-background/50 backdrop-blur-xl shrink-0 flex items-center justify-between gap-3 flex-wrap">
                 {editMode ? (
-                  <>
-                    <Button variant="ghost" className="rounded-xl" onClick={() => setEditMode(false)}>Cancelar</Button>
+                  <div className="flex w-full justify-end gap-2">
+                    <Button variant="ghost" className="rounded-xl font-semibold" onClick={() => setEditMode(false)}>Cancelar</Button>
                     <Button 
-                      className="rounded-xl" 
+                      className="rounded-xl font-bold px-6 shadow-md" 
                       disabled={updateTareaMutation.isPending}
                       onClick={() => {
                         updateTareaMutation.mutate({
@@ -1032,75 +1057,70 @@ export function TasksPage() {
                             fechaLimite: editForm.fechaLimite || null,
                             prioridad: editForm.prioridad,
                           }
-                        }, {
-                          onSuccess: () => {
-                            toast.success("Tarea actualizada");
-                            setEditMode(false);
-                          }
-                        });
+                        }, { onSuccess: () => { toast.success("Tarea actualizada"); setEditMode(false); }});
                       }}
                     >
                       {updateTareaMutation.isPending ? "Guardando..." : "Guardar cambios"}
                     </Button>
-                  </>
+                  </div>
                 ) : (
                   <>
-                    {isAdmin && (
-                      <div className="mr-auto flex gap-2">
-                        <button
-                          className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-sm font-medium text-amber-500 hover:bg-amber-500/10 transition-colors"
-                          disabled={updateEstadoMutation.isPending}
-                          onClick={() => setConfirmCancel({ open: true, id: task.idTarea })}
-                        >
-                          Cancelar Tarea
-                        </button>
-                        <button
-                          className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
-                          disabled={deleteTareaMutation.isPending}
-                          onClick={() => { handleDeleteTarea(task.idTarea, task.titulo); setSelectedTask(null); }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Eliminar
-                        </button>
-                      </div>
-                    )}
-                    <Button variant="ghost" className="rounded-xl" onClick={() => setSelectedTask(null)}>Cerrar</Button>
-                    {(() => {
-                      const serverAction = canActAsServidor ? getActionForServer(task.estado) : null;
-                      if (!serverAction) return null;
-                      return (
-                        <Button
-                          className="rounded-xl"
-                          onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: serverAction.next }); setSelectedTask(null); }}
-                        >
-                          {serverAction.label}
-                        </Button>
-                      );
-                    })()}
-                    {(() => {
-                      const leaderAction = canManageTasks ? getActionForLeader(task.estado) : null;
-                      if (!leaderAction) return null;
-                      return (
+                    <div className="flex items-center gap-2">
+                      {isAdmin && (
                         <>
-                          <Button
-                            variant="ghost"
-                            className="rounded-xl"
-                            onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.rework.next }); setSelectedTask(null); }}
+                          <button
+                            className="h-10 px-4 rounded-xl flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 transition-all border border-amber-500/20"
+                            disabled={updateEstadoMutation.isPending}
+                            onClick={() => setConfirmCancel({ open: true, id: task.idTarea })}
                           >
-                            {leaderAction.rework.label}
-                          </Button>
-                          <Button
-                            className="rounded-xl"
-                            onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.approve.next }); setSelectedTask(null); }}
+                            <X className="w-3.5 h-3.5" /> Cancelar
+                          </button>
+                          <button
+                            className="h-10 px-4 rounded-xl flex items-center gap-2 text-xs font-bold text-rose-600 dark:text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 transition-all border border-rose-500/20"
+                            disabled={deleteTareaMutation.isPending}
+                            onClick={() => { handleDeleteTarea(task.idTarea, task.titulo); setSelectedTask(null); }}
                           >
-                            {leaderAction.approve.label}
-                          </Button>
+                            <Trash2 className="w-3.5 h-3.5" /> Eliminar
+                          </button>
                         </>
-                      );
-                    })()}
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2 ml-auto">
+                      <Button variant="ghost" className="rounded-xl font-semibold hover:bg-white/5 text-muted-foreground" onClick={() => setSelectedTask(null)}>Cerrar</Button>
+                      
+                      {(() => {
+                        const serverAction = canActAsServidor ? getActionForServer(task.estado) : null;
+                        if (serverAction) {
+                          return (
+                            <Button className="rounded-xl font-bold shadow-md px-6" onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: serverAction.next }); setSelectedTask(null); }}>
+                              {serverAction.label}
+                            </Button>
+                          );
+                        }
+                        
+                        const leaderAction = canManageTasks ? getActionForLeader(task.estado) : null;
+                        if (leaderAction) {
+                          return (
+                            <>
+                              <Button variant="secondary" className="rounded-xl font-bold shadow-sm" onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.rework.next }); setSelectedTask(null); }}>
+                                {leaderAction.rework.label}
+                              </Button>
+                              <Button className="rounded-xl font-bold shadow-md" onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.approve.next }); setSelectedTask(null); }}>
+                                {leaderAction.approve.label}
+                              </Button>
+                            </>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                   </>
                 )}
-              </DialogFooter>
+              </div>
             </>
+          ) : (
+            <div className="p-8 text-center text-muted-foreground font-medium">Cargando tarea...</div>
           )}
         </DialogContent>
       </Dialog>

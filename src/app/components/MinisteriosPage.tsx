@@ -27,12 +27,20 @@ import { MinisterioDetailPanel } from "./MinisterioDetailPanel";
 export function MinisteriosPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
   const idIglesiaNum = Number(idIglesia) || undefined;
-  const { iglesiaActual, iglesiasDelUsuario, rolActual, setIglesiaActual } = useApp();
+  const { iglesiaActual, iglesiasDelUsuario, rolActual, setIglesiaActual, sedesDelUsuario } = useApp();
   const { data: ministerios = [], isLoading, error } = useMinisteriosEnriquecidos(idIglesiaNum);
   const { data: todasSedes = [] } = useSedesEnriquecidas();
-  const sedes = idIglesiaNum
-    ? todasSedes.filter(s => s.idIglesia === idIglesiaNum)
-    : todasSedes;
+  const sedes = (() => {
+    const baseSedes = idIglesiaNum
+      ? todasSedes.filter(s => s.idIglesia === idIglesiaNum)
+      : todasSedes;
+    // Admin sede can only create ministerios in their own sedes
+    if (rolActual === 'admin_sede' && sedesDelUsuario.length > 0) {
+      const mySedeIds = new Set(sedesDelUsuario.map(s => s.id));
+      return baseSedes.filter(s => mySedeIds.has(s.idSede));
+    }
+    return baseSedes;
+  })();
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedMin, setSelectedMin] = useState<number | null>(null);
@@ -75,7 +83,16 @@ export function MinisteriosPage() {
     </div>
   );
 
-  const filtered = ministerios.filter((m) => m.nombre.toLowerCase().includes(search.toLowerCase()));
+  // Admin sede only sees ministerios from their assigned sedes
+  const sedeFilteredMinisterios = (() => {
+    if (rolActual === 'admin_sede' && sedesDelUsuario.length > 0) {
+      const mySedeIds = new Set(sedesDelUsuario.map(s => s.id));
+      return ministerios.filter(m => mySedeIds.has(m.idSede));
+    }
+    return ministerios;
+  })();
+
+  const filtered = sedeFilteredMinisterios.filter((m) => m.nombre.toLowerCase().includes(search.toLowerCase()));
   const min = selectedMin ? ministerios.find((m) => m.idMinisterio === selectedMin) : null;
 
   if (selectedMin && min) {

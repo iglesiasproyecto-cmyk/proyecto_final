@@ -193,15 +193,38 @@ export function HojaDeVidaForm({
 
   const onSubmit = async (data: HojaDeVidaFormData) => {
     try {
-      await onGuardar({
+      const result = await onGuardar({
         resumen_profesional: data.resumen_profesional || null,
         experiencia_laboral: data.experiencia_laboral || null,
         foto_perfil_url: data.foto_perfil_url || null,
         habilidades: data.habilidades as any,
         formacion_academica: data.formacion_academica as any,
       });
+
+      if (result) {
+        toast.success('Perfil profesional actualizado');
+      } else {
+        toast.error('No se pudo guardar. Verifica tus permisos o intenta de nuevo.');
+      }
     } catch (error) {
       console.error('Error saving hoja de vida:', error);
+      toast.error('Ocurrio un error al guardar cambios.');
+    }
+  };
+
+  const handleMarcarCompleta = async () => {
+    if (!onMarcarCompleta) return;
+
+    try {
+      const result = await onMarcarCompleta();
+      if (result) {
+        toast.success('Perfil marcado como completo');
+      } else {
+        toast.error('No se pudo marcar como completa.');
+      }
+    } catch (error) {
+      console.error('Error marking hoja de vida as complete:', error);
+      toast.error('Ocurrio un error al marcar como completa.');
     }
   };
 
@@ -475,7 +498,7 @@ export function HojaDeVidaForm({
           <Button
             type="button"
             variant="secondary"
-            onClick={onMarcarCompleta}
+            onClick={handleMarcarCompleta}
             disabled={isUpdating}
           >
             Marcar como Completa
