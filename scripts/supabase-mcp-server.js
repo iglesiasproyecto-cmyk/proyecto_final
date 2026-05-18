@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.SUPABASE_URL;
