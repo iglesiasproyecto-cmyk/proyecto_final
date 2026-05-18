@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "./ui/button";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { SEILogo } from "./SEILogo";
 import {
   BookOpen, Activity, Layers, ShieldCheck, Network, 

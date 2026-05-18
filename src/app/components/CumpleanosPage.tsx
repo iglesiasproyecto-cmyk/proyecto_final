@@ -4,7 +4,7 @@ import { useApp } from "@/app/store/AppContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { Badge } from "@/app/components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   Globe, Church, MapPin, Users, User, Gift, Calendar, 
   Sparkles, Clock, AlertTriangle, Search, Cake, Mail, CalendarDays, Compass

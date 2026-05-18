@@ -6,7 +6,7 @@ import { ROLE_IDS } from "@/app/constants/roles";
 import type { UsuarioEnriquecido } from "@/services/usuarios.service";
 import { Skeleton } from "./ui/skeleton";
 import { Building2, MapPin, Users, Plus, X, Search, Crown, ShieldCheck, UserMinus } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 
 const ID_ROL_ADMIN_IGLESIA = ROLE_IDS.ADMIN_IGLESIA;
