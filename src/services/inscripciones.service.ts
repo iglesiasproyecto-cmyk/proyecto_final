@@ -92,33 +92,26 @@ export async function getCandidatosInscripcionCurso(idAulaCurso: number) {
   if (cursoError) throw cursoError
   if (!curso) throw new Error('Curso no encontrado')
 
-  // 2. Usuarios activos del ministerio (query mejorada)
+  // 2. Usuarios activos del ministerio
   const { data: miembros, error: miembrosError } = await supabase
     .from('miembro_ministerio')
     .select(`
-      id_usuario
+      id_usuario,
+      usuario (
+        id_usuario,
+        nombres,
+        apellidos,
+        correo,
+        telefono,
+        activo
+      )
     `)
     .eq('id_ministerio', curso.id_ministerio)
     .is('fecha_salida', null)
 
   if (miembrosError) throw miembrosError
 
-  if (!miembros || miembros.length === 0) {
-    return []
-  }
-
-  const usuarioIds = miembros.map((m: any) => m.id_usuario)
-
-  // 3. Obtener datos de usuarios
-  const { data: usuarios, error: usuariosError } = await supabase
-    .from('usuario')
-    .select('id_usuario, nombres, apellidos, correo, telefono, activo')
-    .in('id_usuario', usuarioIds)
-    .eq('activo', true)
-
-  if (usuariosError) throw usuariosError
-
-  // 4. Inscritos activos
+  // 3. Inscritos activos
   const { data: inscritos, error: inscritosError } = await supabase
     .from('aula_inscripcion')
     .select('id_usuario')
@@ -129,8 +122,10 @@ export async function getCandidatosInscripcionCurso(idAulaCurso: number) {
 
   const inscritosIds = new Set((inscritos ?? []).map((i) => i.id_usuario))
 
-  // 5. Filtrar candidatos (usuarios no inscritos)
-  return (usuarios ?? [])
+  // 4. Filtrar candidatos
+  return (miembros ?? [])
+    .map((m: any) => m.usuario)
+    .filter((u: any) => u && u.activo === true)
     .filter((u: any) => !inscritosIds.has(u.id_usuario))
 }
 

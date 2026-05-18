@@ -118,11 +118,27 @@ function CreateEventoDialog({ open, onClose }: { open: boolean; onClose: () => v
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">Fecha Inicio *</label>
-                <Input type="date" value={form.fechaInicio} onChange={e => setForm(p => ({ ...p, fechaInicio: e.target.value }))} className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+                <div className="relative">
+                  <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/75 pointer-events-none" />
+                  <Input 
+                    type="date" 
+                    value={form.fechaInicio} 
+                    onChange={e => setForm(p => ({ ...p, fechaInicio: e.target.value }))} 
+                    className="h-11 pl-10 bg-background/50 border-white/10 rounded-xl text-sm hover:border-primary/40 focus-visible:ring-primary/20 transition-all cursor-pointer select-none" 
+                  />
+                </div>
               </div>
               <div>
                 <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">Fecha Fin *</label>
-                <Input type="date" value={form.fechaFin} onChange={e => setForm(p => ({ ...p, fechaFin: e.target.value }))} className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+                <div className="relative">
+                  <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/75 pointer-events-none" />
+                  <Input 
+                    type="date" 
+                    value={form.fechaFin} 
+                    onChange={e => setForm(p => ({ ...p, fechaFin: e.target.value }))} 
+                    className="h-11 pl-10 bg-background/50 border-white/10 rounded-xl text-sm hover:border-primary/40 focus-visible:ring-primary/20 transition-all cursor-pointer select-none" 
+                  />
+                </div>
               </div>
             </div>
             <div>
@@ -219,11 +235,27 @@ function EditEventoDialog({ evento, onClose }: { evento: EventoEnriquecido; onCl
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">Fecha Inicio *</label>
-              <Input type="date" value={form.fechaInicio} onChange={e => setForm(p => ({ ...p, fechaInicio: e.target.value }))} className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+              <div className="relative">
+                <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/75 pointer-events-none" />
+                <Input 
+                  type="date" 
+                  value={form.fechaInicio} 
+                  onChange={e => setForm(p => ({ ...p, fechaInicio: e.target.value }))} 
+                  className="h-11 pl-10 bg-background/50 border-white/10 rounded-xl text-sm hover:border-primary/40 focus-visible:ring-primary/20 transition-all cursor-pointer select-none" 
+                />
+              </div>
             </div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">Fecha Fin *</label>
-              <Input type="date" value={form.fechaFin} onChange={e => setForm(p => ({ ...p, fechaFin: e.target.value }))} className="h-11 bg-background/50 border-white/10 rounded-xl text-sm" />
+              <div className="relative">
+                <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/75 pointer-events-none" />
+                <Input 
+                  type="date" 
+                  value={form.fechaFin} 
+                  onChange={e => setForm(p => ({ ...p, fechaFin: e.target.value }))} 
+                  className="h-11 pl-10 bg-background/50 border-white/10 rounded-xl text-sm hover:border-primary/40 focus-visible:ring-primary/20 transition-all cursor-pointer select-none" 
+                />
+              </div>
             </div>
           </div>
           <div>
@@ -374,17 +406,20 @@ function IglesiaSection({ iglesiaNombre, eventos, onSelect, onDelete }: {
                       <h3 className="font-bold text-[13px] leading-tight group-hover:text-primary transition-colors">{ev.nombre}</h3>
                       {ev.tipoEventoTexto && <p className="text-[11px] text-muted-foreground">{ev.tipoEventoTexto}</p>}
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-auto pt-2 border-t border-border/50">
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-auto pt-2 border-t border-border/50 relative min-h-[32px]">
                       <span>{ev.fechaInicio ? new Date(ev.fechaInicio).toLocaleDateString("es-CO", { month: "short", day: "numeric" }) : "—"}</span>
-                      <span className="flex items-center gap-1"><ListChecks className="w-3 h-3" />{ev.cantidadTareas}</span>
-                    </div>
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                      <button
-                        className="w-6 h-6 rounded-lg bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-500 transition-colors"
-                        onClick={e => { e.stopPropagation(); onDelete(ev); }}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 group-hover:opacity-0 transition-opacity duration-200">
+                          <ListChecks className="w-3 h-3" />{ev.cantidadTareas}
+                        </span>
+                        <button
+                          className="absolute right-0 top-1.5 opacity-0 group-hover:opacity-100 w-6 h-6 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 flex items-center justify-center text-rose-500 transition-all duration-200 cursor-pointer"
+                          onClick={e => { e.stopPropagation(); onDelete(ev); }}
+                          title="Eliminar Evento"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
                   </Card>
                 </motion.div>
@@ -439,9 +474,9 @@ export function GlobalEventosPage() {
     });
   };
 
-  const chipBase = "px-3 py-1 rounded-full text-xs font-medium border cursor-pointer transition-colors";
-  const chipActive = "bg-primary text-primary-foreground border-primary";
-  const chipInactive = "bg-background/50 text-muted-foreground border-border/40 hover:border-primary/40";
+  const chipBase = "px-3.5 py-1.5 rounded-full text-xs font-semibold border cursor-pointer transition-all duration-300 whitespace-nowrap hover:-translate-y-0.5";
+  const chipActive = "bg-primary text-white border-primary shadow-md shadow-primary/20";
+  const chipInactive = "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 text-slate-600 dark:text-slate-400 shadow-sm hover:border-primary/40 dark:hover:border-primary/50 hover:text-primary dark:hover:text-white hover:shadow-md dark:hover:shadow-primary/5";
 
   if (isLoading) return (
     <div className="space-y-6 max-w-6xl mx-auto px-4">
@@ -468,8 +503,13 @@ export function GlobalEventosPage() {
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 w-full md:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
-            <Input placeholder="Buscar evento..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
+            <Input 
+              placeholder="Buscar evento..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              className="pl-9 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-sm" 
+            />
           </div>
           <Button onClick={() => setShowCreate(true)} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30">
             <Plus className="w-4 h-4 mr-2" /> Nuevo Evento

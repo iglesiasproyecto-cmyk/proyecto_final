@@ -1,21 +1,10 @@
 import { useNavigate } from "react-router";
 import { useApp } from "../store/AppContext";
 import { Button } from "./ui/button";
-import { useEffect } from "react";
 
 export function NoChurchAssignedPage() {
   const navigate = useNavigate();
-  const { logout, usuarioActual, iglesiaActual, rolActual, authReady } = useApp();
-
-  useEffect(() => {
-    if (authReady) {
-      if (rolActual === "super_admin") {
-        navigate("/app/global", { replace: true });
-      } else if (iglesiaActual?.id != null) {
-        navigate(`/app/${iglesiaActual.id}`, { replace: true });
-      }
-    }
-  }, [authReady, iglesiaActual, rolActual, navigate]);
+  const { logout, usuarioActual } = useApp();
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-6">

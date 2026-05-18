@@ -74,7 +74,7 @@ export function UsuariosPage() {
     fechaNacimiento: "",
     idIglesia: iglesiaActual?.id ?? 0,
     idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
-    idSede: isAdminSede ? 0 : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
     idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
   const resetInviteForm = () => {
@@ -85,7 +85,7 @@ export function UsuariosPage() {
       fechaNacimiento: "",
       idIglesia: iglesiaActual?.id ?? 0,
       idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
-      idSede: isAdminSede ? 0 : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
+      idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
       idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0
     });
     setInviteStep(1);
@@ -96,13 +96,13 @@ export function UsuariosPage() {
   const [assignForm, setAssignForm] = useState({
     idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
     idIglesia: iglesiaActual?.id ?? 0,
-    idSede: isAdminSede ? 0 : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
     idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
   const resetAssignForm = () => setAssignForm({
     idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
     idIglesia: iglesiaActual?.id ?? 0,
-    idSede: isAdminSede ? 0 : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
+    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
     idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
 
@@ -145,11 +145,11 @@ export function UsuariosPage() {
       if (!hasRoleInMyIglesia) return false;
     }
 
-    // If admin_sede, only show users from their sedes
+    // If admin_sede, only show users from their sede
     if (isAdminSede) {
-      if (sedesDelUsuario.length === 0) return false;
-      const mySedeIds = new Set(sedesDelUsuario.map(s => s.id));
-      const hasRoleInMySede = u.roleNames.some(rn => rn.idSede && mySedeIds.has(rn.idSede));
+      if (sedesDelUsuario.length === 0) return false; // Security: no sede assigned, hide all
+      const mySede = sedesDelUsuario[0]; // Use admin's assigned sede
+      const hasRoleInMySede = u.roleNames.some(rn => rn.idSede === mySede.id);
       if (!hasRoleInMySede) return false;
     }
 
@@ -182,7 +182,7 @@ export function UsuariosPage() {
 
   // Ministerios disponibles para el filtro según el rol actual
   const ministeriosParaFiltro = isAdminSede
-    ? ministeriosInvite.filter(m => m.idSede && sedesDelUsuario.some(s => s.id === m.idSede))
+    ? ministeriosInvite.filter(m => m.idSede === sedesDelUsuario[0]?.id)
     : isLider
     ? ministeriosDelUsuario.map(m => ({ idMinisterio: m.id, nombre: m.nombre }))
     : [];
@@ -404,12 +404,19 @@ export function UsuariosPage() {
         {/* Búsqueda y Filtros */}
         <div className="flex flex-col gap-2">
           <div className="relative w-full">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
-            <Input placeholder="Buscar por nombre o correo..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
+            <Input
+              placeholder="Buscar por nombre o correo..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-sm"
+            />
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Select value={filterEstado} onValueChange={setFilterEstado}>
-              <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="flex-1 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-sm text-foreground/80">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="activo">Activos</SelectItem>
@@ -417,7 +424,9 @@ export function UsuariosPage() {
               </SelectContent>
             </Select>
             <Select value={filterRol} onValueChange={setFilterRol}>
-              <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Rol" /></SelectTrigger>
+              <SelectTrigger className="flex-1 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-sm text-foreground/80">
+                <SelectValue placeholder="Rol" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los roles</SelectItem>
                 {rolesParaFiltro.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
@@ -426,7 +435,9 @@ export function UsuariosPage() {
             {/* Filtro de Iglesia: solo para super_admin y admin_iglesia */}
             {!isAdminSede && !isLider && (
               <Select value={filterIglesia} onValueChange={setFilterIglesia}>
-                <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Iglesia" /></SelectTrigger>
+                <SelectTrigger className="flex-1 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-sm text-foreground/80">
+                  <SelectValue placeholder="Iglesia" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas las iglesias</SelectItem>
                   {iglesias.map(ig => <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>)}
@@ -436,7 +447,9 @@ export function UsuariosPage() {
             {/* Filtro de Ministerio: para admin_sede y lider (si tiene varios) */}
             {(isAdminSede || (isLider && ministeriosDelUsuario.length > 1)) && ministeriosParaFiltro.length > 0 && (
               <Select value={filterMinisterio} onValueChange={setFilterMinisterio}>
-                <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Ministerio" /></SelectTrigger>
+                <SelectTrigger className="flex-1 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-sm text-foreground/80">
+                  <SelectValue placeholder="Ministerio" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los ministerios</SelectItem>
                   {ministeriosParaFiltro.map(m => <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>)}
@@ -818,18 +831,7 @@ export function UsuariosPage() {
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         Sede{roleNeedsSede(inviteForm.idRol) ? ' *' : ' (opcional)'}
                       </label>
-                      {isAdminSede && sedesDelUsuario.length > 1 ? (
-                        <select
-                          value={inviteForm.idSede || ""}
-                          onChange={e => setInviteForm(p => ({ ...p, idSede: Number(e.target.value), idMinisterio: 0 }))}
-                          className="w-full h-11 px-3 bg-background/50 border border-white/10 rounded-xl text-sm outline-none"
-                        >
-                          <option value="" disabled>Seleccionar sede...</option>
-                          {sedesDelUsuario.map(s => (
-                            <option key={s.id} value={s.id}>{s.nombre}</option>
-                          ))}
-                        </select>
-                      ) : isAdminSede ? (
+                      {isAdminSede ? (
                         <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-muted/40 border border-border/50">
                           <span className="text-sm text-foreground/80">{sedesDelUsuario.find(s => s.id === inviteForm.idSede)?.nombre ?? '—'}</span>
                           <span className="ml-auto text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Tu sede</span>
@@ -1064,21 +1066,8 @@ export function UsuariosPage() {
                         </SelectContent>
                       </Select>
                     )}
-                    {/* Show dropdown if admin_sede has multiple sedes */}
-                    {isAdminSede && sedesDelUsuario.length > 1 && (
-                      <select
-                        value={assignForm.idSede || ""}
-                        onChange={e => setAssignForm(p => ({ ...p, idSede: Number(e.target.value), idMinisterio: 0 }))}
-                        className="w-full h-11 px-3 bg-background/50 border border-white/10 rounded-xl text-sm outline-none"
-                      >
-                        <option value="" disabled>Seleccionar sede...</option>
-                        {sedesDelUsuario.map(s => (
-                          <option key={s.id} value={s.id}>{s.nombre}</option>
-                        ))}
-                      </select>
-                    )}
-                    {/* Show as text if admin_sede (single sede) */}
-                    {isAdminSede && sedesDelUsuario.length <= 1 && (
+                    {/* Show as text if admin_sede */}
+                    {isAdminSede && (
                       <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
                         Sede: {sedesDelUsuario.find(s => s.id === assignForm.idSede)?.nombre}
                       </div>

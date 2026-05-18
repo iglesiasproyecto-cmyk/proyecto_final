@@ -464,12 +464,15 @@ function EnrollUsersDialog({
             <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2 block">
               Buscar usuario
             </label>
-            <Input
-              placeholder="Buscar por nombre o email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-10 bg-background/50 border-white/10 rounded-lg text-sm"
-            />
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
+              <Input
+                placeholder="Buscar por nombre o email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-sm"
+              />
+            </div>
           </div>
           <div className="py-8 text-center text-sm text-muted-foreground">
             <p>Funcionalidad en desarrollo</p>

@@ -17,10 +17,7 @@ import {
   ChevronDown,
   FileText,
   HelpCircle,
-  Lock,
-  Unlock,
 } from 'lucide-react'
-import { motion } from 'motion/react'
 import { supabase } from '@/lib/supabaseClient'
 import { toast } from 'sonner'
 
@@ -114,17 +111,9 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Estructura del curso</p>
           <h3 className="mt-1 text-xl font-black tracking-tight">Módulos del Curso</h3>
-          <div className="mt-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            {desbloqueoSecuencial ? (
-              <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs">
-                <Lock className="w-3 h-3 mr-1" /> Desbloqueo secuencial activado
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-xs">
-                <Unlock className="w-3 h-3 mr-1" /> Todos los módulos disponibles
-              </Badge>
-            )}
-          </div>
+          <p className="text-sm font-medium text-muted-foreground">
+            {desbloqueoSecuencial ? '🔒 Desbloqueo secuencial activado' : '🔓 Todos los módulos disponibles'}
+          </p>
         </div>
         <Button onClick={() => setShowCrearModulo(true)} className="h-11 rounded-2xl bg-[#4682b4] px-6 font-bold text-white shadow-md shadow-blue-900/10 hover:bg-[#4682b4]/90">
           <Plus className="h-4 w-4 mr-2" />
@@ -159,35 +148,35 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
                         {...provided.draggableProps}
                         className="mb-3"
                       >
-                          <Card className="overflow-hidden rounded-[24px] border border-border/50 bg-card/40 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:shadow-lg shadow-sm">
+                          <Card className="overflow-hidden rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl transition-all hover:-translate-y-0.5 hover:shadow-lg">
                           <CardContent className="p-4 sm:p-5">
                             <div className="flex items-start gap-4">
-                              <div {...provided.dragHandleProps} className="mt-1 cursor-grab rounded-xl bg-muted/30 p-2 hover:bg-muted/50 transition-colors">
+                              <div {...provided.dragHandleProps} className="mt-1 cursor-grab rounded-xl bg-muted/30 p-2">
                                 <GripVertical className="h-5 w-5 text-muted-foreground" />
                               </div>
 
                               <div className="flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">Módulo {modulo.orden}</Badge>
-                                  <h4 className="font-bold text-lg">{modulo.titulo}</h4>
-                                  <Badge variant={modulo.publicado ? 'default' : 'secondary'} className={modulo.publicado ? "bg-emerald-500/10 text-emerald-600 border-none" : "bg-muted text-muted-foreground border-none"}>
-                                    {modulo.publicado ? 'Publicado' : 'Borrador'}
+                                  <Badge variant="outline">#{modulo.orden}</Badge>
+                                  <h4 className="font-semibold">{modulo.titulo}</h4>
+                                  <Badge variant={modulo.publicado ? 'default' : 'secondary'}>
+                                    {modulo.publicado ? 'publicado' : 'borrador'}
                                   </Badge>
                                 </div>
 
                                 {modulo.descripcion && (
-                                  <p className="mt-2 text-sm text-muted-foreground">
+                                  <p className="mt-1 text-sm text-muted-foreground">
                                     {modulo.descripcion}
                                   </p>
                                 )}
 
-                                <div className="mt-3 flex items-center gap-4 text-xs font-medium text-muted-foreground">
-                                  <span className="flex items-center bg-accent/30 px-2 py-1 rounded-md">
-                                    <FileText className="h-3 w-3 mr-1 text-blue-500" />
+                                <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                                  <span className="flex items-center">
+                                    <FileText className="h-3 w-3 mr-1" />
                                     Contenido
                                   </span>
-                                  <span className="flex items-center bg-accent/30 px-2 py-1 rounded-md">
-                                    <HelpCircle className="h-3 w-3 mr-1 text-amber-500" />
+                                  <span className="flex items-center">
+                                    <HelpCircle className="h-3 w-3 mr-1" />
                                     Evaluación
                                   </span>
                                 </div>
@@ -197,7 +186,6 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
                                 <Button
                                   variant={moduloEditando?.id === modulo.id_aula_modulo ? 'default' : 'outline'}
                                   size="sm"
-                                  className={moduloEditando?.id === modulo.id_aula_modulo ? "bg-primary text-primary-foreground rounded-xl" : "bg-background/50 rounded-xl"}
                                   onClick={() =>
                                     setModuloEditando(
                                       moduloEditando?.id === modulo.id_aula_modulo
@@ -214,23 +202,22 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="bg-background/50 rounded-xl"
                                   onClick={() => togglePublicacion(modulo.id_aula_modulo, modulo.publicado)}
                                 >
                                   {modulo.publicado ? (
-                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                    <EyeOff className="h-4 w-4" />
                                   ) : (
-                                    <Eye className="h-4 w-4 text-emerald-500" />
+                                    <Eye className="h-4 w-4" />
                                   )}
                                 </Button>
 
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <Button variant="outline" size="sm" className="bg-background/50 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-xl border-red-500/20">
+                                    <Button variant="outline" size="sm">
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
                                   </AlertDialogTrigger>
-                                  <AlertDialogContent className="rounded-[28px] border-border/50 bg-card/95 backdrop-blur-2xl">
+                                  <AlertDialogContent>
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>¿Eliminar módulo?</AlertDialogTitle>
                                       <AlertDialogDescription>
@@ -238,8 +225,8 @@ export function ModulosGestion({ idCurso, modulos, desbloqueoSecuencial }: Modul
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => eliminarModulo(modulo.id_aula_modulo)} className="rounded-xl bg-red-500 hover:bg-red-600 text-white">
+                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => eliminarModulo(modulo.id_aula_modulo)}>
                                         Eliminar
                                       </AlertDialogAction>
                                     </AlertDialogFooter>

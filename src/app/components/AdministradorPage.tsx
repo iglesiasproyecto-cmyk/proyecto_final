@@ -8,7 +8,6 @@ import { Skeleton } from "./ui/skeleton";
 import { Building2, MapPin, Users, Plus, X, Search, Crown, ShieldCheck, UserMinus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { useApp } from "../store/AppContext";
 
 const ID_ROL_ADMIN_IGLESIA = ROLE_IDS.ADMIN_IGLESIA;
 
@@ -58,14 +57,14 @@ function UserPicker({ candidates, onSelect, onClose, isLoading }: {
     >
       <div className="pt-4 mt-4 border-t border-border/30 space-y-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 transition-colors" />
           <input
             autoFocus
             type="text"
             placeholder="Buscar por nombre o correo..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-border/50 bg-background/60 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+            className="w-full rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-foreground transition-all duration-300 pl-9 pr-3 py-2.5 text-sm outline-none"
           />
         </div>
         <div className="max-h-52 overflow-y-auto space-y-1 pr-1">
@@ -308,7 +307,6 @@ export function AdministradorPage() {
   const { data: sedes = [], isLoading: loadingSedes } = useSedesEnriquecidas();
   const { data: usuarios = [], isLoading: loadingUsuarios } = useUsuariosEnriquecidos();
   const { data: adminSedesAsignaciones = [], isLoading: loadingAdminSedes } = useAdminSedesAsignaciones();
-  const { rolActual } = useApp();
 
   const qc = useQueryClient();
   const assignRol = useAssignRol();
@@ -401,32 +399,27 @@ export function AdministradorPage() {
 
   const isLoading = loadingIglesias || loadingSedes || loadingUsuarios || loadingAdminSedes;
 
-  if (rolActual === "admin_sede") {
-    return (
-      <div className="max-w-2xl mx-auto py-16 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
-          <ShieldCheck className="w-8 h-8 text-amber-500" />
-        </div>
-        <h2 className="text-xl font-bold text-foreground mb-2">Acceso restringido</h2>
-        <p className="text-sm text-muted-foreground">
-          No tienes permisos para gestionar administradores de iglesias y sedes.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-10 max-w-7xl mx-auto pb-10">
 
       {/* ── Page header ── */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
-          <ShieldCheck className="w-7 h-7 text-[#1a7fa8] shrink-0" />
-          Administrador
-        </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-          Gestiona los administradores de iglesias y sedes desde un solo lugar. Haz clic en una tarjeta para asignar o remover.
-        </p>
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-2"
+      >
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Seguridad</p>
+            <h1 className="text-2xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">Administrador</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
+              Gestiona los administradores de iglesias y sedes desde un solo lugar. Haz clic en una tarjeta para asignar o remover.
+            </p>
+          </div>
+        </div>
       </motion.div>
 
       {/* ── Iglesias section ── */}

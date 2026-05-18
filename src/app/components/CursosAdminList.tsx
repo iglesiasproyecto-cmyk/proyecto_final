@@ -97,18 +97,18 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
       {/* Filters */}
       <div className="flex flex-col gap-3 rounded-[28px] border border-white/10 bg-card/55 p-4 backdrop-blur-2xl lg:flex-row lg:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 transition-colors" />
           <Input
             placeholder="Buscar curso..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="h-11 rounded-2xl border-white/10 bg-background/60 pl-9"
+            className="h-11 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 pl-9 text-sm"
           />
         </div>
         <select
           value={ministerioFilter}
           onChange={e => setMinisterioFilter(Number(e.target.value))}
-          className="h-11 rounded-2xl border border-white/10 bg-background/60 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20"
+          className="h-11 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 px-3 text-sm text-foreground/80 outline-none cursor-pointer"
         >
           <option value={0}>Todos los ministerios</option>
           {ministerios.map(m => (
@@ -120,10 +120,10 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
             <button
               key={t}
               onClick={() => setTipoFilter(t)}
-              className={`h-11 px-4 rounded-2xl text-xs font-semibold capitalize transition-all ${
+              className={`h-11 px-4 rounded-2xl text-xs font-semibold capitalize transition-all border ${
                 tipoFilter === t
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-background/55 border border-white/10 text-foreground/60 hover:text-foreground'
+                  ? 'bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20'
+                  : 'bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 text-slate-600 dark:text-slate-400 hover:border-primary/30 dark:hover:border-primary/40 hover:text-primary dark:hover:text-white'
               }`}
             >
               {t === 'todos' ? 'Todos' : t === 'iglesia' ? 'Iglesia' : 'Ministerio'}
@@ -133,7 +133,7 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
         <select
           value={estadoFilter}
           onChange={e => setEstadoFilter(e.target.value)}
-          className="h-11 rounded-2xl border border-white/10 bg-background/60 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20"
+          className="h-11 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 px-3 text-sm text-foreground/80 outline-none cursor-pointer"
         >
           <option value="todos">Todos los estados</option>
           <option value="activo">Activos</option>

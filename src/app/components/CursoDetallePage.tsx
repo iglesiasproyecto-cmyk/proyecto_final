@@ -25,21 +25,15 @@ import {
   UserCheck,
   AlertCircle,
   UserPlus,
-  ClipboardList,
-  FolderOpen
+  ClipboardList
 } from 'lucide-react'
-import { motion } from 'motion/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabaseClient'
 import { useCursos } from '@/hooks/useCursos'
 import { useProgresoGrupoCurso } from '@/hooks/useProgreso'
 import { ModulosGestion } from './ModulosGestion'
 import { AgregarPersonasCursoDialog } from '@/app/components/aula/AgregarPersonasCursoDialog'
 import { ModulosNavegacion } from './ModulosNavegacion'
-import { CrearEvaluacionDialog } from '@/app/components/CrearEvaluacionDialog'
-import { EditarEvaluacionDialog } from '@/app/components/EditarEvaluacionDialog'
-import { CalificacionesTab } from '@/app/components/CalificacionesTab'
 
 export function CursoDetallePage() {
   const { idCurso } = useParams<{ idCurso: string }>()
@@ -263,47 +257,32 @@ export function CursoDetallePage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8 pb-10">
-      {/* Header Premium */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative bg-card/40 backdrop-blur-xl border border-border/50 p-6 rounded-3xl shadow-sm overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-5"
-      >
-        <div className="absolute top-0 right-0 w-72 h-48 bg-primary/10 rounded-full blur-[90px] pointer-events-none -z-10" />
-
-        <div className="flex flex-col md:flex-row md:items-center gap-4 sm:gap-6">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="flex flex-col gap-4 rounded-[32px] border border-white/10 bg-card/55 p-5 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
           <Button 
-            variant="ghost" 
-            size="icon" 
+            variant="outline" 
+            size="sm" 
             onClick={() => navigate(aulaBasePath)}
-            className="h-10 w-10 rounded-full bg-background/50 hover:bg-background shadow-sm border border-border/50 shrink-0"
+            className="h-10 rounded-2xl border-white/20 bg-background/55 px-4"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Volver
           </Button>
-
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white text-xl font-black shadow-lg shadow-blue-900/20 shrink-0">
-              <BookOpen className="w-6 h-6 sm:w-8 sm:h-8" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/80 mb-1">
-                {curso.ministerio?.nombre || "Curso Global"}
-              </p>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-                {curso.titulo}
-              </h1>
-            </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Detalle del curso</p>
+            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{curso.titulo}</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-primary/70">{curso.ministerio?.nombre}</p>
           </div>
         </div>
-
         <div className="flex items-center gap-3">
           <Badge 
-            variant="outline"
-            className={`px-3 py-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider border ${
+            variant={curso.estado === 'activo' ? 'default' : 'secondary'}
+            className={`rounded-full px-4 py-1 text-[10px] font-bold uppercase tracking-widest border-none ${
               curso.estado === 'activo' 
-                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400' 
-                : 'bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400'
+                ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' 
+                : 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
             }`}
           >
             {curso.estado}
@@ -312,103 +291,120 @@ export function CursoDetallePage() {
             <Button
               onClick={() => setShowAgregarPersonas(true)}
               size="sm"
-              className="h-9 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+              className="h-10 rounded-2xl border-white/20 bg-background/55"
             >
-              <UserPlus className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Añadir personas</span>
+              <UserPlus className="h-4 w-4 mr-2 text-primary" />
+              Agregar personas
             </Button>
           )}
-          <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-border/50 bg-background/50 hover:bg-accent shadow-sm">
-            <Settings className="h-4 w-4 text-primary" />
+          <Button variant="outline" size="sm" className="h-10 rounded-2xl border-white/20 bg-background/55">
+            <Settings className="h-4 w-4 mr-2 text-primary" />
+            Configuración
           </Button>
         </div>
-      </motion.div>
+      </div>
 
       {/* Estadísticas Rápidas */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
-      >
-        {[
-          { label: "Módulos", value: totalModulos, icon: <BookOpen className="h-5 w-5" />, color: "from-[#4682b4] to-[#709dbd]" },
-          { label: "Publicados", value: modulosPublicados, icon: <Eye className="h-5 w-5" />, color: "from-emerald-500 to-emerald-400" },
-          { label: "Servidores", value: miembrosActivos, icon: <Users className="h-5 w-5" />, color: "from-indigo-500 to-indigo-400" },
-          { label: "Progreso", value: `${promedioProgreso}%`, icon: <TrendingUp className="h-5 w-5" />, color: "from-amber-500 to-amber-400" },
-        ].map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 + i * 0.05 }}
-            className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 sm:p-5 flex items-center gap-4 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 transition-all"
-          >
-            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white shadow-sm shrink-0`}>
-              {stat.icon}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-[#4682b4]/10 text-[#4682b4]">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-foreground">{totalModulos}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Módulos</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xl sm:text-2xl font-black text-foreground leading-none">{stat.value}</p>
-              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1">{stat.label}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500">
+                <Eye className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-foreground">{modulosPublicados}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Publicados</p>
+              </div>
             </div>
-          </motion.div>
-        ))}
-      </motion.div>
+          </CardContent>
+        </Card>
+
+        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-foreground">{miembrosActivos}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Servidores</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-foreground">{promedioProgreso}%</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Progreso</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {cursoVacio && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-primary/5 border border-primary/20 border-dashed rounded-3xl p-8 flex flex-col md:flex-row items-center gap-6 justify-between"
-        >
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-              <FolderOpen className="w-8 h-8 text-primary/60" />
+        <Card className="rounded-[28px] border border-dashed border-primary/30 bg-primary/5">
+          <CardContent className="py-8 px-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Curso en preparación</p>
+                <h3 className="mt-1 text-xl font-black tracking-tight">Este curso aún no tiene módulos publicados</h3>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                  Agrega módulos con objetivos claros, actividades y evaluación para que los servidores puedan iniciar su ruta de aprendizaje.
+                </p>
+              </div>
+              {(isLider || isAdmin) && (
+                <Button
+                  onClick={() => setShowAgregarPersonas(true)}
+                  className="h-11 rounded-2xl px-5"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Gestionar participantes
+                </Button>
+              )}
             </div>
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/80 mb-1">Curso en preparación</p>
-              <h3 className="text-xl font-bold tracking-tight text-foreground">Este curso aún no tiene módulos publicados</h3>
-              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                Agrega módulos con objetivos claros, actividades y evaluación para que los servidores puedan iniciar su ruta de aprendizaje.
-              </p>
-            </div>
-          </div>
-          {(isLider || isAdmin) && (
-            <Button
-              onClick={() => setShowAgregarPersonas(true)}
-              className="rounded-xl px-5 shadow-sm whitespace-nowrap shrink-0"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Gestionar participantes
-            </Button>
-          )}
-        </motion.div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Contenido Principal */}
       <Tabs defaultValue="modulos" className="space-y-6">
         <div className="flex items-center justify-between overflow-x-auto pb-2 no-scrollbar">
-          <TabsList className="inline-flex h-auto rounded-2xl border border-border/50 bg-card/40 backdrop-blur-xl p-1.5 shadow-sm">
-            <TabsTrigger value="modulos" className="rounded-xl px-6 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
+          <TabsList className="inline-flex rounded-2xl border border-border/50 bg-muted/50 p-1.5 backdrop-blur-md">
+            <TabsTrigger value="modulos" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <BookOpen className="h-4 w-4 mr-2" />
               Módulos
             </TabsTrigger>
-            <TabsTrigger value="evaluaciones" className="rounded-xl px-6 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
+            <TabsTrigger value="evaluaciones" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <ClipboardList className="h-4 w-4 mr-2" />
               Evaluaciones
             </TabsTrigger>
-            {(isAdmin || isLider) && (
-              <TabsTrigger value="calificaciones" className="rounded-xl px-6 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
-                <Award className="h-4 w-4 mr-2" />
-                Calificaciones
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="progreso" className="rounded-xl px-6 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
+            <TabsTrigger value="progreso" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <BarChart3 className="h-4 w-4 mr-2" />
               Progreso
             </TabsTrigger>
-            <TabsTrigger value="servidores" className="rounded-xl px-6 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
+            <TabsTrigger value="servidores" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
               <Users className="h-4 w-4 mr-2" />
               Servidores
             </TabsTrigger>
@@ -427,15 +423,19 @@ export function CursoDetallePage() {
           )}
         </TabsContent>
 
-        <TabsContent value="evaluaciones" className="mt-6">
-          <EvaluacionesTab idCurso={parseInt(idCurso!)} isAdmin={isAdmin} isLider={isLider} />
+        <TabsContent value="evaluaciones">
+          {(isLider || isAdmin) ? (
+            <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
+              <CardContent className="py-8 px-6">
+                <p className="text-muted-foreground">
+                  Los líderes pueden configurar evaluaciones en cada módulo desde la pestaña "Módulos".
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <EvaluacionesTab idCurso={parseInt(idCurso!)} />
+          )}
         </TabsContent>
-
-        {(isAdmin || isLider) && (
-          <TabsContent value="calificaciones" className="mt-6">
-            <CalificacionesTab idCurso={parseInt(idCurso!)} />
-          </TabsContent>
-        )}
 
         <TabsContent value="progreso">
           <ProgresoCursoTab progresoGrupo={progresoGrupo || []} />
@@ -458,238 +458,51 @@ export function CursoDetallePage() {
 }
 
 // Componente para la pestaña de evaluaciones
-function EvaluacionesTab({ idCurso, isAdmin, isLider }: { idCurso: number; isAdmin: boolean; isLider: boolean }) {
-  const [moduloSeleccionado, setModuloSeleccionado] = useState<number | null>(null)
-  const [showCrearEvaluacion, setShowCrearEvaluacion] = useState(false)
-  const [evaluacionEditar, setEvaluacionEditar] = useState<any | null>(null)
-  const [evaluacionEliminar, setEvaluacionEliminar] = useState<any | null>(null)
-  const [eliminando, setEliminando] = useState(false)
-  const { canCreateModulos } = useEvaluacionPermissions(idCurso, isAdmin || isLider)
-  const queryClient = useQueryClient()
-
+function EvaluacionesTab({ idCurso }: { idCurso: number }) {
   const { data: modulos } = useQuery({
     queryKey: ['modulos-evaluaciones', idCurso],
     queryFn: async () => {
       const { data, error } = await supabase
-        .rpc('get_modulos_con_evaluaciones', { p_id_curso: idCurso })
+        .from('aula_modulo')
+        .select(`
+          id_aula_modulo,
+          titulo,
+          evaluaciones:aula_evaluacion(
+            id_aula_evaluacion,
+            titulo,
+            puntaje_minimo
+          )
+        `)
+        .eq('id_aula_curso', idCurso)
       if (error) throw error
-      return (data as any[]) || []
+      return data || []
     }
   })
 
-  const refrescar = () => queryClient.invalidateQueries({ queryKey: ['modulos-evaluaciones', idCurso] })
-
-  const handleCrearEvaluacion = (idModulo: number) => {
-    setModuloSeleccionado(idModulo)
-    setShowCrearEvaluacion(true)
-  }
-
-  const handleEvaluacionCreada = () => {
-    setShowCrearEvaluacion(false)
-    setModuloSeleccionado(null)
-    refrescar()
-  }
-
-  const handleAbrirEditar = (ev: any) => {
-    setEvaluacionEditar(ev)
-  }
-
-  const handleEliminar = async () => {
-    if (!evaluacionEliminar) return
-    setEliminando(true)
-    try {
-      const { error } = await supabase.rpc('eliminar_evaluacion', {
-        p_id_evaluacion: evaluacionEliminar.id_aula_evaluacion,
-      })
-      if (error) throw error
-      toast.success('Evaluación eliminada')
-      setEvaluacionEliminar(null)
-      refrescar()
-    } catch (e) {
-      toast.error('Error al eliminar la evaluación')
-    } finally {
-      setEliminando(false)
-    }
-  }
-
-  if (!modulos || modulos.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-        <ClipboardList className="w-12 h-12 opacity-20 mb-4" />
-        <p className="text-base font-semibold">No hay módulos aún</p>
-        <p className="text-sm">Crea módulos en la pestaña anterior para agregar evaluaciones</p>
-      </div>
-    )
-  }
-
   return (
-    <>
-      <div className="space-y-4">
-        {modulos.map(mod => (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            key={mod.id_aula_modulo}
-            className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="p-5 border-b border-border/40 bg-card/20 flex items-center justify-between">
-              <h3 className="font-bold text-lg">{mod.titulo}</h3>
-              {canCreateModulos && (
-                <button
-                  onClick={() => handleCrearEvaluacion(mod.id_aula_modulo)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Crear
-                </button>
-              )}
-            </div>
-            <div className="p-5">
-              {mod.evaluaciones?.length ? (
-                <div className="space-y-3">
-                  {mod.evaluaciones.map((ev: any) => (
-                    <div key={ev.id_aula_evaluacion} className="flex items-center gap-3 p-3 bg-accent/20 rounded-xl border border-border/30 group">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                        <ClipboardList className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate">{ev.titulo}</p>
-                        <p className="text-xs text-muted-foreground">Mínimo para aprobar: {ev.puntaje_minimo}%</p>
-                      </div>
-                      {canCreateModulos && (
-                        <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => handleAbrirEditar(ev)}
-                            className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
-                            title="Editar"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setEvaluacionEliminar(ev)}
-                            className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                            title="Eliminar"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                  <ClipboardList className="w-8 h-8 opacity-20 mb-2" />
-                  <p className="text-sm font-semibold mb-2">Sin evaluaciones</p>
-                  {canCreateModulos && (
-                    <button
-                      onClick={() => handleCrearEvaluacion(mod.id_aula_modulo)}
-                      className="text-xs font-semibold text-primary hover:underline mt-2"
-                    >
-                      + Crear evaluación
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Dialog Crear */}
-      {moduloSeleccionado && (
-        <CrearEvaluacionDialog
-          open={showCrearEvaluacion}
-          onOpenChange={setShowCrearEvaluacion}
-          idModulo={moduloSeleccionado}
-          onSuccess={handleEvaluacionCreada}
-        />
-      )}
-
-      {/* Dialog Editar Completo (preguntas + opciones) */}
-      {evaluacionEditar && (
-        <EditarEvaluacionDialog
-          open={!!evaluacionEditar}
-          onOpenChange={(open) => { if (!open) setEvaluacionEditar(null) }}
-          idEvaluacion={evaluacionEditar.id_aula_evaluacion}
-          onSuccess={() => { setEvaluacionEditar(null); refrescar() }}
-        />
-      )}
-
-      {/* Dialog Confirmar Eliminar */}
-      {evaluacionEliminar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4"
-          >
-            <div className="flex flex-col items-center text-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center text-destructive">
-                <Trash2 className="w-6 h-6" />
+    <div className="space-y-4">
+      {modulos?.map(mod => (
+        <Card key={mod.id_aula_modulo} className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
+          <CardHeader>
+            <CardTitle className="text-lg">{mod.titulo}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {mod.evaluaciones?.length ? (
+              <div className="space-y-2">
+                {mod.evaluaciones.map((ev: any) => (
+                  <p key={ev.id_aula_evaluacion} className="text-sm">
+                    📝 {ev.titulo} (Mín. {ev.puntaje_minimo}%)
+                  </p>
+                ))}
               </div>
-              <div>
-                <h2 className="text-lg font-bold">¿Eliminar evaluación?</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Se eliminará <span className="font-semibold text-foreground">"{evaluacionEliminar.titulo}"</span> junto con todas sus preguntas e intentos. Esta acción no se puede deshacer.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setEvaluacionEliminar(null)} className="flex-1 px-4 py-2 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors">
-                Cancelar
-              </button>
-              <button
-                onClick={handleEliminar}
-                disabled={eliminando}
-                className="flex-1 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Sin evaluaciones</p>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   )
-}
-
-function useEvaluacionPermissions(idCurso: number, isAdminOrLider?: boolean) {
-  const { user, rolActual } = useAuth()
-  const [canCreateModulos, setCanCreateModulos] = useState(false)
-
-  useEffect(() => {
-    // Si el padre ya determinó que es admin o líder, conceder permiso directamente
-    if (isAdminOrLider) {
-      setCanCreateModulos(true)
-      return
-    }
-
-    // Para otros roles, verificar si es creador del curso
-    const checkPermissions = async () => {
-      if (!user?.id) return
-
-      const internalId = await getInternalUserId(user.id)
-      if (!internalId) return
-
-      const { data: curso } = await supabase
-        .from('aula_curso')
-        .select('id_usuario_creador')
-        .eq('id_aula_curso', idCurso)
-        .maybeSingle()
-
-      if (curso && curso.id_usuario_creador === internalId) {
-        setCanCreateModulos(true)
-        return
-      }
-
-      setCanCreateModulos(false)
-    }
-
-    checkPermissions()
-  }, [user?.id, idCurso, rolActual, isAdminOrLider])
-
-  return { canCreateModulos }
 }
 
 // Componente para la pestaña de progreso
@@ -703,58 +516,58 @@ function ProgresoCursoTab({ progresoGrupo }: { progresoGrupo: any[] }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-6 text-center shadow-sm hover:-translate-y-1 transition-transform">
-          <div className="w-12 h-12 rounded-full bg-blue-500/10 text-blue-500 mx-auto mb-3 flex items-center justify-center">
-            <UserCheck className="h-6 w-6" />
-          </div>
-          <div className="text-3xl font-black">{miembrosActivos}</div>
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-1">Servidores activos</p>
-        </div>
+        <Card className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
+          <CardContent className="p-4 text-center">
+            <UserCheck className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+            <div className="text-2xl font-bold">{miembrosActivos}</div>
+            <p className="text-sm text-muted-foreground">Servidores activos</p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-6 text-center shadow-sm hover:-translate-y-1 transition-transform">
-          <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 mx-auto mb-3 flex items-center justify-center">
-            <Award className="h-6 w-6" />
-          </div>
-          <div className="text-3xl font-black">{miembrosCompletaron}</div>
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-1">Completaron curso</p>
-        </div>
+        <Card className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
+          <CardContent className="p-4 text-center">
+            <Award className="h-8 w-8 mx-auto mb-2 text-green-600" />
+            <div className="text-2xl font-bold">{miembrosCompletaron}</div>
+            <p className="text-sm text-muted-foreground">Completaron curso</p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-6 text-center shadow-sm hover:-translate-y-1 transition-transform">
-          <div className="w-12 h-12 rounded-full bg-purple-500/10 text-purple-500 mx-auto mb-3 flex items-center justify-center">
-            <TrendingUp className="h-6 w-6" />
-          </div>
-          <div className="text-3xl font-black">{promedioProgreso}%</div>
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-1">Progreso promedio</p>
-        </div>
+        <Card className="rounded-[24px] border border-white/10 bg-card/55 backdrop-blur-2xl">
+          <CardContent className="p-4 text-center">
+            <TrendingUp className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+            <div className="text-2xl font-bold">{promedioProgreso}%</div>
+            <p className="text-sm text-muted-foreground">Progreso promedio</p>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-border/40 bg-card/20">
-          <h3 className="font-bold text-lg">Distribución de Progreso</h3>
-          <p className="text-sm text-muted-foreground">Progreso de todos los servidores inscritos</p>
-        </div>
-        <div className="p-6">
+      <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
+        <CardHeader>
+          <CardTitle>Distribución de Progreso</CardTitle>
+          <CardDescription>Progreso de todos los servidores inscritos</CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="space-y-4">
             {progresoGrupo
               .sort((a, b) => b.porcentaje - a.porcentaje)
               .slice(0, 10)
               .map((servidor, index) => (
-                <div key={servidor.idUsuario} className="flex items-center space-x-4 p-3 rounded-2xl hover:bg-accent/30 transition-colors">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] text-white font-bold shadow-sm">
-                    #{index + 1}
+                <div key={servidor.idUsuario} className="flex items-center space-x-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">
+                    {index + 1}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate">{servidor.nombre}</p>
-                    <div className="flex items-center gap-3 mt-1.5">
-                      <Progress value={servidor.porcentaje} className="h-2 flex-1 bg-muted/50" />
-                      <span className="text-xs font-bold w-10 text-right">{servidor.porcentaje}%</span>
-                    </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{servidor.nombre}</p>
+                    <Progress value={servidor.porcentaje} className="h-2 mt-1" />
                   </div>
+                  <Badge variant={servidor.completado ? "default" : "secondary"}>
+                    {servidor.porcentaje}%
+                  </Badge>
                 </div>
             ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -768,86 +581,76 @@ function ServidoresCursoTab({ progresoGrupo, aulaBasePath }: { progresoGrupo: an
   return (
     <div className="space-y-6">
       {servidoresAtrasados.length > 0 && (
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-3xl overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-amber-500/20 bg-amber-500/10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 flex items-center justify-center">
-              <AlertCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg text-amber-700 dark:text-amber-500">Servidores que necesitan atención</h3>
-              <p className="text-sm text-amber-600/80 dark:text-amber-500/80">Servidores con menos del 25% de progreso</p>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center text-orange-600">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              Servidores que necesitan atención
+            </CardTitle>
+            <CardDescription>
+              Servidores con menos del 25% de progreso
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
               {servidoresAtrasados.map((servidor) => (
                 <div
                   key={servidor.idUsuario}
-                  className="flex cursor-pointer items-center justify-between rounded-2xl border border-amber-500/20 bg-background/50 p-4 transition-all hover:bg-amber-500/10 hover:shadow-md group"
+                  className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/10 p-3 transition-colors hover:bg-accent/50"
                   onClick={() => navigate(`${aulaBasePath}/curso/${idCurso}/servidor/${servidor.idUsuario}`)}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-700 dark:text-amber-500 font-bold group-hover:scale-110 transition-transform">
-                      {servidor.nombre.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm">{servidor.nombre}</p>
-                      <p className="text-xs text-muted-foreground truncate max-w-[150px] sm:max-w-[200px]">{servidor.correo}</p>
-                    </div>
+                  <div>
+                    <p className="font-medium">{servidor.nombre}</p>
+                    <p className="text-sm text-muted-foreground">{servidor.correo}</p>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/20">{servidor.porcentaje}%</Badge>
-                    <div className="w-20 sm:w-24">
-                      <Progress value={servidor.porcentaje} className="h-1.5 bg-amber-500/20" />
+                  <div className="text-right">
+                    <Badge variant="outline" className="mb-1">{servidor.porcentaje}%</Badge>
+                    <div className="w-24">
+                      <Progress value={servidor.porcentaje} className="h-2" />
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-border/40 bg-card/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="font-bold text-lg">Todos los Servidores</h3>
-            <p className="text-sm text-muted-foreground">Lista completa de servidores inscritos</p>
-          </div>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <Card className="rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl">
+        <CardHeader>
+          <CardTitle>Todos los Servidores</CardTitle>
+          <CardDescription>
+            Lista completa de servidores inscritos en el curso
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
             {progresoGrupo.map((servidor) => (
                 <div
                   key={servidor.idUsuario}
-                  className="flex cursor-pointer items-center justify-between rounded-2xl border border-border/50 bg-background/50 p-4 transition-all hover:bg-accent/50 hover:shadow-md group"
+                  className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/10 p-3 transition-colors hover:bg-accent/50"
                   onClick={() => navigate(`${aulaBasePath}/curso/${idCurso}/servidor/${servidor.idUsuario}`)}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#709dbd]/20 to-[#4682b4]/10 text-[#4682b4] flex items-center justify-center font-bold group-hover:scale-110 transition-transform shadow-sm">
-                      {servidor.nombre.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm">{servidor.nombre}</p>
-                      <p className="text-xs text-muted-foreground truncate max-w-[150px] sm:max-w-[200px]">{servidor.correo}</p>
-                    </div>
+                <div>
+                  <p className="font-medium">{servidor.nombre}</p>
+                  <p className="text-sm text-muted-foreground">{servidor.correo}</p>
+                </div>
+                <div className="text-right">
+                  <Badge
+                    variant={servidor.completado ? "default" : servidor.porcentaje > 50 ? "secondary" : "outline"}
+                    className="mb-1"
+                  >
+                    {servidor.porcentaje}%
+                  </Badge>
+                  <div className="w-24">
+                    <Progress value={servidor.porcentaje} className="h-2" />
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <Badge
-                      variant={servidor.completado ? "default" : servidor.porcentaje > 50 ? "secondary" : "outline"}
-                      className="text-[10px]"
-                    >
-                      {servidor.porcentaje}%
-                    </Badge>
-                    <div className="w-20 sm:w-24">
-                      <Progress value={servidor.porcentaje} className="h-1.5 bg-muted/50" />
-                    </div>
-                  </div>
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

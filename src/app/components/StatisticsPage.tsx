@@ -25,10 +25,10 @@ const domainLabels: Record<StatisticsDomain, string> = {
 };
 
 const domainIcons: Record<StatisticsDomain, React.ReactNode> = {
-  iglesia: <Building2 className="w-4 h-4" />,
-  ministerios: <Settings2 className="w-4 h-4" />,
-  'eventos-tareas': <CalendarDays className="w-4 h-4" />,
-  aula: <BookOpen className="w-4 h-4" />,
+  iglesia: <Building2 className="w-4 h-4 text-sky-500/80" />,
+  ministerios: <Settings2 className="w-4 h-4 text-violet-500/80" />,
+  'eventos-tareas': <CalendarDays className="w-4 h-4 text-amber-500/80" />,
+  aula: <BookOpen className="w-4 h-4 text-emerald-500/80" />,
 };
 
 const datePresets = [
@@ -52,16 +52,16 @@ const datePresets = [
 
 function DateRangeSelector({ value, onChange }: { value: string; onChange: (label: string, range: { start: string | null; end: string | null }) => void }) {
   return (
-    <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1 border border-border/30 backdrop-blur-md">
-      <CalendarDaysIcon className="w-4 h-4 text-muted-foreground/60 ml-2 shrink-0 mr-1" />
+    <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-slate-950/60 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm backdrop-blur-md">
+      <CalendarDaysIcon className="w-4 h-4 text-[#1a7fa8] dark:text-[#5cbcd6] ml-2 shrink-0 mr-1.5" />
       {datePresets.map((p) => (
         <button
           key={p.label}
           onClick={() => onChange(p.label, p.range())}
-          className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-widest ${
+          className={`px-3.5 py-2 text-[10px] font-black rounded-xl transition-all duration-300 uppercase tracking-widest border ${
             value === p.label
-              ? 'bg-card text-foreground shadow-sm border border-border/50'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              ? 'bg-white dark:bg-slate-900 text-primary dark:text-white border-slate-200/60 dark:border-slate-800/80 shadow-md hover:scale-[1.02]'
+              : 'text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-white border-transparent hover:bg-white/50 dark:hover:bg-slate-800/30'
           }`}
         >
           {p.label}
@@ -269,14 +269,17 @@ export function StatisticsPage() {
         animate={{ opacity: 1, y: 0 }} 
         className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6"
       >
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
-            <TrendingUp className="w-7 h-7 text-[#1a7fa8] shrink-0" />
-            Estadísticas
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Analiza el crecimiento, participación y métricas clave de tu comunidad en {iglesiaActual?.nombre || 'Lumen'}
-          </p>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+            <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+          </div>
+          <div>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Métricas</p>
+            <h1 className="text-2xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">Estadísticas</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
+              Analiza el crecimiento, participación y métricas clave de tu comunidad en {iglesiaActual?.nombre || 'Lumen'}
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <DateRangeSelector value={activePreset} onChange={handlePresetChange} />
@@ -284,7 +287,7 @@ export function StatisticsPage() {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-xl gap-2 h-10 px-4 text-xs font-bold uppercase tracking-wider bg-card border-border/50 hover:bg-accent text-foreground transition-all duration-300"
+              className="rounded-xl gap-2 h-10 px-4 text-xs font-bold uppercase tracking-wider bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-emerald-500/50 hover:bg-emerald-500/5 dark:hover:bg-emerald-500/10 text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300"
               disabled={exporting !== null}
               onClick={() => handleExport('xlsx')}
             >
@@ -294,7 +297,7 @@ export function StatisticsPage() {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-xl gap-2 h-10 px-4 text-xs font-bold uppercase tracking-wider bg-card border-border/50 hover:bg-accent text-foreground transition-all duration-300"
+              className="rounded-xl gap-2 h-10 px-4 text-xs font-bold uppercase tracking-wider bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-rose-500/50 hover:bg-rose-500/5 dark:hover:bg-rose-500/10 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 transition-all duration-300"
               disabled={exporting !== null}
               onClick={() => handleExport('pdf')}
             >
@@ -307,12 +310,12 @@ export function StatisticsPage() {
 
       {/* ── Tabs Navigation with unified styles ── */}
       <Tabs value={activeDomain} onValueChange={(v) => setActiveDomain(v as StatisticsDomain)}>
-        <TabsList className="bg-muted/50 border border-border/30 rounded-xl p-1 mb-6 flex flex-wrap h-auto max-w-fit">
+        <TabsList className="bg-slate-100/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-1.5 mb-6 flex flex-wrap gap-1 h-auto max-w-fit shadow-sm">
           {(Object.keys(domainLabels) as StatisticsDomain[]).map((d) => (
             <TabsTrigger 
               key={d} 
               value={d} 
-              className="gap-2 rounded-lg text-xs font-bold uppercase tracking-wider py-2 px-4 transition-all data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              className="gap-2.5 rounded-xl text-xs font-bold uppercase tracking-wider py-2.5 px-4.5 transition-all duration-300 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/30 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-primary dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-200/60 dark:data-[state=active]:border-slate-800/80 hover:scale-[1.02]"
             >
               {domainIcons[d]}
               {domainLabels[d]}

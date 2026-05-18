@@ -244,13 +244,13 @@ export function CumpleanosPage() {
 
         {/* Real-time search filter */}
         <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 transition-colors" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar por nombre, correo..."
-            className="w-full h-10 pl-9 pr-4 rounded-xl text-xs bg-card border border-border/50 hover:border-border text-foreground transition-all outline-none"
+            className="w-full h-10 pl-9 pr-4 rounded-xl text-xs bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-foreground transition-all duration-300 outline-none"
           />
         </div>
       </motion.div>

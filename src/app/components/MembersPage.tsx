@@ -29,9 +29,9 @@ const rolColors: Record<string, string> = {
 export function MembersPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
   const idIglesiaNum = Number(idIglesia) || undefined;
-  const { usuarioActual, iglesiaActual, rolActual, sedesDelUsuario } = useApp();
+  const { usuarioActual, iglesiaActual, rolActual } = useApp();
   const { data: ministeriosIdsUsuario = [] } = useMinisteriosIdsDeUsuario(usuarioActual?.idUsuario);
-  const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin" || rolActual === "admin_sede";
+  const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin";
   const isLider = rolActual === "lider" && ministeriosIdsUsuario.length > 0;
   const canManageMembers = isAdmin || isLider;
   const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios(idIglesiaNum);
@@ -43,14 +43,10 @@ export function MembersPage() {
 
   const ministerioIdsLider = useMemo(() => new Set(ministeriosIdsUsuario), [ministeriosIdsUsuario]);
   const ministeriosVisibles = useMemo(() => {
-    if (isAdmin && rolActual !== "admin_sede") return ministerios;
-    if (rolActual === "admin_sede") {
-      const sedeIds = new Set(sedesDelUsuario.map(s => s.id));
-      return ministerios.filter(m => sedeIds.has(m.idSede));
-    }
+    if (isAdmin) return ministerios;
     if (isLider) return ministerios.filter((m) => ministerioIdsLider.has(m.idMinisterio));
     return ministerios.filter((m) => ministerioIdsLider.has(m.idMinisterio));
-  }, [isAdmin, isLider, ministerios, ministerioIdsLider, rolActual, sedesDelUsuario]);
+  }, [isAdmin, isLider, ministerios, ministerioIdsLider]);
 
   useEffect(() => {
     if (isAdmin) return;
@@ -158,12 +154,12 @@ export function MembersPage() {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
           {/* Búsqueda */}
           <div className="relative flex-1 min-w-0 md:w-56">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
             <Input
               placeholder="Buscar miembro..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm"
+              className="pl-9 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-sm"
             />
           </div>
 
@@ -171,13 +167,13 @@ export function MembersPage() {
           <motion.div
             animate={highlightFilter ? { x: [0, -6, 6, -4, 4, 0] } : {}}
             transition={{ duration: 0.45 }}
-            className={`flex items-center gap-2 bg-background/60 border rounded-xl px-3 h-10 shadow-sm shrink-0 transition-colors ${
+            className={`flex items-center gap-2 bg-white dark:bg-slate-900/60 border rounded-xl px-3 h-10 shadow-sm shrink-0 transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 ${
               highlightFilter
                 ? "border-amber-400/80 ring-2 ring-amber-400/30 shadow-amber-500/20"
-                : "border-border/40"
+                : "border-slate-200 dark:border-slate-800/80"
             }`}
           >
-            <Filter className={`w-3.5 h-3.5 shrink-0 transition-colors ${highlightFilter ? "text-amber-500" : "text-muted-foreground/60"}`} />
+            <Filter className={`w-3.5 h-3.5 shrink-0 transition-colors ${highlightFilter ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`} />
             <select
               value={effectiveMinisterioId}
               onChange={(e) => {
@@ -408,16 +404,7 @@ export function MembersPage() {
       <ConfirmDialog
         isOpen={confirmDeleteMiembro.isOpen}
         onClose={() => setConfirmDeleteMiembro({ isOpen: false, id: 0, nombre: "" })}
-        onConfirm={() => deleteMiembroMutation.mutate(confirmDeleteMiembro.id, {
-          onSuccess: () => {
-            toast.success("Miembro eliminado correctamente");
-            setConfirmDeleteMiembro({ isOpen: false, id: 0, nombre: "" });
-          },
-          onError: (err: any) => {
-            toast.error(err.message || "Error al eliminar miembro");
-            setConfirmDeleteMiembro({ isOpen: false, id: 0, nombre: "" });
-          }
-        })}
+        onConfirm={() => deleteMiembroMutation.mutate(confirmDeleteMiembro.id)}
         title="¿Eliminar Miembro?"
         description={`¿Estás seguro de que quieres eliminar a "${confirmDeleteMiembro.nombre}" del ministerio?`}
       />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSedesEnriquecidas, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado, useDeleteSede, useSedePastores, usePastoresEnriquecidos, usePastoresPorSede, useCreateSedePastor, useCreatePastor, checkPastorCorreoExists } from "@/hooks/useIglesias";
+import { useSedesEnriquecidas, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado, useDeleteSede, useSedePastores, usePastoresEnriquecidos, usePastoresPorSede, useCreateSedePastor, useCreatePastor } from "@/hooks/useIglesias";
 import { useApp } from "@/app/store/AppContext";
 import { usePaisesEnhanced, useDepartamentosEnhanced, useCiudadesEnhanced } from "@/hooks/useGeografiaEnhanced";
 import { Button } from "./ui/button";
@@ -154,33 +154,16 @@ export function SedesPage() {
       }
 
       try {
-        const correoNormalizado = pastorForm.nuevoPastor.correo.trim().toLowerCase();
-        const correoExiste = await checkPastorCorreoExists(correoNormalizado);
-        if (correoExiste) {
-          toast.error("Ya existe un pastor con ese correo.");
-          return;
-        }
-
         const nuevoPastor = await createPastorMutation.mutateAsync({
           nombres: pastorForm.nuevoPastor.nombres.trim(),
           apellidos: pastorForm.nuevoPastor.apellidos.trim(),
-          correo: correoNormalizado,
+          correo: pastorForm.nuevoPastor.correo.trim(),
           telefono: pastorForm.nuevoPastor.telefono.trim() || null,
           idUsuario: null
         });
         idPastor = nuevoPastor.idPastor;
-      } catch (error: any) {
-        if (error?.code === "23505") {
-          if (typeof error?.message === "string" && error.message.includes("pastor_correo_key")) {
-            toast.error("El correo ya está registrado para otro pastor.");
-            return;
-          }
-          if (typeof error?.message === "string" && error.message.includes("pastor_id_usuario_key")) {
-            toast.error("El usuario ya está vinculado a otro pastor.");
-            return;
-          }
-        }
-        toast.error(error?.message ?? "Error al crear el pastor");
+      } catch (error) {
+        toast.error("Error al crear el pastor");
         return;
       }
     }
@@ -251,17 +234,17 @@ export function SedesPage() {
         {/* Búsqueda y Filtros */}
         <div className="flex flex-col gap-2">
           <div className="relative w-full">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
             <Input 
               placeholder="Buscar sedes..." 
               value={search} 
               onChange={e => setSearch(e.target.value)} 
-              className="w-full pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" 
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-sm" 
             />
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Select value={filterIglesia} onValueChange={setFilterIglesia}>
-              <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm">
+              <SelectTrigger className="flex-1 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-sm text-foreground/80">
                 <SelectValue placeholder="Iglesia" />
               </SelectTrigger>
               <SelectContent>
@@ -270,7 +253,7 @@ export function SedesPage() {
               </SelectContent>
             </Select>
             <Select value={filterEstado} onValueChange={setFilterEstado}>
-              <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm">
+              <SelectTrigger className="flex-1 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-sm text-foreground/80">
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>

@@ -84,13 +84,13 @@ export function TasksFilter({ ministerios, onFilterChange, isLoading = false }: 
       <div className="flex items-center gap-2">
         {/* Search Input */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 transition-colors" />
           <Input
             placeholder="Buscar tareas..."
             value={busqueda}
             onChange={handleSearchChange}
             disabled={isLoading}
-            className="pl-9 h-9 bg-background/50 border-white/10 rounded-xl text-xs"
+            className="pl-9 h-9 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-xs"
           />
         </div>
 
@@ -100,7 +100,7 @@ export function TasksFilter({ ministerios, onFilterChange, isLoading = false }: 
           size="sm"
           onClick={() => setShowAdvanced(!showAdvanced)}
           disabled={isLoading}
-          className="h-9 px-3 rounded-xl border-white/10"
+          className="h-9 px-3 rounded-xl border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 transition-all duration-300"
         >
           <ChevronDown
             className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
@@ -134,7 +134,7 @@ export function TasksFilter({ ministerios, onFilterChange, isLoading = false }: 
               onValueChange={handleMinisterioChange}
               disabled={isLoading}
             >
-              <SelectTrigger className="h-9 rounded-xl text-xs bg-background/50 border-white/10">
+              <SelectTrigger className="h-9 rounded-xl text-xs bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-foreground/80">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
@@ -158,7 +158,7 @@ export function TasksFilter({ ministerios, onFilterChange, isLoading = false }: 
               onValueChange={handleEstadoChange}
               disabled={isLoading}
             >
-              <SelectTrigger className="h-9 rounded-xl text-xs bg-background/50 border-white/10">
+              <SelectTrigger className="h-9 rounded-xl text-xs bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-foreground/80">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
@@ -182,7 +182,7 @@ export function TasksFilter({ ministerios, onFilterChange, isLoading = false }: 
               onValueChange={handlePrioridadChange}
               disabled={isLoading}
             >
-              <SelectTrigger className="h-9 rounded-xl text-xs bg-background/50 border-white/10">
+              <SelectTrigger className="h-9 rounded-xl text-xs bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-foreground/80">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>

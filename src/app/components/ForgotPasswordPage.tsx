@@ -106,7 +106,11 @@ export function ForgotPasswordPage() {
 
         {/* Logo SEI */}
         <div className="relative z-10">
-          <SEILogo className="w-32 h-32 object-contain filter drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]" />
+          <SEILogo 
+            variant="dark-bg" 
+            style={{ width: '100%', maxWidth: '350px', height: '110px' }}
+            className="filter drop-shadow-[0_0_35px_rgba(59,130,246,0.35)] hover:scale-105 transition-all duration-500" 
+          />
         </div>
 
         {/* Contenido Branding */}
@@ -199,7 +203,7 @@ export function ForgotPasswordPage() {
                 <Button
                   type="submit"
                   disabled={isLoading || !email}
-                  className="w-full h-14 bg-[#1a7fa8] hover:bg-[#2596be] text-white font-bold uppercase tracking-wider rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
+                  className="w-full h-14 bg-gradient-to-r from-[#4682b4] to-[#709dbd] hover:from-[#3b6d96] hover:to-[#5b84a1] text-white font-bold uppercase tracking-wider rounded-lg shadow-lg border-0 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
                 >
                   {isLoading ? (
                     <>

@@ -151,12 +151,27 @@ export function LiderTareasView() {
         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
         className="flex flex-col md:flex-row gap-3 bg-card/40 backdrop-blur-xl border border-border/50 p-4 rounded-2xl shadow-sm"
       >
-        <div className="flex-1">
-          <Input placeholder="Buscar por título o descripción..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-background/50 border-white/10 h-11" />
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
+          <Input 
+            placeholder="Buscar por título o descripción..." 
+            value={searchQuery} 
+            onChange={e => setSearchQuery(e.target.value)} 
+            className="pl-11 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 h-11 text-sm w-full" 
+          />
         </div>
         <div className="flex gap-3">
-          <Input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="w-[150px] bg-background/50 border-white/10 h-11" />
-          <select value={sortOrder} onChange={e => setSortOrder(e.target.value as "newest" | "oldest")} className="w-[180px] h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
+          <Input 
+            type="date" 
+            value={dateFilter} 
+            onChange={e => setDateFilter(e.target.value)} 
+            className="w-[150px] bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 h-11 text-sm" 
+          />
+          <select 
+            value={sortOrder} 
+            onChange={e => setSortOrder(e.target.value as "newest" | "oldest")} 
+            className="w-[180px] h-11 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 px-3 text-sm text-foreground/80 outline-none cursor-pointer"
+          >
             <option value="newest">Más recientes primero</option>
             <option value="oldest">Más antiguas primero</option>
           </select>

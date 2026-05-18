@@ -342,9 +342,10 @@ export async function deleteMinisterio(id: number): Promise<void> {
 }
 
 export async function deleteMiembroMinisterio(id: number): Promise<void> {
-  const { error } = await supabase.rpc('remover_miembro_ministerio', {
-    p_id_miembro_ministerio: id
-  })
+  const { error } = await supabase
+    .from('miembro_ministerio')
+    .update({ fecha_salida: new Date().toISOString().split('T')[0] })
+    .eq('id_miembro_ministerio', id)
   if (error) throw error
 }
 

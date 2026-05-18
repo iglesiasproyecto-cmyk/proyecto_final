@@ -98,11 +98,27 @@ function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { fo
       <div className="grid grid-cols-2 gap-3">
         <div>
           <FieldLabel>Inicio</FieldLabel>
-          <GlassInput type="datetime-local" value={form.fechaInicio} onChange={e => setForm((p: any) => ({ ...p, fechaInicio: e.target.value }))} />
+          <div className="relative">
+            <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/75 pointer-events-none" />
+            <GlassInput 
+              type="datetime-local" 
+              value={form.fechaInicio} 
+              onChange={e => setForm((p: any) => ({ ...p, fechaInicio: e.target.value }))} 
+              className="pl-10 hover:border-primary/40 focus-visible:ring-primary/20 transition-all cursor-pointer select-none" 
+            />
+          </div>
         </div>
         <div>
           <FieldLabel>Fin</FieldLabel>
-          <GlassInput type="datetime-local" value={form.fechaFin} onChange={e => setForm((p: any) => ({ ...p, fechaFin: e.target.value }))} />
+          <div className="relative">
+            <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/75 pointer-events-none" />
+            <GlassInput 
+              type="datetime-local" 
+              value={form.fechaFin} 
+              onChange={e => setForm((p: any) => ({ ...p, fechaFin: e.target.value }))} 
+              className="pl-10 hover:border-primary/40 focus-visible:ring-primary/20 transition-all cursor-pointer select-none" 
+            />
+          </div>
         </div>
       </div>
       {"estado" in form && (
