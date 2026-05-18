@@ -293,10 +293,10 @@ export function LoginPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[2px] bg-gradient-to-r from-transparent via-sky-400 to-transparent opacity-50" />
 
         {/* Logo (Responsive & Glowing) */}
-        <div className="mb-6 flex justify-center items-center">
+        <div className="mb-10 flex justify-center items-center">
           <SEILogo 
             variant="dark-bg" 
-            className="w-[180px] sm:w-[220px] md:w-[260px] h-12 sm:h-16 md:h-20 drop-shadow-[0_0_40px_rgba(59,130,246,0.4)] transition-all duration-500 hover:scale-[1.03]" 
+            className="w-[300px] sm:w-[380px] md:w-[480px] h-20 sm:h-32 md:h-40 drop-shadow-[0_0_40px_rgba(59,130,246,0.4)] transition-all duration-500 hover:scale-[1.03]" 
           />
         </div>
 

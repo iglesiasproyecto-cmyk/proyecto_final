@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Button } from "./ui/button";
 import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { SEILogo } from "./SEILogo";
+import { useApp } from "../store/AppContext";
 import {
   BookOpen, Activity, Layers, ShieldCheck, Network, 
   TrendingUp, Globe, Users, Zap, Shield, 
@@ -280,6 +281,11 @@ export function LandingPage() {
   // Logo estático y centrado como se solicitó
   const contentOpacity = useTransform(scrollY, [0, 150], [1, 0]);
 
+  // Redireccionar al login automáticamente
+  useEffect(() => {
+    navigate("/login", { replace: true });
+  }, [navigate]);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 640) {
@@ -417,7 +423,7 @@ export function LandingPage() {
 
             <Button 
               onClick={() => navigate("/login")}
-              className="group relative bg-white text-black hover:bg-slate-100 rounded-[40px] px-8 md:px-16 h-12 md:h-20 text-lg md:text-2xl font-bold shadow-[0_20px_60px_rgba(255,255,255,0.1)] border-0 overflow-hidden"
+              className="group relative bg-white text-black hover:bg-slate-100 rounded-[40px] px-8 md:px-16 h-12 md:h-20 text-lg md:text-2xl font-bold shadow-[0_20px_60px_rgba(255,255,255,0.1)] border-0 overflow-hidden mt-8 md:mt-12"
             >
               <span className="relative z-10 flex items-center gap-3 md:gap-4">
                 INICIAR SESIÓN <ArrowRight className="w-5 h-5 md:w-8 md:h-8 group-hover:translate-x-2 transition-transform" />
