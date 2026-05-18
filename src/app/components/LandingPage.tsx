@@ -281,11 +281,6 @@ export function LandingPage() {
   // Logo estático y centrado como se solicitó
   const contentOpacity = useTransform(scrollY, [0, 150], [1, 0]);
 
-  // Redireccionar al login automáticamente
-  useEffect(() => {
-    navigate("/login", { replace: true });
-  }, [navigate]);
-
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 640) {
