@@ -523,7 +523,7 @@ function AdminIglesiaDashboard() {
 
 /* ======== ADMIN SEDE ======== */
 function AdminSedeDashboard() {
-  const { usuarioActual, notificacionesCount, iglesiaActual } = useApp();
+  const { usuarioActual, notificacionesCount, iglesiaActual, sedesDelUsuario } = useApp();
   const navigate = useNavigate();
   const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : '/app';
   const { data: ministerios = [] } = useMinisterios(iglesiaActual?.id);
@@ -532,7 +532,9 @@ function AdminSedeDashboard() {
 
   if (!usuarioActual) return null;
 
-  const activeMins = ministerios.filter((m) => m.estado === "activo");
+  const sedeIdsAdmin = new Set(sedesDelUsuario.map(s => s.id));
+  const ministeriosSede = ministerios.filter((m) => sedeIdsAdmin.has(m.idSede));
+  const activeMins = ministeriosSede.filter((m) => m.estado === "activo");
   const globalEvents = eventos.filter((e) => !e.idMinisterio);
   const unread = notificacionesCount;
 
@@ -545,7 +547,7 @@ function AdminSedeDashboard() {
             <UserCheck className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
           <div>
-            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[8px] sm:text-[10px] mb-0.5">Administrador de Sede{iglesiaActual ? ` — ${iglesiaActual.nombre}` : ""}</p>
+            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[8px] sm:text-[10px] mb-0.5">Administrador de Sede{sedesDelUsuario.length > 0 ? ` — ${sedesDelUsuario.map(s => s.nombre).join(', ')}` : (iglesiaActual ? ` — ${iglesiaActual.nombre}` : "")}</p>
             <h1 className="text-2xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">{usuarioActual.nombres} {usuarioActual.apellidos}</h1>
           </div>
         </div>
@@ -608,10 +610,10 @@ function AdminSedeDashboard() {
           <SectionHeader icon={<TrendingUp className="w-4 h-4" />} title="Accesos Rápidos" />
           <div className="grid grid-cols-2 gap-2">
             {[
-              { label: "Ministerios", path: `${basePath}/ministerios`, icon: <Settings2 className="w-5 h-5" /> },
+              { label: "Usuarios", path: `${basePath}/usuarios`, icon: <Users className="w-5 h-5" /> },
+              { label: "Miembros", path: `${basePath}/miembros`, icon: <Users className="w-5 h-5" /> },
               { label: "Eventos", path: `${basePath}/eventos`, icon: <CalendarDays className="w-5 h-5" /> },
               { label: "Tareas", path: `${basePath}/tareas`, icon: <ListTodo className="w-5 h-5" /> },
-              { label: "Aula", path: `${basePath}/aula`, icon: <BookOpen className="w-5 h-5" /> },
             ].map((q) => (
               <button
                 key={q.path}
