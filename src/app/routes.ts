@@ -16,30 +16,46 @@ import { AcceptInvitePage } from "./components/AcceptInvitePage";
 import { DashboardPage } from "./components/DashboardPage";
 import { ChurchesPage } from "./components/ChurchesPage";
 import { ChurchDetailPage } from "./components/ChurchDetailPage";
-import { SedesPage } from "./components/SedesPage";
-import { PastoresPage } from "./components/PastoresPage";
 import { MinisteriosPage } from "./components/MinisteriosPage";
 import { MiMinisterioPage } from "./components/MiMinisterioPage";
 import { AdministradorPage } from "./components/AdministradorPage";
 import { MembersPage } from "./components/MembersPage";
-import { EventsPage } from "./components/EventsPage";
-import { TasksPage } from "./components/TasksPage";
 import { AulaPage } from "./components/AulaPage";
-import { CursoDetallePage } from "./components/CursoDetallePage";
 import { ProgresoIndividualPage } from "./components/ProgresoIndividualPage";
 import { NotificationsPage } from "./components/NotificationsPage";
 import { ProfilePage } from "./components/ProfilePage";
 import { GeographyPage } from "./components/GeographyPage";
-import { UsuariosPage } from "./components/UsuariosPage";
 import { SitemapPage } from "./components/SitemapPage";
 import { CumpleanosPage } from "./components/CumpleanosPage";
-import { StatisticsPage } from "./components/StatisticsPage";
 import { NoChurchAssignedPage } from "./components/NoChurchAssignedPage";
 import { GlobalMinisteriosPage } from "./components/GlobalMinisteriosPage";
 import { GlobalEventosPage } from "./components/GlobalEventosPage";
 import { GlobalTareasPage } from "./components/GlobalTareasPage";
 import { GlobalAulaPage } from "./components/GlobalAulaPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
+
+// Lazy-loaded route components (code splitting for large pages)
+const UsuariosPage = React.lazy(() =>
+  import("./components/UsuariosPage").then(mod => ({ default: mod.UsuariosPage }))
+);
+const TasksPage = React.lazy(() =>
+  import("./components/TasksPage").then(mod => ({ default: mod.TasksPage }))
+);
+const PastoresPage = React.lazy(() =>
+  import("./components/PastoresPage").then(mod => ({ default: mod.PastoresPage }))
+);
+const SedesPage = React.lazy(() =>
+  import("./components/SedesPage").then(mod => ({ default: mod.SedesPage }))
+);
+const CursoDetallePage = React.lazy(() =>
+  import("./components/CursoDetallePage").then(mod => ({ default: mod.CursoDetallePage }))
+);
+const EventsPage = React.lazy(() =>
+  import("./components/EventsPage").then(mod => ({ default: mod.EventsPage }))
+);
+const StatisticsPage = React.lazy(() =>
+  import("./components/StatisticsPage").then(mod => ({ default: mod.StatisticsPage }))
+);
 
 export const router = createBrowserRouter([
   {
