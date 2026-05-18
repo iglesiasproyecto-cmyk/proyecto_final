@@ -3,6 +3,9 @@
 -- 1. SECURITY DEFINER RPCs exposed global users/role assignment without caller checks.
 -- 2. admin_sede aula policies were iglesia-scoped instead of sede-scoped.
 -- 3. stale tarea policies duplicated newer policies and made effective permissions hard to reason about.
+--
+-- NOTE: Role IDs 3=Líder, 4=Servidor, 9=Administrador de Sede are hardcoded.
+-- These come from the rol table seed data and must be kept in sync.
 
 BEGIN;
 
@@ -401,7 +404,7 @@ USING (
   AND EXISTS (
     SELECT 1
     FROM public.aula_curso c
-    WHERE c.id_curso = aula_modulo.id_curso
+    WHERE c.id_aula_curso = aula_modulo.id_aula_curso
       AND c.id_ministerio IS NOT NULL
       AND public.can_manage_ministerio(c.id_ministerio)
   )
