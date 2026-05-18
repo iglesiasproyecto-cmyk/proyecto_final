@@ -6,12 +6,20 @@ import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
 import { motion } from 'motion/react'
-import { GraduationCap, BookOpen, TrendingUp, Plus, Building2 } from 'lucide-react'
+import { GraduationCap, BookOpen, TrendingUp, Plus, Building2, Church } from 'lucide-react'
 import { CursosAdminList } from './CursosAdminList'
 import { DashboardAdmin } from './DashboardAdmin'
 import { CrearCursoDialog } from './CrearCursoDialog'
 
-export function AdminAulaPage({ showHeader = true }: { showHeader?: boolean }) {
+interface AdminAulaPageProps {
+  showHeader?: boolean
+  /** IDs de sedes a las que tiene acceso el admin_sede */
+  sedeIds?: number[]
+  /** Nombre de la sede (para mostrar en el badge) */
+  sedeName?: string
+}
+
+export function AdminAulaPage({ showHeader = true, sedeIds, sedeName }: AdminAulaPageProps) {
   const { iglesiaActual, user: appUser } = useApp()
   const { user } = useAuth()
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
@@ -25,10 +33,15 @@ export function AdminAulaPage({ showHeader = true }: { showHeader?: boolean }) {
 
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(iglesiaActual?.id)
 
-  const ministeriosDisponibles = ministerios.map(m => ({
-    id_ministerio: m.idMinisterio,
-    nombre: m.nombre,
-  }))
+  // When scoped to sedes, only offer ministerios from those sedes for filtering/creating
+  const ministeriosDisponibles = ministerios
+    .filter(m => sedeIds && sedeIds.length > 0 ? sedeIds.includes(m.idSede) : true)
+    .map(m => ({
+      id_ministerio: m.idMinisterio,
+      nombre: m.nombre,
+    }))
+
+  const isSedeScoped = !!sedeIds && sedeIds.length > 0
 
   return (
     <div className="space-y-8">
@@ -48,7 +61,12 @@ export function AdminAulaPage({ showHeader = true }: { showHeader?: boolean }) {
                   <GraduationCap className="mr-1 h-3.5 w-3.5" />
                   Gestión académica
                 </Badge>
-                {iglesiaActual?.nombre && (
+                {isSedeScoped && sedeName ? (
+                  <Badge variant="outline" className="border-white/15 bg-background/50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">
+                    <Church className="mr-1 h-3 w-3" />
+                    {sedeName}
+                  </Badge>
+                ) : iglesiaActual?.nombre && (
                   <Badge variant="outline" className="border-white/15 bg-background/50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">
                     <Building2 className="mr-1 h-3 w-3" />
                     {iglesiaActual.nombre}
@@ -60,7 +78,9 @@ export function AdminAulaPage({ showHeader = true }: { showHeader?: boolean }) {
                   Aula <span className="text-[#4682b4]">Virtual</span>
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm sm:text-base font-medium leading-relaxed text-muted-foreground">
-                  Gestiona cursos, módulos, inscripciones y progreso de todos los servidores de tu iglesia.
+                  {isSedeScoped
+                    ? 'Gestiona los cursos de tu sede: crea, edita, publica y elimina contenido formativo.'
+                    : 'Gestiona cursos, módulos, inscripciones y progreso de todos los servidores de tu iglesia.'}
                 </p>
               </div>
             </div>
@@ -85,29 +105,36 @@ export function AdminAulaPage({ showHeader = true }: { showHeader?: boolean }) {
               className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-[#4682b4] data-[state=active]:shadow-lg"
             >
               <BookOpen className="h-4 w-4 mr-2" />
-              Todos los Cursos
+              {isSedeScoped ? 'Cursos de mi Sede' : 'Todos los Cursos'}
             </TabsTrigger>
-            <TabsTrigger
-              value="stats"
-              className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-[#4682b4] data-[state=active]:shadow-lg"
-            >
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Estadísticas
-            </TabsTrigger>
+            {!isSedeScoped && (
+              <TabsTrigger
+                value="stats"
+                className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-[#4682b4] data-[state=active]:shadow-lg"
+              >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Estadísticas
+              </TabsTrigger>
+            )}
           </TabsList>
         </div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <TabsContent value="cursos" className="mt-0">
-            <CursosAdminList ministerios={ministeriosDisponibles.map(m => ({ idMinisterio: m.id_ministerio, nombre: m.nombre }))} />
+            <CursosAdminList
+              ministerios={ministeriosDisponibles.map(m => ({ idMinisterio: m.id_ministerio, nombre: m.nombre }))}
+              sedeIds={sedeIds}
+            />
           </TabsContent>
-          <TabsContent value="stats" className="mt-0">
-            {iglesiaActual?.id ? (
-              <DashboardAdmin idIglesia={iglesiaActual.id} />
-            ) : (
-              <p className="text-muted-foreground text-sm">No hay iglesia seleccionada.</p>
-            )}
-          </TabsContent>
+          {!isSedeScoped && (
+            <TabsContent value="stats" className="mt-0">
+              {iglesiaActual?.id ? (
+                <DashboardAdmin idIglesia={iglesiaActual.id} />
+              ) : (
+                <p className="text-muted-foreground text-sm">No hay iglesia seleccionada.</p>
+              )}
+            </TabsContent>
+          )}
         </motion.div>
       </Tabs>
 

@@ -126,6 +126,55 @@ export async function getCursosParaUsuario(): Promise<AulaCursoEnriquecido[]> {
   }))
 }
 
+/**
+ * Obtiene los cursos de los ministerios que pertenecen a las sedes indicadas.
+ * Usado por el admin_sede para ver/gestionar solo los cursos de su sede.
+ */
+export async function getCursosParaSede(sedeIds: number[]): Promise<AulaCursoEnriquecido[]> {
+  if (sedeIds.length === 0) return []
+
+  // 1. Resolve ministerio IDs that belong to these sedes
+  const { data: ministerios, error: minError } = await supabase
+    .from('ministerio')
+    .select('id_ministerio')
+    .in('id_sede', sedeIds)
+
+  if (minError) throw minError
+
+  const ministerioIds = (ministerios ?? []).map((m: any) => m.id_ministerio)
+  if (ministerioIds.length === 0) return []
+
+  // 2. Fetch courses for those ministerios
+  const { data, error } = await supabase
+    .from('aula_curso')
+    .select(`
+      *,
+      ministerio:id_ministerio(nombre),
+      iglesia:id_iglesia(nombre)
+    `)
+    .in('id_ministerio', ministerioIds)
+    .order('creado_en', { ascending: false })
+
+  if (error) throw error
+
+  return (data ?? []).map((r: any) => ({
+    idAulaCurso: r.id_aula_curso,
+    titulo: r.titulo,
+    descripcion: r.descripcion,
+    imagenUrl: r.imagen_url,
+    estado: r.estado,
+    ordenSecuencial: r.orden_secuencial,
+    idMinisterio: r.id_ministerio,
+    idIglesia: r.id_iglesia,
+    idUsuarioCreador: r.id_usuario_creador,
+    tipo: 'ministerio' as TipoCurso,
+    ministerioNombre: r.ministerio?.nombre ?? undefined,
+    iglesiaNombre: r.iglesia?.nombre ?? undefined,
+    creadoEn: r.creado_en,
+    actualizadoEn: r.updated_at,
+  }))
+}
+
 export async function crearCurso(params: {
   titulo: string
   descripcion?: string

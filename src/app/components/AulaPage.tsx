@@ -1,4 +1,4 @@
-import { useAuth } from '@/app/store/AppContext'
+import { useAuth, useApp } from '@/app/store/AppContext'
 import { LiderAulaPage } from './LiderAulaPage'
 import { ServidorAulaPage } from './ServidorAulaPage'
 import { AdminAulaPage } from './AdminAulaPage'
@@ -11,6 +11,7 @@ import { AulaSkeleton } from './loading/skeletons';
 
 export function AulaPage() {
   const { user, rolActual, isHydrated, isClaimsReady } = useAuth()
+  const { sedesDelUsuario } = useApp()
 
   const stableRole = useMemo(() => {
     if (!isHydrated || !isClaimsReady || !rolActual) return null
@@ -57,6 +58,11 @@ export function AulaPage() {
     }
     if (stableRole === "admin_iglesia" || stableRole === "super_admin") {
       return <AdminAulaPage />
+    }
+    if (stableRole === "admin_sede") {
+      const sedeIds = sedesDelUsuario.map(s => s.id)
+      const sedeName = sedesDelUsuario.length === 1 ? sedesDelUsuario[0].nombre : undefined
+      return <AdminAulaPage sedeIds={sedeIds} sedeName={sedeName} />
     }
     if (stableRole === "lider") {
       return <LiderAulaPage />

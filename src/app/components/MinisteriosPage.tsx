@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams } from "react-router";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router";
 import {
   useMinisteriosEnriquecidos,
   useDeleteMinisterio,
@@ -26,8 +26,17 @@ import { MinisterioDetailPanel } from "./MinisterioDetailPanel";
 
 export function MinisteriosPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
+  const navigate = useNavigate();
   const idIglesiaNum = Number(idIglesia) || undefined;
   const { iglesiaActual, iglesiasDelUsuario, rolActual, setIglesiaActual, sedesDelUsuario } = useApp();
+
+  // Servidores no tienen acceso a la lista de gestión — redirigir a Mi Ministerio
+  useEffect(() => {
+    if (rolActual === 'servidor') {
+      navigate(`/app/${idIglesia}/mi-ministerio`, { replace: true });
+    }
+  }, [rolActual, idIglesia, navigate]);
+
   const { data: ministerios = [], isLoading, error } = useMinisteriosEnriquecidos(idIglesiaNum);
   const { data: todasSedes = [] } = useSedesEnriquecidas();
   const sedes = (() => {

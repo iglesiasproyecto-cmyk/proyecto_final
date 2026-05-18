@@ -17,9 +17,11 @@ import { AulaSkeleton } from '@/app/components/loading/skeletons';
 
 interface CursosAdminListProps {
   ministerios: { idMinisterio: number; nombre: string }[]
+  /** Sede IDs to scope the list (admin_sede). If omitted, shows all iglesia courses. */
+  sedeIds?: number[]
 }
 
-export function CursosAdminList({ ministerios }: CursosAdminListProps) {
+export function CursosAdminList({ ministerios, sedeIds }: CursosAdminListProps) {
   const { iglesiaActual } = useApp()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -31,10 +33,14 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
     open: false, id: 0, titulo: '',
   })
 
+  const isSedeScoped = !!sedeIds && sedeIds.length > 0
+
   const { data: cursos = [], isLoading } = useQuery<AulaCursoEnriquecido[]>({
-    queryKey: ['cursos-admin', iglesiaActual?.id],
-    queryFn: getCursosParaUsuario,
-    enabled: !!iglesiaActual?.id,
+    queryKey: isSedeScoped ? ['cursos-sede', sedeIds] : ['cursos-admin', iglesiaActual?.id],
+    queryFn: isSedeScoped
+      ? () => import('@/services/aula.service').then(m => m.getCursosParaSede(sedeIds!))
+      : getCursosParaUsuario,
+    enabled: isSedeScoped ? sedeIds!.length > 0 : !!iglesiaActual?.id,
     staleTime: 2 * 60 * 1000,
   })
 
@@ -58,7 +64,11 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
       toast.error('Error al cambiar estado del curso')
       return
     }
-    queryClient.invalidateQueries({ queryKey: ['cursos-admin', iglesiaActual?.id] })
+    if (isSedeScoped) {
+      queryClient.invalidateQueries({ queryKey: ['cursos-sede', sedeIds] })
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['cursos-admin', iglesiaActual?.id] })
+    }
     toast.success(`Curso ${nuevoEstado === 'activo' ? 'publicado' : 'despublicado'}`)
   }
 
@@ -72,7 +82,11 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
       toast.error('Error al eliminar curso')
       return
     }
-    queryClient.invalidateQueries({ queryKey: ['cursos-admin', iglesiaActual?.id] })
+    if (isSedeScoped) {
+      queryClient.invalidateQueries({ queryKey: ['cursos-sede', sedeIds] })
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['cursos-admin', iglesiaActual?.id] })
+    }
     toast.success('Curso eliminado')
     setDeleteConfirm({ open: false, id: 0, titulo: '' })
   }
@@ -94,7 +108,7 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
+        {/* Filters */}
       <div className="flex flex-col gap-3 rounded-[28px] border border-white/10 bg-card/55 p-4 backdrop-blur-2xl lg:flex-row lg:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 transition-colors" />
@@ -115,21 +129,24 @@ export function CursosAdminList({ ministerios }: CursosAdminListProps) {
             <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>
           ))}
         </select>
-        <div className="flex flex-wrap gap-2">
-          {(['todos', 'iglesia', 'ministerio'] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setTipoFilter(t)}
-              className={`h-11 px-4 rounded-2xl text-xs font-semibold capitalize transition-all border ${
-                tipoFilter === t
-                  ? 'bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20'
-                  : 'bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 text-slate-600 dark:text-slate-400 hover:border-primary/30 dark:hover:border-primary/40 hover:text-primary dark:hover:text-white'
-              }`}
-            >
-              {t === 'todos' ? 'Todos' : t === 'iglesia' ? 'Iglesia' : 'Ministerio'}
-            </button>
-          ))}
-        </div>
+        {/* Only show tipo filter for non-sede-scoped admins (sede courses are always 'ministerio') */}
+        {!isSedeScoped && (
+          <div className="flex flex-wrap gap-2">
+            {(['todos', 'iglesia', 'ministerio'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTipoFilter(t)}
+                className={`h-11 px-4 rounded-2xl text-xs font-semibold capitalize transition-all border ${
+                  tipoFilter === t
+                    ? 'bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20'
+                    : 'bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 text-slate-600 dark:text-slate-400 hover:border-primary/30 dark:hover:border-primary/40 hover:text-primary dark:hover:text-white'
+                }`}
+              >
+                {t === 'todos' ? 'Todos' : t === 'iglesia' ? 'Iglesia' : 'Ministerio'}
+              </button>
+            ))}
+          </div>
+        )}
         <select
           value={estadoFilter}
           onChange={e => setEstadoFilter(e.target.value)}

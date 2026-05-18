@@ -29,11 +29,14 @@ const rolColors: Record<string, string> = {
 export function MembersPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
   const idIglesiaNum = Number(idIglesia) || undefined;
-  const { usuarioActual, iglesiaActual, rolActual } = useApp();
+  const { usuarioActual, iglesiaActual, rolActual, sedesDelUsuario } = useApp();
   const { data: ministeriosIdsUsuario = [] } = useMinisteriosIdsDeUsuario(usuarioActual?.idUsuario);
+
   const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin";
+  const isAdminSede = rolActual === "admin_sede";
   const isLider = rolActual === "lider" && ministeriosIdsUsuario.length > 0;
-  const canManageMembers = isAdmin || isLider;
+  const canManageMembers = isAdmin || isAdminSede || isLider;
+
   const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios(idIglesiaNum);
   const { data: usuarios = [] } = useUsuarios();
   const [search, setSearch] = useState("");
@@ -42,19 +45,27 @@ export function MembersPage() {
   const [highlightFilter, setHighlightFilter] = useState(false);
 
   const ministerioIdsLider = useMemo(() => new Set(ministeriosIdsUsuario), [ministeriosIdsUsuario]);
+
+  // admin_sede: only show ministerios from their assigned sedes
+  const sedeIdsAdmin = useMemo(
+    () => new Set(sedesDelUsuario.map(s => s.id)),
+    [sedesDelUsuario]
+  );
+
   const ministeriosVisibles = useMemo(() => {
     if (isAdmin) return ministerios;
-    if (isLider) return ministerios.filter((m) => ministerioIdsLider.has(m.idMinisterio));
-    return ministerios.filter((m) => ministerioIdsLider.has(m.idMinisterio));
-  }, [isAdmin, isLider, ministerios, ministerioIdsLider]);
+    if (isAdminSede) return ministerios.filter(m => sedeIdsAdmin.has(m.idSede));
+    if (isLider) return ministerios.filter(m => ministerioIdsLider.has(m.idMinisterio));
+    return ministerios.filter(m => ministerioIdsLider.has(m.idMinisterio));
+  }, [isAdmin, isAdminSede, isLider, ministerios, ministerioIdsLider, sedeIdsAdmin]);
 
   useEffect(() => {
-    if (isAdmin) return;
+    if (isAdmin || isAdminSede) return;
     const firstId = ministeriosVisibles[0]?.idMinisterio ?? 0;
     if (selectedMinisterioId !== firstId) setSelectedMinisterioId(firstId);
-  }, [isAdmin, ministeriosVisibles, selectedMinisterioId]);
+  }, [isAdmin, isAdminSede, ministeriosVisibles, selectedMinisterioId]);
 
-  const effectiveMinisterioId = (!isAdmin && ministeriosVisibles.length > 0)
+  const effectiveMinisterioId = ((!isAdmin && !isAdminSede) && ministeriosVisibles.length > 0)
     ? (selectedMinisterioId || ministeriosVisibles[0]?.idMinisterio || 0)
     : selectedMinisterioId;
   const { data: miembros = [], isLoading: miembrosLoading } = useMiembrosMinisterioEnriquecidos(effectiveMinisterioId || undefined);
@@ -125,7 +136,7 @@ export function MembersPage() {
 
   const activeCount = filtered.filter(m => m.activo).length;
   const leaderCount = filtered.filter(m => m.rolEnMinisterio === "lider").length;
-  const showMinisterioColumn = isAdmin && selectedMinisterioId === 0;
+  const showMinisterioColumn = (isAdmin || isAdminSede) && selectedMinisterioId === 0;
 
   return (
     <div className="space-y-5 max-w-6xl mx-auto">
@@ -180,10 +191,10 @@ export function MembersPage() {
                 setSelectedMinisterioId(Number(e.target.value));
                 setHighlightFilter(false);
               }}
-              disabled={!isAdmin && isLider}
+              disabled={!isAdmin && !isAdminSede && isLider}
               className="text-sm bg-transparent border-0 outline-none text-foreground/80 min-w-0 cursor-pointer [&_option]:bg-white [&_option]:text-gray-900 dark:[&_option]:bg-gray-800 dark:[&_option]:text-gray-100"
             >
-              {isAdmin && <option value={0}>Todos los ministerios</option>}
+              {(isAdmin || isAdminSede) && <option value={0}>Todos los ministerios</option>}
               {ministeriosVisibles.map((m) => <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>)}
             </select>
           </motion.div>

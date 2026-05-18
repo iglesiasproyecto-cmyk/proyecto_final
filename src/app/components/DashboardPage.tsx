@@ -21,7 +21,7 @@ import { StatisticsSummaryCard } from "./StatisticsSummaryCard";
 import {
   Building2, Users, CalendarDays, ListTodo, BookOpen, ClipboardCheck, Bell,
   ArrowRight, CheckCircle2, Clock, AlertCircle, Globe,
-  Church, UserCheck, User, Settings, TrendingUp, Sparkles, Activity
+  Church, UserCheck, User, Settings, Settings2, TrendingUp, Sparkles, Activity
 } from "lucide-react";
 
 

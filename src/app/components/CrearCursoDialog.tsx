@@ -98,6 +98,7 @@ export function CrearCursoDialog({ open, onOpenChange, internalUserId, ministeri
       })
 
       queryClient.invalidateQueries({ queryKey: ['cursos-admin', iglesiaActual?.id] })
+      queryClient.invalidateQueries({ queryKey: ['cursos-sede'] })
       toast.success('Curso creado exitosamente')
       form.reset()
       setTipoCurso('ministerio')
