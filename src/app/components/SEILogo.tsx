@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import logo1 from "../../assets/logo-1-lumen-.webp"; // Logo 1 (letras blancas) para fondo oscuro/azul
 import logo2 from "../../assets/logo-2-lumen.webp"; // Logo 2 (letras azules) para fondo claro/blanco
+import { useApp } from "../store/AppContext";
 
 interface SEILogoProps {
   className?: string;
@@ -9,23 +10,17 @@ interface SEILogoProps {
 }
 
 export function LumenLogo({ className = "w-20 h-20", style, variant }: SEILogoProps) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    // Detectar tema oscuro del documento
-    const isDark = document.documentElement.classList.contains("dark") || 
+  let isDarkMode = false;
+  try {
+    const app = useApp();
+    isDarkMode = app.darkMode;
+  } catch (e) {
+    // Fallback si se usa fuera de AppProvider
+    if (typeof window !== "undefined") {
+      isDarkMode = document.documentElement.classList.contains("dark") || 
                    window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setIsDarkMode(isDark);
-
-    // Observar cambios en el tema
-    const observer = new MutationObserver(() => {
-      const dark = document.documentElement.classList.contains("dark");
-      setIsDarkMode(dark);
-    });
-
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
+    }
+  }
 
   // Determinar qué logo mostrar
   // Si se especifica una variante, la respetamos. Si no, dependemos del tema oscuro global.
