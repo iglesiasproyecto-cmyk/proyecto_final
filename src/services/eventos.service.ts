@@ -418,9 +418,14 @@ export async function assignUsuariosATarea(input: AssignBatchInput): Promise<Ass
     .single()
   if (actorError || !actor) throw new Error('No se pudo resolver el usuario actual')
 
-  const [{ data: roles }, { data: taskRow, error: taskError }] = await Promise.all([
+  const [{ data: churchRoles }, { data: sedeRoles }, { data: taskRow, error: taskError }] = await Promise.all([
     supabase
       .from('usuario_rol')
+      .select('id_sede, id_iglesia, fecha_fin, rol:rol(nombre)')
+      .eq('id_usuario', actor.id_usuario)
+      .is('fecha_fin', null),
+    supabase
+      .from('usuario_rol_sede')
       .select('id_sede, id_iglesia, fecha_fin, rol:rol(nombre)')
       .eq('id_usuario', actor.id_usuario)
       .is('fecha_fin', null),
@@ -436,16 +441,18 @@ export async function assignUsuariosATarea(input: AssignBatchInput): Promise<Ass
     throw new Error('Contexto de ministerio invalido')
   }
 
-  const roleNames = ((roles || []) as any[]).map(r => `${r.rol?.nombre || ''}`.toLowerCase())
-  const isSuper = roleNames.some(n => n.includes('super'))
-  const isAdminIglesia = isSuper || roleNames.some(n => n.includes('iglesia'))
-  const isAdminSede = roleNames.some(n => n.includes('sede'))
+  const churchRoleNames = ((churchRoles || []) as any[]).map(r => `${r.rol?.nombre || ''}`.toLowerCase())
+  const sedeRoleNames = ((sedeRoles || []) as any[]).map(r => `${r.rol?.nombre || ''}`.toLowerCase())
+  const isSuper = churchRoleNames.some(n => n.includes('super'))
+  const isAdminIglesia = isSuper || churchRoleNames.some(n => n.includes('iglesia'))
+  const isAdminSede = sedeRoleNames.some(n => n.includes('sede'))
 
   const taskSedeId = (taskRow as any).ministerio?.id_sede as number | undefined
   const taskIglesiaId = (taskRow as any).ministerio?.sede?.id_iglesia as number | undefined
 
-  const hasScope = isSuper || (isAdminIglesia && (roles || []).some((r: any) => !r.id_iglesia || r.id_iglesia === taskIglesiaId)) ||
-    (isAdminSede && (roles || []).some((r: any) => r.id_sede && r.id_sede === taskSedeId))
+  const hasScope = isSuper
+    || (isAdminIglesia && (churchRoles || []).some((r: any) => !r.id_iglesia || r.id_iglesia === taskIglesiaId))
+    || (isAdminSede && (sedeRoles || []).some((r: any) => r.id_sede && r.id_sede === taskSedeId))
 
   let isLiderDelMinisterio = false
   if (!hasScope) {

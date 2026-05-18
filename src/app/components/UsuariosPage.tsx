@@ -74,7 +74,7 @@ export function UsuariosPage() {
     fechaNacimiento: "",
     idIglesia: iglesiaActual?.id ?? 0,
     idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
-    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
+    idSede: isAdminSede ? 0 : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
     idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
   const resetInviteForm = () => {
@@ -85,7 +85,7 @@ export function UsuariosPage() {
       fechaNacimiento: "",
       idIglesia: iglesiaActual?.id ?? 0,
       idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
-      idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
+      idSede: isAdminSede ? 0 : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
       idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0
     });
     setInviteStep(1);
@@ -96,13 +96,13 @@ export function UsuariosPage() {
   const [assignForm, setAssignForm] = useState({
     idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
     idIglesia: iglesiaActual?.id ?? 0,
-    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
+    idSede: isAdminSede ? 0 : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
     idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
   const resetAssignForm = () => setAssignForm({
     idRol: isLider ? ROLE_IDS.SERVIDOR : 0,
     idIglesia: iglesiaActual?.id ?? 0,
-    idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
+    idSede: isAdminSede ? 0 : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
     idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
 
@@ -145,11 +145,11 @@ export function UsuariosPage() {
       if (!hasRoleInMyIglesia) return false;
     }
 
-    // If admin_sede, only show users from their sede
+    // If admin_sede, only show users from their sedes
     if (isAdminSede) {
-      if (sedesDelUsuario.length === 0) return false; // Security: no sede assigned, hide all
-      const mySede = sedesDelUsuario[0]; // Use admin's assigned sede
-      const hasRoleInMySede = u.roleNames.some(rn => rn.idSede === mySede.id);
+      if (sedesDelUsuario.length === 0) return false;
+      const mySedeIds = new Set(sedesDelUsuario.map(s => s.id));
+      const hasRoleInMySede = u.roleNames.some(rn => rn.idSede && mySedeIds.has(rn.idSede));
       if (!hasRoleInMySede) return false;
     }
 
@@ -182,7 +182,7 @@ export function UsuariosPage() {
 
   // Ministerios disponibles para el filtro según el rol actual
   const ministeriosParaFiltro = isAdminSede
-    ? ministeriosInvite.filter(m => m.idSede === sedesDelUsuario[0]?.id)
+    ? ministeriosInvite.filter(m => m.idSede && sedesDelUsuario.some(s => s.id === m.idSede))
     : isLider
     ? ministeriosDelUsuario.map(m => ({ idMinisterio: m.id, nombre: m.nombre }))
     : [];
@@ -818,7 +818,18 @@ export function UsuariosPage() {
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         Sede{roleNeedsSede(inviteForm.idRol) ? ' *' : ' (opcional)'}
                       </label>
-                      {isAdminSede ? (
+                      {isAdminSede && sedesDelUsuario.length > 1 ? (
+                        <select
+                          value={inviteForm.idSede || ""}
+                          onChange={e => setInviteForm(p => ({ ...p, idSede: Number(e.target.value), idMinisterio: 0 }))}
+                          className="w-full h-11 px-3 bg-background/50 border border-white/10 rounded-xl text-sm outline-none"
+                        >
+                          <option value="" disabled>Seleccionar sede...</option>
+                          {sedesDelUsuario.map(s => (
+                            <option key={s.id} value={s.id}>{s.nombre}</option>
+                          ))}
+                        </select>
+                      ) : isAdminSede ? (
                         <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-muted/40 border border-border/50">
                           <span className="text-sm text-foreground/80">{sedesDelUsuario.find(s => s.id === inviteForm.idSede)?.nombre ?? '—'}</span>
                           <span className="ml-auto text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Tu sede</span>
@@ -1053,8 +1064,21 @@ export function UsuariosPage() {
                         </SelectContent>
                       </Select>
                     )}
-                    {/* Show as text if admin_sede */}
-                    {isAdminSede && (
+                    {/* Show dropdown if admin_sede has multiple sedes */}
+                    {isAdminSede && sedesDelUsuario.length > 1 && (
+                      <select
+                        value={assignForm.idSede || ""}
+                        onChange={e => setAssignForm(p => ({ ...p, idSede: Number(e.target.value), idMinisterio: 0 }))}
+                        className="w-full h-11 px-3 bg-background/50 border border-white/10 rounded-xl text-sm outline-none"
+                      >
+                        <option value="" disabled>Seleccionar sede...</option>
+                        {sedesDelUsuario.map(s => (
+                          <option key={s.id} value={s.id}>{s.nombre}</option>
+                        ))}
+                      </select>
+                    )}
+                    {/* Show as text if admin_sede (single sede) */}
+                    {isAdminSede && sedesDelUsuario.length <= 1 && (
                       <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
                         Sede: {sedesDelUsuario.find(s => s.id === assignForm.idSede)?.nombre}
                       </div>

@@ -147,23 +147,33 @@ Deno.serve(async (req) => {
       return jsonResponse(origin, { message: 'Caller profile not found' }, 403)
     }
 
-    const { data: callerRoles, error: callerRolesError } = await supabaseAdmin
-      .from('usuario_rol')
-      .select('id_iglesia, rol:rol!inner(nombre)')
-      .eq('id_usuario', callerUsuario.id_usuario)
-      .is('fecha_fin', null)
+    const [{ data: callerChurchRoles, error: callerChurchRolesError }, { data: callerSedeRoles, error: callerSedeRolesError }] = await Promise.all([
+      supabaseAdmin
+        .from('usuario_rol')
+        .select('id_iglesia, rol:rol!inner(nombre)')
+        .eq('id_usuario', callerUsuario.id_usuario)
+        .is('fecha_fin', null),
+      supabaseAdmin
+        .from('usuario_rol_sede')
+        .select('id_iglesia, id_sede, rol:rol!inner(nombre)')
+        .eq('id_usuario', callerUsuario.id_usuario)
+        .is('fecha_fin', null),
+    ])
 
-    if (callerRolesError) throw callerRolesError
+    if (callerChurchRolesError) throw callerChurchRolesError
+    if (callerSedeRolesError) throw callerSedeRolesError
 
-    const activeRoles = (callerRoles ?? []) as Array<{ id_iglesia: number; rol: { nombre: string } }>
-    const isSuperAdmin = activeRoles.some((r) => r.rol?.nombre === 'Super Administrador')
-    const managedIglesias = new Set(
-      activeRoles
-        .filter((r) => r.rol?.nombre === 'Super Administrador' || r.rol?.nombre === 'Administrador de Iglesia')
-        .map((r) => r.id_iglesia)
+    const activeChurchRoles = (callerChurchRoles ?? []) as Array<{ id_iglesia: number; rol: { nombre: string } }>
+    const activeSedeRoles = (callerSedeRoles ?? []) as Array<{ id_iglesia: number; id_sede: number | null; rol: { nombre: string } }>
+    const isSuperAdmin = activeChurchRoles.some((r) => r.rol?.nombre === 'Super Administrador')
+    const isAdminIglesia = activeChurchRoles.some((r) => r.rol?.nombre === 'Administrador de Iglesia' && r.id_iglesia === idIglesia)
+    const adminSedeIds = new Set(
+      activeSedeRoles
+        .filter((r) => r.rol?.nombre === 'Administrador de Sede' && r.id_iglesia === idIglesia && r.id_sede)
+        .map((r) => Number(r.id_sede))
     )
 
-    if (!isSuperAdmin && !managedIglesias.has(idIglesia)) {
+    if (!isSuperAdmin && !isAdminIglesia && adminSedeIds.size === 0) {
       return jsonResponse(origin, { message: 'No autorizado para gestionar esa iglesia' }, 403)
     }
 
@@ -193,6 +203,33 @@ Deno.serve(async (req) => {
 
     if (requiresMinisterio && (!ministerioId || Number.isNaN(ministerioId))) {
       return jsonResponse(origin, { message: 'Debes seleccionar un ministerio para este rol' }, 400)
+    }
+
+    const callerIsOnlyAdminSede = !isSuperAdmin && !isAdminIglesia && adminSedeIds.size > 0
+
+    if (callerIsOnlyAdminSede) {
+      const allowedRoles = new Set(['Administrador de Sede', 'Líder', 'Servidor'])
+      if (!allowedRoles.has(targetRole.nombre)) {
+        return jsonResponse(origin, { message: 'No autorizado para asignar ese rol' }, 403)
+      }
+
+      if (!sedeId || !adminSedeIds.has(sedeId)) {
+        return jsonResponse(origin, { message: 'Solo puedes gestionar usuarios de tu sede' }, 403)
+      }
+
+      if (ministerioId) {
+        const { data: ministerioScope, error: ministerioScopeError } = await supabaseAdmin
+          .from('ministerio')
+          .select('id_ministerio')
+          .eq('id_ministerio', ministerioId)
+          .eq('id_sede', sedeId)
+          .maybeSingle()
+
+        if (ministerioScopeError) throw ministerioScopeError
+        if (!ministerioScope) {
+          return jsonResponse(origin, { message: 'El ministerio no pertenece a tu sede' }, 403)
+        }
+      }
     }
 
     // First, check if the app profile already exists to keep this flow idempotent.

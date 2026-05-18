@@ -29,9 +29,9 @@ const rolColors: Record<string, string> = {
 export function MembersPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
   const idIglesiaNum = Number(idIglesia) || undefined;
-  const { usuarioActual, iglesiaActual, rolActual } = useApp();
+  const { usuarioActual, iglesiaActual, rolActual, sedesDelUsuario } = useApp();
   const { data: ministeriosIdsUsuario = [] } = useMinisteriosIdsDeUsuario(usuarioActual?.idUsuario);
-  const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin";
+  const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin" || rolActual === "admin_sede";
   const isLider = rolActual === "lider" && ministeriosIdsUsuario.length > 0;
   const canManageMembers = isAdmin || isLider;
   const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios(idIglesiaNum);
@@ -43,10 +43,14 @@ export function MembersPage() {
 
   const ministerioIdsLider = useMemo(() => new Set(ministeriosIdsUsuario), [ministeriosIdsUsuario]);
   const ministeriosVisibles = useMemo(() => {
-    if (isAdmin) return ministerios;
+    if (isAdmin && rolActual !== "admin_sede") return ministerios;
+    if (rolActual === "admin_sede") {
+      const sedeIds = new Set(sedesDelUsuario.map(s => s.id));
+      return ministerios.filter(m => sedeIds.has(m.idSede));
+    }
     if (isLider) return ministerios.filter((m) => ministerioIdsLider.has(m.idMinisterio));
     return ministerios.filter((m) => ministerioIdsLider.has(m.idMinisterio));
-  }, [isAdmin, isLider, ministerios, ministerioIdsLider]);
+  }, [isAdmin, isLider, ministerios, ministerioIdsLider, rolActual, sedesDelUsuario]);
 
   useEffect(() => {
     if (isAdmin) return;
@@ -404,7 +408,16 @@ export function MembersPage() {
       <ConfirmDialog
         isOpen={confirmDeleteMiembro.isOpen}
         onClose={() => setConfirmDeleteMiembro({ isOpen: false, id: 0, nombre: "" })}
-        onConfirm={() => deleteMiembroMutation.mutate(confirmDeleteMiembro.id)}
+        onConfirm={() => deleteMiembroMutation.mutate(confirmDeleteMiembro.id, {
+          onSuccess: () => {
+            toast.success("Miembro eliminado correctamente");
+            setConfirmDeleteMiembro({ isOpen: false, id: 0, nombre: "" });
+          },
+          onError: (err: any) => {
+            toast.error(err.message || "Error al eliminar miembro");
+            setConfirmDeleteMiembro({ isOpen: false, id: 0, nombre: "" });
+          }
+        })}
         title="¿Eliminar Miembro?"
         description={`¿Estás seguro de que quieres eliminar a "${confirmDeleteMiembro.nombre}" del ministerio?`}
       />

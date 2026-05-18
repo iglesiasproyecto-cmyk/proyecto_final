@@ -125,7 +125,7 @@ export function TasksPage() {
       return ministerios.filter(m => m.idSede === assignScope.idSede);
     }
     if (isAdminSede) {
-      const sedeId = sedesDelUsuario[0]?.id ?? 0;
+      const sedeId = assignScope.idSede || sedesDelUsuario[0]?.id ?? 0;
       return ministerios.filter(m => m.idSede === sedeId);
     }
     if (isLider) {
@@ -175,7 +175,7 @@ export function TasksPage() {
     }
 
     if (isAdminSede) {
-      const defaultSedeId = sedesDelUsuario[0]?.id ?? 0;
+      const defaultSedeId = assignScope.idSede || sedesDelUsuario[0]?.id ?? 0;
       setAssignScope(prev => ({ ...prev, idSede: defaultSedeId }));
     }
 

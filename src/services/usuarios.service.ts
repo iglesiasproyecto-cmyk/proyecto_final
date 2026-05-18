@@ -124,7 +124,7 @@ export interface UsuarioEnriquecido extends Usuario {
 
 export async function getUsuariosEnriquecidos(): Promise<UsuarioEnriquecido[]> {
   // Use RPC that bypasses RLS for admin users
-  const { data, error } = await supabase.rpc('get_all_usuarios_enriquecidos')
+  const { data, error } = await supabase.rpc('get_usuarios_enriquecidos_scoped')
   if (error) throw error
 
   return (data ?? []).map((r: any) => ({
