@@ -4,3 +4,4 @@ Docker Desktop is a prerequisite for local development. Follow the official docs
 2026-05-17 Task1 baseline: npm run build EXIT:0; supabase migration list BLOCKED (supabase CLI not found in environment).
 2026-05-17T23:50:47-05:00 Task2 evidence: attempted `supabase db push` and `supabase db diff --schema public`; both BLOCKED with CommandNotFoundException (supabase CLI not installed/available in this environment).
 2026-05-18T00:00:00-05:00 Task3 evidence: attempted `supabase db push`; BLOCKED with CommandNotFoundException (supabase CLI not installed/available in this environment).
+2026-05-18 Task3 review fix evidence: attempted `supabase db push`; BLOCKED with CommandNotFoundException (`supabase` not recognized in current shell/environment).

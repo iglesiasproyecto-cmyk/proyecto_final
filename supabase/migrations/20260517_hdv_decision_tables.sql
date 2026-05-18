@@ -60,27 +60,24 @@ CREATE INDEX IF NOT EXISTS idx_hdv_disponibilidad_hoja ON public.hoja_de_vida_di
 CREATE INDEX IF NOT EXISTS idx_hdv_etiqueta_categoria ON public.hoja_de_vida_etiqueta(categoria);
 CREATE INDEX IF NOT EXISTS idx_hdv_etiqueta_usuario_etiqueta ON public.hoja_de_vida_etiqueta_usuario(id_etiqueta);
 
-DO $$
-DECLARE
-  v_trigger_function regproc;
+CREATE OR REPLACE FUNCTION public.set_actualizado_en_hdv_decision_tables()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
 BEGIN
-  v_trigger_function := to_regproc('public.trigger_set_updated_at');
+  NEW.actualizado_en := NOW();
+  RETURN NEW;
+END;
+$$;
 
-  IF v_trigger_function IS NULL THEN
-    v_trigger_function := to_regproc('public.handle_updated_at');
-  END IF;
+DROP TRIGGER IF EXISTS set_actualizado_en_hdv_revision ON public.hoja_de_vida_revision;
+CREATE TRIGGER set_actualizado_en_hdv_revision
+BEFORE UPDATE ON public.hoja_de_vida_revision
+FOR EACH ROW
+EXECUTE FUNCTION public.set_actualizado_en_hdv_decision_tables();
 
-  IF v_trigger_function IS NOT NULL THEN
-    EXECUTE 'DROP TRIGGER IF EXISTS set_updated_at_hdv_revision ON public.hoja_de_vida_revision';
-    EXECUTE format(
-      'CREATE TRIGGER set_updated_at_hdv_revision BEFORE UPDATE ON public.hoja_de_vida_revision FOR EACH ROW EXECUTE FUNCTION %s()',
-      v_trigger_function::text
-    );
-
-    EXECUTE 'DROP TRIGGER IF EXISTS set_updated_at_hdv_disponibilidad ON public.hoja_de_vida_disponibilidad';
-    EXECUTE format(
-      'CREATE TRIGGER set_updated_at_hdv_disponibilidad BEFORE UPDATE ON public.hoja_de_vida_disponibilidad FOR EACH ROW EXECUTE FUNCTION %s()',
-      v_trigger_function::text
-    );
-  END IF;
-END $$;
+DROP TRIGGER IF EXISTS set_actualizado_en_hdv_disponibilidad ON public.hoja_de_vida_disponibilidad;
+CREATE TRIGGER set_actualizado_en_hdv_disponibilidad
+BEFORE UPDATE ON public.hoja_de_vida_disponibilidad
+FOR EACH ROW
+EXECUTE FUNCTION public.set_actualizado_en_hdv_decision_tables();
