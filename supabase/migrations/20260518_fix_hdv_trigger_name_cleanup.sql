@@ -1,0 +1,17 @@
+DROP TRIGGER IF EXISTS set_updated_at_hdv_revision ON public.hoja_de_vida_revision;
+DROP TRIGGER IF EXISTS set_actualizado_en_hdv_revision ON public.hoja_de_vida_revision;
+DROP TRIGGER IF EXISTS trg_set_actualizado_en_hdv_revision ON public.hoja_de_vida_revision;
+
+CREATE TRIGGER trg_set_actualizado_en_hdv_revision
+BEFORE UPDATE ON public.hoja_de_vida_revision
+FOR EACH ROW
+EXECUTE FUNCTION public.set_actualizado_en_hdv_decision_tables();
+
+DROP TRIGGER IF EXISTS set_updated_at_hdv_disponibilidad ON public.hoja_de_vida_disponibilidad;
+DROP TRIGGER IF EXISTS set_actualizado_en_hdv_disponibilidad ON public.hoja_de_vida_disponibilidad;
+DROP TRIGGER IF EXISTS trg_set_actualizado_en_hdv_disponibilidad ON public.hoja_de_vida_disponibilidad;
+
+CREATE TRIGGER trg_set_actualizado_en_hdv_disponibilidad
+BEFORE UPDATE ON public.hoja_de_vida_disponibilidad
+FOR EACH ROW
+EXECUTE FUNCTION public.set_actualizado_en_hdv_decision_tables();

@@ -2,3 +2,4 @@ WARN: no seed files matched pattern: supabase/seed.sql
 failed to inspect service: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
 Docker Desktop is a prerequisite for local development. Follow the official docs to install: https://docs.docker.com/desktop
 2026-05-18: supabase db push blocked - CLI not installed in shell (CommandNotFoundException).
+2026-05-18: supabase db push blocked again - 'supabase' command not found in current shell.
