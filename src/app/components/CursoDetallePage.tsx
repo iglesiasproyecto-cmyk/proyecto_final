@@ -29,7 +29,8 @@ import {
   FolderOpen
 } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabaseClient'
 import { useCursos } from '@/hooks/useCursos'
 import { useProgresoGrupoCurso } from '@/hooks/useProgreso'
@@ -37,6 +38,8 @@ import { ModulosGestion } from './ModulosGestion'
 import { AgregarPersonasCursoDialog } from '@/app/components/aula/AgregarPersonasCursoDialog'
 import { ModulosNavegacion } from './ModulosNavegacion'
 import { CrearEvaluacionDialog } from '@/app/components/CrearEvaluacionDialog'
+import { EditarEvaluacionDialog } from '@/app/components/EditarEvaluacionDialog'
+import { CalificacionesTab } from '@/app/components/CalificacionesTab'
 
 export function CursoDetallePage() {
   const { idCurso } = useParams<{ idCurso: string }>()
@@ -395,6 +398,12 @@ export function CursoDetallePage() {
               <ClipboardList className="h-4 w-4 mr-2" />
               Evaluaciones
             </TabsTrigger>
+            {(isAdmin || isLider) && (
+              <TabsTrigger value="calificaciones" className="rounded-xl px-6 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
+                <Award className="h-4 w-4 mr-2" />
+                Calificaciones
+              </TabsTrigger>
+            )}
             <TabsTrigger value="progreso" className="rounded-xl px-6 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
               <BarChart3 className="h-4 w-4 mr-2" />
               Progreso
@@ -419,8 +428,14 @@ export function CursoDetallePage() {
         </TabsContent>
 
         <TabsContent value="evaluaciones" className="mt-6">
-          <EvaluacionesTab idCurso={parseInt(idCurso!)} />
+          <EvaluacionesTab idCurso={parseInt(idCurso!)} isAdmin={isAdmin} isLider={isLider} />
         </TabsContent>
+
+        {(isAdmin || isLider) && (
+          <TabsContent value="calificaciones" className="mt-6">
+            <CalificacionesTab idCurso={parseInt(idCurso!)} />
+          </TabsContent>
+        )}
 
         <TabsContent value="progreso">
           <ProgresoCursoTab progresoGrupo={progresoGrupo || []} />
@@ -443,30 +458,26 @@ export function CursoDetallePage() {
 }
 
 // Componente para la pestaña de evaluaciones
-function EvaluacionesTab({ idCurso }: { idCurso: number }) {
+function EvaluacionesTab({ idCurso, isAdmin, isLider }: { idCurso: number; isAdmin: boolean; isLider: boolean }) {
   const [moduloSeleccionado, setModuloSeleccionado] = useState<number | null>(null)
   const [showCrearEvaluacion, setShowCrearEvaluacion] = useState(false)
-  const { canCreateModulos } = useEvaluacionPermissions(idCurso)
+  const [evaluacionEditar, setEvaluacionEditar] = useState<any | null>(null)
+  const [evaluacionEliminar, setEvaluacionEliminar] = useState<any | null>(null)
+  const [eliminando, setEliminando] = useState(false)
+  const { canCreateModulos } = useEvaluacionPermissions(idCurso, isAdmin || isLider)
+  const queryClient = useQueryClient()
 
-  const { data: modulos, refetch } = useQuery({
+  const { data: modulos } = useQuery({
     queryKey: ['modulos-evaluaciones', idCurso],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('aula_modulo')
-        .select(`
-          id_aula_modulo,
-          titulo,
-          evaluaciones:aula_evaluacion(
-            id_aula_evaluacion,
-            titulo,
-            puntaje_minimo
-          )
-        `)
-        .eq('id_aula_curso', idCurso)
+        .rpc('get_modulos_con_evaluaciones', { p_id_curso: idCurso })
       if (error) throw error
-      return data || []
+      return (data as any[]) || []
     }
   })
+
+  const refrescar = () => queryClient.invalidateQueries({ queryKey: ['modulos-evaluaciones', idCurso] })
 
   const handleCrearEvaluacion = (idModulo: number) => {
     setModuloSeleccionado(idModulo)
@@ -476,7 +487,29 @@ function EvaluacionesTab({ idCurso }: { idCurso: number }) {
   const handleEvaluacionCreada = () => {
     setShowCrearEvaluacion(false)
     setModuloSeleccionado(null)
-    refetch()
+    refrescar()
+  }
+
+  const handleAbrirEditar = (ev: any) => {
+    setEvaluacionEditar(ev)
+  }
+
+  const handleEliminar = async () => {
+    if (!evaluacionEliminar) return
+    setEliminando(true)
+    try {
+      const { error } = await supabase.rpc('eliminar_evaluacion', {
+        p_id_evaluacion: evaluacionEliminar.id_aula_evaluacion,
+      })
+      if (error) throw error
+      toast.success('Evaluación eliminada')
+      setEvaluacionEliminar(null)
+      refrescar()
+    } catch (e) {
+      toast.error('Error al eliminar la evaluación')
+    } finally {
+      setEliminando(false)
+    }
   }
 
   if (!modulos || modulos.length === 0) {
@@ -515,14 +548,32 @@ function EvaluacionesTab({ idCurso }: { idCurso: number }) {
               {mod.evaluaciones?.length ? (
                 <div className="space-y-3">
                   {mod.evaluaciones.map((ev: any) => (
-                    <div key={ev.id_aula_evaluacion} className="flex items-center gap-3 p-3 bg-accent/20 rounded-xl border border-border/30">
+                    <div key={ev.id_aula_evaluacion} className="flex items-center gap-3 p-3 bg-accent/20 rounded-xl border border-border/30 group">
                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
                         <ClipboardList className="w-5 h-5" />
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold">{ev.titulo}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold truncate">{ev.titulo}</p>
                         <p className="text-xs text-muted-foreground">Mínimo para aprobar: {ev.puntaje_minimo}%</p>
                       </div>
+                      {canCreateModulos && (
+                        <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleAbrirEditar(ev)}
+                            className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                            title="Editar"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setEvaluacionEliminar(ev)}
+                            className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -545,6 +596,7 @@ function EvaluacionesTab({ idCurso }: { idCurso: number }) {
         ))}
       </div>
 
+      {/* Dialog Crear */}
       {moduloSeleccionado && (
         <CrearEvaluacionDialog
           open={showCrearEvaluacion}
@@ -553,90 +605,89 @@ function EvaluacionesTab({ idCurso }: { idCurso: number }) {
           onSuccess={handleEvaluacionCreada}
         />
       )}
+
+      {/* Dialog Editar Completo (preguntas + opciones) */}
+      {evaluacionEditar && (
+        <EditarEvaluacionDialog
+          open={!!evaluacionEditar}
+          onOpenChange={(open) => { if (!open) setEvaluacionEditar(null) }}
+          idEvaluacion={evaluacionEditar.id_aula_evaluacion}
+          onSuccess={() => { setEvaluacionEditar(null); refrescar() }}
+        />
+      )}
+
+      {/* Dialog Confirmar Eliminar */}
+      {evaluacionEliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4"
+          >
+            <div className="flex flex-col items-center text-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center text-destructive">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">¿Eliminar evaluación?</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Se eliminará <span className="font-semibold text-foreground">"{evaluacionEliminar.titulo}"</span> junto con todas sus preguntas e intentos. Esta acción no se puede deshacer.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setEvaluacionEliminar(null)} className="flex-1 px-4 py-2 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={handleEliminar}
+                disabled={eliminando}
+                className="flex-1 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </>
   )
 }
 
-function useEvaluacionPermissions(idCurso: number) {
+function useEvaluacionPermissions(idCurso: number, isAdminOrLider?: boolean) {
   const { user, rolActual } = useAuth()
   const [canCreateModulos, setCanCreateModulos] = useState(false)
 
   useEffect(() => {
+    // Si el padre ya determinó que es admin o líder, conceder permiso directamente
+    if (isAdminOrLider) {
+      setCanCreateModulos(true)
+      return
+    }
+
+    // Para otros roles, verificar si es creador del curso
     const checkPermissions = async () => {
       if (!user?.id) return
-      
-      if (rolActual === 'super_admin') {
-        setCanCreateModulos(true)
-        return
-      }
 
       const internalId = await getInternalUserId(user.id)
       if (!internalId) return
 
       const { data: curso } = await supabase
         .from('aula_curso')
-        .select(`
-          id_usuario_creador, 
-          id_ministerio, 
-          id_iglesia,
-          ministerio ( id_sede )
-        `)
+        .select('id_usuario_creador')
         .eq('id_aula_curso', idCurso)
         .maybeSingle()
 
-      if (!curso) return
-
-      // Si es el creador del curso
-      if (curso.id_usuario_creador === internalId) {
+      if (curso && curso.id_usuario_creador === internalId) {
         setCanCreateModulos(true)
         return
-      }
-
-      // Si es líder de ese ministerio
-      if (curso.id_ministerio) {
-        const { data: liderData } = await supabase
-          .from('miembro_ministerio')
-          .select('id_usuario')
-          .eq('id_ministerio', curso.id_ministerio)
-          .eq('id_usuario', internalId)
-          .eq('rol_en_ministerio', 'lider')
-          .is('fecha_salida', null)
-          .maybeSingle()
-        
-        if (liderData) {
-          setCanCreateModulos(true)
-          return
-        }
-      }
-
-      // Si es admin, verificar si administra la iglesia dueña del curso
-      if (rolActual === 'admin_iglesia' || rolActual === 'admin_sede') {
-        let iglesiaId = curso.id_iglesia
-        
-        if (!iglesiaId && curso.ministerio?.id_sede) {
-           const { data: sede } = await supabase
-            .from('sede')
-            .select('id_iglesia')
-            .eq('id_sede', curso.ministerio.id_sede)
-            .maybeSingle()
-           if (sede) iglesiaId = sede.id_iglesia
-        }
-
-        if (iglesiaId) {
-          const { data: adminData } = await supabase.rpc('get_user_iglesias')
-          const isIglesiaAdmin = adminData?.some((i: any) => i.id_iglesia === iglesiaId)
-          if (isIglesiaAdmin) {
-            setCanCreateModulos(true)
-            return
-          }
-        }
       }
 
       setCanCreateModulos(false)
     }
 
     checkPermissions()
-  }, [user?.id, idCurso, rolActual])
+  }, [user?.id, idCurso, rolActual, isAdminOrLider])
 
   return { canCreateModulos }
 }
