@@ -9,6 +9,18 @@ BEGIN
   END IF;
 END $$;
 
+CREATE OR REPLACE FUNCTION public._hdv_try_parse_jsonb(input_text TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN input_text::jsonb;
+EXCEPTION
+  WHEN others THEN
+    RETURN NULL;
+END;
+$$;
+
 ALTER TABLE public.hoja_de_vida
   ADD COLUMN IF NOT EXISTS resumen_profesional TEXT,
   ADD COLUMN IF NOT EXISTS foto_perfil_url TEXT,
@@ -36,9 +48,9 @@ BEGIN
         WHEN habilidades IS NULL OR btrim(habilidades) = '' THEN '[]'::jsonb
         WHEN left(btrim(habilidades), 1) IN ('[', '{', '"') THEN
           CASE
-            WHEN pg_input_is_valid(btrim(habilidades), 'jsonb') THEN
+            WHEN public._hdv_try_parse_jsonb(btrim(habilidades)) IS NOT NULL THEN
               CASE
-                WHEN jsonb_typeof(btrim(habilidades)::jsonb) = 'array' THEN btrim(habilidades)::jsonb
+                WHEN jsonb_typeof(public._hdv_try_parse_jsonb(btrim(habilidades))) = 'array' THEN public._hdv_try_parse_jsonb(btrim(habilidades))
                 ELSE to_jsonb(ARRAY[btrim(habilidades)])
               END
             ELSE to_jsonb(string_to_array(habilidades, ','))
@@ -69,9 +81,9 @@ BEGIN
         WHEN formacion_academica IS NULL OR btrim(formacion_academica) = '' THEN '[]'::jsonb
         WHEN left(btrim(formacion_academica), 1) IN ('[', '{', '"') THEN
           CASE
-            WHEN pg_input_is_valid(btrim(formacion_academica), 'jsonb') THEN
+            WHEN public._hdv_try_parse_jsonb(btrim(formacion_academica)) IS NOT NULL THEN
               CASE
-                WHEN jsonb_typeof(btrim(formacion_academica)::jsonb) = 'array' THEN btrim(formacion_academica)::jsonb
+                WHEN jsonb_typeof(public._hdv_try_parse_jsonb(btrim(formacion_academica))) = 'array' THEN public._hdv_try_parse_jsonb(btrim(formacion_academica))
                 ELSE to_jsonb(ARRAY[btrim(formacion_academica)])
               END
             ELSE to_jsonb(ARRAY[formacion_academica])
@@ -145,3 +157,5 @@ ALTER TABLE public.hoja_de_vida
   ALTER COLUMN actualizado_en SET DEFAULT NOW(),
   ALTER COLUMN completa SET NOT NULL,
   ALTER COLUMN actualizado_en SET NOT NULL;
+
+DROP FUNCTION IF EXISTS public._hdv_try_parse_jsonb(TEXT);
