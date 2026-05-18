@@ -34,7 +34,15 @@ BEGIN
       ALTER COLUMN habilidades TYPE JSONB USING
       CASE
         WHEN habilidades IS NULL OR btrim(habilidades) = '' THEN '[]'::jsonb
-        WHEN left(btrim(habilidades), 1) = '[' THEN habilidades::jsonb
+        WHEN left(btrim(habilidades), 1) IN ('[', '{', '"') THEN
+          CASE
+            WHEN pg_input_is_valid(btrim(habilidades), 'jsonb') THEN
+              CASE
+                WHEN jsonb_typeof(btrim(habilidades)::jsonb) = 'array' THEN btrim(habilidades)::jsonb
+                ELSE to_jsonb(ARRAY[btrim(habilidades)])
+              END
+            ELSE to_jsonb(string_to_array(habilidades, ','))
+          END
         ELSE to_jsonb(string_to_array(habilidades, ','))
       END
     $sql$;
@@ -42,6 +50,8 @@ BEGIN
     UPDATE public.hoja_de_vida
     SET habilidades = COALESCE(habilidades, '[]'::jsonb)
     WHERE habilidades IS NULL;
+  ELSE
+    RAISE EXCEPTION 'tipo inesperado para hoja_de_vida.habilidades: %', COALESCE(v_habilidades_tipo, 'NULL');
   END IF;
 
   SELECT data_type
@@ -57,7 +67,15 @@ BEGIN
       ALTER COLUMN formacion_academica TYPE JSONB USING
       CASE
         WHEN formacion_academica IS NULL OR btrim(formacion_academica) = '' THEN '[]'::jsonb
-        WHEN left(btrim(formacion_academica), 1) = '[' THEN formacion_academica::jsonb
+        WHEN left(btrim(formacion_academica), 1) IN ('[', '{', '"') THEN
+          CASE
+            WHEN pg_input_is_valid(btrim(formacion_academica), 'jsonb') THEN
+              CASE
+                WHEN jsonb_typeof(btrim(formacion_academica)::jsonb) = 'array' THEN btrim(formacion_academica)::jsonb
+                ELSE to_jsonb(ARRAY[btrim(formacion_academica)])
+              END
+            ELSE to_jsonb(ARRAY[formacion_academica])
+          END
         ELSE to_jsonb(ARRAY[formacion_academica])
       END
     $sql$;
@@ -65,6 +83,8 @@ BEGIN
     UPDATE public.hoja_de_vida
     SET formacion_academica = COALESCE(formacion_academica, '[]'::jsonb)
     WHERE formacion_academica IS NULL;
+  ELSE
+    RAISE EXCEPTION 'tipo inesperado para hoja_de_vida.formacion_academica: %', COALESCE(v_formacion_tipo, 'NULL');
   END IF;
 
   IF EXISTS (
@@ -113,7 +133,11 @@ BEGIN
   SET actualizado_en = COALESCE(actualizado_en, NOW()),
       completa = COALESCE(completa, FALSE),
       habilidades = COALESCE(habilidades, '[]'::jsonb),
-      formacion_academica = COALESCE(formacion_academica, '[]'::jsonb);
+      formacion_academica = COALESCE(formacion_academica, '[]'::jsonb)
+  WHERE actualizado_en IS NULL
+     OR completa IS NULL
+     OR habilidades IS NULL
+     OR formacion_academica IS NULL;
 END $$;
 
 ALTER TABLE public.hoja_de_vida
