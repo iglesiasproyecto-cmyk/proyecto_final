@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSedesEnriquecidas, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado, useDeleteSede, useSedePastores, usePastoresEnriquecidos, usePastoresPorSede, useCreateSedePastor, useCreatePastor } from "@/hooks/useIglesias";
+import { useSedesEnriquecidas, useIglesias, useCreateSede, useUpdateSede, useToggleSedeEstado, useDeleteSede, useSedePastores, usePastoresEnriquecidos, usePastoresPorSede, useCreateSedePastor, useCreatePastor, checkPastorCorreoExists } from "@/hooks/useIglesias";
 import { useApp } from "@/app/store/AppContext";
 import { usePaisesEnhanced, useDepartamentosEnhanced, useCiudadesEnhanced } from "@/hooks/useGeografiaEnhanced";
 import { Button } from "./ui/button";
@@ -154,16 +154,33 @@ export function SedesPage() {
       }
 
       try {
+        const correoNormalizado = pastorForm.nuevoPastor.correo.trim().toLowerCase();
+        const correoExiste = await checkPastorCorreoExists(correoNormalizado);
+        if (correoExiste) {
+          toast.error("Ya existe un pastor con ese correo.");
+          return;
+        }
+
         const nuevoPastor = await createPastorMutation.mutateAsync({
           nombres: pastorForm.nuevoPastor.nombres.trim(),
           apellidos: pastorForm.nuevoPastor.apellidos.trim(),
-          correo: pastorForm.nuevoPastor.correo.trim(),
+          correo: correoNormalizado,
           telefono: pastorForm.nuevoPastor.telefono.trim() || null,
           idUsuario: null
         });
         idPastor = nuevoPastor.idPastor;
-      } catch (error) {
-        toast.error("Error al crear el pastor");
+      } catch (error: any) {
+        if (error?.code === "23505") {
+          if (typeof error?.message === "string" && error.message.includes("pastor_correo_key")) {
+            toast.error("El correo ya está registrado para otro pastor.");
+            return;
+          }
+          if (typeof error?.message === "string" && error.message.includes("pastor_id_usuario_key")) {
+            toast.error("El usuario ya está vinculado a otro pastor.");
+            return;
+          }
+        }
+        toast.error(error?.message ?? "Error al crear el pastor");
         return;
       }
     }
