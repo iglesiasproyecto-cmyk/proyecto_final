@@ -178,9 +178,9 @@ function SuperAdminDashboard() {
   const recentUsers = [...usuarios].filter((u) => u.ultimoAcceso).sort((a, b) => (b.ultimoAcceso || "").localeCompare(a.ultimoAcceso || "")).slice(0, 5);
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-10">
+    <div className="space-y-2 w-full pb-10 px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-in-out">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-5 relative overflow-hidden dark:border-white/10">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/10 shrink-0 text-white" style={{ backgroundImage: `linear-gradient(135deg, ${CARD_COLORS[0].from}, ${CARD_COLORS[0].to})` }}>
             <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" />
@@ -192,18 +192,18 @@ function SuperAdminDashboard() {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
         <StatCard index={0} icon={<Building2 className="w-4 h-4 sm:w-5 sm:h-5" />} value={iglesias.length} label="Iglesias" sublabel={`${activeIglesias.length} activas`} onClick={() => navigate("/app/global/iglesias")} />
         <StatCard index={1} icon={<Church className="w-4 h-4 sm:w-5 sm:h-5" />} value={sedes.length} label="Sedes" sublabel={`${activeSedes} activas`} onClick={() => navigate("/app/global/iglesias")} />
         <StatCard index={2} icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />} value={usuarios.length} label="Usuarios" sublabel={`${activeUsers} activos`} onClick={() => navigate("/app/global/usuarios")} />
         <StatCard index={3} icon={<UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />} value={pastores.length} label="Pastores" onClick={() => navigate("/app/global/iglesias")} />
       </div>
 
-      <div className="w-full mb-4">
+      <div className="w-full mb-2">
         <StatisticsSummaryCard statsPath="/app/global/estadisticas" index={4} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         <AnimatedCard index={4} className="p-4 lg:col-span-2">
           <SectionHeader icon={<Activity className="w-5 h-5" />} title="Recursos por Iglesia" action={() => navigate("/app/global/iglesias")} actionLabel="Gestionar" />
           <SimpleBarChart
@@ -235,7 +235,7 @@ function SuperAdminDashboard() {
         </AnimatedCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         <AnimatedCard index={6} className="p-4 lg:col-span-2">
           <SectionHeader icon={<Building2 className="w-5 h-5" />} title="Iglesias Registradas" action={() => navigate("/app/global/iglesias")} actionLabel="Gestionar" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -268,7 +268,7 @@ function SuperAdminDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={7} className="p-4 h-fit" onClick={() => navigate("/app/global/geografia")}>
+        <AnimatedCard index={7} className="p-3 h-fit" onClick={() => navigate("/app/global/geografia")}>
             <SectionHeader icon={<Globe className="w-4 h-4" />} title="Cobertura Geografica" />
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-3 rounded-2xl bg-[#4682b4]/10 border-[#4682b4]/10 flex flex-col items-center justify-center hover:bg-[#4682b4]/20 transition-colors"><p className="text-xl font-light text-[#4682b4] dark:text-[#709dbd]">{paises.length}</p><p className="text-[9px] font-bold uppercase tracking-widest text-[#4682b4]/70 mt-1">Paises</p></div>
@@ -277,7 +277,7 @@ function SuperAdminDashboard() {
             </div>
         </AnimatedCard>
 
-        <AnimatedCard index={8} className="p-4 h-fit">
+        <AnimatedCard index={8} className="p-3 h-fit">
             <SectionHeader icon={<Clock className="w-4 h-4" />} title="Actividad Reciente" />
             <div className="grid grid-cols-1 gap-2">
               {recentUsers.map((u) => (
@@ -290,7 +290,7 @@ function SuperAdminDashboard() {
             </div>
         </AnimatedCard>
 
-        <AnimatedCard index={9} className="p-4 lg:col-span-2 h-fit">
+        <AnimatedCard index={9} className="p-3 lg:col-span-2 h-fit">
             <SectionHeader icon={<TrendingUp className="w-4 h-4" />} title="Accesos Rapidos" />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {[
@@ -390,9 +390,9 @@ function AdminIglesiaDashboard() {
   }));
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-10">
+    <div className="space-y-2 w-full pb-10 px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-in-out">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-4 sm:p-5 relative overflow-hidden dark:border-white/10">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 p-4 sm:p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0">
             <UserCheck className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
@@ -404,22 +404,22 @@ function AdminIglesiaDashboard() {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
         <StatCard index={0} icon={<Settings className="w-5 h-5" />} value={activeMins.length} label="Ministerios activos" onClick={() => navigate(`${basePath}/ministerios`)} />
         <StatCard index={1} icon={<Users className="w-5 h-5" />} value={activeMembers.length} label="Miembros activos" onClick={() => navigate(`${basePath}/miembros`)} />
         <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={globalEvents.length} label="Eventos globales" onClick={() => navigate(`${basePath}/eventos`)} />
         <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate(`${basePath}/notificaciones`)} />
       </div>
 
-      <div className="w-full mb-4">
+      <div className="w-full mb-2">
         <StatisticsSummaryCard statsPath={`${basePath}/estadisticas`} index={4} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AnimatedCard index={5} className="p-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+        <AnimatedCard index={5} className="p-3">
           <SectionHeader icon={<Settings className="w-5 h-5" />} title="Ministerios" action={() => navigate(`${basePath}/ministerios`)} />
           {minChartData.length > 0 && (
-            <div className="mb-4">
+            <div className="mb-2">
               <SimpleBarChart
                 data={minChartData.map((d) => ({
                   label: d.name,
@@ -445,7 +445,7 @@ function AdminIglesiaDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={5} className="p-4">
+        <AnimatedCard index={6} className="p-3">
           <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Eventos Globales" action={() => navigate(`${basePath}/eventos`)} />
           <div className="grid grid-cols-1 gap-2">
             {globalEvents.slice(0, 5).map((ev) => (
@@ -464,7 +464,7 @@ function AdminIglesiaDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={6} className="p-4">
+        <AnimatedCard index={7} className="p-3">
           <SectionHeader icon={<Building2 className="w-5 h-5" />} title="Sedes y Pastores" action={() => navigate(`${basePath}/sedes`)} />
           <div className="grid grid-cols-1 gap-2">
             {sedesConPastores.slice(0, 6).map((sede) => (
@@ -502,7 +502,7 @@ function AdminIglesiaDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={7} className="p-4 lg:col-span-2">
+        <AnimatedCard index={8} className="p-3 lg:col-span-2">
           <SectionHeader icon={<Bell className="w-5 h-5" />} title={`Notificaciones ${unread > 0 ? `(${unread})` : ""}`} action={() => navigate(`${basePath}/notificaciones`)} actionLabel="Ver todas" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {notificaciones.slice(0, 4).map((n) => (
@@ -537,9 +537,9 @@ function AdminSedeDashboard() {
   const unread = notificacionesCount;
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-10">
+    <div className="space-y-2 w-full pb-10 px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-in-out">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-4 sm:p-5 relative overflow-hidden dark:border-white/10">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 p-4 sm:p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
             <UserCheck className="w-6 h-6 sm:w-8 sm:h-8" />
@@ -557,8 +557,8 @@ function AdminSedeDashboard() {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <AnimatedCard index={0} className="p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <AnimatedCard index={0} className="p-4">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Ministerios</p>
@@ -568,7 +568,7 @@ function AdminSedeDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={1} className="p-6">
+        <AnimatedCard index={1} className="p-4">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Eventos</p>
@@ -578,7 +578,7 @@ function AdminSedeDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={2} className="p-6">
+        <AnimatedCard index={2} className="p-4">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Tareas</p>
@@ -588,7 +588,7 @@ function AdminSedeDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={3} className="p-6">
+        <AnimatedCard index={3} className="p-4">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Notificaciones</p>
@@ -599,14 +599,14 @@ function AdminSedeDashboard() {
         </AnimatedCard>
       </div>
 
-      <div className="w-full mb-4">
+      <div className="w-full mb-2">
         <StatisticsSummaryCard statsPath={`${basePath}/estadisticas`} index={4} compact />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <AnimatedCard index={4} className="lg:col-span-2 p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+        <AnimatedCard index={4} className="lg:col-span-2 p-3">
           <SectionHeader icon={<TrendingUp className="w-4 h-4" />} title="Accesos Rápidos" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {[
               { label: "Ministerios", path: `${basePath}/ministerios`, icon: <Settings2 className="w-5 h-5" /> },
               { label: "Eventos", path: `${basePath}/eventos`, icon: <CalendarDays className="w-5 h-5" /> },
@@ -625,7 +625,7 @@ function AdminSedeDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={5} className="p-6">
+        <AnimatedCard index={5} className="p-3">
           <SectionHeader icon={<Bell className="w-4 h-4" />} title="Notificaciones" />
           {notificaciones.slice(0, 3).map((n) => (
             <div key={n.idNotificacion} className="p-2 text-xs border-b last:border-b-0 text-muted-foreground">
@@ -663,9 +663,9 @@ function LiderDashboard() {
   ];
 
   return (
-    <div className="space-y-4 max-w-6xl mx-auto pb-10">
+    <div className="space-y-2 max-w-6xl mx-auto pb-10 px-4">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-4 sm:p-5 relative overflow-hidden dark:border-white/10">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 p-4 sm:p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
             <Users className="w-6 h-6 sm:w-8 sm:h-8" />
@@ -677,19 +677,19 @@ function LiderDashboard() {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
         <StatCard index={0} icon={<Users className="w-5 h-5" />} value={minMembers.length} label="Miembros" onClick={() => navigate(`${basePath}/miembros`)} />
         <StatCard index={1} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate(`${basePath}/tareas`)} />
         <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate(`${basePath}/eventos`)} />
         <StatCard index={3} icon={<BookOpen className="w-5 h-5" />} value={cursos?.filter(c => c.estado === 'activo').length || 0} label="Cursos activos" onClick={() => navigate(`${basePath}/aula`)} />
       </div>
 
-      <div className="w-full mb-4">
+      <div className="w-full mb-2">
         <StatisticsSummaryCard statsPath={`${basePath}/estadisticas`} index={4} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <AnimatedCard index={5} className="p-4 lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+        <AnimatedCard index={5} className="p-3 lg:col-span-2">
           <SectionHeader icon={<ListTodo className="w-5 h-5" />} title="Tareas del Ministerio" action={() => navigate(`${basePath}/tareas`)} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {tareas.slice(0, 5).map((t) => (
@@ -706,7 +706,7 @@ function LiderDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={6} className="p-4">
+        <AnimatedCard index={6} className="p-3">
           <SectionHeader icon={<Activity className="w-5 h-5" />} title="Estado de Tareas" />
           <div className="flex justify-center py-2">
             <SimpleDonutChart
@@ -718,8 +718,8 @@ function LiderDashboard() {
         </AnimatedCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <AnimatedCard index={7} className="p-4 lg:col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+        <AnimatedCard index={7} className="p-3 lg:col-span-1">
           <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Próximos Eventos" action={() => navigate(`${basePath}/eventos`)} />
           <div className="grid grid-cols-1 gap-2">
             {upcomingEvents.map((ev) => (
@@ -738,14 +738,14 @@ function LiderDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={8} className="p-4 lg:col-span-1">
+        <AnimatedCard index={8} className="p-3 lg:col-span-1">
           <SectionHeader icon={<BookOpen className="w-5 h-5" />} title="Formación" action={() => navigate(`${basePath}/aula`)} />
-          <div className="space-y-3">
+          <div className="space-y-2">
             {cursos && cursos.length > 0 ? (
               <div className="space-y-2">
                 {cursos.slice(0, 3).map((curso: any) => (
 
-                  <div key={curso.id_aula_curso} className="p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/10">
+                  <div key={curso.id_aula_curso} className="p-2 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/10">
 
                     <p className="text-sm font-medium truncate">{curso.titulo}</p>
                     <div className="flex items-center justify-between mt-1">
@@ -769,7 +769,7 @@ function LiderDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={9} className="p-4 lg:col-span-1">
+        <AnimatedCard index={9} className="p-3 lg:col-span-1">
           <SectionHeader icon={<Users className="w-5 h-5" />} title="Equipo" action={() => navigate(`${basePath}/miembros`)} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {minMembers.slice(0, 5).map((mm) => (
@@ -812,9 +812,9 @@ function ServidorDashboard() {
     : 0;
 
   return (
-    <div className="space-y-4 max-w-6xl mx-auto pb-10">
+    <div className="space-y-2 max-w-6xl mx-auto pb-10 px-4">
       {/* Header unificado */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 p-4 sm:p-5 relative overflow-hidden dark:border-white/10">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 p-4 sm:p-5 relative overflow-hidden dark:border-white/10">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-[#4682b4]/20 shrink-0 text-white">
             <UserCheck className="w-6 h-6 sm:w-8 sm:h-8" />
@@ -826,19 +826,19 @@ function ServidorDashboard() {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
         <StatCard index={0} icon={<ListTodo className="w-5 h-5" />} value={pendingTareas.length} label="Tareas pendientes" onClick={() => navigate(`${basePath}/tareas`)} />
         <StatCard index={1} icon={<CheckCircle2 className="w-5 h-5" />} value={completedTareas.length} label="Completadas" onClick={() => navigate(`${basePath}/tareas`)} />
         <StatCard index={2} icon={<CalendarDays className="w-5 h-5" />} value={eventos.length} label="Eventos" onClick={() => navigate(`${basePath}/eventos`)} />
         <StatCard index={3} icon={<Bell className="w-5 h-5" />} value={unread} label="Sin leer" onClick={() => navigate(`${basePath}/notificaciones`)} />
       </div>
 
-      <div className="w-full mb-4">
+      <div className="w-full mb-2">
         <StatisticsSummaryCard statsPath={`${basePath}/estadisticas`} index={4} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AnimatedCard index={5} className="p-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+        <AnimatedCard index={5} className="p-3">
           <SectionHeader icon={<ListTodo className="w-5 h-5" />} title="Mis Tareas" action={() => navigate(`${basePath}/tareas`)} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {myTareas.slice(0, 5).map((t) => (
@@ -855,7 +855,7 @@ function ServidorDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={5} className="p-4">
+        <AnimatedCard index={6} className="p-3">
           <SectionHeader icon={<CalendarDays className="w-5 h-5" />} title="Proximos Eventos" action={() => navigate(`${basePath}/eventos`)} />
           <div className="grid grid-cols-1 gap-2">
             {eventos.slice(0, 4).map((ev) => (
@@ -873,11 +873,11 @@ function ServidorDashboard() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard index={6} className="p-4">
+        <AnimatedCard index={7} className="p-3">
           <SectionHeader icon={<ClipboardCheck className="w-5 h-5" />} title="Mis Evaluaciones" action={() => navigate(`${basePath}/aula`)} />
           {evaluaciones.length > 0 ? (
             <div>
-              <div className="flex items-center justify-between gap-3 mb-3 p-3 rounded-2xl bg-gradient-to-r from-[#709dbd]/10 to-[#4682b4]/10 border-[#4682b4]/10">
+              <div className="flex items-center justify-between gap-3 mb-2 p-2 rounded-2xl bg-gradient-to-r from-[#709dbd]/10 to-[#4682b4]/10 border-[#4682b4]/10">
                 <div className="flex items-baseline gap-2"><span className="text-3xl font-light tracking-tight text-[#4682b4] dark:text-[#709dbd]">{avgCal.toFixed(1)}</span><span className="text-[10px] font-bold uppercase tracking-widest text-[#4682b4]/70">Promedio</span></div>
                 <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-2 py-1 rounded-lg uppercase tracking-wider">{evaluaciones.length} Eval.</span>
               </div>
