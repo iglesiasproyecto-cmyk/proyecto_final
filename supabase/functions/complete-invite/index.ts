@@ -128,7 +128,10 @@ Deno.serve(async (req) => {
       if (usuarioError || !usuario) {
         console.error('Error creating usuario:', usuarioError)
         if (!existingAuthUser) await supabaseAdmin.auth.admin.deleteUser(authUserId)
-        return new Response(JSON.stringify({ error: usuarioError?.message ?? 'Error creando perfil de usuario' }), {
+        return new Response(JSON.stringify({
+          error: 'No se pudo crear el perfil de usuario. Intenta nuevamente o contacta soporte.',
+          code: 'PROFILE_CREATE_FAILED',
+        }), {
           status: 500,
           headers: { ...baseCorsHeaders, 'Content-Type': 'application/json' },
         })

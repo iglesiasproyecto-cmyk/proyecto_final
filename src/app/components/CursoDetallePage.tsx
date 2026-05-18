@@ -419,17 +419,7 @@ export function CursoDetallePage() {
         </TabsContent>
 
         <TabsContent value="evaluaciones" className="mt-6">
-          {(isLider || isAdmin) ? (
-            <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-8 text-center shadow-sm">
-              <ClipboardList className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold">Gestión de Evaluaciones</h3>
-              <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-                Los líderes pueden configurar evaluaciones en cada módulo directamente desde la pestaña "Módulos".
-              </p>
-            </div>
-          ) : (
-            <EvaluacionesTab idCurso={parseInt(idCurso!)} />
-          )}
+          <EvaluacionesTab idCurso={parseInt(idCurso!)} />
         </TabsContent>
 
         <TabsContent value="progreso">
@@ -568,26 +558,41 @@ function EvaluacionesTab({ idCurso }: { idCurso: number }) {
 }
 
 function useEvaluacionPermissions(idCurso: number) {
-  const { user } = useAuth()
+  const { user, rolActual } = useAuth()
   const [canCreateModulos, setCanCreateModulos] = useState(false)
 
   useEffect(() => {
     const checkPermissions = async () => {
       if (!user?.id) return
+      
+      if (rolActual === 'super_admin') {
+        setCanCreateModulos(true)
+        return
+      }
+
       const internalId = await getInternalUserId(user.id)
       if (!internalId) return
 
       const { data: curso } = await supabase
         .from('aula_curso')
-        .select('id_usuario_creador, id_ministerio')
+        .select(`
+          id_usuario_creador, 
+          id_ministerio, 
+          id_iglesia,
+          ministerio ( id_sede )
+        `)
         .eq('id_aula_curso', idCurso)
         .maybeSingle()
 
       if (!curso) return
 
-      const isCreator = curso.id_usuario_creador === internalId
+      // Si es el creador del curso
+      if (curso.id_usuario_creador === internalId) {
+        setCanCreateModulos(true)
+        return
+      }
 
-      let isLider = false
+      // Si es líder de ese ministerio
       if (curso.id_ministerio) {
         const { data: liderData } = await supabase
           .from('miembro_ministerio')
@@ -597,14 +602,41 @@ function useEvaluacionPermissions(idCurso: number) {
           .eq('rol_en_ministerio', 'lider')
           .is('fecha_salida', null)
           .maybeSingle()
-        isLider = !!liderData
+        
+        if (liderData) {
+          setCanCreateModulos(true)
+          return
+        }
       }
 
-      setCanCreateModulos(isCreator || isLider)
+      // Si es admin, verificar si administra la iglesia dueña del curso
+      if (rolActual === 'admin_iglesia' || rolActual === 'admin_sede') {
+        let iglesiaId = curso.id_iglesia
+        
+        if (!iglesiaId && curso.ministerio?.id_sede) {
+           const { data: sede } = await supabase
+            .from('sede')
+            .select('id_iglesia')
+            .eq('id_sede', curso.ministerio.id_sede)
+            .maybeSingle()
+           if (sede) iglesiaId = sede.id_iglesia
+        }
+
+        if (iglesiaId) {
+          const { data: adminData } = await supabase.rpc('get_user_iglesias')
+          const isIglesiaAdmin = adminData?.some((i: any) => i.id_iglesia === iglesiaId)
+          if (isIglesiaAdmin) {
+            setCanCreateModulos(true)
+            return
+          }
+        }
+      }
+
+      setCanCreateModulos(false)
     }
 
     checkPermissions()
-  }, [user?.id, idCurso])
+  }, [user?.id, idCurso, rolActual])
 
   return { canCreateModulos }
 }

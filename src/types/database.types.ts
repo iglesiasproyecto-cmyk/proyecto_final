@@ -2387,7 +2387,7 @@ export type Database = {
           activo: boolean
           apellidos: string
           auth_user_id: string | null
-          contrasena_hash: string
+          contrasena_hash: string | null
           correo: string
           creado_en: string
           fecha_nacimiento: string | null
@@ -2401,7 +2401,7 @@ export type Database = {
           activo?: boolean
           apellidos: string
           auth_user_id?: string | null
-          contrasena_hash: string
+          contrasena_hash?: string | null
           correo: string
           creado_en?: string
           fecha_nacimiento?: string | null
@@ -2415,7 +2415,7 @@ export type Database = {
           activo?: boolean
           apellidos?: string
           auth_user_id?: string | null
-          contrasena_hash?: string
+          contrasena_hash?: string | null
           correo?: string
           creado_en?: string
           fecha_nacimiento?: string | null
@@ -2917,7 +2917,7 @@ export type Database = {
           activo: boolean
           apellidos: string
           auth_user_id: string | null
-          contrasena_hash: string
+          contrasena_hash: string | null
           correo: string
           creado_en: string
           fecha_nacimiento: string | null

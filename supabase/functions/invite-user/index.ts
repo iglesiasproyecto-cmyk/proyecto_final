@@ -324,6 +324,9 @@ Deno.serve(async (req) => {
     const message = error instanceof Error ? error.message : 'Internal error'
     const details = error instanceof Error ? error.stack : String(error)
     console.error('[invite-user] ERROR:', message, details)
-    return jsonResponse(origin, { message, details }, 500)
+    return jsonResponse(origin, {
+      message: 'Error interno al procesar la invitacion',
+      code: 'INVITE_USER_INTERNAL_ERROR',
+    }, 500)
   }
 })
