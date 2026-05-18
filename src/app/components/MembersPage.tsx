@@ -154,12 +154,12 @@ export function MembersPage() {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
           {/* Búsqueda */}
           <div className="relative flex-1 min-w-0 md:w-56">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
             <Input
               placeholder="Buscar miembro..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm"
+              className="pl-9 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-sm"
             />
           </div>
 
@@ -167,13 +167,13 @@ export function MembersPage() {
           <motion.div
             animate={highlightFilter ? { x: [0, -6, 6, -4, 4, 0] } : {}}
             transition={{ duration: 0.45 }}
-            className={`flex items-center gap-2 bg-background/60 border rounded-xl px-3 h-10 shadow-sm shrink-0 transition-colors ${
+            className={`flex items-center gap-2 bg-white dark:bg-slate-900/60 border rounded-xl px-3 h-10 shadow-sm shrink-0 transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 ${
               highlightFilter
                 ? "border-amber-400/80 ring-2 ring-amber-400/30 shadow-amber-500/20"
-                : "border-border/40"
+                : "border-slate-200 dark:border-slate-800/80"
             }`}
           >
-            <Filter className={`w-3.5 h-3.5 shrink-0 transition-colors ${highlightFilter ? "text-amber-500" : "text-muted-foreground/60"}`} />
+            <Filter className={`w-3.5 h-3.5 shrink-0 transition-colors ${highlightFilter ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`} />
             <select
               value={effectiveMinisterioId}
               onChange={(e) => {

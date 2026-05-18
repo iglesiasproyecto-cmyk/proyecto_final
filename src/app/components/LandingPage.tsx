@@ -274,10 +274,26 @@ export function LandingPage() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [radius, setRadius] = useState(200);
 
   const { scrollY } = useScroll();
   // Logo estático y centrado como se solicitó
   const contentOpacity = useTransform(scrollY, [0, 150], [1, 0]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setRadius(95);
+      } else if (window.innerWidth < 1024) {
+        setRadius(140);
+      } else {
+        setRadius(200);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -326,7 +342,8 @@ export function LandingPage() {
           <div className="absolute inset-0 bg-blue-500/10 blur-[150px] rounded-full animate-pulse" />
           
           <SEILogo 
-            className="w-[200px] h-[200px] sm:w-[350px] sm:h-[350px] md:w-[500px] md:h-[500px] lg:w-[700px] lg:h-[700px] drop-shadow-[0_0_60px_rgba(59,130,246,0.3)]" 
+            variant="dark-bg"
+            className="w-[280px] h-[280px] sm:w-[420px] sm:h-[420px] md:w-[580px] md:h-[580px] lg:w-[800px] lg:h-[800px] drop-shadow-[0_0_60px_rgba(59,130,246,0.3)]" 
             style={{ 
               imageRendering: "auto",
               WebkitFontSmoothing: "antialiased"
@@ -403,7 +420,7 @@ export function LandingPage() {
               className="group relative bg-white text-black hover:bg-slate-100 rounded-[40px] px-8 md:px-16 h-12 md:h-20 text-lg md:text-2xl font-bold shadow-[0_20px_60px_rgba(255,255,255,0.1)] border-0 overflow-hidden"
             >
               <span className="relative z-10 flex items-center gap-3 md:gap-4">
-                COMENZAR <ArrowRight className="w-5 h-5 md:w-8 md:h-8 group-hover:translate-x-2 transition-transform" />
+                INICIAR SESIÓN <ArrowRight className="w-5 h-5 md:w-8 md:h-8 group-hover:translate-x-2 transition-transform" />
               </span>
               <motion.div 
                 className="absolute inset-0 bg-gradient-to-r from-slate-200 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
@@ -448,7 +465,7 @@ export function LandingPage() {
               </div>
             </div>
 
-            <div className="relative">
+            <div className="relative w-full max-w-[280px] sm:max-w-[400px] lg:max-w-none mx-auto">
               <div className="aspect-square bg-blue-600/5 rounded-full border border-white/5 flex items-center justify-center relative">
                 {/* Ministry Network Visualization */}
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -457,19 +474,19 @@ export function LandingPage() {
                       key={i}
                       animate={{ 
                         rotate: 360,
-                        x: Math.cos(i * 60 * (Math.PI / 180)) * 200,
-                        y: Math.sin(i * 60 * (Math.PI / 180)) * 200
+                        x: Math.cos(i * 60 * (Math.PI / 180)) * radius,
+                        y: Math.sin(i * 60 * (Math.PI / 180)) * radius
                       }}
                       transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
                       className="absolute"
                     >
-                      <div className="w-16 h-16 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center">
-                        <Users className="w-6 h-6 text-blue-400" />
+                      <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center">
+                        <Users className="w-4 h-4 sm:w-6 sm:h-6 text-blue-400" />
                       </div>
                     </motion.div>
                   ))}
-                  <div className="w-40 h-40 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_0_100px_rgba(37,99,235,0.5)]">
-                    <Cpu className="w-16 h-16 text-white animate-pulse" />
+                  <div className="w-24 h-24 sm:w-40 sm:h-40 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_0_100px_rgba(37,99,235,0.5)]">
+                    <Cpu className="w-8 h-8 sm:w-16 sm:h-16 text-white animate-pulse" />
                   </div>
                 </div>
               </div>
@@ -512,11 +529,11 @@ export function LandingPage() {
       {/* --- GEOGRAPHY MODULE --- */}
       <section className="py-12 md:py-20 px-4 md:px-6 relative overflow-hidden">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
-          <div className="order-2 lg:order-1 relative">
+          <div className="order-2 lg:order-1 relative w-full flex justify-center">
             <motion.div 
               animate={{ rotate: 360 }}
               transition={{ duration: 100, repeat: Infinity, ease: "linear" }}
-              className="w-full aspect-square border border-blue-500/10 rounded-full flex items-center justify-center p-12"
+              className="w-full max-w-[280px] sm:max-w-[360px] lg:max-w-none aspect-square border border-blue-500/10 rounded-full flex items-center justify-center p-6 sm:p-12 mx-auto relative"
             >
               <Globe className="w-full h-full text-blue-500/10" />
               <div className="absolute inset-0 flex items-center justify-center">
@@ -551,7 +568,7 @@ export function LandingPage() {
             onClick={() => navigate("/login")}
             className="bg-white text-black hover:bg-slate-100 rounded-[30px] px-8 md:px-16 h-12 md:h-20 text-base md:text-xl font-bold shadow-[0_20px_60px_rgba(255,255,255,0.1)] active:scale-95 transition-all w-full max-w-xs md:max-w-none"
           >
-            COMENZAR LA TRANSFORMACIÓN
+            INICIAR SESIÓN
           </Button>
         </motion.div>
       </section>
@@ -560,7 +577,7 @@ export function LandingPage() {
       <footer className="py-12 md:py-20 px-4 md:px-6 border-t border-white/5 relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 text-center md:text-left">
           <div className="flex items-center">
-            <SEILogo className="w-20 h-20 md:w-32 md:h-32 opacity-40 hover:opacity-100 transition-opacity" />
+            <SEILogo variant="dark-bg" className="w-20 h-20 md:w-32 md:h-32 opacity-40 hover:opacity-100 transition-opacity" />
           </div>
           <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-slate-500">
             <a href="#" className="hover:text-blue-400">Plataforma</a>

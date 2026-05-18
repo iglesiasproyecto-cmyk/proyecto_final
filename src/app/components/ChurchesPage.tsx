@@ -329,25 +329,27 @@ export function ChurchesPage() {
         {/* Búsqueda y Filtros */}
         <div className="flex flex-col gap-2">
           <div className="relative w-full">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
             <Input 
               placeholder="Buscar por nombre o ciudad..." 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
-              className="w-full pl-11 bg-white/50 dark:bg-black/20 border-transparent focus-visible:ring-[#4682b4]/20 h-11 rounded-xl" 
+              className="w-full pl-11 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 h-11 text-sm" 
             />
           </div>
-          <div className="flex gap-1.5 p-1 bg-background/60 border border-border/40 rounded-xl shadow-sm overflow-x-auto h-10 items-center min-w-0">
+          <div className="flex gap-1.5 overflow-x-auto pb-2 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0">
             {(["all", "activa", "inactiva"] as const).map((f) => (
-              <Button 
-                key={f} 
-                variant={filter === f ? "default" : "ghost"} 
-                size="sm" 
-                onClick={() => setFilter(f)} 
-                className={`h-full px-3 sm:px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filter === f ? "shadow-sm bg-[#4682b4] text-white hover:bg-[#4682b4]/90" : "text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-white/5"}`}
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 sm:px-4 h-10 rounded-xl text-xs font-bold border transition-all duration-300 whitespace-nowrap hover:-translate-y-0.5 ${
+                  filter === f
+                    ? "bg-[#4682b4] text-white border-[#4682b4] shadow-md shadow-[#4682b4]/20"
+                    : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 text-slate-600 dark:text-slate-400 shadow-sm hover:border-[#4682b4]/40 dark:hover:border-[#4682b4]/50 hover:text-[#4682b4] dark:hover:text-white hover:shadow-md dark:hover:shadow-[#4682b4]/5"
+                }`}
               >
                 {f === "all" ? "Todas" : f === "activa" ? "Activas" : "Inactivas"}
-              </Button>
+              </button>
             ))}
           </div>
         </div>

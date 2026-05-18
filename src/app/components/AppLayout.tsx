@@ -11,10 +11,10 @@ import {
   Church, LayoutDashboard, Building2, Users, CalendarDays, ListTodo,
   Bell, User, LogOut, Menu, X, ChevronDown,
   Settings, FolderHeart, Globe, UserCheck, Settings2,
-  PanelLeftClose, PanelLeftOpen, Moon, Sun, BookOpen, Cake, BarChart3
+  Moon, Sun, BookOpen, Cake, BarChart3
 } from "lucide-react";
-import logoLight from "../../assets/logo-light.png";
-import logoDark from "../../assets/logo-dark.png";
+import logo1 from "../../assets/logo-1-lumen-.webp"; // Logo 1 (letras blancas) para fondo oscuro/azul
+import { SEILogo, LumenIsotype } from "./SEILogo";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Administrador",
@@ -202,9 +202,6 @@ export function AppLayout() {
     toggleDarkMode,
   } = useApp();
 
-  const [isHovered, setIsHovered] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(true);
-  const isExpanded = !isCollapsed || isHovered;
   const authResolved = isHydrated && !authLoading;
   const { data: usuarios = [] } = useUsuariosEnriquecidos();
 
@@ -250,16 +247,14 @@ export function AppLayout() {
 
   const rol = rolActual;
   const unreadCount = notificacionesCount;
-  const activeChurch = iglesiaActual;
   const navItems = getNavItemsForRole(rol, iglesiaActual);
   const navGroups = groupBySection(navItems);
   const showChurchSelectorPanel = rol !== "super_admin";
   const fullName = `${usuarioActual.nombres} ${usuarioActual.apellidos}`;
   const initials = `${usuarioActual.nombres.charAt(0)}${usuarioActual.apellidos.charAt(0)}`;
-  const sidebarWidth = isExpanded ? "w-72" : "w-[78px]";
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider delayDuration={100}>
       <div className="flex h-screen overflow-hidden bg-background">
         {/* Mobile overlay */}
         <AnimatePresence>
@@ -275,256 +270,149 @@ export function AppLayout() {
           )}
         </AnimatePresence>
 
-        {/* Sidebar */}
+        {/* Sidebar — fixed icon-only */}
         <aside
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          className={`fixed lg:static inset-y-0 left-0 z-40 ${sidebarWidth} bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) shadow-[4px_0_24px_rgba(0,0,0,0.3)] border-r border-sidebar-border/30 ${
+          className={`fixed lg:static inset-y-0 left-0 z-40 w-[72px] bg-gradient-to-b from-[#091320] via-[#0c1828] to-[#070f1a] text-sidebar-foreground flex flex-col shadow-[8px_0_32px_rgba(0,0,0,0.45)] border-r border-white/[0.06] backdrop-blur-xl relative overflow-hidden transition-transform duration-300 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           }`}
         >
-          {/* Sidebar Header */}
-          <div className="h-28 flex items-center px-4 border-b border-sidebar-border/30 shrink-0 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/10 to-transparent pointer-events-none" />
-            <AnimatePresence mode="wait">
-              {isExpanded ? (
-                <motion.div 
-                  key="expanded-header"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="flex items-center justify-center flex-1 min-w-0 relative z-10 w-full h-full"
-                >
-                  <img src={darkMode ? logoLight : logoDark} alt="SEI Logo" className="h-22 w-auto max-w-[90%] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
-                </motion.div>
-              ) : (
-                <motion.div 
-                  key="collapsed-header"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="w-full h-full flex justify-center items-center"
-                >
-                  <img src={darkMode ? logoLight : logoDark} alt="SEI Logo" className="h-22 w-auto max-w-[85%] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <button
-              onClick={toggleSidebar}
-              className="lg:hidden text-sidebar-foreground/60 hover:text-white ml-2 relative z-10"
+          {/* Ambient Glow / Blue Modern Illumination */}
+          <div className="absolute top-[-10%] left-[-20%] w-[140%] h-[35%] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-500/10 via-blue-900/5 to-transparent pointer-events-none z-0" />
+          {/* Sidebar Header — Mobile Touch-friendly Close */}
+          <div className="h-14 shrink-0 flex items-center justify-end px-3 relative lg:hidden">
+            <button 
+              onClick={toggleSidebar} 
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
+          {/* Sidebar Header — Desktop minimal top edge */}
+          <div className="h-3 shrink-0 relative hidden lg:block">
+            <div className="absolute inset-0 bg-gradient-to-b from-sky-500/8 to-transparent pointer-events-none" />
+          </div>
 
-          {/* Church Selector */}
+          {/* Church Selector — icon-only */}
           {showChurchSelectorPanel && (
-            <div className={`px-3 py-4 border-b border-sidebar-border/30 bg-gradient-to-b from-sidebar-accent/20 to-transparent transition-all duration-500 ${!isExpanded ? "flex justify-center" : ""}`}>
-              {isExpanded ? (
-                <div className="relative">
+            <div className="py-3 flex justify-center border-b border-white/[0.06]">
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <button
                     onClick={() => setShowChurchSelector(!showChurchSelector)}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold text-sidebar-foreground bg-white/[0.03] hover:bg-white/[0.08] transition-all duration-300 border border-white/[0.05] hover:border-sidebar-primary/40 shadow-inner group"
+                    className="w-11 h-11 rounded-xl flex items-center justify-center bg-[#4682b4]/10 border border-[#4682b4]/20 text-[#4682b4] hover:bg-[#4682b4]/25 hover:border-[#4682b4]/40 transition-all duration-200 relative"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-sidebar-primary/20 flex items-center justify-center shrink-0 group-hover:bg-sidebar-primary/30 transition-colors">
-                      <Building2 className="w-4 h-4 text-sidebar-primary group-hover:scale-110 transition-transform" />
-                    </div>
-                    <span className="flex-1 text-left truncate tracking-tight">
-                      {iglesiaActual?.nombre || "Seleccionar iglesia"}
-                    </span>
-                    <ChevronDown className={`w-4 h-4 text-sidebar-primary/70 shrink-0 transition-all duration-300 ${showChurchSelector ? "rotate-180 text-sidebar-primary" : ""}`} />
+                    <Building2 className="w-5 h-5" />
+                    <AnimatePresence>
+                      {showChurchSelector && (
+                        <motion.div
+                          initial={{ opacity: 0, x: 8, scale: 0.95 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          exit={{ opacity: 0, x: 8, scale: 0.95 }}
+                          transition={{ duration: 0.18, ease: "easeOut" }}
+                          className="absolute left-full ml-3 top-0 w-56 bg-[#0c1828]/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)] z-50 overflow-hidden"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {iglesiasDelUsuario.map((ig) => (
+                              <button
+                                key={ig.id}
+                                onClick={() => { setIglesiaActual(ig); setShowChurchSelector(false); }}
+                                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-3 mb-1 last:mb-0 ${
+                                  ig.id === iglesiaActual?.id
+                                    ? "text-white bg-gradient-to-r from-[#4682b4] to-[#709dbd]"
+                                    : "text-white/60 hover:bg-white/5 hover:text-white"
+                                }`}
+                              >
+                                <div className={`w-2 h-2 rounded-full shrink-0 ${ig.id === iglesiaActual?.id ? "bg-white" : "bg-white/20"}`} />
+                                <span className="truncate">{ig.nombre}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </button>
-                  <AnimatePresence>
-                    {showChurchSelector && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute top-full left-0 right-0 mt-2 bg-[#0f172a] rounded-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 overflow-hidden origin-top backdrop-blur-xl"
-                      >
-                        <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
-                          {iglesiasDelUsuario.map((ig) => (
-                            <button
-                              key={ig.id}
-                              onClick={() => {
-                                setIglesiaActual(ig);
-                                setShowChurchSelector(false);
-                              }}
-                              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-3 mb-1 last:mb-0 ${
-                                ig.id === iglesiaActual?.id
-                                  ? "text-white bg-gradient-to-r from-sidebar-primary to-blue-600 shadow-lg"
-                                  : "text-sidebar-foreground/70 hover:bg-white/5 hover:text-white"
-                              }`}
-                            >
-                              <div className={`w-2 h-2 rounded-full shrink-0 transition-all ${ig.id === iglesiaActual?.id ? "bg-white scale-100" : "bg-white/20 scale-75"}`} />
-                              {ig.nombre}
-                            </button>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => setShowChurchSelector(!showChurchSelector)}
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center bg-sidebar-primary/10 border border-sidebar-primary/20 text-sidebar-primary hover:bg-sidebar-primary/20 transition-all"
-                    >
-                      <Building2 className="w-5 h-5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="font-bold">
-                    {iglesiaActual?.nombre || "Cambiar Iglesia"}
-                  </TooltipContent>
-                </Tooltip>
-              )}
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-[#0c1828]/95 backdrop-blur-xl text-white border-white/10 text-xs font-bold px-3 py-1.5 rounded-lg shadow-2xl">
+                  {iglesiaActual?.nombre || "Seleccionar iglesia"}
+                </TooltipContent>
+              </Tooltip>
             </div>
           )}
 
-          {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          {/* Navigation — icon-only with glassmorphic tooltips */}
+          <nav className="flex-1 overflow-y-auto pt-3 pb-4 flex flex-col items-center gap-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {navGroups.map((group, groupIndex) => (
-              <div key={group.section} className="space-y-2">
-                <AnimatePresence mode="popLayout">
-                  {group.section && isExpanded && (
-                    <motion.p 
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400/50 px-3 mb-3"
-                    >
-                      {group.section}
-                    </motion.p>
-                  )}
-                  {!isExpanded && groupIndex > 0 && (
-                    <motion.div 
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: 1 }}
-                      className="w-8 h-[1px] bg-white/10 mx-auto mb-4" 
-                    />
-                  )}
-                </AnimatePresence>
-                
-                <div className="space-y-1.5">
-                  {group.items.map((item) => {
-                    const isActive =
-                      location.pathname === item.path ||
-                      (item.path !== "/" && location.pathname.startsWith(item.path));
-                    const isNotif = item.label === "Notificaciones";
-                    const isCumpleanos = item.label === "Cumpleaños";
-
-                    if (!isExpanded) {
-                      return (
-                        <Tooltip key={item.path}>
-                          <TooltipTrigger asChild>
-                            <div className="relative group/nav w-full flex justify-center">
-                              <button
-                                onClick={() => {
-                                  navigate(item.path);
-                                  if (window.innerWidth < 1024) toggleSidebar();
-                                }}
-                                className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative overflow-hidden focus:outline-none ${
-                                  isActive 
-                                    ? "text-white bg-gradient-to-br from-sidebar-primary to-blue-600 shadow-[0_8px_20px_rgba(26,127,168,0.4)]" 
-                                    : "text-sidebar-foreground/40 hover:text-cyan-400 hover:bg-white/[0.05]"
-                                }`}
-                              >
-                                <span className={`relative z-10 transition-transform duration-500 ${isActive ? "scale-110" : "group-hover/nav:scale-110"}`}>
-                                  {item.icon}
-                                </span>
-                                {isNotif && unreadCount > 0 && (
-                                  <span className="absolute top-2 right-2 z-10 bg-red-500 outline outline-2 outline-sidebar text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold animate-pulse">
-                                    {unreadCount}
-                                  </span>
-                                )}
-                                {isCumpleanos && cumpleanosHoy > 0 && (
-                                  <span className="absolute top-2 right-2 z-10 bg-red-500 outline outline-2 outline-sidebar text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                                    {cumpleanosHoy}
-                                  </span>
-                                )}
-                              </button>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5 bg-[#0f172a] text-white border-white/10 shadow-2xl">
-                            {item.label}
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    }
-
-                    return (
-                      <button
-                        key={item.path}
-                        onClick={() => {
-                          navigate(item.path);
-                          if (window.innerWidth < 1024) toggleSidebar();
-                        }}
-                        className={`group/nav w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm transition-all duration-300 relative overflow-hidden focus:outline-none ${
-                          isActive ? "text-white shadow-lg" : "text-sidebar-foreground/60 hover:text-white"
-                        }`}
+              <React.Fragment key={group.section}>
+                {groupIndex > 0 && (
+                  <div className="w-8 h-px bg-white/[0.08] my-3" />
+                )}
+                {group.items.map((item) => {
+                  const isActive =
+                    location.pathname === item.path ||
+                    (item.path !== "/" && location.pathname.startsWith(item.path));
+                  const isNotif = item.label === "Notificaciones";
+                  const isCumpleanos = item.label === "Cumpleaños";
+                  return (
+                    <Tooltip key={item.path}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => {
+                            navigate(item.path);
+                            if (window.innerWidth < 1024) toggleSidebar();
+                          }}
+                          className={`relative w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-200 focus:outline-none group ${
+                            isActive
+                              ? "bg-gradient-to-br from-[#4682b4] to-[#709dbd] text-white shadow-[0_4px_20px_rgba(70,130,180,0.45)] ring-1 ring-[#709dbd]/30"
+                              : "text-white/35 hover:text-white/90 hover:bg-white/[0.08] hover:ring-1 hover:ring-white/[0.08]"
+                          }`}
+                        >
+                          {/* Active left accent bar */}
+                          {isActive && (
+                            <span className="absolute -left-[14px] top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
+                          )}
+                          <span className={`transition-transform duration-200 ${isActive ? "scale-110" : "group-hover:scale-110"}`}>
+                            {item.icon}
+                          </span>
+                          {isNotif && unreadCount > 0 && (
+                            <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[8px] rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.7)]">
+                              {unreadCount}
+                            </span>
+                          )}
+                          {isCumpleanos && cumpleanosHoy > 0 && (
+                            <span className="absolute top-1.5 right-1.5 bg-amber-500 text-white text-[8px] rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">
+                              {cumpleanosHoy}
+                            </span>
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="right"
+                        sideOffset={14}
+                        className="bg-[#0d1e30]/95 backdrop-blur-xl text-white border border-white/[0.12] shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-xs font-semibold px-3 py-1.5 rounded-lg tracking-wide"
                       >
-                        {isActive && (
-                          <motion.div
-                            layoutId="active-nav-bg"
-                            className="absolute inset-0 bg-gradient-to-r from-sidebar-primary to-blue-600 z-0"
-                            initial={false}
-                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                          />
-                        )}
-                        {!isActive && (
-                          <div className="absolute inset-0 bg-white/[0.03] opacity-0 group-hover/nav:opacity-100 transition-opacity duration-300 z-0" />
-                        )}
-                        <span className={`relative z-10 shrink-0 transition-all duration-500 ${isActive ? "scale-110 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : "group-hover/nav:scale-110 group-hover/nav:text-cyan-400"}`}>
-                          {item.icon}
-                        </span>
-                        <span className={`relative z-10 flex-1 text-left truncate transition-all duration-300 ${isActive ? "font-black tracking-tight" : "font-bold tracking-tight group-hover/nav:translate-x-1"}`}>
-                          <span className="flex items-center gap-2">
-                            {item.label}
-                            {isCumpleanos && cumpleanosHoy > 0 && (
-                              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-[10px] font-bold rounded-full bg-red-500 text-white">
-                                {cumpleanosHoy}
-                              </span>
-                            )}
-                          </span>
-                        </span>
-                        {isNotif && unreadCount > 0 && (
-                          <span className="relative z-10 bg-red-500 text-white text-[10px] rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 font-bold shadow-lg animate-pulse">
-                            {unreadCount}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+                        {item.label}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </React.Fragment>
             ))}
           </nav>
 
-          {/* Collapse Toggle (desktop only) */}
-          <div className={`hidden lg:flex py-6 border-t border-sidebar-border/30 mt-auto shrink-0 transition-all duration-500 ${!isExpanded ? "justify-center" : "px-6"}`}>
+          {/* Logout at bottom */}
+          <div className="py-4 flex justify-center border-t border-white/[0.06]">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => setIsCollapsed(!isCollapsed)}
-                  className={`flex items-center justify-center transition-all duration-500 outline-none ${
-                    !isExpanded 
-                    ? "w-12 h-12 rounded-2xl bg-white/[0.03] text-sidebar-foreground/40 hover:text-white hover:bg-white/10" 
-                    : "gap-3 px-4 py-3 rounded-2xl bg-white/[0.03] text-sidebar-foreground/60 hover:text-white hover:bg-white/10 w-full"
-                  }`}
+                  onClick={async () => { await logout(); }}
+                  className="w-11 h-11 flex items-center justify-center rounded-xl text-white/25 hover:text-red-400 hover:bg-red-500/[0.12] hover:ring-1 hover:ring-red-500/20 transition-all duration-200 group"
                 >
-                  {isCollapsed ? <PanelLeftOpen className="w-5 h-5 shrink-0" /> : <PanelLeftClose className="w-5 h-5 shrink-0" />}
-                  {isExpanded && (
-                    <span className="text-sm font-bold truncate">
-                      {isCollapsed ? "Fijar Menú" : "Contraer Menú"}
-                    </span>
-                  )}
+                  <LogOut className="w-[18px] h-[18px] transition-transform duration-200 group-hover:translate-x-0.5" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="right" className="text-xs font-bold px-3 py-1.5">
-                {isCollapsed ? "Expandir y Fijar" : "Permitir auto-contraer"}
+              <TooltipContent side="right" sideOffset={14} className="bg-[#0d1e30]/95 backdrop-blur-xl text-red-400 border border-red-500/20 shadow-2xl text-xs font-semibold px-3 py-1.5 rounded-lg">
+                Cerrar Sesión
               </TooltipContent>
             </Tooltip>
           </div>
@@ -533,7 +421,7 @@ export function AppLayout() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
-          <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-4 md:px-6 gap-4 shrink-0 sticky top-0 z-20">
+          <header className="h-32 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-3 sm:px-4 md:px-6 gap-3 sm:gap-6 shrink-0 sticky top-0 z-20">
             <button
               onClick={toggleSidebar}
               className="text-muted-foreground hover:text-foreground transition-colors lg:hidden"
@@ -541,16 +429,22 @@ export function AppLayout() {
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* Page Title & Breadcrumb */}
-            <div className="flex-1 min-w-0">
-              {/* Page title removed */}
+            {/* Page Title — left aligned */}
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground/50 leading-none mb-0.5 hidden sm:block">Panel</span>
+              <span className="text-[14px] sm:text-[15px] font-black text-foreground truncate leading-tight hidden sm:block">
+                {pageTitles[location.pathname] ?? getDynamicPageTitle(location.pathname)}
+              </span>
             </div>
 
+            {/* Spacer */}
+            <div className="flex-1" />
+
             {/* Header Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Badge
                 variant="outline"
-                className={`hidden sm:inline-flex text-[10px] ${roleBadgeColors[rol] ?? ""}`}
+                className={`hidden sm:inline-flex text-[9px] sm:text-[10px] px-2 sm:px-2.5 py-1 ${roleBadgeColors[rol] ?? ""}`}
               >
                 {roleLabels[rol] ?? rol}
               </Badge>
@@ -594,21 +488,7 @@ export function AppLayout() {
               </Tooltip>
 
               <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={async () => {
-                      await logout();
-                    }}
-                    className="p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-red-500 transition-colors"
-                  >
-                    <LogOut className="w-5 h-5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="text-xs font-bold">Cerrar Sesión</TooltipContent>
-              </Tooltip>
-
+              {/* User profile button */}
               <button
                 onClick={() => {
                   const perfilPath = rolActual === "super_admin"
@@ -616,18 +496,27 @@ export function AppLayout() {
                     : iglesiaActual?.id != null ? `/app/${iglesiaActual.id}/perfil` : "/app";
                   navigate(perfilPath);
                 }}
-                className="flex items-center gap-3 p-1.5 pr-4 rounded-xl hover:bg-accent transition-colors border border-transparent hover:border-border"
+                className="flex items-center gap-2 sm:gap-2.5 p-1.5 pr-2 sm:pr-3 rounded-xl hover:bg-accent transition-all duration-200 border border-transparent hover:border-border group"
               >
-                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center text-white text-[11px] font-bold shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#4682b4] to-[#709dbd] flex items-center justify-center text-white text-[11px] font-black shadow-[0_2px_8px_rgba(70,130,180,0.35)] ring-2 ring-[#4682b4]/20 shrink-0">
                   {initials}
                 </div>
                 <div className="hidden md:flex flex-col items-start min-w-0">
-                  <span className="text-[13px] font-bold text-foreground truncate max-w-[120px] leading-tight transition-colors">
+                  <span className="text-[12px] font-bold text-foreground truncate max-w-[110px] leading-tight">
                     {usuarioActual.nombres.split(" ")[0]} {usuarioActual.apellidos.split(" ")[0]}
                   </span>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-primary/70 truncate">{roleLabels[rol] ?? rol}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-primary/60 truncate">{roleLabels[rol] ?? rol}</span>
                 </div>
               </button>
+
+              {/* Logo — right corner */}
+              <div className="h-6 w-px bg-border/60 mx-1 sm:mx-2 hidden sm:block shrink-0" />
+              <div className="hidden sm:flex items-center justify-center shrink-0 overflow-hidden" style={{ width: '300px', height: '95px' }}>
+                <SEILogo
+                  style={{ width: '120px', height: '38px', transform: 'scale(2.4)', transformOrigin: 'center' }}
+                  className="drop-shadow-[0_0_15px_rgba(59,130,246,0.1)] opacity-90 hover:opacity-100 transition-all duration-300"
+                />
+              </div>
             </div>
           </header>
 

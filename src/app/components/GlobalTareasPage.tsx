@@ -398,9 +398,9 @@ export function GlobalTareasPage() {
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [filtered]);
 
-  const chipBase = "px-3 py-1 rounded-full text-xs font-medium border cursor-pointer transition-colors";
-  const chipActive = "bg-primary text-primary-foreground border-primary";
-  const chipInactive = "bg-background/50 text-muted-foreground border-border/40 hover:border-primary/40";
+  const chipBase = "px-3.5 py-1.5 rounded-full text-xs font-semibold border cursor-pointer transition-all duration-300 whitespace-nowrap hover:-translate-y-0.5";
+  const chipActive = "bg-primary text-white border-primary shadow-md shadow-primary/20";
+  const chipInactive = "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 text-slate-600 dark:text-slate-400 shadow-sm hover:border-primary/40 dark:hover:border-primary/50 hover:text-primary dark:hover:text-white hover:shadow-md dark:hover:shadow-primary/5";
 
   if (isLoading) return (
     <div className="space-y-4 max-w-6xl mx-auto px-4">
@@ -425,8 +425,13 @@ export function GlobalTareasPage() {
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 w-full md:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
-            <Input placeholder="Buscar tarea..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
+            <Input 
+              placeholder="Buscar tarea..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              className="pl-9 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-sm" 
+            />
           </div>
           <Button onClick={() => setShowCreate(true)} className="w-full sm:w-auto shrink-0 h-10 rounded-xl font-medium bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30">
             <Plus className="w-4 h-4 mr-2" /> Nueva Tarea

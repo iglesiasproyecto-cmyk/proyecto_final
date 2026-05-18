@@ -32,7 +32,7 @@ export function FlyingAppLogo() {
         }}
         className="drop-shadow-[0_50px_100px_rgba(70,130,180,0.5)]"
       >
-        <SEILogo className="w-96 h-96 md:w-[500px] md:h-[500px]" />
+        <SEILogo variant="dark-bg" className="w-96 h-96 md:w-[500px] md:h-[500px]" />
       </motion.div>
       
       {/* Glow effect */}

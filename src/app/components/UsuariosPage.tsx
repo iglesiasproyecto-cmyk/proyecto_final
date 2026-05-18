@@ -404,12 +404,19 @@ export function UsuariosPage() {
         {/* Búsqueda y Filtros */}
         <div className="flex flex-col gap-2">
           <div className="relative w-full">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
-            <Input placeholder="Buscar por nombre o correo..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-10 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/40 text-sm" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
+            <Input
+              placeholder="Buscar por nombre o correo..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-sm"
+            />
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Select value={filterEstado} onValueChange={setFilterEstado}>
-              <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="flex-1 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-sm text-foreground/80">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="activo">Activos</SelectItem>
@@ -417,7 +424,9 @@ export function UsuariosPage() {
               </SelectContent>
             </Select>
             <Select value={filterRol} onValueChange={setFilterRol}>
-              <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Rol" /></SelectTrigger>
+              <SelectTrigger className="flex-1 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-sm text-foreground/80">
+                <SelectValue placeholder="Rol" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los roles</SelectItem>
                 {rolesParaFiltro.map(r => <SelectItem key={r.idRol} value={r.nombre}>{r.nombre}</SelectItem>)}
@@ -426,7 +435,9 @@ export function UsuariosPage() {
             {/* Filtro de Iglesia: solo para super_admin y admin_iglesia */}
             {!isAdminSede && !isLider && (
               <Select value={filterIglesia} onValueChange={setFilterIglesia}>
-                <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Iglesia" /></SelectTrigger>
+                <SelectTrigger className="flex-1 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-sm text-foreground/80">
+                  <SelectValue placeholder="Iglesia" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas las iglesias</SelectItem>
                   {iglesias.map(ig => <SelectItem key={ig.idIglesia} value={String(ig.idIglesia)}>{ig.nombre}</SelectItem>)}
@@ -436,7 +447,9 @@ export function UsuariosPage() {
             {/* Filtro de Ministerio: para admin_sede y lider (si tiene varios) */}
             {(isAdminSede || (isLider && ministeriosDelUsuario.length > 1)) && ministeriosParaFiltro.length > 0 && (
               <Select value={filterMinisterio} onValueChange={setFilterMinisterio}>
-                <SelectTrigger className="flex-1 h-10 bg-background/60 border border-border/40 rounded-xl shadow-sm text-sm"><SelectValue placeholder="Ministerio" /></SelectTrigger>
+                <SelectTrigger className="flex-1 h-10 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 text-sm text-foreground/80">
+                  <SelectValue placeholder="Ministerio" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los ministerios</SelectItem>
                   {ministeriosParaFiltro.map(m => <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>)}
