@@ -1,6 +1,7 @@
 // TODO: Consolidar el progreso con aula_progreso_actividad y aula_inscripcion.
 // Nota: algunas columnas en aula_* mantienen nombres legacy (id_detalle_proceso_curso).
 import { supabase } from '@/lib/supabaseClient'
+import { debugLog } from '@/lib/debug'
 
 export interface AvanceModuloRow {
   idAvance: number

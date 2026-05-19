@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
+import { debugLog } from '@/lib/debug'
 import type { Evento, Tarea, TareaAsignada, TareaEvidencia } from '@/types/app.types'
 import type { Database } from '@/types/database.types'
 import { sendEmail } from './email.service'

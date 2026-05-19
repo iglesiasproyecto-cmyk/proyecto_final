@@ -1,4 +1,5 @@
 import type { Tarea } from '@/services/eventos.service'
+import { debugLog } from '@/lib/debug'
 
 // Audit-aware error handling utilities
 export function handleAuditError(error: any, operation: string, context?: any): never {

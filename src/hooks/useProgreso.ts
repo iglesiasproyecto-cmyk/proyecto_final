@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabaseClient'
+import { debugLog } from '@/lib/debug'
 import { toast } from 'sonner'
 
 // Función auxiliar para emitir certificado automáticamente

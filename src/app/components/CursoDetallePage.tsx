@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useAuth } from '@/app/store/AppContext'
+import { debugLog } from '@/lib/debug'
 import { getInternalUserId } from '@/lib/userHelpers'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'

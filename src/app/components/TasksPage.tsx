@@ -255,6 +255,11 @@ export function TasksPage() {
       toast.error("Debes iniciar sesión para crear tareas");
       return;
     }
+    if (!usuarioActual.idUsuario) {
+      toast.error("Tu perfil de usuario no está completamente configurado. Contacta al administrador.");
+      console.error('usuarioActual:', usuarioActual);
+      return;
+    }
     createTareaMutation.mutate(
       { titulo: createForm.titulo.trim(), descripcion: createForm.descripcion.trim() || null, fechaLimite: createForm.fechaLimite || null, prioridad: createForm.prioridad, idUsuarioCreador: usuarioActual.idUsuario, idMinisterio: createForm.idMinisterio },
       {
