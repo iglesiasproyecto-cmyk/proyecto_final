@@ -216,6 +216,10 @@ export function EventsPage() {
       toast.error('Por favor completa nombre, fecha de inicio y fecha de fin del evento');
       return;
     }
+    if (isLider && !createForm.idMinisterio) {
+      toast.error('Como lider debes seleccionar un ministerio para crear el evento');
+      return;
+    }
     createEventoMutation.mutate(
       { nombre: createForm.nombre.trim(), descripcion: createForm.descripcion.trim() || null, tipoEventoTexto: createForm.tipoEventoTexto.trim() || null, fechaInicio: createForm.fechaInicio, fechaFin: createForm.fechaFin, idIglesia: idIglesiaNum ?? iglesiaActual?.id ?? 0, idSede: createForm.idSede || null, idMinisterio: createForm.idMinisterio || null },
       {

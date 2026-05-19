@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useAssignUsuariosATarea, useDeleteTareaAsignada, useArchiveTask, useUnarchiveTask } from "@/hooks/useEventos";
+import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useAssignUsuariosATarea, useDeleteTareaAsignada, useArchiveTask, useUnarchiveTask, useCreateTareaEvidencia } from "@/hooks/useEventos";
 import { useDragDropTasks } from "@/hooks/useDragDropTasks";
 import type { TareaEnriquecida } from "@/services/eventos.service";
 import { useMinisteriosEnriquecidos, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
