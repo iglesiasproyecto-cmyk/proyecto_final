@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { useMinisterios, useMiembrosMinisterioEnriquecidos, useCreateMiembroMinisterio, useDeleteMiembroMinisterio, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
-import { useUsuarios } from "@/hooks/useUsuarios";
+import { useUsuariosEnriquecidos } from "@/hooks/useUsuarios";
 import { useApp } from "../store/AppContext";
 import { Card } from "./ui/card";
 import { AnimatedCard } from "./ui/AnimatedCard";
@@ -38,7 +38,7 @@ export function MembersPage() {
   const canManageMembers = isAdmin || isAdminSede || isLider;
 
   const { data: ministerios = [], isLoading: ministeriosLoading } = useMinisterios(idIglesiaNum);
-  const { data: usuarios = [] } = useUsuarios();
+  const { data: usuarios = [] } = useUsuariosEnriquecidos();
   const [search, setSearch] = useState("");
   const [selectedMinisterioId, setSelectedMinisterioId] = useState<number>(0);
   const [showInvite, setShowInvite] = useState(false);
@@ -103,6 +103,49 @@ export function MembersPage() {
   const selectableUsuarios = usuarios
     .filter((u) => u.activo)
     .filter((u) => !activeMemberIds.has(u.idUsuario))
+    .filter((u) => {
+      // Ocultar Super Administradores para todos excepto para otro Super Admin
+      if (!isAdmin && u.roleNames?.some((r: any) => r.rolNombre === 'Super Administrador')) return false;
+
+      if (isAdmin) {
+        // Admin Iglesia: Todos los de su iglesia (asumiendo que useUsuariosEnriquecidos ya filtra por iglesia,
+        // pero por seguridad comprobamos)
+        return true;
+      }
+
+      if (isAdminSede) {
+        // Admin Sede: Solo usuarios que tienen un rol en las sedes que administra,
+        // o usuarios nuevos que no tienen roles aún.
+        const userSedes = new Set(u.roleNames?.map((r: any) => r.idSede).filter(Boolean));
+        if (userSedes.size > 0) {
+          let hasOverlap = false;
+          userSedes.forEach((s) => {
+            if (sedeIdsAdmin.has(s)) hasOverlap = true;
+          });
+          if (!hasOverlap) return false;
+        }
+        return true;
+      }
+
+      if (isLider) {
+        // Lider: Solo usuarios que ya están vinculados a alguno de los ministerios que el líder administra,
+        // o usuarios que no tienen ministerios asignados aún? El usuario pidió "los de mis ministerios".
+        const userMins = new Set(u.minNames?.map((m: any) => m.idMinisterio).filter(Boolean));
+        if (userMins.size > 0) {
+          let hasOverlap = false;
+          userMins.forEach((m) => {
+            if (ministerioIdsLider.has(m)) hasOverlap = true;
+          });
+          if (!hasOverlap) return false;
+        } else {
+           // Si el usuario no tiene NINGÚN ministerio, el líder tampoco debería verlo según la regla estricta.
+           return false;
+        }
+        return true;
+      }
+
+      return true;
+    })
     .filter((u) => {
       const full = `${u.nombres} ${u.apellidos}`.toLowerCase();
       const email = (u.correo || "").toLowerCase();

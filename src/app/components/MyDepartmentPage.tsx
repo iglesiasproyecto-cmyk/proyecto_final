@@ -1,5 +1,5 @@
 import React from "react";
-import { useMinisterios, useMiembrosMinisterioEnriquecidos } from "@/hooks/useMinisterios";
+import { useMinisteriosEnriquecidos, useMiembrosMinisterioEnriquecidos } from "@/hooks/useMinisterios";
 import { useEventos } from "@/hooks/useEventos";
 import { useApp } from "../store/AppContext";
 import { useProgresoCurso } from "@/hooks/useProgreso";
@@ -39,10 +39,11 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 export function MyDepartmentPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
-  const { usuarioActual, rolActual } = useApp();
+  const { usuarioActual, rolActual, ministeriosDelUsuario } = useApp();
   const navigate = useNavigate();
-  const { data: ministerios = [], isLoading } = useMinisterios();
-  const min = ministerios[0] ?? null;
+  const { data: ministerios = [], isLoading } = useMinisteriosEnriquecidos();
+  const userMinIds = ministeriosDelUsuario?.map(m => m.idMinisterio) || [];
+  const min = ministerios.find(m => userMinIds.includes(m.idMinisterio)) ?? ministerios[0] ?? null;
   const { data: minMembers = [] } = useMiembrosMinisterioEnriquecidos(min?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos();
 

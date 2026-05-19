@@ -3,7 +3,7 @@ import { useApp } from '@/app/store/AppContext';
 import { useUsuarios, useUsuariosEnriquecidos } from '@/hooks/useUsuarios';
 import { useSedes } from '@/hooks/useIglesias';
 import { useEventos, useTareas } from '@/hooks/useEventos';
-import { useMinisterios, useMiembrosMinisterio } from '@/hooks/useMinisterios';
+import { useMinisteriosEnriquecidos, useMiembrosMinisterio } from '@/hooks/useMinisterios';
 import { useCursos } from '@/hooks/useCursos';
 import type { StatisticsScope, DateRange, StatisticsDomain, TabData, StatisticsData } from '@/types/statistics.types';
 import { computeStatistics } from '@/services/statistics.service';
@@ -41,7 +41,7 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
   const { data: sedes = [] } = useSedes();
   const { data: eventos = [] } = useEventos(scope.idIglesia);
   const { data: tareas = [] } = useTareas();
-  const { data: ministerios = [] } = useMinisterios(scope.idIglesia);
+  const { data: ministerios = [] } = useMinisteriosEnriquecidos(scope.idIglesia);
   const { data: miembrosMinisterio = [] } = useMiembrosMinisterio();
 
   const { data: certificados = [] } = useQuery({
@@ -69,34 +69,99 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
     },
   });
 
+  const filteredSedes = useMemo(() => {
+    if (scope.type === 'sede') return sedes.filter((s: any) => s.idSede === scope.idSede);
+    if (scope.type === 'personal') return [];
+    return sedes;
+  }, [sedes, scope]);
+
+  const filteredMinisterios = useMemo(() => {
+    if (scope.type === 'sede') return ministerios.filter((m: any) => m.idSede === scope.idSede);
+    if (scope.type === 'personal') return [];
+    return ministerios;
+  }, [ministerios, scope]);
+
+  const filteredEnrichedUsuarios = useMemo(() => {
+    if (scope.type === 'sede') {
+      const allowedMinisterios = new Set(filteredMinisterios.map((m: any) => m.idMinisterio));
+      return enrichedUsuarios.filter((u: any) => {
+        const isSedeRole = u.roleNames.some((r: any) => r.idSede === scope.idSede);
+        const isMinRole = u.minNames.some((m: any) => allowedMinisterios.has(m.idMinisterio));
+        return isSedeRole || isMinRole;
+      });
+    }
+    if (scope.type === 'personal') {
+       return enrichedUsuarios.filter((u: any) => u.idUsuario === scope.idUsuario);
+    }
+    return enrichedUsuarios;
+  }, [enrichedUsuarios, scope, filteredMinisterios]);
+
+  const filteredUsuarios = useMemo(() => {
+    if (scope.type === 'iglesia' || scope.type === 'global') return usuarios;
+    const allowed = new Set(filteredEnrichedUsuarios.map((u: any) => u.idUsuario));
+    return usuarios.filter((u: any) => allowed.has(u.idUsuario));
+  }, [usuarios, filteredEnrichedUsuarios, scope]);
+
+  const filteredEventos = useMemo(() => {
+    if (scope.type === 'sede') {
+      const allowedMinisterios = new Set(filteredMinisterios.map((m: any) => m.idMinisterio));
+      return eventos.filter((e: any) => e.idSede === scope.idSede || (e.idMinisterio && allowedMinisterios.has(e.idMinisterio)));
+    }
+    if (scope.type === 'personal') return [];
+    return eventos;
+  }, [eventos, scope, filteredMinisterios]);
+
+  const filteredTareas = useMemo(() => {
+    if (scope.type === 'sede') {
+      const allowedMinisterios = new Set(filteredMinisterios.map((m: any) => m.idMinisterio));
+      const allowedEventos = new Set(filteredEventos.map((e: any) => e.idEvento));
+      return tareas.filter((t: any) => 
+        (t.idMinisterio && allowedMinisterios.has(t.idMinisterio)) || 
+        (t.idEvento && allowedEventos.has(t.idEvento))
+      );
+    }
+    if (scope.type === 'personal') return [];
+    return tareas;
+  }, [tareas, scope, filteredMinisterios, filteredEventos]);
+
+  const filteredMiembrosMinisterio = useMemo(() => {
+    if (scope.type === 'sede') {
+      const allowedMinisterios = new Set(filteredMinisterios.map((m: any) => m.idMinisterio));
+      return miembrosMinisterio.filter((m: any) => allowedMinisterios.has(m.idMinisterio));
+    }
+    if (scope.type === 'personal') return [];
+    return miembrosMinisterio;
+  }, [miembrosMinisterio, scope, filteredMinisterios]);
+
   const roles = useMemo(() => {
     const map = new Map<string, number>();
-    enrichedUsuarios.forEach((u: any) => {
+    filteredEnrichedUsuarios.forEach((u: any) => {
       u.roleNames.forEach((rn: any) => {
+        if (scope.type === 'sede' && rn.idSede && rn.idSede !== scope.idSede) return;
         const name = rn.rolNombre || 'Sin rol';
         map.set(name, (map.get(name) || 0) + 1);
       });
     });
-    const withoutRole = enrichedUsuarios.filter((u: any) => u.roleNames.length === 0).length;
+    const withoutRole = filteredEnrichedUsuarios.filter((u: any) => u.roleNames.length === 0).length;
     if (withoutRole > 0) map.set('Sin rol', withoutRole);
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
-  }, [enrichedUsuarios]);
+  }, [filteredEnrichedUsuarios, scope]);
 
   const rawData = useMemo(
     () => ({
-      usuarios,
+      usuarios: filteredUsuarios,
       miembros: [],
-      sedes,
-      ministerios,
+      sedes: filteredSedes,
+      ministerios: filteredMinisterios,
       roles,
-      eventos,
-      tareas,
+      eventos: filteredEventos,
+      tareas: filteredTareas,
       cursos,
       inscripciones,
       certificados,
-      miembrosMinisterio,
+      miembrosMinisterio: filteredMiembrosMinisterio,
     }),
-    [usuarios, sedes, ministerios, roles, eventos, tareas, cursos, inscripciones, certificados, miembrosMinisterio],
+    [filteredUsuarios, filteredSedes, filteredMinisterios, roles, filteredEventos, filteredTareas, cursos, inscripciones, certificados, filteredMiembrosMinisterio],
   );
 
   const allData = useMemo<StatisticsData>(() => computeStatistics(scope, range, rawData), [scope, range, rawData]);

@@ -11,7 +11,7 @@ import { SimpleBarChart, SimpleDonutChart } from '@/app/components/SimpleCharts'
 import {
   Building2, Users, UserCheck, Church, Settings2, ListTodo,
   CheckCircle2, AlertCircle, BookOpen, FileEdit, Award,
-  FileSpreadsheet, FileText, TrendingUp, CalendarDays as CalendarDaysIcon
+  FileSpreadsheet, FileText, TrendingUp, CalendarDays
 } from 'lucide-react';
 import type { StatisticsDomain, StatisticsData, TabData, DateRange } from '@/types/statistics.types';
 
@@ -53,7 +53,7 @@ const datePresets = [
 function DateRangeSelector({ value, onChange }: { value: string; onChange: (label: string, range: { start: string | null; end: string | null }) => void }) {
   return (
     <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-slate-950/60 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm backdrop-blur-md">
-      <CalendarDaysIcon className="w-4 h-4 text-[#1a7fa8] dark:text-[#5cbcd6] ml-2 shrink-0 mr-1.5" />
+      <CalendarDays className="w-4 h-4 text-[#1a7fa8] dark:text-[#5cbcd6] ml-2 shrink-0 mr-1.5" />
       {datePresets.map((p) => (
         <button
           key={p.label}

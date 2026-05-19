@@ -59,7 +59,7 @@ export function computeIglesiaTab(
     ],
     rows: filteredUsers.slice(0, 10).map((u) => ({
       nombre: `${u.nombres || ''} ${u.apellidos || ''}`,
-      email: u.email || '-',
+      email: u.correo || '-',
       activo: u.activo ? 'Activo' : 'Inactivo',
       ultimoAcceso: u.ultimoAcceso ? new Date(u.ultimoAcceso).toLocaleDateString('es') : '-',
     })),

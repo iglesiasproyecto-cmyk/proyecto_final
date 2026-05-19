@@ -147,24 +147,32 @@ Deno.serve(async (req) => {
       return jsonResponse(origin, { message: 'Caller profile not found' }, 403)
     }
 
-    const { data: callerRoles, error: callerRolesError } = await supabaseAdmin
-      .from('usuario_rol')
-      .select('id_iglesia, rol:rol!inner(nombre)')
-      .eq('id_usuario', callerUsuario.id_usuario)
-      .is('fecha_fin', null)
-
-    if (callerRolesError) throw callerRolesError
-
-    const activeRoles = (callerRoles ?? []) as Array<{ id_iglesia: number; rol: { nombre: string } }>
-    const isSuperAdmin = activeRoles.some((r) => r.rol?.nombre === 'Super Administrador')
-    const managedIglesias = new Set(
-      activeRoles
-        .filter((r) => r.rol?.nombre === 'Super Administrador' || r.rol?.nombre === 'Administrador de Iglesia')
-        .map((r) => r.id_iglesia)
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } }
     )
 
-    if (!isSuperAdmin && !managedIglesias.has(idIglesia)) {
-      return jsonResponse(origin, { message: 'No autorizado para gestionar esa iglesia' }, 403)
+    const sedeId = Number(idSede)
+    const ministerioId = idMinisterio ? Number(idMinisterio) : null
+
+    const { data: isAuthorized, error: authzError } = await supabaseClient.rpc(
+      'can_assign_role_scoped',
+      {
+        p_target_role_id: idRol,
+        p_id_iglesia: idIglesia,
+        p_id_sede: sedeId || null,
+        p_id_ministerio: ministerioId || null,
+      }
+    )
+
+    if (authzError) {
+      console.error('Authorization check error:', authzError)
+      return jsonResponse(origin, { message: 'Error verificando autorizacion' }, 500)
+    }
+
+    if (!isAuthorized) {
+      return jsonResponse(origin, { message: 'No estas autorizado para invitar/asignar en esta iglesia/sede/ministerio' }, 403)
     }
 
     const { data: targetRole, error: targetRoleError } = await supabaseAdmin
@@ -177,6 +185,8 @@ Deno.serve(async (req) => {
       return jsonResponse(origin, { message: 'Rol inválido' }, 400)
     }
 
+    // Redundant, can_assign_role_scoped checks this, but let's leave it just in case
+    const isSuperAdmin = await supabaseClient.rpc('is_super_admin').then(r => r.data === true)
     if (!isSuperAdmin && targetRole.nombre === 'Super Administrador') {
       return jsonResponse(origin, { message: 'No autorizado para asignar ese rol' }, 403)
     }
@@ -184,8 +194,6 @@ Deno.serve(async (req) => {
     const sedeRequiredRoles = new Set(['Administrador de Sede', 'Líder', 'Servidor'])
     const isSedeRole = sedeRequiredRoles.has(targetRole.nombre)
     const requiresMinisterio = targetRole.nombre === 'Líder' || targetRole.nombre === 'Servidor'
-    const sedeId = Number(idSede)
-    const ministerioId = idMinisterio ? Number(idMinisterio) : null
 
     if (isSedeRole && (!sedeId || Number.isNaN(sedeId))) {
       return jsonResponse(origin, { message: 'Debes seleccionar una sede para este rol' }, 400)
