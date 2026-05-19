@@ -195,6 +195,11 @@ Deno.serve(async (req) => {
     const isSedeRole = sedeRequiredRoles.has(targetRole.nombre)
     const requiresMinisterio = targetRole.nombre === 'Líder' || targetRole.nombre === 'Servidor'
 
+    if (targetRole.nombre === 'Super Administrador' && (sedeId || ministerioId)) {
+      console.warn('[invite-user] Rejected scoped Super Administrador invite', { caller: callerUsuario.id_usuario, idIglesia, idSede, idMinisterio })
+      return jsonResponse(origin, { message: 'Super Administrador no puede estar asociado a una sede o ministerio' }, 400)
+    }
+
     if (isSedeRole && (!sedeId || Number.isNaN(sedeId))) {
       return jsonResponse(origin, { message: 'Debes seleccionar una sede para este rol' }, 400)
     }

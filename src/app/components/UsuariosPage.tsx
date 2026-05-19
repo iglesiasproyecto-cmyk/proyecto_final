@@ -19,6 +19,7 @@ import { HojaDeVidaModal } from "./hojaDeVida/HojaDeVidaModal";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { TableSkeleton } from "./loading/skeletons";
 import { Skeleton } from "./ui/skeleton";
+import { findActiveLeaderConflict, formatLeaderConflictMessage, formatUsuarioMutationError, roleOptionsForScope } from "./usuarios/roleNotifications";
 
 export function UsuariosPage() {
   const { iglesiaActual, rolActual, iglesiasDelUsuario, ministeriosDelUsuario, sedesDelUsuario } = useApp();
@@ -125,6 +126,10 @@ export function UsuariosPage() {
   const roleNeedsMinisterio = (idRol: number) => ([ROLE_IDS.LIDER, ROLE_IDS.SERVIDOR] as number[]).includes(idRol);
   const ministeriosInviteFiltered = ministeriosInvite.filter(m => inviteForm.idSede ? m.idSede === inviteForm.idSede : true);
   const ministeriosFiltered = ministeriosAssign.filter(m => assignForm.idSede ? m.idSede === assignForm.idSede : true);
+  const inviteLeaderConflict = findActiveLeaderConflict(enriched, inviteForm.idRol, inviteForm.idMinisterio);
+  const assignLeaderConflict = findActiveLeaderConflict(enriched, assignForm.idRol, assignForm.idMinisterio, showAssignRol);
+  const inviteRoleOptions = roleOptionsForScope(roles, { selectedSedeId: inviteForm.idSede, canAssignRole });
+  const assignRoleOptions = roleOptionsForScope(roles, { selectedSedeId: assignForm.idSede, canAssignRole });
 
   const isTechnicalArchivedUser = (correo: string, activo: boolean) => {
     return !activo && /@local\.invalid$/i.test(String(correo).trim());
@@ -259,6 +264,14 @@ export function UsuariosPage() {
       toast.error("Debes seleccionar un ministerio para este rol");
       return;
     }
+    if (inviteForm.idRol === ROLE_IDS.SUPER_ADMIN && (inviteForm.idSede || inviteForm.idMinisterio)) {
+      toast.error("Super Administrador no puede estar asociado a una sede o ministerio");
+      return;
+    }
+    if (inviteLeaderConflict) {
+      toast.error(formatLeaderConflictMessage(inviteLeaderConflict));
+      return;
+    }
     inviteMutation.mutate(
       {
         correo: inviteForm.correo.trim(),
@@ -284,6 +297,9 @@ export function UsuariosPage() {
           setShowInvite(false);
           resetInviteForm();
         },
+        onError: (err: any) => {
+          toast.error(formatUsuarioMutationError(err));
+        },
       }
     );
   };
@@ -305,6 +321,14 @@ export function UsuariosPage() {
       toast.error("No tienes permiso para asignar este rol");
       return;
     }
+    if (assignForm.idRol === ROLE_IDS.SUPER_ADMIN && (assignForm.idSede || assignForm.idMinisterio)) {
+      toast.error("Super Administrador no puede estar asociado a una sede o ministerio");
+      return;
+    }
+    if (assignLeaderConflict) {
+      toast.error(formatLeaderConflictMessage(assignLeaderConflict));
+      return;
+    }
     assignRolMutation.mutate(
       {
         idUsuario: showAssignRol,
@@ -318,6 +342,9 @@ export function UsuariosPage() {
           toast.success("Rol asignado exitosamente");
           setShowAssignRol(null);
           resetAssignForm();
+        },
+        onError: (err: any) => {
+          toast.error(formatUsuarioMutationError(err));
         },
       }
     );
@@ -887,7 +914,7 @@ export function UsuariosPage() {
                       ) : (
                         <Select
                           value={inviteForm.idSede ? String(inviteForm.idSede) : ""}
-                          onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
+                          onValueChange={v => setInviteForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0, idRol: p.idRol === ROLE_IDS.SUPER_ADMIN ? 0 : p.idRol }))}
                         >
                           <SelectTrigger className="bg-input-background h-10"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
                           <SelectContent>
@@ -914,16 +941,24 @@ export function UsuariosPage() {
                     ) : (
                       <Select
                         value={inviteForm.idRol ? String(inviteForm.idRol) : ""}
-                        onValueChange={v => setInviteForm(p => ({ ...p, idRol: Number(v), idMinisterio: 0 }))}
+                        onValueChange={v => {
+                          const idRol = Number(v);
+                          setInviteForm(p => ({ ...p, idRol, idSede: idRol === ROLE_IDS.SUPER_ADMIN ? 0 : p.idSede, idMinisterio: 0 }));
+                        }}
                       >
                         <SelectTrigger className="bg-input-background h-10"><SelectValue placeholder="Seleccionar rol..." /></SelectTrigger>
                         <SelectContent>
-                          {roles.filter(role => canAssignRole(role.idRol)).map(r => (
+                          {inviteRoleOptions.map(r => (
                             <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
                           ))}
                         </SelectContent>
-                      </Select>
-                    )}
+                        </Select>
+                      )}
+                      {inviteForm.idSede > 0 && isSuperAdmin && (
+                        <p className="text-[11px] text-muted-foreground bg-accent/30 px-2.5 py-1.5 rounded-lg leading-snug">
+                          Super Administrador es global y no se asigna a una sede.
+                        </p>
+                      )}
                   </div>
 
                   {/* Ministerio */}
@@ -986,6 +1021,11 @@ export function UsuariosPage() {
                             : 'El servidor se asignará a tu ministerio.'
                           : 'Para Líder/Servidor la persona debe pertenecer a un ministerio de la sede.'}
                       </p>
+                      {inviteLeaderConflict && (
+                        <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-lg leading-snug">
+                          {formatLeaderConflictMessage(inviteLeaderConflict)}
+                        </p>
+                      )}
                     </div>
                   )}
                     </>
@@ -1024,6 +1064,7 @@ export function UsuariosPage() {
                     !inviteForm.idRol || !inviteForm.idIglesia ||
                     (roleNeedsSede(inviteForm.idRol) && !inviteForm.idSede) ||
                     (roleNeedsMinisterio(inviteForm.idRol) && !inviteForm.idMinisterio) ||
+                    !!inviteLeaderConflict ||
                     (isAdminSede && sedesDelUsuario.length === 0) ||
                     (isLider && ministeriosDelUsuario.length === 0)
                   }
@@ -1093,12 +1134,14 @@ export function UsuariosPage() {
                     ) : (
                       <Select
                         value={assignForm.idRol ? String(assignForm.idRol) : ""}
-                        onValueChange={v => setAssignForm(p => ({ ...p, idRol: Number(v), idMinisterio: 0 }))}
+                        onValueChange={v => {
+                          const idRol = Number(v);
+                          setAssignForm(p => ({ ...p, idRol, idSede: idRol === ROLE_IDS.SUPER_ADMIN ? 0 : p.idSede, idMinisterio: 0 }));
+                        }}
                       >
                         <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                         <SelectContent>
-                          {roles
-                            .filter(role => canAssignRole(role.idRol))
+                          {assignRoleOptions
                             .map(r => (
                               <SelectItem key={r.idRol} value={String(r.idRol)}>{r.nombre}</SelectItem>
                             ))}
@@ -1131,7 +1174,7 @@ export function UsuariosPage() {
                     {!isAdminSede && !isLider && (
                       <Select
                         value={assignForm.idSede ? String(assignForm.idSede) : ""}
-                        onValueChange={v => setAssignForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0 }))}
+                        onValueChange={v => setAssignForm(p => ({ ...p, idSede: Number(v), idMinisterio: 0, idRol: p.idRol === ROLE_IDS.SUPER_ADMIN ? 0 : p.idRol }))}
                       >
                         <SelectTrigger className="bg-input-background"><SelectValue placeholder="Seleccionar sede..." /></SelectTrigger>
                         <SelectContent>
@@ -1203,9 +1246,14 @@ export function UsuariosPage() {
                     <p className="text-[11px] text-muted-foreground bg-accent/30 px-2 py-1.5 rounded">
                       Para Lider/Servidor la persona debe pertenecer a un ministerio de la sede.
                     </p>
+                    {assignLeaderConflict && (
+                      <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-1.5 rounded">
+                        {formatLeaderConflictMessage(assignLeaderConflict)}
+                      </p>
+                    )}
                   </div>
                 )}
-                    <Button className="w-full mt-3" onClick={handleAssignRol} disabled={assignRolMutation.isPending || !assignForm.idRol || !assignForm.idIglesia}>
+                    <Button className="w-full mt-3" onClick={handleAssignRol} disabled={assignRolMutation.isPending || !assignForm.idRol || !assignForm.idIglesia || !!assignLeaderConflict}>
                       {assignRolMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Asignando...</> : <><ShieldPlus className="w-4 h-4 mr-2" /> Asignar Rol</>}
                     </Button>
                   </>
