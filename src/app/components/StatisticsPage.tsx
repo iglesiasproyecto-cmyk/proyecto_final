@@ -226,7 +226,21 @@ function TabRenderer({ data }: { data: TabData }) {
 }
 
 export function StatisticsPage() {
-  const { iglesiaActual } = useApp();
+  const { iglesiaActual, rolActual } = useApp();
+
+  // Solo admin_iglesia y admin_sede pueden ver estadísticas
+  if (rolActual === 'servidor') {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">Acceso Restringido</h2>
+          <p className="text-muted-foreground">No tienes permiso para acceder a las estadísticas</p>
+        </div>
+      </div>
+    );
+  }
+
   const [activeDomain, setActiveDomain] = useState<StatisticsDomain>('iglesia');
   const [activePreset, setActivePreset] = useState('Este mes');
   const [dateRange, setDateRange] = useState<DateRange>(() => datePresets[0].range());
