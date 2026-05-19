@@ -1,100 +1,48 @@
-import { useAuth } from '@/app/store/AppContext'
-import { supabase } from '@/lib/supabaseClient'
-import { getInternalUserId } from '@/lib/userHelpers'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState, useEffect } from 'react'
+import { useApp } from '@/app/store/AppContext'
+import { useNotificaciones, useMarkNotificacionRead, useMarkAllNotificacionesRead } from '@/hooks/useNotificaciones'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
 import { Bell, Check, BookOpen } from 'lucide-react'
-import { toast } from 'sonner'
 import { Skeleton } from '@/app/components/ui/skeleton'
 
+function NotificationSkeleton({ items = 3 }: { items?: number }) {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: items }).map((_, i) => (
+        <div key={i} className="rounded-2xl border p-4">
+          <div className="flex items-start gap-3">
+            <Skeleton className="h-4 w-4 mt-0.5 rounded" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function NotificacionesAula() {
-  const { user } = useAuth()
-  const qc = useQueryClient()
-  const [internalUserId, setInternalUserId] = useState<number | null>(null)
+  const { usuarioActual, iglesiaActual } = useApp()
 
-  useEffect(() => {
-    let mounted = true
+  // Usa el hook centralizado con filtro de iglesia — mismo sistema que el resto de la app
+  const { data: todasNotificaciones = [], isLoading } = useNotificaciones(
+    usuarioActual?.idUsuario ?? 0,
+    iglesiaActual?.id
+  )
 
-    const getUserId = async () => {
-      if (!user?.id) {
-        if (mounted) setInternalUserId(null)
-        return
-      }
+  const marcarComoLeida = useMarkNotificacionRead()
+  const marcarTodasLeidas = useMarkAllNotificacionesRead()
 
-      const id = await getInternalUserId(user.id)
-      if (mounted) setInternalUserId(id)
-    }
+  // Solo notificaciones de aula: tipo curso, tarea, evento
+  const notificaciones = todasNotificaciones.filter(n =>
+    ['curso', 'tarea', 'evento'].includes(n.tipo)
+  )
 
-    getUserId()
-    return () => {
-      mounted = false
-    }
-  }, [user?.id])
-
-  const { data: notificaciones, isLoading } = useQuery({
-    queryKey: ['notificaciones-aula', internalUserId],
-    queryFn: async () => {
-      if (!internalUserId) return []
-
-      const { data, error } = await supabase
-        .from('notificacion')
-        .select('*')
-        .eq('id_usuario', internalUserId)
-        .or('tipo.eq.curso,tipo.eq.tarea,tipo.eq.evento') // Include aula-related notification types
-        .order('creado_en', { ascending: false })
-        .limit(10)
-
-      if (error) throw error
-      return data
-    },
-    enabled: !!internalUserId,
-    staleTime: 30 * 1000,
-  })
-
-  const marcarComoLeida = useMutation({
-    mutationFn: async (idNotificacion: number) => {
-      const { error } = await supabase
-        .from('notificacion')
-        .update({
-          leida: true,
-          fecha_lectura: new Date().toISOString()
-        })
-        .eq('id_notificacion', idNotificacion)
-
-      if (error) throw error
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['notificaciones-aula'] })
-    }
-  })
-
-  const marcarTodasComoLeidas = useMutation({
-    mutationFn: async () => {
-      if (!internalUserId) throw new Error('Usuario no identificado')
-
-      const { error } = await supabase
-        .from('notificacion')
-        .update({
-          leida: true,
-          fecha_lectura: new Date().toISOString()
-        })
-        .eq('id_usuario', internalUserId)
-        .or('tipo.eq.curso,tipo.eq.tarea,tipo.eq.evento')
-        .eq('leida', false)
-
-      if (error) throw error
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['notificaciones-aula'] })
-      toast.success('Todas las notificaciones marcadas como leídas')
-    },
-    enabled: !!internalUserId,
-  })
-
-  const notificacionesNoLeidas = notificaciones?.filter(n => !n.leida) || []
+  const notificacionesNoLeidas = notificaciones.filter(n => !n.leida)
 
   if (isLoading) {
     return (
@@ -127,7 +75,8 @@ export function NotificacionesAula() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => marcarTodasComoLeidas.mutate()}
+              onClick={() => marcarTodasLeidas.mutate(usuarioActual?.idUsuario ?? 0)}
+              disabled={marcarTodasLeidas.isPending}
             >
               <Check className="h-4 w-4 mr-2" />
               Marcar todas como leídas
@@ -139,7 +88,7 @@ export function NotificacionesAula() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!notificaciones || notificaciones.length === 0 ? (
+        {notificaciones.length === 0 ? (
           <div className="rounded-[24px] border border-dashed border-border bg-muted/20 py-10 text-center text-muted-foreground">
             <Bell className="mx-auto mb-4 h-12 w-12 opacity-50" />
             <p className="font-medium">No tienes notificaciones de aula</p>
@@ -149,7 +98,7 @@ export function NotificacionesAula() {
           <div className="space-y-3">
             {notificaciones.map((notificacion) => (
               <div
-                key={notificacion.id_notificacion}
+                key={notificacion.idNotificacion}
                 className={`rounded-2xl border p-4 transition-colors ${
                   notificacion.leida ? 'bg-muted/40' : 'border-primary/15 bg-primary/5'
                 }`}
@@ -160,21 +109,24 @@ export function NotificacionesAula() {
                       <BookOpen className="h-4 w-4 text-primary" />
                       <p className="font-medium text-sm">{notificacion.titulo}</p>
                       {!notificacion.leida && (
-                        <div className="h-2 w-2 rounded-full bg-primary"></div>
+                        <div className="h-2 w-2 rounded-full bg-primary" />
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">
                       {notificacion.mensaje}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(notificacion.creado_en).toLocaleString()}
+                      {new Date(notificacion.creadoEn).toLocaleString('es', {
+                        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                      })}
                     </p>
                   </div>
                   {!notificacion.leida && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => marcarComoLeida.mutate(notificacion.id_notificacion)}
+                      onClick={() => marcarComoLeida.mutate(notificacion.idNotificacion)}
+                      disabled={marcarComoLeida.isPending}
                     >
                       <Check className="h-4 w-4" />
                     </Button>

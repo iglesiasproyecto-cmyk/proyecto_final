@@ -1,12 +1,35 @@
 import { supabase } from '@/lib/supabaseClient'
 import { toast } from 'sonner'
 
-export async function getNotificaciones(idUsuario: number) {
-  const { data, error } = await supabase
+export interface NotificacionMapped {
+  idNotificacion: number
+  idUsuario: number
+  titulo: string
+  mensaje: string
+  tipo: string
+  leida: boolean
+  creadoEn: string
+  fechaLectura: string | null
+  idIglesia: number | null
+  idSede: number | null
+  idMinisterio: number | null
+  referenciaId: number | null
+  referenciaTipo: string | null
+}
+
+export async function getNotificaciones(idUsuario: number, idIglesia?: number): Promise<NotificacionMapped[]> {
+  let query = supabase
     .from('notificacion')
     .select('*')
     .eq('id_usuario', idUsuario)
     .order('creado_en', { ascending: false })
+
+  // Filter by iglesia context: show notifications for this iglesia + global (null iglesia)
+  if (idIglesia) {
+    query = query.or(`id_iglesia.eq.${idIglesia},id_iglesia.is.null`)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
   
@@ -19,6 +42,11 @@ export async function getNotificaciones(idUsuario: number) {
     leida: n.leida,
     creadoEn: n.creado_en,
     fechaLectura: n.fecha_lectura,
+    idIglesia: n.id_iglesia ?? null,
+    idSede: n.id_sede ?? null,
+    idMinisterio: n.id_ministerio ?? null,
+    referenciaId: n.referencia_id ?? null,
+    referenciaTipo: n.referencia_tipo ?? null,
   })) || []
 }
 
@@ -65,44 +93,27 @@ export function extractTaskIdFromNotificationMessage(message: string): number | 
   return Number.isFinite(id) ? id : null
 }
 
+/**
+ * Notifica a todos los inscritos de un curso sobre nuevo contenido.
+ * Usa RPC SECURITY DEFINER para bypass de RLS (permite notificar a otros usuarios).
+ */
 export async function crearNotificacionNuevoContenido(
   idCurso: number,
   tipoContenido: 'actividad' | 'evaluacion' | 'modulo',
   tituloContenido: string
 ) {
   try {
-    // Obtener todos los usuarios inscritos en el curso
-    const { data: usuariosInscritos, error } = await supabase
-      .from('aula_inscripcion')
-      .select(`
-        id_usuario,
-        usuario:usuario(correo, nombres, apellidos)
-      `)
-      .eq('activo', true)
-      .eq('id_aula_curso', idCurso)
+    const { data: count, error } = await supabase.rpc('rpc_notificar_contenido_curso', {
+      p_id_curso: idCurso,
+      p_tipo_contenido: tipoContenido,
+      p_titulo_contenido: tituloContenido,
+    })
 
     if (error) throw error
 
-    if (!usuariosInscritos || usuariosInscritos.length === 0) return
-
-    // Crear notificaciones para cada usuario
-    const notificaciones = usuariosInscritos.map(usuario => ({
-      id_usuario: usuario.id_usuario,
-      tipo: 'curso' as const,
-      titulo: 'Nuevo contenido disponible',
-      mensaje: `Se ha agregado ${tipoContenido === 'actividad' ? 'una nueva actividad' :
-                tipoContenido === 'evaluacion' ? 'una nueva evaluación' : 'un nuevo módulo'}: "${tituloContenido}"`,
-      leida: false
-    }))
-
-    const { error: notifError } = await supabase
-      .from('notificacion')
-      .insert(notificaciones)
-
-    if (notifError) throw notifError
-
-    // Mostrar toast solo para el líder
-    toast.success(`Notificaciones enviadas a ${usuariosInscritos.length} servidores`)
+    if (count && count > 0) {
+      toast.success(`Notificaciones enviadas a ${count} servidores`)
+    }
   } catch (error) {
     console.error('Error creating notifications:', error)
     // No mostrar error al usuario ya que es funcionalidad secundaria

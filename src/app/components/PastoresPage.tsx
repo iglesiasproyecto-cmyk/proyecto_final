@@ -7,7 +7,7 @@ import {
 } from "@/hooks/useIglesias";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useApp } from "../store/AppContext";
-import { useCreateNotificacion } from "@/hooks/useNotificaciones";
+
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -77,7 +77,7 @@ export function PastoresPage() {
   const deletePastorMutation = useDeletePastor();
   const createAsignMutation = useCreateSedePastor();
   const closeAsignMutation = useCloseSedePastor();
-  const createNotificacionMutation = useCreateNotificacion();
+
 
   if (isLoading) return (
     <div className="space-y-6 max-w-7xl mx-auto px-4">
@@ -205,26 +205,23 @@ export function PastoresPage() {
         return;
       }
 
-      // Enviar notificación a todos los super admins
-      const notificacionesPromises = superAdmins.map(admin =>
-        createNotificacionMutation.mutateAsync({
-          titulo: `Solicitud de cambio pastoral`,
-          mensaje: `El administrador ${usuarioActual.nombres} ${usuarioActual.apellidos} solicita cambiar al pastor de la sede ${sede.nombre}.
+      // Enviar notificación a todos los super admins via RPC (SECURITY DEFINER - permite notificar a otros usuarios)
+      const superAdminIds = superAdmins.map((a: any) => a.id_usuario);
+      const mensaje = `${usuarioActual.nombres} ${usuarioActual.apellidos} solicita cambiar al pastor de "${sede.nombre}". Pastor actual: ${pastorActual.nombres} ${pastorActual.apellidos} → Nuevo: ${pastorNuevo.nombres} ${pastorNuevo.apellidos}. Motivo: ${formSolicitud.motivo}`;
 
-**Cambio solicitado:**
-- Pastor actual: ${pastorActual.nombres} ${pastorActual.apellidos}
-- Nuevo pastor: ${pastorNuevo.nombres} ${pastorNuevo.apellidos}
-- Rol: ${formSolicitud.esPrincipal ? 'Pastor Principal' : 'Pastor Regular'}
+      const { error: notifError } = await supabase.rpc('crear_notificaciones_masivas', {
+        p_usuario_ids: superAdminIds,
+        p_titulo: 'Solicitud de cambio pastoral',
+        p_mensaje: mensaje,
+        p_tipo: 'alerta',
+        p_id_iglesia: null,
+        p_id_sede: formSolicitud.idSede,
+        p_id_ministerio: null,
+        p_referencia_id: null,
+        p_referencia_tipo: 'solicitud_pastoral',
+      });
 
-**Motivo:** ${formSolicitud.motivo}
-
-Por favor, revise y apruebe esta solicitud desde la página de gestión de pastores.`,
-          tipo: "tarea",
-          idUsuario: admin.id_usuario
-        })
-      );
-
-      await Promise.all(notificacionesPromises);
+      if (notifError) throw notifError;
 
       toast.success('Solicitud de cambio enviada a Super Administradores');
       setDialogSolicitud(false);

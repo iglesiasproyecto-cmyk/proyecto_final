@@ -4,10 +4,10 @@ import {
   getNotificaciones, markNotificacionRead, markAllNotificacionesRead, createNotificacion,
 } from '@/services/notificaciones.service'
 
-export function useNotificaciones(idUsuario: number) {
+export function useNotificaciones(idUsuario: number, idIglesia?: number) {
   return useQuery({
-    queryKey: ['notificaciones', idUsuario],
-    queryFn: () => getNotificaciones(idUsuario),
+    queryKey: ['notificaciones', idUsuario, idIglesia],
+    queryFn: () => getNotificaciones(idUsuario, idIglesia),
     enabled: !!idUsuario,
     staleTime: 30 * 1000,
   })

@@ -318,7 +318,7 @@ function AdminIglesiaDashboard() {
   const { data: ministerios = [] } = useMinisterios(iglesiaActual?.id);
   const { data: miembrosMinisterio = [] } = useMiembrosMinisterioEnriquecidos(ministerios[0]?.idMinisterio ?? 0);
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
-  const { data: notificaciones = [] } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
+  const { data: notificaciones = [] } = useNotificaciones(usuarioActual?.idUsuario ?? 0, iglesiaActual?.id);
   const { data: sedes = [] } = useSedesEnriquecidas(iglesiaActual?.id);
   const { data: sedePastores = [] } = useSedePastores();
   const { data: pastores = [] } = usePastoresEnriquecidos();
@@ -528,7 +528,7 @@ function AdminSedeDashboard() {
   const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : '/app';
   const { data: ministerios = [] } = useMinisterios(iglesiaActual?.id);
   const { data: eventos = [] } = useEventos(iglesiaActual?.id);
-  const { data: notificaciones = [] } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
+  const { data: notificaciones = [] } = useNotificaciones(usuarioActual?.idUsuario ?? 0, iglesiaActual?.id);
 
   if (!usuarioActual) return null;
 

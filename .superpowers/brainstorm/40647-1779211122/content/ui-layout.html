@@ -1,0 +1,79 @@
+<h2>Interfaz de Usuario</h2>
+<p class="subtitle">Vistas para envío y revisión de evidencia</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Paso 1: Asignado Marca Tarea Como Hecha</div>
+    <div class="mockup-body">
+      <div style="padding: 1.5rem;">
+        <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+          <p style="font-size: 0.85rem; color: #666;">TAREA</p>
+          <h4 style="margin: 0.5rem 0 0 0;">Reparar puertas de la iglesia</h4>
+        </div>
+
+        <p style="font-weight: 600; margin-bottom: 1rem;">¿Haz completado esta tarea?</p>
+        <button style="background: #4CAF50; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; width: 100%; font-weight: 500;">Marcar como Hecha</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Paso 2: Envío Opcional de Evidencia</div>
+    <div class="mockup-body">
+      <div style="padding: 1.5rem;">
+        <div style="background: #fff3cd; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 4px solid #ffc107;">
+          <p style="margin: 0; font-size: 0.9rem;"><strong>Tarea enviada a revisión</strong><br/>Opcional: Agrega fotos o documentos para mostrar tu trabajo</p>
+        </div>
+
+        <div style="border: 2px dashed #ccc; padding: 1.5rem; border-radius: 6px; text-align: center; margin-bottom: 1.5rem; background: #fafafa;">
+          <p style="color: #999; font-size: 0.9rem;">Arrastra archivos aquí o haz clic para seleccionar<br/><small>Fotos (.jpg, .png) o Documentos (.pdf, .doc)</small></p>
+        </div>
+
+        <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+          <p style="font-size: 0.85rem; color: #666; margin: 0 0 0.5rem 0;">📎 ARCHIVOS ADJUNTOS</p>
+          <div style="font-size: 0.9rem; color: #666;">Ningún archivo aún</div>
+        </div>
+
+        <button style="background: #1a7fa8; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; width: 100%; font-weight: 500; margin-bottom: 0.5rem;">Enviar para Revisión</button>
+        <button style="background: transparent; border: 1px solid #ccc; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; width: 100%;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e0e0e0;">
+  <h3>Vista del Asignador: Revisión de Tarea</h3>
+  <div class="mockup">
+    <div class="mockup-header">Detalle de Tarea - En Revisión</div>
+    <div class="mockup-body">
+      <div style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+          <div>
+            <h4 style="margin: 0 0 0.5rem 0;">Reparar puertas de la iglesia</h4>
+            <p style="margin: 0; font-size: 0.9rem; color: #666;">Asignado a: Juan Pérez</p>
+          </div>
+          <div style="background: #f3e5f5; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">En Revisión</div>
+        </div>
+
+        <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+          <p style="font-size: 0.85rem; color: #666; margin: 0 0 0.5rem 0;">📎 EVIDENCIA ENVIADA</p>
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div style="width: 80px; height: 80px; background: #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #999;">Foto 1</div>
+            <div style="width: 80px; height: 80px; background: #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #999;">Foto 2</div>
+            <div style="width: 80px; height: 80px; background: #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #999;">PDF</div>
+          </div>
+        </div>
+
+        <div style="background: #f9f9f9; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem; border-left: 4px solid #2196F3;">
+          <p style="margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">Comentarios</p>
+          <p style="margin: 0; font-size: 0.85rem; color: #666;">Añade un comentario aquí (ej: "Necesito una foto más clara del lado derecho")</p>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem;">
+          <button style="flex: 1; background: #4CAF50; color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 500;">✓ Aprobar</button>
+          <button style="flex: 1; background: #f44336; color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 500;">↻ Rechazar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

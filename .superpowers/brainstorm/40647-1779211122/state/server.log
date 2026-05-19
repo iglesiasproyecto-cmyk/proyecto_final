@@ -1,0 +1,12 @@
+{"type":"server-started","port":56471,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:56471","screen_dir":"/home/juanda/Proyectofinal/.superpowers/brainstorm/40647-1779211122/content","state_dir":"/home/juanda/Proyectofinal/.superpowers/brainstorm/40647-1779211122/state"}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/40647-1779211122/content/evidence-types.html"}
+{"source":"user-event","type":"click","text":"C\n    \n      Any File Type\n      All files including videos, audio, archives, etc.","choice":"all-files","id":null,"timestamp":1779211232219}
+{"source":"user-event","type":"click","text":"B\n    \n      Photos + Documents\n      Images plus PDFs, Word docs, spreadsheets, etc.","choice":"photos-docs","id":null,"timestamp":1779211240409}
+{"source":"user-event","type":"click","text":"B\n    \n      Photos + Documents\n      Images plus PDFs, Word docs, spreadsheets, etc.","choice":"photos-docs","id":null,"timestamp":1779211242792}
+{"source":"user-event","type":"click","text":"B\n    \n      Photos + Documents\n      Images plus PDFs, Word docs, spreadsheets, etc.","choice":"photos-docs","id":null,"timestamp":1779211243009}
+{"source":"user-event","type":"click","text":"B\n    \n      Photos + Documents\n      Images plus PDFs, Word docs, spreadsheets, etc.","choice":"photos-docs","id":null,"timestamp":1779211250291}
+{"source":"user-event","type":"click","text":"B\n    \n      Photos + Documents\n      Images plus PDFs, Word docs, spreadsheets, etc.","choice":"photos-docs","id":null,"timestamp":1779211250467}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/40647-1779211122/content/waiting.html"}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/40647-1779211122/content/workflow.html"}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/40647-1779211122/content/ui-layout.html"}
+{"type":"screen-added","file":"/home/juanda/Proyectofinal/.superpowers/brainstorm/40647-1779211122/content/waiting-2.html"}

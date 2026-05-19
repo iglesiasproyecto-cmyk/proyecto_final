@@ -26,7 +26,7 @@ const typeConfig: Record<string, { label: string; color: string; bg: string; ico
 export function NotificationsPage() {
   const { usuarioActual, iglesiaActual } = useApp();
   const navigate = useNavigate();
-  const { data: notificaciones = [], isLoading } = useNotificaciones(usuarioActual?.idUsuario ?? 0);
+  const { data: notificaciones = [], isLoading } = useNotificaciones(usuarioActual?.idUsuario ?? 0, iglesiaActual?.id);
   const [activeTab, setActiveTab] = useState("todas");
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
@@ -36,19 +36,28 @@ export function NotificationsPage() {
   const handleOpenNotification = (n: any) => {
     if (!n.leida) markReadMutation.mutate(n.idNotificacion);
 
-    if (n.tipo !== "tarea") {
-      setSelectedNotification(n);
+    const base = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : "/app";
+
+    // Navigate using referenciaTipo + referenciaId if available
+    if (n.referenciaTipo === 'evento' && n.referenciaId) {
+      navigate(`${base}/eventos?openEvent=${n.referenciaId}`);
+      return;
+    }
+    if (n.referenciaTipo === 'tarea' && n.referenciaId) {
+      navigate(`${base}/tareas?openTask=${n.referenciaId}`);
       return;
     }
 
-    const taskId = extractTaskIdFromNotificationMessage(n.mensaje || "");
-    if (!taskId) {
-      setSelectedNotification(n);
-      return;
+    // Legacy fallback: extract TASK_ID from message
+    if (n.tipo === 'tarea') {
+      const taskId = extractTaskIdFromNotificationMessage(n.mensaje || "");
+      if (taskId) {
+        navigate(`${base}/tareas?openTask=${taskId}`);
+        return;
+      }
     }
 
-    const basePath = iglesiaActual?.id ? `/app/${iglesiaActual.id}/tareas` : "/app/tareas";
-    navigate(`${basePath}?openTask=${taskId}`);
+    setSelectedNotification(n);
   };
 
   if (isLoading) return (
