@@ -75,26 +75,44 @@ export function useHojaDeVida() {
     };
   }, [fetchHojaDeVida, state.hoja?.id_usuario]);
 
-  // Update hoja de vida
+  // Upsert hoja de vida — creates it if it doesn't exist yet, then updates
   const actualizarHoja = useCallback(
     async (datos: hojaDeVidaService.HojaDeVidaUpdate) => {
-      if (!state.hoja) return null;
-
       try {
         setState((prev) => ({ ...prev, isUpdating: true, error: null }));
-        const updated = await hojaDeVidaService.actualizarHojaDeVida(
-          state.hoja.id_hoja_de_vida,
-          datos
-        );
 
-        if (updated) {
-          // Refetch to get complete data with certificados
-          await fetchHojaDeVida();
+        let hojaId = state.hoja?.id_hoja_de_vida ?? null;
+
+        // If no hoja exists yet, auto-create it for this user
+        if (!hojaId) {
+          const { data: authData } = await supabase.auth.getUser();
+          if (!authData.user) throw new Error('No autenticado');
+
+          const { data: usuarioRow, error: usuarioError } = await supabase
+            .from('usuario')
+            .select('id_usuario')
+            .eq('auth_user_id', authData.user.id)
+            .maybeSingle();
+
+          if (usuarioError || !usuarioRow) throw new Error('No se encontró el perfil de usuario');
+
+          const created = await hojaDeVidaService.crearHojaDeVida(usuarioRow.id_usuario, {
+            habilidades: (datos.habilidades as any) ?? [],
+            formacion_academica: (datos.formacion_academica as any) ?? [],
+            otros_datos: {} as any,
+          });
+
+          if (!created) throw new Error('No se pudo crear el perfil profesional');
+          hojaId = created.id_hoja_de_vida;
         }
 
+        // Update with full datos
+        const updated = await hojaDeVidaService.actualizarHojaDeVida(hojaId, datos);
+        if (updated) await fetchHojaDeVida();
         return updated;
+
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : 'Error updating hoja de vida';
+        const errorMsg = error instanceof Error ? error.message : 'Error actualizando perfil';
         setState((prev) => ({ ...prev, error: errorMsg }));
         return null;
       } finally {
