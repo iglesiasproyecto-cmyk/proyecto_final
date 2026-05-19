@@ -145,12 +145,17 @@ export function UsuariosPage() {
       if (!hasRoleInMyIglesia) return false;
     }
 
-    // If admin_sede, only show users from their sede
+    // If admin_sede, only show users from their sedes
     if (isAdminSede) {
       if (sedesDelUsuario.length === 0) return false; // Security: no sede assigned, hide all
-      const mySede = sedesDelUsuario[0]; // Use admin's assigned sede
-      const hasRoleInMySede = u.roleNames.some(rn => rn.idSede === mySede.id);
-      if (!hasRoleInMySede) return false;
+      const mySedeIds = new Set(sedesDelUsuario.map(s => s.id));
+      // Show user if they have a role in any of my sedes
+      const hasRoleInMySedes = u.roleNames.some(rn => rn.idSede !== null && rn.idSede !== undefined && mySedeIds.has(rn.idSede));
+      // Also show users with no roles at all (newly invited) if they are in my iglesia
+      const hasNoRoles = u.roleNames.length === 0;
+      const isInMyIglesia = hasNoRoles && iglesiaActual?.id !== undefined &&
+        u.roleNames.every(rn => rn.idIglesia === iglesiaActual?.id); // vacío => passes
+      if (!hasRoleInMySedes && !(hasNoRoles && isInMyIglesia)) return false;
     }
 
     // If líder, only show users from their ministerios
