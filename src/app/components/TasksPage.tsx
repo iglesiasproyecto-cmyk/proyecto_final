@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useAssignUsuariosATarea, useDeleteTareaAsignada, useTareaEvidencias, useCreateTareaEvidencia, useArchiveTask, useUnarchiveTask } from "@/hooks/useEventos";
+import { useTareasEnriquecidas, useCreateTarea, useUpdateTarea, useUpdateTareaEstado, useDeleteTarea, useAssignUsuariosATarea, useDeleteTareaAsignada, useArchiveTask, useUnarchiveTask } from "@/hooks/useEventos";
 import { useDragDropTasks } from "@/hooks/useDragDropTasks";
 import type { TareaEnriquecida } from "@/services/eventos.service";
 import { useMinisteriosEnriquecidos, useMinisteriosIdsDeUsuario } from "@/hooks/useMinisterios";
@@ -10,7 +10,6 @@ import { useSedesEnriquecidas } from "@/hooks/useIglesias";
 import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
 import { useUsuariosDeIglesia } from "@/hooks/useUsuariosDeIglesia";
 import { useTaskPermissions, useCanBulkUpdate } from "@/hooks/useTaskPermissions";
-import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service";
 import { filterAndSortTareas } from "@/lib/taskUtils";
 import { useApp } from "../store/AppContext";
 import { SedeMinisterioSelector } from "./ui/SedeMinisterioSelector";
@@ -18,12 +17,12 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { AnimatedCard } from "./ui/AnimatedCard";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar,
-  ChevronRight, Inbox, Trash2, UserPlus, X, Paperclip, Pencil, Search
+  ChevronRight, Inbox, Trash2, UserPlus, X, Pencil, Search
 } from "lucide-react";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { Skeleton } from "./ui/skeleton";
@@ -31,7 +30,7 @@ import { TableSkeleton } from "./loading/skeletons";
 import { TasksSkeleton } from "./tasks/TasksSkeleton";
 import { TaskBulkActions } from "./tasks/TaskBulkActions";
 import { TaskArchiveIndicator } from "./tasks/TaskArchiveIndicator";
-import { TaskApprovalSection } from "./tasks/TaskApprovalSection";
+import { TaskEvidenceReview } from "./tasks/TaskEvidenceReview";
 
 const statusConfig = {
   pendiente:   { label: "Pendiente",   color: "bg-amber-500/10 text-amber-400 border-amber-500/20",   dot: "bg-amber-400",   icon: <AlertCircle className="w-3.5 h-3.5" /> },
@@ -101,7 +100,7 @@ export function TasksPage() {
   const [dateFilter, setDateFilter] = useState("");
   const [ministerioFilter, setMinisterioFilter] = useState<number>(0);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
-  const [evidenceUploading, setEvidenceUploading] = useState(false);
+  // (evidenceUploading removed — handled by TaskEvidenceReview)
   const [confirmCancel, setConfirmCancel] = useState<{ open: boolean; id: number }>({ open: false, id: 0 });
   const [confirmRemoveAssign, setConfirmRemoveAssign] = useState<{ open: boolean; id: number; nombre: string }>({ open: false, id: 0, nombre: "" });
   const [editMode, setEditMode] = useState(false);
@@ -111,7 +110,6 @@ export function TasksPage() {
   const [selectedTareaIds, setSelectedTareaIds] = useState<Set<number>>(new Set());
 
   const task = selectedTask ? tareas.find(t => t.idTarea === selectedTask) : null;
-  const { data: evidencias = [] } = useTareaEvidencias(task?.idTarea);
   const isAdminIglesia = rolActual === "admin_iglesia" || rolActual === "super_admin";
 
   const sedesDisponiblesAsignacion = useMemo(() => {
@@ -155,7 +153,8 @@ export function TasksPage() {
   const archiveMutation = useArchiveTask();
   const unarchiveMutation = useUnarchiveTask();
   const canBulkUpdate = useCanBulkUpdate();
-  const taskPerms = useTaskPermissions(task);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _taskPerms = useTaskPermissions(task);
 
   // Drag-drop hook
   const { handleDropTask, isUpdating } = useDragDropTasks();
@@ -282,36 +281,8 @@ export function TasksPage() {
     );
   };
 
-  const handleOpenEvidence = async (objectPath: string) => {
-    try {
-      const url = await getTareaEvidenciaSignedUrl(objectPath);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch (err: any) {
-      console.error('[TasksPage] Error opening evidence:', err);
-      toast.error("No se pudo abrir la evidencia.");
-    }
-  };
+  // Evidence handling moved to TaskEvidenceReview component
 
-  const handleUploadEvidence = (file: File) => {
-    if (!usuarioActual || !myAssignment) {
-      toast.error("No tienes una asignacion valida para subir evidencia.");
-      return;
-    }
-    setEvidenceUploading(true);
-    createEvidenciaMutation.mutate(
-      { idTareaAsignada: myAssignment.idTareaAsignada, idUsuario: usuarioActual.idUsuario, file },
-      {
-        onSuccess: () => {
-          toast.success("Evidencia subida.");
-        },
-        onError: (error: any) => {
-          console.error('[TasksPage] Error uploading evidence:', error);
-          toast.error("Error al subir evidencia.");
-        },
-        onSettled: () => setEvidenceUploading(false),
-      }
-    );
-  };
 
   const handleBulkUpdateEstado = (estado: string) => {
     if (selectedTareaIds.size === 0) {
@@ -398,21 +369,7 @@ export function TasksPage() {
   const myAssignment = task?.asignados?.find(a => a.idUsuario === usuarioActual?.idUsuario) ?? null;
   const canActAsServidor = rolActual === "servidor" && !!myAssignment;
 
-  const getActionForServer = (estado: string) => {
-    if (estado === "pendiente") return { label: "Iniciar", next: "en_progreso" as const };
-    if (estado === "en_progreso") return { label: "Enviar a revision", next: "en_revision" as const };
-    return null;
-  };
-
-  const getActionForLeader = (estado: string) => {
-    if (estado === "en_revision") {
-      return {
-        approve: { label: "Aprobar", next: "completada" as const },
-        rework: { label: "Reabrir", next: "en_progreso" as const },
-      };
-    }
-    return null;
-  };
+  // State transitions handled by TaskEvidenceReview (en_progreso → en_revision → completada/rechazada)
 
   const tasksByStatus = (status: string) => visibleTareas.filter(t => t.estado === status);
   const COLS = ["pendiente", "en_progreso", "en_revision", "completada"] as const;
@@ -694,16 +651,17 @@ export function TasksPage() {
       </DndProvider>
 
       {/* ── Task Detail Dialog ── */}
-      <Dialog 
-        open={!!selectedTask} 
-        onOpenChange={(open) => { 
-          if (!open) { 
-            setSelectedTask(null); 
-            setAssignScope({ idSede: 0, idMinisterio: 0, selectedUserIds: [], assignAll: false }); 
+      <Dialog
+        open={!!selectedTask}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedTask(null);
+            setAssignScope({ idSede: 0, idMinisterio: 0, selectedUserIds: [], assignAll: false });
           }
         }}
       >
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-0 overflow-hidden flex flex-col max-h-[90vh]">
+          <DialogDescription className="sr-only">Detalles de la tarea seleccionada</DialogDescription>
           {task ? (
             <>
               {/* ── Header ── */}
@@ -974,54 +932,8 @@ export function TasksPage() {
                   </div>
                 )}
 
-                {/* Evidencias */}
-                {!editMode && (evidencias.length > 0 || canActAsServidor) && (
-                  <div className="space-y-3">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                      <Paperclip className="w-3 h-3" /> Evidencias
-                    </span>
-                    {evidencias.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {evidencias.map(ev => (
-                          <div key={ev.idTareaEvidencia} className="flex items-center justify-between gap-3 bg-white/5 dark:bg-black/20 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors group">
-                            <div className="min-w-0">
-                              <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{ev.nombreArchivo}</p>
-                              {ev.nombreCompleto && (
-                                <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider truncate mt-0.5">{ev.nombreCompleto}</p>
-                              )}
-                            </div>
-                            <Button variant="secondary" size="sm" className="h-7 text-[10px] font-bold rounded-lg shrink-0" onClick={() => handleOpenEvidence(ev.objectPath)}>Ver</Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {canActAsServidor && (
-                      <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 flex flex-col items-center justify-center border-dashed gap-2 hover:bg-primary/10 transition-colors">
-                        <label className="cursor-pointer text-center w-full h-full">
-                          <input
-                            type="file"
-                            className="hidden"
-                            disabled={evidenceUploading}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleUploadEvidence(file);
-                              e.currentTarget.value = "";
-                            }}
-                          />
-                          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center mb-2">
-                            <Paperclip className="w-4 h-4" />
-                          </div>
-                          <p className="text-xs font-bold text-primary">Subir nueva evidencia</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">Formatos soportados (PDF, Imágenes)</p>
-                        </label>
-                        {evidenceUploading && <p className="text-[10px] font-bold text-amber-500 animate-pulse mt-2">Subiendo archivo...</p>}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {/* Archive Indicator */}
-                {task && (
+                {!editMode && task && (
                   <TaskArchiveIndicator
                     archivedAt={task.archivedAt}
                     onUnarchive={canBulkUpdate ? handleUnarchiveTask : undefined}
@@ -1029,13 +941,13 @@ export function TasksPage() {
                   />
                 )}
 
-                {/* Approval Section */}
-                {task && (
-                  <TaskApprovalSection
+                {/* Evidence & Review Section — for tasks with assignees or in review state */}
+                {!editMode && task && usuarioActual && (
+                  <TaskEvidenceReview
                     task={task}
-                    onApprove={() => updateEstadoMutation.mutate({ id: task.idTarea, estado: 'completada' })}
-                    onReject={() => setConfirmCancel({ open: true, id: task.idTarea })}
-                    isLoading={updateEstadoMutation.isPending}
+                    currentUserId={usuarioActual.idUsuario}
+                    isAssignor={canManageTasks}
+                    isAssignee={!!myAssignment}
                   />
                 )}
               </div>
@@ -1089,31 +1001,15 @@ export function TasksPage() {
                     <div className="flex items-center gap-2 ml-auto">
                       <Button variant="ghost" className="rounded-xl font-semibold hover:bg-white/5 text-muted-foreground" onClick={() => setSelectedTask(null)}>Cerrar</Button>
                       
-                      {(() => {
-                        const serverAction = canActAsServidor ? getActionForServer(task.estado) : null;
-                        if (serverAction) {
-                          return (
-                            <Button className="rounded-xl font-bold shadow-md px-6" onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: serverAction.next }); setSelectedTask(null); }}>
-                              {serverAction.label}
-                            </Button>
-                          );
-                        }
-                        
-                        const leaderAction = canManageTasks ? getActionForLeader(task.estado) : null;
-                        if (leaderAction) {
-                          return (
-                            <>
-                              <Button variant="secondary" className="rounded-xl font-bold shadow-sm" onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.rework.next }); setSelectedTask(null); }}>
-                                {leaderAction.rework.label}
-                              </Button>
-                              <Button className="rounded-xl font-bold shadow-md" onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: leaderAction.approve.next }); setSelectedTask(null); }}>
-                                {leaderAction.approve.label}
-                              </Button>
-                            </>
-                          );
-                        }
-                        return null;
-                      })()}
+                      {/* Only show Iniciar in footer — all other state changes are handled by TaskEvidenceReview */}
+                      {canActAsServidor && task.estado === 'pendiente' && (
+                        <Button
+                          className="rounded-xl font-bold shadow-md px-6"
+                          onClick={() => { updateEstadoMutation.mutate({ id: task.idTarea, estado: 'en_progreso' }); }}
+                        >
+                          Iniciar
+                        </Button>
+                      )}
                     </div>
                   </>
                 )}
@@ -1128,6 +1024,7 @@ export function TasksPage() {
       {/* ── Create Dialog ── */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogDescription className="sr-only">Formulario para crear una nueva tarea</DialogDescription>
           <DialogHeader>
             <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
               Nueva Tarea
@@ -1194,6 +1091,7 @@ export function TasksPage() {
       {/* ── Delete Confirmation Dialog ── */}
       <Dialog open={deleteConfirm.open} onOpenChange={(open) => setDeleteConfirm(prev => ({ ...prev, open }))}>
         <DialogContent className="sm:max-w-sm rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogDescription className="sr-only">Confirmación para eliminar una tarea</DialogDescription>
           <DialogHeader>
             <div className="flex flex-col items-center gap-3 pt-2">
               <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">

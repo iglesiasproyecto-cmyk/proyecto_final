@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
+import { debugLog } from '@/lib/debug'
 import { ROLE_IDS } from '@/app/constants/roles'
 import type { Rol, Usuario, UsuarioRol, AdminSedeAsignacion } from '@/types/app.types'
 import type { Database } from '@/types/database.types'

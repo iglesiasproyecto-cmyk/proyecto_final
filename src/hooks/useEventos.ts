@@ -13,6 +13,11 @@ import {
   getEventosPorMinisterio,
 } from '@/services/eventos.service'
 import { archiveTask, unarchiveTask } from '@/services/tareaArchive.service'
+import {
+  getTaskTimeline,
+  createTareaComentario,
+  createTareaAprobacion,
+} from '@/services/evidenceService'
 import type { Tarea } from '@/types/app.types'
 import { toast } from 'sonner'
 
@@ -339,6 +344,51 @@ export function useUnarchiveTask() {
     },
     onError: (err: any) => {
       toast.error(err.message || 'Error al restaurar tarea')
+    },
+  })
+}
+
+// ── Task Review Workflow Hooks ──
+
+export function useTaskTimeline(idTarea: number | undefined) {
+  return useQuery({
+    queryKey: ['task-timeline', idTarea],
+    queryFn: () => getTaskTimeline(idTarea!),
+    enabled: !!idTarea,
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useCreateTareaComentario() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createTareaComentario,
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['task-timeline', variables.idTarea] })
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Error al agregar comentario')
+    },
+  })
+}
+
+export function useCreateTareaAprobacion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createTareaAprobacion,
+    onSuccess: (data, variables) => {
+      qc.invalidateQueries({ queryKey: ['task-timeline', variables.idTarea] })
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      const msg = variables.accion === 'aprobar'
+        ? 'Tarea aprobada exitosamente'
+        : variables.accion === 'rechazar'
+        ? 'Tarea rechazada — el asignado recibirá los comentarios'
+        : 'Tarea reabierta para trabajo adicional'
+      toast.success(msg)
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Error al procesar la revisión')
     },
   })
 }
