@@ -10,7 +10,7 @@ export function usePreguntasPorEvaluacion(idEvaluacion?: number) {
     queryKey: ['preguntas', idEvaluacion],
     queryFn: () => evaluacionesService.obtenerPreguntasPorEvaluacion(idEvaluacion || 0),
     enabled: !!idEvaluacion,
-    staleTime: 5 * 60 * 1000
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false
   })
 }
 
@@ -19,7 +19,7 @@ export function usePregunta(idPregunta?: number) {
     queryKey: ['pregunta', idPregunta],
     queryFn: () => evaluacionesService.obtenerPregunta(idPregunta || 0),
     enabled: !!idPregunta,
-    staleTime: 5 * 60 * 1000
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false
   })
 }
 

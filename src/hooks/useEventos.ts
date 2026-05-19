@@ -80,7 +80,7 @@ export function useEventosEnriquecidos(idIglesia?: number) {
     queryKey: ['eventos-enriquecidos', idIglesia],
     queryFn: () => getEventosEnriquecidos(idIglesia),
     enabled: idIglesia !== undefined,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -88,7 +88,7 @@ export function useTareasEnriquecidas(idEvento?: number, idIglesia?: number, idU
   return useQuery({
     queryKey: ['tareas-enriquecidas', idEvento, idIglesia, idUsuario],
     queryFn: () => getTareasEnriquecidas(idEvento, idIglesia, idUsuario),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -96,7 +96,7 @@ export function useEventosGlobal() {
   return useQuery({
     queryKey: ['eventos-enriquecidos', 'global'],
     queryFn: () => getEventosEnriquecidos(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -104,7 +104,7 @@ export function useTareasGlobal() {
   return useQuery({
     queryKey: ['tareas-enriquecidas', 'global'],
     queryFn: () => getTareasEnriquecidas(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -239,7 +239,7 @@ export function useAulaCursoCompleto(idCurso: number | undefined) {
     queryKey: ['aula-curso-completo', idCurso],
     queryFn: () => getAulaCursoCompleto(idCurso!),
     enabled: !!idCurso,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false, // 5 minutes
   })
 }
 
@@ -307,7 +307,7 @@ export function useEventosPorMinisterio(idMinisterio: number) {
     queryKey: ['eventos-ministerio', idMinisterio],
     queryFn: () => getEventosPorMinisterio(idMinisterio),
     enabled: typeof idMinisterio === 'number' && idMinisterio > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 

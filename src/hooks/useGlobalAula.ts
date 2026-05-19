@@ -30,7 +30,7 @@ export function useCursosGlobal(idIglesia: number | undefined) {
       return data || [];
     },
     enabled: idIglesia !== undefined,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false, // 5 minutes
   });
 }
 
@@ -60,7 +60,7 @@ export function useCursosPorMinisterio(idMinisterio: number | undefined) {
       return data || [];
     },
     enabled: idMinisterio !== undefined,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   });
 }
 

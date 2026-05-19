@@ -19,7 +19,9 @@ export function useRoles() {
   return useQuery({
     queryKey: ['roles'],
     queryFn: getRoles,
-    staleTime: 30 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 2 * 60 * 60 * 1000, // 2 hours
+    refetchOnWindowFocus: false,
   })
 }
 
@@ -27,7 +29,9 @@ export function useUsuarios() {
   return useQuery({
     queryKey: ['usuarios'],
     queryFn: getUsuarios,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
   })
 }
 
@@ -36,7 +40,7 @@ export function useUsuarioRoles(idUsuario: number) {
     queryKey: ['usuario-rol', idUsuario],
     queryFn: () => getUsuarioRoles(idUsuario),
     enabled: !!idUsuario,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -44,7 +48,10 @@ export function useUsuariosEnriquecidos() {
   return useQuery({
     queryKey: ['usuarios-enriquecidos'],
     queryFn: getUsuariosEnriquecidos,
-    staleTime: 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   })
 }
 
@@ -124,7 +131,9 @@ export function useAdminSedesAsignaciones(idIglesia?: number) {
   return useQuery({
     queryKey: ['admin-sedes-asignaciones', idIglesia],
     queryFn: () => fetchAdminSedesAsignaciones(idIglesia),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
   })
 }
 

@@ -14,7 +14,7 @@ export function useMinisterios(idIglesia?: number) {
   return useQuery({
     queryKey: ['ministerios', idIglesia],
     queryFn: () => getMinisterios(idIglesia),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -23,7 +23,7 @@ export function useMiembrosMinisterio(idMinisterio: number) {
     queryKey: ['miembros-ministerio', idMinisterio],
     queryFn: () => getMiembrosMinisterio(idMinisterio),
     enabled: idMinisterio > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -31,7 +31,7 @@ export function useMinisteriosEnriquecidos(idIglesia?: number) {
   return useQuery({
     queryKey: ['ministerios-enriquecidos', idIglesia],
     queryFn: () => getMinisteriosEnriquecidos(idIglesia),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -39,7 +39,7 @@ export function useMinisteriosGlobal() {
   return useQuery({
     queryKey: ['ministerios-enriquecidos', 'global'],
     queryFn: () => getMinisteriosEnriquecidos(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -49,7 +49,7 @@ export function useMinisteriosPorSede(idSede?: number) {
     queryKey: ['ministerios-por-sede', idSede],
     queryFn: () => getMinisteriosPorSede(sedeId),
     enabled: sedeId > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -67,7 +67,7 @@ export function useMiembrosMinisterioEnriquecidos(idMinisterio?: number) {
   return useQuery({
     queryKey: ['miembros-ministerio-enriquecidos', idMinisterio],
     queryFn: () => getMiembrosMinisterioEnriquecidos(idMinisterio),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -77,7 +77,7 @@ export function useMinisteriosIdsDeUsuario(idUsuario?: number) {
     queryKey: ['ministerios-ids-usuario', idUsuario],
     queryFn: () => getMinisteriosIdsDeUsuario(usuarioId),
     enabled: !!idUsuario,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -167,6 +167,6 @@ export function useServidoresMinisterio(idMinisterio: number) {
     queryKey: ['servidores-ministerio', idMinisterio],
     queryFn: () => getServidoresMinisterio(idMinisterio),
     enabled: idMinisterio > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }

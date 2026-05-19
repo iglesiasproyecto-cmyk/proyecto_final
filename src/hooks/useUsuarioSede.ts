@@ -9,7 +9,7 @@ export function useUsuariosSede(idSede: number) {
     queryKey: ['usuarios-sede', idSede],
     queryFn: () => getUsuariosSede(idSede),
     enabled: idSede > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 
@@ -18,7 +18,7 @@ export function useSedesDeUsuario(idUsuario?: number) {
     queryKey: ['sedes-usuario', idUsuario],
     queryFn: () => getSedesDeUsuario(idUsuario as number),
     enabled: !!idUsuario,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
   })
 }
 

@@ -14,39 +14,45 @@ export function useIglesias(options?: { includeInactive?: boolean }) {
   return useQuery({
     queryKey: ['iglesias', includeInactive],
     queryFn: () => getIglesias(includeInactive),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
   })
 }
 
 export function usePastores() {
-  return useQuery({ queryKey: ['pastores'], queryFn: getPastores, staleTime: 5 * 60 * 1000 })
+  return useQuery({ queryKey: ['pastores'], queryFn: getPastores, staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false })
 }
 
 export function useSedePastores() {
-  return useQuery({ queryKey: ['sede-pastores'], queryFn: getSedePastores, staleTime: 5 * 60 * 1000 })
+  return useQuery({ queryKey: ['sede-pastores'], queryFn: getSedePastores, staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false })
 }
 
 export function useSedes(idIglesia?: number) {
   return useQuery({
     queryKey: ['sedes', idIglesia],
     queryFn: () => getSedes(idIglesia),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
   })
 }
 
 export function useIglesiasEnriquecidas() {
-  return useQuery({ queryKey: ['iglesias-enriquecidas'], queryFn: getIglesiasEnriquecidas, staleTime: 5 * 60 * 1000 })
+  return useQuery({ queryKey: ['iglesias-enriquecidas'], queryFn: getIglesiasEnriquecidas, staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false })
 }
 
 export function usePastoresEnriquecidos() {
-  return useQuery({ queryKey: ['pastores-enriquecidos'], queryFn: getPastoresEnriquecidos, staleTime: 5 * 60 * 1000 })
+  return useQuery({ queryKey: ['pastores-enriquecidos'], queryFn: getPastoresEnriquecidos, staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false })
 }
 
 export function useSedesEnriquecidas(idIglesia?: number) {
   return useQuery({
     queryKey: ['sedes-enriquecidas', idIglesia],
     queryFn: () => getSedesEnriquecidas(idIglesia),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
   })
 }
 
@@ -57,7 +63,9 @@ export function usePastoresPorSede(idSede?: number) {
     queryKey: ['pastores-por-sede', idSede],
     queryFn: () => getPastoresPorSede(idSede || 0),
     enabled: !!idSede,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
   })
 }
 
@@ -66,7 +74,9 @@ export function useIglesiaEnriquecidaById(idIglesia?: number) {
     queryKey: ['iglesia-enriquecida', idIglesia],
     queryFn: () => getIglesiaEnriquecidaById(idIglesia!),
     enabled: !!idIglesia && idIglesia > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
   })
 }
 
@@ -75,7 +85,9 @@ export function usePastoresPorIglesia(idIglesia?: number) {
     queryKey: ['pastores-por-iglesia', idIglesia],
     queryFn: () => getPastoresPorIglesia(idIglesia || 0),
     enabled: !!idIglesia,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
   })
 }
 
@@ -84,7 +96,9 @@ export function useAdminsPorIglesia(idIglesia?: number) {
     queryKey: ['admins-por-iglesia', idIglesia],
     queryFn: () => getAdminsPorIglesia(idIglesia || 0),
     enabled: !!idIglesia,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
   })
 }
 

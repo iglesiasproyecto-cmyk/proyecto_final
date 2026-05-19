@@ -15,7 +15,7 @@ export function useMinisterioRole(idMinisterio: number | null | undefined) {
     queryFn: () =>
       getMiRolEnMinisterio(idMinisterio as number, usuarioActual!.idUsuario),
     enabled: !isHighPrivilege && !!idMinisterio && !!usuarioActual,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
     select: (data) => data,
     placeholderData: isHighPrivilege ? 'lider' : undefined,
   })
