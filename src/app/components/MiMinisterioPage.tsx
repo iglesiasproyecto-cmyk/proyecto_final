@@ -151,9 +151,9 @@ export function MiMinisterioPage() {
         className="grid grid-cols-2 sm:grid-cols-4 gap-3"
       >
         {[
-          { label: "Eventos",       value: upcomingEvents.length, icon: <CalendarDays className="w-4 h-4" />, nav: "/app/eventos" },
+          { label: "Eventos",       value: upcomingEvents.length, icon: <CalendarDays className="w-4 h-4" />, nav: `/app/${idIglesia}/eventos` },
 
-          { label: "Miembros",      value: activeMembers.length,  icon: <Users className="w-4 h-4" />,        nav: "/app/miembros" },
+          { label: "Miembros",      value: activeMembers.length,  icon: <Users className="w-4 h-4" />,        nav: `/app/${idIglesia}/miembros` },
         ].map((s, i) => (
           <motion.div
             key={s.label}
@@ -190,7 +190,7 @@ export function MiMinisterioPage() {
                 <FieldLabel>Equipo del Ministerio</FieldLabel>
                 <h3 className="font-bold text-sm -mt-2">{activeMembers.length} personas activas</h3>
               </div>
-              <Button size="sm" variant="ghost" className="h-8 rounded-xl text-xs" onClick={() => navigate("/app/miembros")}>
+              <Button size="sm" variant="ghost" className="h-8 rounded-xl text-xs" onClick={() => navigate(`/app/${idIglesia}/miembros`)}>
                 Gestionar <ChevronRight className="w-3 h-3 ml-1" />
               </Button>
             </div>
@@ -242,13 +242,13 @@ export function MiMinisterioPage() {
           <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-2xl p-0 overflow-hidden shadow-sm flex-1">
             <div className="p-4 border-b border-border/40 bg-card/20 flex items-center justify-between">
               <FieldLabel>Próximos Eventos</FieldLabel>
-              <button className="text-[10px] text-primary font-bold hover:underline" onClick={() => navigate("/app/eventos")}>
+              <button className="text-[10px] text-primary font-bold hover:underline" onClick={() => navigate(`/app/${idIglesia}/eventos`)}>
                 Ver todos
               </button>
             </div>
             <div className="divide-y divide-border/30">
               {upcomingEvents.map((ev) => (
-                <div key={ev.idEvento} className="group flex items-center gap-3 px-4 py-3 hover:bg-accent/20 transition-colors cursor-pointer" onClick={() => navigate("/app/eventos")}>
+                <div key={ev.idEvento} className="group flex items-center gap-3 px-4 py-3 hover:bg-accent/20 transition-colors cursor-pointer" onClick={() => navigate(`/app/${idIglesia}/eventos`)}>
                   <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/10 flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                     <span className="text-[9px] font-bold text-primary/60 uppercase leading-none">{getMon(ev.fechaInicio)}</span>
                     <span className="text-base font-black text-primary leading-none">{getDay(ev.fechaInicio)}</span>
@@ -274,15 +274,15 @@ export function MiMinisterioPage() {
           <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-2xl p-0 overflow-hidden shadow-sm flex-1">
             <div className="p-4 border-b border-border/40 bg-card/20 flex items-center justify-between">
               <FieldLabel>Formación del Ministerio</FieldLabel>
-              <button className="text-[10px] text-primary font-bold hover:underline" onClick={() => navigate("/app/aula")}>
+              <button className="text-[10px] text-primary font-bold hover:underline" onClick={() => navigate(`/app/${idIglesia}/aula`)}>
                 Ver todo
               </button>
             </div>
             <div className="p-4">
               {isLiderMinisterio ? (
-                <LiderAulaSection ministerio={min} />
+                <LiderAulaSection ministerio={min} idIglesia={idIglesia} />
               ) : (
-                <ServidorAulaSection ministerio={min} />
+                <ServidorAulaSection ministerio={min} idIglesia={idIglesia} />
               )}
             </div>
           </Card>
@@ -294,7 +294,7 @@ export function MiMinisterioPage() {
 }
 
 // Componente para la sección de Aula del líder
-function LiderAulaSection({ ministerio }: { ministerio: any }) {
+function LiderAulaSection({ ministerio, idIglesia }: { ministerio: any; idIglesia?: string }) {
   const navigate = useNavigate();
   const { data: cursos } = useCursos(ministerio?.idMinisterio);
 
@@ -308,7 +308,7 @@ function LiderAulaSection({ ministerio }: { ministerio: any }) {
           <GraduationCap className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">Panel de Líder</span>
         </div>
-        <Button size="sm" onClick={() => navigate("/app/aula")}>
+        <Button size="sm" onClick={() => navigate(`/app/${idIglesia}/aula`)}>
           <BookOpen className="w-3 h-3 mr-1" />
           Gestionar Formación
         </Button>
@@ -360,7 +360,7 @@ function LiderAulaSection({ ministerio }: { ministerio: any }) {
             variant="outline"
             size="sm"
             className="mt-2"
-            onClick={() => navigate("/app/aula")}
+          onClick={() => navigate(`/app/${idIglesia}/aula`)}
           >
             Crear primer curso
           </Button>
@@ -371,7 +371,7 @@ function LiderAulaSection({ ministerio }: { ministerio: any }) {
 }
 
 // Componente para la sección de Aula del servidor
-function ServidorAulaSection({ ministerio }: { ministerio: any }) {
+function ServidorAulaSection({ ministerio, idIglesia }: { ministerio: any; idIglesia?: string }) {
   const navigate = useNavigate();
   const { usuarioActual } = useApp();
   const [cursosInscritos, setCursosInscritos] = React.useState<any[]>([]);
@@ -417,7 +417,7 @@ function ServidorAulaSection({ ministerio }: { ministerio: any }) {
           <BookOpen className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">Mis Cursos</span>
         </div>
-        <Button size="sm" variant="ghost" onClick={() => navigate("/app/aula")}>
+        <Button size="sm" variant="ghost" onClick={() => navigate(`/app/${idIglesia}/aula`)}>
           Ver todos
         </Button>
       </div>
