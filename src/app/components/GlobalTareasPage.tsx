@@ -71,7 +71,7 @@ function CreateTareaDialog({ open, onClose }: { open: boolean; onClose: () => vo
     iglesiaId: "", sedeId: "", ministerioId: "",
     titulo: "", descripcion: "", prioridad: "media" as Tarea["prioridad"], fechaLimite: "",
   });
-  const { usuario } = useApp();
+  const { usuarioActual } = useApp();
   const { data: iglesias = [] } = useIglesias();
   const { data: sedes = [] } = useSedes(form.iglesiaId ? Number(form.iglesiaId) : undefined);
   const { data: ministerios = [] } = useMinisteriosPorSede(form.sedeId ? Number(form.sedeId) : undefined);
@@ -88,13 +88,17 @@ function CreateTareaDialog({ open, onClose }: { open: boolean; onClose: () => vo
       toast.error("Título y ministerio son requeridos");
       return;
     }
+    if (!usuarioActual?.idUsuario) {
+      toast.error("Tu perfil de usuario no está completamente configurado. Contacta al administrador.");
+      return;
+    }
     createMutation.mutate(
       {
         titulo: form.titulo.trim(),
         descripcion: form.descripcion.trim() || null,
         fechaLimite: form.fechaLimite || null,
         prioridad: form.prioridad,
-        idUsuarioCreador: usuario?.idUsuario ?? 0,
+        idUsuarioCreador: usuarioActual.idUsuario,
         idMinisterio: Number(form.ministerioId),
       },
       {

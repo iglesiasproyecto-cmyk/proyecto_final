@@ -195,7 +195,7 @@ export function ProfilePage() {
           <AccordionItem value="hoja-de-vida" className="border-0 bg-card/40 backdrop-blur-2xl rounded-3xl overflow-hidden shadow-lg border border-white/10 px-4">
             <AccordionTrigger className="hover:no-underline py-5 text-xs font-black tracking-widest uppercase text-[#4682b4]">
               <div className="flex items-center gap-3">
-                <FileText className="w-4 h-4" /> Perfil Profesional
+                <FileText className="w-4 h-4" /> Información miembros
               </div>
             </AccordionTrigger>
             <AccordionContent className="pt-2 pb-6">
@@ -230,7 +230,7 @@ export function ProfilePage() {
                 </TabsTrigger>
               )}
               <TabsTrigger value="hoja-de-vida" className="shrink-0 lg:w-full justify-start rounded-xl sm:rounded-2xl px-4 sm:px-6 py-2.5 sm:py-4 text-[10px] sm:text-[12px] font-black tracking-widest uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-900/20 transition-all duration-300">
-                <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3" /> Perfil Prof.
+                <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3" /> Información miembros
               </TabsTrigger>
               <div className="pt-2 sm:pt-4 mt-1 sm:mt-2 border-t lg:border-t border-white/5 px-2">
                 <Button variant="ghost" className="w-full justify-start h-10 sm:h-14 rounded-xl sm:rounded-2xl px-3 sm:px-4 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 font-black text-[10px] sm:text-[12px] uppercase tracking-widest transition-all" onClick={() => logout()}>
@@ -563,7 +563,7 @@ function HojaDeVidaSection({ showEditHoja, setShowEditHoja, hoja, actualizarHoja
               <FileText className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-black tracking-tight text-foreground/90 uppercase italic">Editar Perfil Profesional</h3>
+              <h3 className="text-xl font-black tracking-tight text-foreground/90 uppercase italic">Completar Perfil</h3>
               <p className="text-[11px] font-bold text-muted-foreground tracking-widest uppercase">Completa tu información personal y ministerial</p>
             </div>
           </div>
@@ -583,8 +583,8 @@ function HojaDeVidaSection({ showEditHoja, setShowEditHoja, hoja, actualizarHoja
                 <FileText className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-black tracking-tight text-foreground/90 uppercase italic">Tu Perfil Profesional</h3>
-                <p className="text-[11px] font-bold text-muted-foreground tracking-widest uppercase">Perfil detallado que ven administradores y líderes</p>
+                <h3 className="text-xl font-black tracking-tight text-foreground/90 uppercase italic">Completar Perfil</h3>
+                <p className="text-[11px] font-bold text-muted-foreground tracking-widest uppercase">Información que ven administradores y líderes</p>
               </div>
             </div>
             <Button

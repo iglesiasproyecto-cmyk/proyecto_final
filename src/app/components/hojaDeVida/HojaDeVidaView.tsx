@@ -56,14 +56,14 @@ export function HojaDeVidaView({
       <Card className="w-full">
         <CardContent className="pt-6">
           <p className="text-center text-muted-foreground font-medium mb-6">
-            No hay información de perfil profesional disponible. {puedeEditar && 'Completa tu información para que los líderes puedan conocer mejor tus dones y talentos.'}
+            Aún no has completado tu perfil. {puedeEditar && 'Completa tu información para que los líderes puedan conocer mejor tus dones y talentos.'}
           </p>
           {puedeEditar && onEditar && (
             <Button
               onClick={onEditar}
               className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white font-black uppercase tracking-widest shadow-2xl shadow-blue-900/30 transition-all hover:-translate-y-1"
             >
-              Crear Perfil Profesional
+              Completar Perfil
             </Button>
           )}
         </CardContent>
