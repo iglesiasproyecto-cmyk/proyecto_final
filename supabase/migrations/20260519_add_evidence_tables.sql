@@ -13,8 +13,7 @@ CREATE TABLE tarea_evidencia (
   nombre_archivo TEXT NOT NULL,
   tipo_archivo VARCHAR(50),
   tamaño_bytes INTEGER,
-  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_tarea_evidencia_tarea ON tarea_evidencia(tarea_id);
@@ -27,8 +26,7 @@ CREATE TABLE tarea_comentario_revision (
   usuario_id UUID NOT NULL REFERENCES usuario(id),
   contenido TEXT NOT NULL,
   tipo TEXT DEFAULT 'comentario' CHECK (tipo IN ('comentario', 'aprobacion', 'rechazo')),
-  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_comentario_revision_tarea ON tarea_comentario_revision(tarea_id);
