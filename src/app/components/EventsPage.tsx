@@ -18,7 +18,7 @@ import { Skeleton } from "./ui/skeleton";
 import { SedeMinisterioSelector } from "./ui/SedeMinisterioSelector";
 import {
   CalendarDays, Plus, MapPin, Clock, Globe, Users, Pencil, Trash2, Eye,
-  CheckCircle2, XCircle, PlayCircle, BookMarked, Church,
+  CheckCircle2, XCircle, PlayCircle, BookMarked, Church, ListTodo
 } from "lucide-react";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { toast } from "sonner";
@@ -95,7 +95,7 @@ function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { fo
           allowGeneral={form._allowGeneral ?? false}
         />
       )}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <FieldLabel>Inicio</FieldLabel>
           <div className="relative">
@@ -344,83 +344,96 @@ export function EventsPage() {
               <AnimatedCard
                 key={evento.idEvento}
                 index={i}
-                className="p-5 group"
+                className="group relative overflow-hidden bg-card/40 hover:bg-card/60 border border-border/50 hover:border-[#4682b4]/30 transition-all duration-300 rounded-[2rem] p-5 shadow-sm hover:shadow-xl hover:shadow-[#4682b4]/5"
               >
-                <div className="flex gap-5 relative z-10">
-                  {/* Calendar chip */}
-                  <div className="w-16 shrink-0 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex flex-col items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform text-white">
-                    <span className="text-[10px] font-black uppercase leading-none opacity-80">{getMon(evento.fechaInicio)}</span>
-                    <span className="text-3xl font-black leading-none mt-1">{getDay(evento.fechaInicio)}</span>
+                {/* Gradiente decorativo de fondo */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#4682b4]/10 to-transparent rounded-bl-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="flex gap-4 relative z-10 h-full">
+                  {/* Calendar chip (Izquierda) */}
+                  <div className="w-[72px] shrink-0 h-[72px] rounded-[1.25rem] bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex flex-col items-center justify-center shadow-lg shadow-[#4682b4]/20 group-hover:scale-105 group-hover:rotate-[-2deg] transition-all duration-300 text-white relative overflow-hidden">
+                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-90">{getMon(evento.fechaInicio)}</span>
+                    <span className="text-[28px] font-black leading-none mt-0.5 tracking-tighter">{getDay(evento.fechaInicio)}</span>
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                      <h4 className="text-lg font-bold tracking-tight leading-snug group-hover:text-[#4682b4] transition-colors truncate pr-1 uppercase italic">{evento.nombre}</h4>
-                      {/* Action buttons — appear on hover */}
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                          <button
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
-                            onClick={() => setSelectedEvent(evento)}
-                            title="Ver detalle"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          {canManageEvents && (
-                            <>
-                              <button
-                                className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
-                                onClick={() => openEditDialog(evento)}
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                              <button
-                                className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                                disabled={deleteEventoMutation.isPending}
-                                onClick={() => handleDeleteEvento(evento.idEvento, evento.nombre)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </>
-                          )}
-                        </div>
+                  <div className="flex flex-col flex-1 min-w-0 py-0.5">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <h4 className="text-lg font-bold tracking-tight leading-tight text-foreground/90 group-hover:text-[#4682b4] transition-colors truncate">
+                        {evento.nombre}
+                      </h4>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 bg-background/80 backdrop-blur-md rounded-xl p-1 border border-border/50 shadow-sm">
+                        <button
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
+                          onClick={() => setSelectedEvent(evento)}
+                          title="Ver detalle"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        {canManageEvents && (
+                          <>
+                            <button
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
+                              onClick={() => openEditDialog(evento)}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                              disabled={deleteEventoMutation.isPending}
+                              onClick={() => handleDeleteEvento(evento.idEvento, evento.nombre)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     {evento.descripcion && (
                       <p className="text-[12px] text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{evento.descripcion}</p>
                     )}
 
-                    {/* Tags row */}
-                    <div className="flex flex-wrap items-center gap-2 mb-4">
-                      <Badge variant="outline" className={`${estado.color} border-0 text-[10px] uppercase font-black tracking-widest px-2.5 py-1 flex items-center gap-1.5 rounded-lg`}>
+                    {/* Spacer para empujar el footer al final si no hay descripción */}
+                    {!evento.descripcion && <div className="flex-1 min-h-[16px]" />}
+
+                    {/* Badges / Estado */}
+                    <div className="flex flex-wrap items-center gap-2 mb-3 mt-1">
+                      <Badge variant="outline" className={`${estado.color} border-0 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 flex items-center gap-1.5 rounded-md`}>
                         {estado.icon} {estado.label}
                       </Badge>
-                      <Badge variant="outline" className={`${scope.color} border-0 text-[10px] uppercase font-black tracking-widest px-2.5 py-1 flex items-center gap-1.5 rounded-lg`}>
+                      <Badge variant="outline" className={`${scope.color} border-0 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 flex items-center gap-1.5 rounded-md`}>
                         {scope.icon} {isGlobal ? "Global" : evento.ministerioNombre}
                       </Badge>
                       {evento.tipoEventoTexto && (
-                        <Badge variant="outline" className="bg-white/5 border-0 text-muted-foreground text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-lg">
+                        <Badge variant="outline" className="bg-muted/50 border-0 text-muted-foreground text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md">
                           {evento.tipoEventoTexto}
                         </Badge>
                       )}
                     </div>
 
                     {/* Meta info */}
-                    <div className="flex flex-wrap gap-4 pt-3 border-t border-white/5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
-                      <span className="flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-[#4682b4]/50 shrink-0" />
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-3 border-t border-border/40 mt-auto text-[11px] font-medium text-muted-foreground/80">
+                      <span className="flex items-center gap-1.5 bg-muted/40 px-2 py-1 rounded-md">
+                        <Clock className="w-3.5 h-3.5 text-[#4682b4]/70 shrink-0" />
                         {formatDate(evento.fechaInicio)} · {formatTime(evento.fechaInicio)}
                       </span>
-                      {evento.sedeNombre && (
-                        <span className="flex items-center gap-2">
-                          <MapPin className="w-3.5 h-3.5 text-[#4682b4]/50 shrink-0" />
-                          {evento.sedeNombre}
+                      {evento.sedeNombre ? (
+                        <span className="flex items-center gap-1.5 bg-muted/40 px-2 py-1 rounded-md max-w-[140px]">
+                          <MapPin className="w-3.5 h-3.5 text-[#4682b4]/70 shrink-0" />
+                          <span className="truncate">{evento.sedeNombre}</span>
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5 bg-muted/20 px-2 py-1 rounded-md opacity-70">
+                           <MapPin className="w-3.5 h-3.5 shrink-0" />
+                           Sin sede
                         </span>
                       )}
-                      {evento.cantidadTareas > 0 && (
-                        <span className="bg-[#4682b4]/10 text-[#4682b4] px-2 py-0.5 rounded-md border-0">
+                      <div className="flex items-center ml-auto">
+                        <span className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors ${evento.cantidadTareas > 0 ? "bg-[#4682b4]/10 text-[#4682b4]" : "bg-muted/20 text-muted-foreground/50"}`}>
+                          <ListTodo className="w-3.5 h-3.5 shrink-0" />
                           {evento.cantidadTareas} tareas
                         </span>
-                      )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -512,7 +525,7 @@ export function EventsPage() {
 
       {/* ── Create Dialog ── */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+        <DialogContent className="sm:max-w-lg md:max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
               Nuevo Evento
@@ -531,7 +544,7 @@ export function EventsPage() {
 
       {/* ── Edit Dialog ── */}
       <Dialog open={!!editEvento} onOpenChange={o => { if (!o) setEditEvento(null); }}>
-        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+        <DialogContent className="sm:max-w-lg md:max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
               Editar Evento
@@ -550,7 +563,7 @@ export function EventsPage() {
 
       {/* ── Detail Dialog ── */}
       <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
-        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+        <DialogContent className="sm:max-w-lg md:max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           {selectedEvent && (() => {
             const isGlobal = !selectedEvent.idMinisterio;
             const scope = isGlobal ? scopeConfig.global : scopeConfig.ministerio;

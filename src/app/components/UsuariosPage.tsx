@@ -812,9 +812,31 @@ export function UsuariosPage() {
                     <Check className="w-4 h-4 text-[#1a7fa8] shrink-0" />
                   </div>
 
-                  {/* Iglesia */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  {isAdminSede && sedesDelUsuario.length === 0 ? (
+                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex flex-col gap-2 mt-2">
+                      <div className="flex items-center gap-2 text-amber-700 dark:text-amber-500 font-semibold text-sm">
+                        <AlertTriangle className="w-4 h-4" />
+                        No puedes enviar invitaciones
+                      </div>
+                      <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
+                        Como administrador de sede, necesitas tener al menos una sede asignada para poder invitar usuarios al sistema. Contacta a un administrador de iglesia.
+                      </p>
+                    </div>
+                  ) : isLider && ministeriosDelUsuario.length === 0 ? (
+                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex flex-col gap-2 mt-2">
+                      <div className="flex items-center gap-2 text-amber-700 dark:text-amber-500 font-semibold text-sm">
+                        <AlertTriangle className="w-4 h-4" />
+                        No puedes enviar invitaciones
+                      </div>
+                      <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
+                        Como líder, solo puedes invitar servidores a tus propios ministerios. Actualmente no tienes ningún ministerio asignado en el sistema.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Iglesia */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                       <Building2 className="w-3.5 h-3.5" /> Iglesia *
                     </label>
                     {(isAdminIglesia || isLider) ? (
@@ -966,6 +988,8 @@ export function UsuariosPage() {
                       </p>
                     </div>
                   )}
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -999,7 +1023,9 @@ export function UsuariosPage() {
                     inviteMutation.isPending ||
                     !inviteForm.idRol || !inviteForm.idIglesia ||
                     (roleNeedsSede(inviteForm.idRol) && !inviteForm.idSede) ||
-                    (roleNeedsMinisterio(inviteForm.idRol) && !inviteForm.idMinisterio)
+                    (roleNeedsMinisterio(inviteForm.idRol) && !inviteForm.idMinisterio) ||
+                    (isAdminSede && sedesDelUsuario.length === 0) ||
+                    (isLider && ministeriosDelUsuario.length === 0)
                   }
                   className="bg-[#1a7fa8] hover:bg-[#15709a] text-white gap-2 px-5"
                 >
@@ -1047,9 +1073,19 @@ export function UsuariosPage() {
               {/* Add new role */}
               <div className="border-t pt-4">
                 <p className="text-sm font-medium mb-3">Agregar nuevo rol</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Rol *</label>
+                {isAdminSede && sedesDelUsuario.length === 0 ? (
+                  <div className="p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-600">
+                    Necesitas tener al menos una sede asignada para asignar roles.
+                  </div>
+                ) : isLider && ministeriosDelUsuario.length === 0 ? (
+                  <div className="p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-600">
+                    Necesitas tener al menos un ministerio asignado para asignar servidores.
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Rol *</label>
                     {isLider ? (
                       <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md opacity-70">
                         Servidor
@@ -1169,9 +1205,11 @@ export function UsuariosPage() {
                     </p>
                   </div>
                 )}
-                <Button className="w-full mt-3" onClick={handleAssignRol} disabled={assignRolMutation.isPending || !assignForm.idRol || !assignForm.idIglesia}>
-                  {assignRolMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Asignando...</> : <><ShieldPlus className="w-4 h-4 mr-2" /> Asignar Rol</>}
-                </Button>
+                    <Button className="w-full mt-3" onClick={handleAssignRol} disabled={assignRolMutation.isPending || !assignForm.idRol || !assignForm.idIglesia}>
+                      {assignRolMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Asignando...</> : <><ShieldPlus className="w-4 h-4 mr-2" /> Asignar Rol</>}
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           )}
