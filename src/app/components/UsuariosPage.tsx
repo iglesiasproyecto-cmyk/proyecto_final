@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useUsuariosEnriquecidos, useRoles, useToggleUsuarioActivo, useInviteUser, useAssignRol, useRemoveRol, useUpdateUsuario, useDeleteUsuarioAsSuperAdmin } from "@/hooks/useUsuarios";
 import { useIglesias, useSedesEnriquecidas } from "@/hooks/useIglesias";
@@ -105,6 +105,16 @@ export function UsuariosPage() {
     idSede: isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : isLider ? (ministeriosDelUsuario[0]?.idSede ?? 0) : 0,
     idMinisterio: isLider ? (ministeriosDelUsuario[0]?.id ?? 0) : 0,
   });
+
+  // Sync invite form when ministeriosDelUsuario loads (async) — keeps lider form correct on open
+  useEffect(() => {
+    if (!isLider || ministeriosDelUsuario.length === 0) return;
+    setInviteForm(prev => ({
+      ...prev,
+      idSede: prev.idSede === 0 ? (ministeriosDelUsuario[0]?.idSede ?? 0) : prev.idSede,
+      idMinisterio: prev.idMinisterio === 0 ? (ministeriosDelUsuario[0]?.id ?? 0) : prev.idMinisterio,
+    }));
+  }, [ministeriosDelUsuario.length, isLider]);
 
   const { data: sedesInvite = [] } = useSedesEnriquecidas(inviteForm.idIglesia || undefined);
   const { data: sedesAssign = [] } = useSedesEnriquecidas(assignForm.idIglesia || undefined);
@@ -895,10 +905,11 @@ export function UsuariosPage() {
                   </div>
 
                   {/* Ministerio */}
-                  {roleNeedsMinisterio(inviteForm.idRol) && inviteForm.idSede > 0 && (
+                  {roleNeedsMinisterio(inviteForm.idRol) && (inviteForm.idSede > 0 || (isLider && ministeriosDelUsuario.length > 0)) && (
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ministerio *</label>
                       {!isLider ? (
+                        // Admins: full selector filtered by sede
                         <Select
                           value={inviteForm.idMinisterio ? String(inviteForm.idMinisterio) : ""}
                           onValueChange={v => setInviteForm(p => ({ ...p, idMinisterio: Number(v) }))}
@@ -915,6 +926,7 @@ export function UsuariosPage() {
                           </SelectContent>
                         </Select>
                       ) : ministeriosDelUsuario.length > 1 ? (
+                        // Lider con múltiples ministerios: puede elegir a cuál invitar
                         <Select
                           value={inviteForm.idMinisterio ? String(inviteForm.idMinisterio) : ""}
                           onValueChange={v => {
@@ -925,17 +937,32 @@ export function UsuariosPage() {
                           <SelectTrigger className="bg-input-background h-10"><SelectValue placeholder="Seleccionar ministerio..." /></SelectTrigger>
                           <SelectContent>
                             {ministeriosDelUsuario.map(m => (
-                              <SelectItem key={m.id} value={String(m.id)}>{m.nombre}</SelectItem>
+                              <SelectItem key={m.id} value={String(m.id)}>
+                                <span className="flex flex-col">
+                                  <span>{m.nombre}</span>
+                                  {m.sedeNombre && <span className="text-[10px] text-muted-foreground">{m.sedeNombre}</span>}
+                                </span>
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      ) : (
+                      ) : ministeriosDelUsuario.length === 1 ? (
+                        // Lider con 1 ministerio: mostrar fijo con badge
                         <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-muted/40 border border-border/50">
-                          <span className="text-sm text-foreground/80">{ministeriosDelUsuario.find(m => m.id === inviteForm.idMinisterio)?.nombre ?? '—'}</span>
+                          <span className="text-sm text-foreground/80 flex-1">{ministeriosDelUsuario[0].nombre}</span>
+                          <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Tu ministerio</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-amber-500/10 border border-amber-500/20">
+                          <span className="text-xs text-amber-600">Sin ministerios asignados</span>
                         </div>
                       )}
                       <p className="text-[11px] text-muted-foreground bg-accent/30 px-2.5 py-1.5 rounded-lg leading-snug">
-                        Para Líder/Servidor la persona debe pertenecer a un ministerio de la sede.
+                        {isLider
+                          ? ministeriosDelUsuario.length > 1
+                            ? 'Selecciona a qué ministerio tuyo pertenecerá este servidor.'
+                            : 'El servidor se asignará a tu ministerio.'
+                          : 'Para Líder/Servidor la persona debe pertenecer a un ministerio de la sede.'}
                       </p>
                     </div>
                   )}
