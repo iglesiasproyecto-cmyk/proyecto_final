@@ -2,14 +2,8 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback } f
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
 import { queryClient } from '@/lib/queryClient'
+import { debugLog } from '@/lib/debug'
 import type { Usuario } from '@/types/app.types'
-
-// Development logging — tree-shaken in production builds
-const debugLog = (label: string, msg: any) => {
-  if (import.meta.env.DEV) {
-    console.log(`[${label}]`, msg)
-  }
-}
 
 interface AppState {
   session: Session | null

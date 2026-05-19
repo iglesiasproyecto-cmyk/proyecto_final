@@ -7,7 +7,7 @@ export function handleAuditError(error: any, operation: string, context?: any): 
 }
 
 export function logAuditSuccess(operation: string, context?: any) {
-  console.log(`[AUDIT] ${operation} completed successfully`, context)
+  debugLog('taskUtils', `${operation} completed successfully`, context)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,5 +1,6 @@
 // src/app/components/IndexRedirect.tsx
 import { useEffect } from "react";
+import { debugLog } from '@/lib/debug'
 import { useNavigate, useLocation } from "react-router";
 import { useApp } from "../store/AppContext";
 
@@ -10,7 +11,7 @@ export function IndexRedirect() {
   const authResolved = isHydrated && !authLoading;
 
   useEffect(() => {
-    console.log('[IndexRedirect] run:', {
+    debugLog('IndexRedirect', 'run:', {
       isHydrated, authReady, authLoading,
       usuarioActual: !!usuarioActual,
       rolActual, iglesiaActual: !!iglesiaActual,

@@ -369,7 +369,7 @@ export async function inviteUser(data: {
   fechaNacimiento?: string | null
 }): Promise<{ success: boolean; message?: string; inviteSent?: boolean; profileReconciled?: boolean; roleAssigned?: boolean; userAlreadyExisted?: boolean }> {
   try {
-    console.log('[inviteUser] Starting invitation process for:', data.correo)
+    debugLog('inviteUser', 'Starting invitation process for:', data.correo)
 
     const { data: sessionData } = await supabase.auth.getSession()
     const token = sessionData.session?.access_token
@@ -402,7 +402,7 @@ export async function inviteUser(data: {
     }
     if (!result?.success) throw new Error(result?.message ?? 'No se pudo invitar usuario')
 
-    console.log('[inviteUser] Invitation result:', result)
+    debugLog('inviteUser', 'Invitation result:', result)
 
     return result
 

@@ -19,7 +19,7 @@ async function emitirCertificadoAutomatico(idUsuario: number, idCurso: number) {
   if (error) {
     // Si hay error de duplicado, es porque ya existe (esperado)
     if (error.code === '23505') {
-      console.log('[AUDIT] Certificate already exists for user-course:', { idUsuario, idCurso })
+      debugLog('useProgreso', 'Certificate already exists for user-course:', { idUsuario, idCurso })
       return
     }
     console.error('[AUDIT] Failed to create certificate - audit logging may be affected:', error)

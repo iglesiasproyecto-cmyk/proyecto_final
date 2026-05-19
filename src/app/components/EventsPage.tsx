@@ -6,6 +6,7 @@ import { useMinisteriosEnriquecidos, useMinisteriosIdsDeUsuario } from "@/hooks/
 import { useCanManageMinisterio } from "@/hooks/useMinisterioRole";
 import type { EventoEnriquecido } from "@/services/eventos.service";
 import { useApp } from "@/app/store/AppContext";
+import { debugLog } from "@/lib/debug";
 import { AnimatedCard } from "./ui/AnimatedCard";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -187,7 +188,7 @@ export function EventsPage() {
     : null;
 
   // DEBUG
-  console.log('[EventsPage] rolActual:', rolActual, 'usuarioActual:', usuarioActual, 'usuarioMinisterioIds:', usuarioMinisterioIds, 'shouldShowSelectorFields:', shouldShowSelectorFields);
+  debugLog('EventsPage', 'rolActual:', rolActual, 'usuarioActual:', usuarioActual, 'usuarioMinisterioIds:', usuarioMinisterioIds, 'shouldShowSelectorFields:', shouldShowSelectorFields);
 
   const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: sedePreFill, idMinisterio: singleUserMinisterio?.idMinisterio ?? 0, _sedeReadOnly: isAdminSede || isLider, _ministerioReadOnly: isLider, _allowGeneral: rolActual === "super_admin" || rolActual === "admin_iglesia", _hideSelectorFields: !shouldShowSelectorFields } as any);
 

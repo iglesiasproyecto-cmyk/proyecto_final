@@ -165,7 +165,7 @@ async function verificarYMarcarModuloCompleto(idAulaInscripcion: number, idUsuar
   if (elementosCompletados === totalElementos && totalElementos > 0) {
     // Note: aula system calculates module completion dynamically from activity/evaluation progress
     // No separate module completion table exists
-    console.log(`Módulo ${idModulo} completado por usuario ${idUsuario}`)
+    debugLog('useEvaluacionesDetalladas', `Módulo ${idModulo} completado por usuario ${idUsuario}`)
   }
 }
 

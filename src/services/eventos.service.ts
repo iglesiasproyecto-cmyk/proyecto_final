@@ -146,7 +146,7 @@ export async function createTarea(
     idEvento?: number | null
   }
 ): Promise<Tarea> {
-  console.log('[createTarea] Calling RPC with:', data)
+  debugLog('createTarea', 'Calling RPC with:', data)
   const { data: result, error } = await supabase.rpc('create_tarea', {
     p_titulo: data.titulo,
     p_descripcion: data.descripcion,
@@ -156,7 +156,7 @@ export async function createTarea(
     p_id_ministerio: data.idMinisterio,
     p_id_evento: data.idEvento ?? null,
   })
-  console.log('[createTarea] RPC result:', result, 'error:', error)
+  debugLog('createTarea', 'RPC result:', result, 'error:', error)
   if (error) throw error
   if (!result) throw new Error('RPC create_tarea returned no data')
   return mapTarea(result as any)
@@ -242,7 +242,7 @@ export async function getTareasEnriquecidas(
     console.warn('[getTareasEnriquecidas] No data returned')
     return []
   }
-  console.log('[getTareasEnriquecidas] Fetched', data.length, 'tasks')
+  debugLog('getTareasEnriquecidas', 'Fetched', data.length, 'tasks')
   return (data as any[]).map(r => {
     const asignadosRaw = r.tarea_asignada
     const asignados = (Array.isArray(asignadosRaw) ? asignadosRaw : []).map((ta: any) => ({

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
+import { debugLog } from '@/lib/debug'
 
 export interface SendEmailOptions {
   to: string;
@@ -32,7 +33,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
       return false;
     }
 
-    console.log(`[EmailService] Correo enviado exitosamente a: ${to}`);
+    debugLog('EmailService', `Correo enviado exitosamente a: ${to}`);
     return true;
   } catch (error) {
     console.error('[EmailService] Error inesperado al enviar el correo:', error);

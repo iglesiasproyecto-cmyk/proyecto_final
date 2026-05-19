@@ -104,5 +104,5 @@ export async function getAvanceCursoByUsuario(idUsuario: number): Promise<Avance
 
 export async function finalizarCicloCurso(idProceso: number): Promise<void> {
   // RPC not implemented in new schema
-  console.log('finalizarCicloCurso not implemented')
+  debugLog('avanceService', 'finalizarCicloCurso not implemented')
 }

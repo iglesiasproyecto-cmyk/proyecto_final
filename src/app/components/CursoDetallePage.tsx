@@ -48,7 +48,7 @@ export function CursoDetallePage() {
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
   const [showAgregarPersonas, setShowAgregarPersonas] = useState(false)
 
-  console.log('[CursoDetallePage] Loaded with:', { idCurso, rolActual, iglesiaActualId: iglesiaActual?.id, aulaBasePath, userEmail: user?.email })
+  debugLog('CursoDetallePage', 'Loaded with:', { idCurso, rolActual, iglesiaActualId: iglesiaActual?.id, aulaBasePath, userEmail: user?.email })
 
   useEffect(() => {
     if (user?.id) {
@@ -160,7 +160,7 @@ export function CursoDetallePage() {
     const isLider = isCreadorCurso || isLiderMinisterio
     const puedeAcceder = isAdmin || isLider || isServidorInscrito
 
-    console.log('[CursoDetallePage] Access check:', {
+    debugLog('CursoDetallePage', 'Access check:', {
       isAdmin,
       isCreadorCurso,
       isLiderMinisterio,
