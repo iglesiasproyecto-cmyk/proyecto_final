@@ -842,8 +842,15 @@ export function UsuariosPage() {
                           <span className="ml-auto text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Tu sede</span>
                         </div>
                       ) : isLider ? (
+                        // Lider: use sedeNombre from ministeriosDelUsuario (populated from get_my_ministerios_v2)
                         <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-muted/40 border border-border/50">
-                          <span className="text-sm text-foreground/80">{sedesInvite.find(s => s.idSede === inviteForm.idSede)?.nombre ?? '—'}</span>
+                          <span className="text-sm text-foreground/80">
+                            {ministeriosDelUsuario.find(m => m.idSede === inviteForm.idSede)?.sedeNombre
+                              ?? sedesDelUsuario.find(s => s.id === inviteForm.idSede)?.nombre
+                              ?? sedesInvite.find(s => Number(s.idSede) === Number(inviteForm.idSede))?.nombre
+                              ?? (inviteForm.idSede > 0 ? `Sede ${inviteForm.idSede}` : '—')}
+                          </span>
+                          <span className="ml-auto text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Tu sede</span>
                         </div>
                       ) : (
                         <Select
@@ -888,7 +895,7 @@ export function UsuariosPage() {
                   </div>
 
                   {/* Ministerio */}
-                  {roleNeedsMinisterio(inviteForm.idRol) && inviteForm.idSede && (
+                  {roleNeedsMinisterio(inviteForm.idRol) && inviteForm.idSede > 0 && (
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ministerio *</label>
                       {!isLider ? (

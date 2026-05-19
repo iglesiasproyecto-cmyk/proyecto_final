@@ -20,7 +20,7 @@ interface AppState {
   setIglesiaActual: (ig: { id: number; nombre: string } | null) => void
   iglesiasDelUsuario: { id: number; nombre: string }[]
   sedesDelUsuario: { id: number; nombre: string }[]
-  ministeriosDelUsuario: { id: number; nombre: string; idSede: number }[]
+  ministeriosDelUsuario: { id: number; nombre: string; idSede: number; sedeNombre: string }[]
   rolActual: string
   sidebarOpen: boolean
   notificacionesCount: number
@@ -182,7 +182,7 @@ async function fetchMinisteriosRaw(accessToken: string): Promise<any[] | null> {
   try {
     console.log('[AUTH] Fetching ministerios where user is líder...')
     const res = await fetchWithTimeout(
-      `${SUPABASE_URL}/rest/v1/rpc/get_my_ministerios`,
+      `${SUPABASE_URL}/rest/v1/rpc/get_my_ministerios_v2`,
       { method: 'POST', headers, body: '{}' },
       5000
     )
@@ -191,7 +191,7 @@ async function fetchMinisteriosRaw(accessToken: string): Promise<any[] | null> {
       console.log('[AUTH] Ministerios fetched:', ministerios.length)
       return Array.isArray(ministerios) ? ministerios : []
     }
-    console.warn('[AUTH] get_user_ministerios returned', res.status)
+    console.warn('[AUTH] get_my_ministerios_v2 returned', res.status)
     return []
   } catch (err) {
     console.warn('[AUTH] Failed to fetch ministerios:', err)
@@ -279,7 +279,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [iglesiaActual, setIglesiaActual] = useState<{ id: number; nombre: string } | null>(null)
   const [iglesiasDelUsuario, setIglesiasDelUsuario] = useState<{ id: number; nombre: string }[]>([])
   const [sedesDelUsuario, setSedesDelUsuario] = useState<{ id: number; nombre: string }[]>([])
-  const [ministeriosDelUsuario, setMinisteriosDelUsuario] = useState<{ id: number; nombre: string; idSede: number }[]>([])
+  const [ministeriosDelUsuario, setMinisteriosDelUsuario] = useState<{ id: number; nombre: string; idSede: number; sedeNombre: string }[]>([])
   const [rolActual, setRolActual] = useState<string>('')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [notificacionesCount, setNotificacionesCount] = useState(0)
@@ -583,8 +583,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         const ministeriosData = (ministerios || []).map((m: any) => ({
           id: m.idMinisterio,
-          nombre: m.ministerioNombre,
-          idSede: m.idSede,
+          nombre: m.ministerioNombre ?? m.nombre ?? '',
+          idSede: m.idSede ?? 0,
+          sedeNombre: m.sedeNombre ?? '',
         }))
         setMinisteriosDelUsuario(ministeriosData)
 
