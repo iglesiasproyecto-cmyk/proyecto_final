@@ -4,6 +4,12 @@ import { supabase } from '@/lib/supabaseClient'
 import { queryClient } from '@/lib/queryClient'
 import type { Usuario } from '@/types/app.types'
 
+// Development logging — tree-shaken in production builds
+const debugLog = (label: string, msg: any) => {
+  if (import.meta.env.DEV) {
+    console.log(`[${label}]`, msg)
+  }
+}
 
 interface AppState {
   session: Session | null
@@ -90,7 +96,7 @@ async function fetchUsuarioRaw(accessToken: string, authUserId: string): Promise
 
   // Try RPC first (SECURITY DEFINER — bypasses RLS)
   try {
-    console.log('[AUTH] Trying RPC get_my_usuario...')
+    debugLog('AUTH', 'Trying RPC get_my_usuario...')
     const res = await fetchWithTimeout(
       `${SUPABASE_URL}/rest/v1/rpc/get_my_usuario`,
       { method: 'POST', headers, body: '{}' },
@@ -99,7 +105,7 @@ async function fetchUsuarioRaw(accessToken: string, authUserId: string): Promise
     if (res.ok) {
       const rows = await res.json()
       if (Array.isArray(rows) && rows.length > 0) {
-        console.log('[AUTH] ✅ RPC get_my_usuario succeeded')
+        debugLog('AUTH', '✅ RPC get_my_usuario succeeded')
         return rows[0]
       }
       console.warn('[AUTH] RPC returned empty array')
@@ -117,7 +123,7 @@ async function fetchUsuarioRaw(accessToken: string, authUserId: string): Promise
 
   // Fallback: direct table query
   try {
-    console.log('[AUTH] Trying direct query...')
+    debugLog('AUTH', 'Trying direct query...')
     const res = await fetchWithTimeout(
       `${SUPABASE_URL}/rest/v1/usuario?auth_user_id=eq.${authUserId}&select=*&limit=1`,
       { method: 'GET', headers },
@@ -126,7 +132,7 @@ async function fetchUsuarioRaw(accessToken: string, authUserId: string): Promise
     if (res.ok) {
       const rows = await res.json()
       if (Array.isArray(rows) && rows.length > 0) {
-        console.log('[AUTH] ✅ Direct query succeeded')
+        debugLog('AUTH', '✅ Direct query succeeded')
         return rows[0]
       }
       console.warn('[AUTH] Direct query returned empty array')
@@ -180,7 +186,7 @@ async function fetchMinisteriosRaw(accessToken: string): Promise<any[] | null> {
   }
 
   try {
-    console.log('[AUTH] Fetching ministerios where user is líder...')
+    debugLog('AUTH', 'Fetching ministerios where user is líder...')
     const res = await fetchWithTimeout(
       `${SUPABASE_URL}/rest/v1/rpc/get_my_ministerios_v2`,
       { method: 'POST', headers, body: '{}' },
@@ -188,7 +194,7 @@ async function fetchMinisteriosRaw(accessToken: string): Promise<any[] | null> {
     )
     if (res.ok) {
       const ministerios = await res.json()
-      console.log('[AUTH] Ministerios fetched:', ministerios.length)
+      debugLog('AUTH', 'Ministerios fetched:', ministerios.length)
       return Array.isArray(ministerios) ? ministerios : []
     }
     console.warn('[AUTH] get_my_ministerios_v2 returned', res.status)
@@ -425,7 +431,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('post_login_reload')
     }
-    console.log('[AUTH] Reset client state:', reason)
+    debugLog('AUTH', 'Reset client state:', reason)
   }, [cleanupRealtime, clearAuthStorage])
 
   const authReady = isHydrated && !authLoading && !!usuarioActual && isClaimsReady && !authError
@@ -488,7 +494,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const token = session.access_token
       const authUserId = session.user.id
       setSession(session)
-      console.log('[AUTH] Loading profile for:', session.user.email)
+      debugLog('AUTH', 'Loading profile for:', session.user.email)
 
       // Background: Claims refresh (non-blocking, runs in parallel with profile load)
       if (!claimsRefreshInFlightRef.current) {
@@ -498,7 +504,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             const jwtClaimsAt = session.user.app_metadata?.claims_at as number | undefined
             const dbPermissionsAt = await fetchPermissionsUpdatedAt(token)
             if (!jwtClaimsAt || (dbPermissionsAt && dbPermissionsAt > jwtClaimsAt)) {
-              console.log('[AUTH] Refreshing claims in background...')
+              debugLog('AUTH', 'Refreshing claims in background...')
               await refreshTenantClaims(token)
               await supabase.auth.refreshSession()
             }
@@ -527,7 +533,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return
         }
 
-        console.log('[AUTH] ✅ Profile loaded:', data.nombres, data.apellidos)
+        debugLog('AUTH', '✅ Profile loaded:', data.nombres, data.apellidos)
         setUsuarioActual({
           idUsuario: data.id_usuario,
           nombres: data.nombres,
@@ -559,7 +565,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ? 'super_admin'
           : derivedFromRoles
 
-        console.log('[AUTH] Role derived:', derivedRol, '| email:', normalizedSessionEmail, '| rawRoles:', roleNames)
+        debugLog('AUTH', 'Role derived:', derivedRol, '| email:', normalizedSessionEmail, '| rawRoles:', roleNames)
 
         if (roles.length === 0) {
           console.warn('[AUTH] ⚠️ No active roles returned for:', normalizedSessionEmail)
@@ -589,7 +595,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }))
         setMinisteriosDelUsuario(ministeriosData)
 
-        console.log('[AUTH] ✅ Fully loaded — role:', derivedRol, '| iglesias:', iglesias.length)
+        debugLog('AUTH', '✅ Fully loaded — role:', derivedRol, '| iglesias:', iglesias.length)
         hydratedUserIdRef.current = authUserId
         hydratedTokenRef.current = token
         setIsClaimsReady(true)
@@ -621,7 +627,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     const handleSessionEvent = async (event: string, session: Session | null) => {
-      console.log('[AUTH] onAuthStateChange:', event, !!session)
+      debugLog('AUTH', 'onAuthStateChange:', event, !!session)
 
       if (logoutInProgressRef.current && event !== 'SIGNED_OUT') {
         return
@@ -672,7 +678,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       await hydrateSession(session, cycleId)
     }
 
-    console.log('[AUTH] Setting up onAuthStateChange listener')
+    debugLog('AUTH', 'Setting up onAuthStateChange listener')
 
     const {
       data: { subscription },
