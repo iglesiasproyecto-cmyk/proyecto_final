@@ -200,14 +200,14 @@ export function MinisterioDetailPanel({
 
       {canManageMembers && (
         <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
-          <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogContent className="w-[94vw] sm:max-w-md max-h-[90vh] overflow-hidden rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl p-4 sm:p-6">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+              <DialogTitle className="text-base sm:text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
                 Agregar Miembro
               </DialogTitle>
-              <p className="text-sm text-muted-foreground">Agregar un nuevo servidor al ministry {min.nombre}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Agregar un nuevo servidor al ministry {min.nombre}</p>
             </DialogHeader>
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto pr-1">
               <div>
                 <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">Seleccionar Usuario</label>
                 <Select value={memberForm.idUsuario} onValueChange={(v) => setMemberForm(p => ({ ...p, idUsuario: v }))}>
@@ -217,7 +217,10 @@ export function MinisterioDetailPanel({
                   <SelectContent>
                     {availableUsers.map((user) => (
                       <SelectItem key={user.idUsuario} value={user.idUsuario.toString()}>
-                        {user.nombres} {user.apellidos} ({user.correo})
+                        <div className="flex flex-col">
+                          <span className="text-sm truncate">{user.nombres} {user.apellidos}</span>
+                          <span className="text-[11px] text-muted-foreground truncate">{user.correo}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -236,13 +239,13 @@ export function MinisterioDetailPanel({
                 </Select>
               </div>
             </div>
-            <DialogFooter className="mt-2 border-t border-border/50 pt-4">
-              <Button variant="ghost" className="rounded-xl" onClick={() => { setShowAddMember(false); setMemberForm({ idUsuario: "", rolEnMinisterio: "servidor" }); }}>
+            <DialogFooter className="mt-2 border-t border-border/50 pt-4 flex flex-col sm:flex-row gap-2">
+              <Button variant="ghost" className="rounded-xl w-full sm:w-auto" onClick={() => { setShowAddMember(false); setMemberForm({ idUsuario: "", rolEnMinisterio: "servidor" }); }}>
                 Cancelar
               </Button>
               <Button
                 variant="default"
-                className="rounded-xl"
+                className="rounded-xl w-full sm:w-auto"
                 onClick={handleAddMember}
                 disabled={!memberForm.idUsuario || createMemberMutation.isPending}
               >

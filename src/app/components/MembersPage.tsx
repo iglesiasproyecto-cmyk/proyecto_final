@@ -393,15 +393,15 @@ export function MembersPage() {
 
       {/* Dialog agregar miembro */}
       <Dialog open={showInvite} onOpenChange={setShowInvite}>
-        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+        <DialogContent className="w-[94vw] sm:max-w-md max-h-[90vh] overflow-hidden rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+            <DialogTitle className="text-base sm:text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
               Agregar Miembro
             </DialogTitle>
-            <p className="text-xs text-muted-foreground mt-1">Asocia un usuario existente a un ministerio con un rol definido.</p>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-1">Asocia un usuario existente a un ministerio con un rol definido.</p>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto pr-1">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Usuario</label>
               <Input
@@ -418,10 +418,15 @@ export function MembersPage() {
                 <option value="" disabled>Selecciona un usuario</option>
                 {selectableUsuarios.map((u) => (
                   <option key={u.idUsuario} value={u.idUsuario}>
-                    {u.nombres} {u.apellidos} - {u.correo}
+                    {u.nombres} {u.apellidos}
                   </option>
                 ))}
               </select>
+              {inviteForm.idUsuario && (
+                <p className="text-[11px] text-muted-foreground mt-1 truncate">
+                  {selectableUsuarios.find((u) => u.idUsuario === inviteForm.idUsuario)?.correo}
+                </p>
+              )}
               <p className="text-[11px] text-muted-foreground mt-2">
                 {selectableUsuarios.length} usuario(s) disponible(s) para este ministerio.
               </p>
@@ -442,10 +447,10 @@ export function MembersPage() {
             </div>
           </div>
 
-          <DialogFooter className="mt-2 pt-4 border-t border-border/50">
-            <Button variant="ghost" className="rounded-xl" onClick={() => setShowInvite(false)}>Cancelar</Button>
+          <DialogFooter className="mt-2 pt-4 border-t border-border/50 flex flex-col sm:flex-row gap-2">
+            <Button variant="ghost" className="rounded-xl w-full sm:w-auto" onClick={() => setShowInvite(false)}>Cancelar</Button>
             <Button
-              className="rounded-xl"
+              className="rounded-xl w-full sm:w-auto"
               onClick={handleInvite}
               disabled={!inviteForm.idUsuario || !effectiveMinisterioId || createMiembroMutation.isPending}
             >

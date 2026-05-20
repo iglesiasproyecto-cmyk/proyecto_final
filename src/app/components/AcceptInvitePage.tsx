@@ -20,6 +20,13 @@ interface InviteData {
   sede?: { nombre: string }
 }
 
+function validatePassword(password: string): string | null {
+  if (password.length < 8) return 'La contrasena debe tener al menos 8 caracteres'
+  if (!/[A-Z]/.test(password)) return 'Incluye al menos una mayuscula'
+  if (!/[0-9]/.test(password)) return 'Incluye al menos un numero'
+  return null
+}
+
 export function AcceptInvitePage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -71,13 +78,14 @@ export function AcceptInvitePage() {
 
     if (!token || !inviteData) return
 
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
+    const validationError = validatePassword(password)
+    if (validationError) {
+      setError(validationError)
       return
     }
 
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden')
+      setError('Las contrasenas no coinciden')
       return
     }
 
@@ -222,8 +230,8 @@ export function AcceptInvitePage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
-                placeholder="Mínimo 6 caracteres"
+                minLength={8}
+                placeholder="Minimo 8 caracteres"
               />
             </div>
 
@@ -235,7 +243,7 @@ export function AcceptInvitePage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 placeholder="Repite tu contraseña"
               />
             </div>
