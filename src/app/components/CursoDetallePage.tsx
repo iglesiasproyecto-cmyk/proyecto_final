@@ -265,13 +265,13 @@ export function CursoDetallePage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="flex flex-col gap-4 rounded-[32px] border border-white/10 bg-card/55 p-5 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 rounded-[32px] border border-white/10 bg-card/55 p-4 sm:p-5 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={() => navigate(aulaBasePath)}
-            className="h-10 rounded-2xl border-white/20 bg-background/55 px-4"
+            className="h-9 sm:h-10 rounded-2xl border-white/20 bg-background/55 px-4 w-fit"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
@@ -282,10 +282,10 @@ export function CursoDetallePage() {
             <p className="text-xs font-bold uppercase tracking-widest text-primary/70">{curso.ministerio?.nombre}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <Badge 
             variant={curso.estado === 'activo' ? 'default' : 'secondary'}
-            className={`rounded-full px-4 py-1 text-[10px] font-bold uppercase tracking-widest border-none ${
+            className={`rounded-full px-4 py-1 text-[10px] font-bold uppercase tracking-widest border-none w-fit ${
               curso.estado === 'activo' 
                 ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' 
                 : 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
@@ -297,13 +297,13 @@ export function CursoDetallePage() {
             <Button
               onClick={() => setShowAgregarPersonas(true)}
               size="sm"
-              className="h-10 rounded-2xl border-white/20 bg-background/55"
+              className="h-10 rounded-2xl bg-[#4682b4] text-white hover:bg-[#4682b4]/90 w-full sm:w-auto"
             >
-              <UserPlus className="h-4 w-4 mr-2 text-primary" />
+              <UserPlus className="h-4 w-4 mr-2 text-white" />
               Agregar personas
             </Button>
           )}
-          <Button variant="outline" size="sm" className="h-10 rounded-2xl border-white/20 bg-background/55">
+          <Button variant="outline" size="sm" className="h-10 rounded-2xl border-white/20 bg-background/55 w-full sm:w-auto">
             <Settings className="h-4 w-4 mr-2 text-primary" />
             Configuración
           </Button>
