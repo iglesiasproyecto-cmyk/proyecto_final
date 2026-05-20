@@ -32,7 +32,9 @@ export function MembersPage() {
   const { usuarioActual, iglesiaActual, rolActual, sedesDelUsuario } = useApp();
   const { data: ministeriosIdsUsuario = [] } = useMinisteriosIdsDeUsuario(usuarioActual?.idUsuario);
 
-  const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin";
+  const isSuperAdmin = rolActual === "super_admin";
+  const isAdminIglesia = rolActual === "admin_iglesia";
+  const isAdmin = isAdminIglesia || isSuperAdmin;
   const isAdminSede = rolActual === "admin_sede";
   const isLider = rolActual === "lider" && ministeriosIdsUsuario.length > 0;
   const canManageMembers = isAdmin || isAdminSede || isLider;
@@ -107,10 +109,13 @@ export function MembersPage() {
       // Ocultar Super Administradores para todos excepto para otro Super Admin
       if (!isAdmin && u.roleNames?.some((r: any) => r.rolNombre === 'Super Administrador')) return false;
 
-      if (isAdmin) {
-        // Admin Iglesia: Todos los de su iglesia (asumiendo que useUsuariosEnriquecidos ya filtra por iglesia,
-        // pero por seguridad comprobamos)
-        return true;
+      if (isSuperAdmin) return true;
+
+      if (isAdminIglesia) {
+        const iglesiaId = iglesiaActual?.id;
+        if (!iglesiaId) return false;
+        const userIglesias = new Set(u.roleNames?.map((r: any) => r.idIglesia).filter(Boolean));
+        return userIglesias.has(iglesiaId);
       }
 
       if (isAdminSede) {
