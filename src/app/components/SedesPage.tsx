@@ -688,7 +688,7 @@ export function SedesPage() {
 
       {/* Diálogo: Asignar Pastor a Sede */}
       <Dialog open={dialogPastor} onOpenChange={setDialogPastor}>
-        <DialogContent className="sm:max-w-lg rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-hidden rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
               Asignar Pastor a Sede
@@ -697,7 +697,7 @@ export function SedesPage() {
               Cada sede debe tener un pastor asignado para su funcionamiento.
             </p>
           </DialogHeader>
-          <div className="space-y-5 py-4">
+          <div className="space-y-5 py-4 overflow-y-auto max-h-[60vh] pr-1">
             {/* Selector de pastor existente o crear nuevo */}
             <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-white/50 dark:bg-black/10">
@@ -747,7 +747,7 @@ export function SedesPage() {
 
               {pastorForm.crearNuevoPastor && (
                 <div className="space-y-3 p-4 rounded-xl border border-dashed border-[#4682b4]/30 bg-[#4682b4]/5">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Nombres *</label>
                       <Input
@@ -791,7 +791,7 @@ export function SedesPage() {
             </div>
 
             {/* Configuración de asignación */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 block">Fecha Inicio *</label>
                 <Input
@@ -801,8 +801,8 @@ export function SedesPage() {
                   className="bg-input-background focus-visible:ring-[#4682b4]/30"
                 />
               </div>
-              <div className="flex flex-col justify-end pb-2">
-                <div className="flex items-center gap-2.5 p-2 rounded-xl border border-border/50 bg-white/50 dark:bg-black/10">
+              <div className="flex flex-col justify-start sm:justify-end pb-0 sm:pb-2">
+                <div className="flex items-center gap-2.5 p-2 rounded-xl border border-border/50 bg-white/50 dark:bg-black/10 h-full">
                   <input
                     type="checkbox"
                     id="es-principal-sede"
