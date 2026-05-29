@@ -1355,6 +1355,7 @@ export type Database = {
       }
       iglesia: {
         Row: {
+          branding: Json | null
           creado_en: string
           descripcion: string | null
           direccion: string | null
@@ -1362,12 +1363,14 @@ export type Database = {
           fecha_fundacion: string | null
           id_ciudad: number
           id_iglesia: number
+          logo_url: string | null
           nombre: string
           sitio_web: string | null
           telefono: string | null
           updated_at: string
         }
         Insert: {
+          branding?: Json | null
           creado_en?: string
           descripcion?: string | null
           direccion?: string | null
@@ -1375,12 +1378,14 @@ export type Database = {
           fecha_fundacion?: string | null
           id_ciudad: number
           id_iglesia?: number
+          logo_url?: string | null
           nombre: string
           sitio_web?: string | null
           telefono?: string | null
           updated_at?: string
         }
         Update: {
+          branding?: Json | null
           creado_en?: string
           descripcion?: string | null
           direccion?: string | null
@@ -1388,6 +1393,7 @@ export type Database = {
           fecha_fundacion?: string | null
           id_ciudad?: number
           id_iglesia?: number
+          logo_url?: string | null
           nombre?: string
           sitio_web?: string | null
           telefono?: string | null
