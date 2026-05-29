@@ -32,6 +32,7 @@ import { GlobalMinisteriosPage } from "./components/GlobalMinisteriosPage";
 import { GlobalEventosPage } from "./components/GlobalEventosPage";
 import { GlobalTareasPage } from "./components/GlobalTareasPage";
 import { GlobalAulaPage } from "./components/GlobalAulaPage";
+import { ConfiguracionPage } from "./components/ConfiguracionPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
 
 // Lazy-loaded route components (code splitting for large pages)
@@ -127,6 +128,7 @@ export const router = createBrowserRouter([
               { path: "perfil", Component: ProfilePage, ErrorBoundary: ErrorPage },
               { path: "cumpleanos", Component: CumpleanosPage, ErrorBoundary: ErrorPage },
               { path: "estadisticas", Component: StatisticsPage, ErrorBoundary: ErrorPage },
+              { path: "configuracion", Component: ConfiguracionPage, ErrorBoundary: ErrorPage },
             ],
           },
         ],
