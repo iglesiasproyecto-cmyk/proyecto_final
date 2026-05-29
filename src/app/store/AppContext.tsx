@@ -375,18 +375,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
+    let cancelled = false
+
     supabase
       .from('iglesia')
       .select('branding, logo_url')
       .eq('id_iglesia', iglesiaActual.id)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error) {
+          debugLog('BRANDING', 'Failed to fetch branding:', error.message)
+          return
+        }
         const branding = (data?.branding as Record<string, string> | null) ?? null
         const logoUrl = data?.logo_url ?? null
         setIglesiaBranding(branding)
         setIglesiaLogoUrl(logoUrl)
         aplicarBranding(branding)
       })
+
+    return () => {
+      cancelled = true
+    }
   }, [iglesiaActual?.id])
 
   const clearAuthStorage = useCallback(() => {
@@ -488,9 +499,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         logoUrl = `${urlData.publicUrl}?t=${Date.now()}`
       }
 
+      const updatePayload: { branding: Record<string, string>; logo_url?: string | null } = { branding }
+      if (logoFile) {
+        updatePayload.logo_url = logoUrl
+      }
+
       const { error: updateError } = await supabase
         .from('iglesia')
-        .update({ branding, logo_url: logoUrl })
+        .update(updatePayload)
         .eq('id_iglesia', iglesiaActual.id)
       if (updateError) throw updateError
 
