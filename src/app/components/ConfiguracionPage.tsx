@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { Palette, Upload, RefreshCw, Save, X } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +25,11 @@ const TOKEN_LABELS: Record<string, { label: string; description: string }> = {
 export function ConfiguracionPage() {
   const navigate = useNavigate();
   const { rolActual, iglesiaActual, iglesiaBranding, iglesiaLogoUrl, actualizarBranding } = useApp();
+
+  const savedBrandingRef = useRef(iglesiaBranding);
+  useEffect(() => {
+    savedBrandingRef.current = iglesiaBranding;
+  }, [iglesiaBranding]);
 
   const [colors, setColors] = useState<Record<string, string>>(
     iglesiaBranding ?? DEFAULT_BRANDING
@@ -56,12 +61,11 @@ export function ConfiguracionPage() {
   // Restore saved branding on unmount (cancel preview)
   useEffect(() => {
     return () => {
-      const saved = iglesiaBranding ?? DEFAULT_BRANDING;
+      const saved = savedBrandingRef.current ?? DEFAULT_BRANDING;
       Object.entries(saved).forEach(([token, value]) => {
         document.documentElement.style.setProperty(`--${token}`, value);
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleColorChange = (token: string, value: string) => {
