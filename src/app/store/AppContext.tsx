@@ -5,6 +5,18 @@ import { queryClient } from '@/lib/queryClient'
 import { debugLog } from '@/lib/debug'
 import type { Usuario } from '@/types/app.types'
 
+const BRANDING_TOKENS = ['primary', 'background', 'foreground', 'sidebar', 'accent', 'card'] as const
+
+function aplicarBranding(branding: Record<string, string> | null) {
+  BRANDING_TOKENS.forEach((token) => {
+    if (branding?.[token]) {
+      document.documentElement.style.setProperty(`--${token}`, branding[token])
+    } else {
+      document.documentElement.style.removeProperty(`--${token}`)
+    }
+  })
+}
+
 interface AppState {
   session: Session | null
   user: any // Supabase user object
@@ -17,6 +29,9 @@ interface AppState {
   authError: string | null
   isInitializing: boolean
   iglesiaActual: { id: number; nombre: string } | null
+  iglesiaBranding: Record<string, string> | null
+  iglesiaLogoUrl: string | null
+  actualizarBranding: (branding: Record<string, string>, logoFile?: File) => Promise<void>
   setIglesiaActual: (ig: { id: number; nombre: string } | null) => void
   iglesiasDelUsuario: { id: number; nombre: string }[]
   sedesDelUsuario: { id: number; nombre: string }[]
@@ -277,6 +292,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isClaimsReady, setIsClaimsReady] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
   const [iglesiaActual, setIglesiaActual] = useState<{ id: number; nombre: string } | null>(null)
+  const [iglesiaBranding, setIglesiaBranding] = useState<Record<string, string> | null>(null)
+  const [iglesiaLogoUrl, setIglesiaLogoUrl] = useState<string | null>(null)
   const [iglesiasDelUsuario, setIglesiasDelUsuario] = useState<{ id: number; nombre: string }[]>([])
   const [sedesDelUsuario, setSedesDelUsuario] = useState<{ id: number; nombre: string }[]>([])
   const [ministeriosDelUsuario, setMinisteriosDelUsuario] = useState<{ id: number; nombre: string; idSede: number; sedeNombre: string }[]>([])
@@ -350,6 +367,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('sei-dark-mode', String(darkMode))
   }, [darkMode])
 
+  useEffect(() => {
+    if (!iglesiaActual?.id) {
+      setIglesiaBranding(null)
+      setIglesiaLogoUrl(null)
+      aplicarBranding(null)
+      return
+    }
+
+    supabase
+      .from('iglesia')
+      .select('branding, logo_url')
+      .eq('id_iglesia', iglesiaActual.id)
+      .single()
+      .then(({ data }) => {
+        const branding = (data?.branding as Record<string, string> | null) ?? null
+        const logoUrl = data?.logo_url ?? null
+        setIglesiaBranding(branding)
+        setIglesiaLogoUrl(logoUrl)
+        aplicarBranding(branding)
+      })
+  }, [iglesiaActual?.id])
+
   const clearAuthStorage = useCallback(() => {
     if (typeof window === 'undefined') return
     const shouldRemoveKey = (key: string) =>
@@ -403,6 +442,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUsuarioActual(null)
     setNotificacionesCount(0)
     setIglesiaActual(null)
+    setIglesiaBranding(null)
+    setIglesiaLogoUrl(null)
+    aplicarBranding(null)
     setIglesiasDelUsuario([])
     setSedesDelUsuario([])
     setMinisteriosDelUsuario([])
@@ -427,6 +469,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     debugLog('AUTH', 'Reset client state:', reason)
   }, [cleanupRealtime, clearAuthStorage])
+
+  const actualizarBranding = useCallback(
+    async (branding: Record<string, string>, logoFile?: File): Promise<void> => {
+      if (!iglesiaActual?.id) throw new Error('No hay iglesia activa')
+
+      let logoUrl = iglesiaLogoUrl
+
+      if (logoFile) {
+        const filePath = `${iglesiaActual.id}/logo`
+        const { error: uploadError } = await supabase.storage
+          .from('church-logos')
+          .upload(filePath, logoFile, { upsert: true, contentType: logoFile.type })
+        if (uploadError) throw uploadError
+        const { data: urlData } = supabase.storage
+          .from('church-logos')
+          .getPublicUrl(filePath)
+        logoUrl = `${urlData.publicUrl}?t=${Date.now()}`
+      }
+
+      const { error: updateError } = await supabase
+        .from('iglesia')
+        .update({ branding, logo_url: logoUrl })
+        .eq('id_iglesia', iglesiaActual.id)
+      if (updateError) throw updateError
+
+      setIglesiaBranding(branding)
+      setIglesiaLogoUrl(logoUrl)
+      aplicarBranding(branding)
+    },
+    [iglesiaActual?.id, iglesiaLogoUrl]
+  )
 
   const authReady = isHydrated && !authLoading && !!usuarioActual && isClaimsReady && !authError
 
@@ -741,6 +814,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         authReady,
         authError,
         iglesiaActual,
+        iglesiaBranding,
+        iglesiaLogoUrl,
+        actualizarBranding,
         setIglesiaActual,
         iglesiasDelUsuario,
         sedesDelUsuario,
