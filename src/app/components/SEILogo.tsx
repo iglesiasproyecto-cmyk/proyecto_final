@@ -10,37 +10,50 @@ interface SEILogoProps {
 }
 
 export function LumenLogo({ className = "w-20 h-20", style, variant }: SEILogoProps) {
-  let isDarkMode = false;
+  let isDarkMode = false
+  let iglesiaLogoUrl: string | null = null
   try {
-    const app = useApp();
-    isDarkMode = app.darkMode;
-  } catch (e) {
-    // Fallback si se usa fuera de AppProvider
+    const app = useApp()
+    isDarkMode = app.darkMode
+    iglesiaLogoUrl = app.iglesiaLogoUrl
+  } catch {
     if (typeof window !== "undefined") {
-      isDarkMode = document.documentElement.classList.contains("dark") || 
-                   window.matchMedia("(prefers-color-scheme: dark)").matches;
+      isDarkMode = document.documentElement.classList.contains("dark") ||
+                   window.matchMedia("(prefers-color-scheme: dark)").matches
     }
   }
 
-  // Determinar qué logo mostrar
-  // Si se especifica una variante, la respetamos. Si no, dependemos del tema oscuro global.
-  const logoSrc = variant 
-    ? (variant === "dark-bg" ? logo1 : logo2) 
-    : (isDarkMode ? logo1 : logo2);
+  if (iglesiaLogoUrl) {
+    return (
+      <div
+        className={`relative flex items-center justify-center transition-all duration-500 hover:scale-105 ${className}`}
+        style={style}
+      >
+        <img
+          src={iglesiaLogoUrl}
+          alt="Logo de la Iglesia"
+          className="w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(56,189,248,0.15)]"
+          draggable={false}
+        />
+      </div>
+    )
+  }
+
+  const logoSrc = variant
+    ? (variant === "dark-bg" ? logo1 : logo2)
+    : (isDarkMode ? logo1 : logo2)
 
   return (
     <div className={`relative flex items-center justify-center transition-all duration-500 hover:scale-105 ${className}`} style={style}>
-      {/* Premium Glow effect behind the logo */}
       <div className="absolute inset-0 bg-sky-500/10 rounded-full blur-2xl opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-      
-      <img 
-        src={logoSrc} 
-        alt="Lumen Logo" 
+      <img
+        src={logoSrc}
+        alt="Lumen Logo"
         className="w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(56,189,248,0.25)] transition-transform duration-500"
         draggable={false}
       />
     </div>
-  );
+  )
 }
 
 export function LumenIsotype({ className = "w-10 h-10", style }: { className?: string; style?: React.CSSProperties }) {
