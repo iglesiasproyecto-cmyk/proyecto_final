@@ -12,7 +12,7 @@ import {
   Church, LayoutDashboard, Building2, Users, CalendarDays, ListTodo,
   Bell, User, LogOut, Menu, X, ChevronDown,
   Settings, FolderHeart, Globe, UserCheck, Settings2,
-  Moon, Sun, BookOpen, Cake, BarChart3
+  Moon, Sun, BookOpen, Cake, BarChart3, Paintbrush
 } from "lucide-react";
 import logo1 from "../../assets/logo-1-lumen-.webp"; // Logo 1 (letras blancas) para fondo oscuro/azul
 import { SEILogo, LumenIsotype } from "./SEILogo";
@@ -42,6 +42,7 @@ interface NavItem {
 
 const pageTitles: Record<string, string> = {
   "/app/global": "Dashboard Global",
+  "/app/configuracion": "Personalización",
   "/app/global/iglesias": "Gestión de Iglesias",
   "/app/global/sedes": "Gestión de Sedes",
   "/app/global/administrador": "Administrador",
@@ -67,6 +68,7 @@ function getDynamicPageTitle(pathname: string): string {
   if (pathname.match(/\/app\/\d+\/aula/)) return "Aula de Formación";
   if (pathname.match(/\/app\/\d+\/mi-ministerio/)) return "Mi Ministerio";
   if (pathname.match(/\/app\/\d+\/notificaciones/)) return "Notificaciones";
+  if (pathname.match(/\/app\/\d+\/configuracion/)) return "Personalización";
   if (pathname.match(/\/app\/\d+\/perfil/)) return "Mi Perfil";
   if (pathname.match(/\/app\/(global\/)?cumpleanos/)) return "Cumpleaños";
   if (pathname.match(/\/app\/\d+$/)) return "Dashboard";
@@ -113,6 +115,7 @@ function getNavItemsForRole(
         { label: "Estadísticas", path: `${t}/estadisticas`, icon: <BarChart3 className="w-5 h-5" />, section: "Operaciones" },
         { label: "Cumpleaños", path: `${t}/cumpleanos`, icon: <Cake className="w-5 h-5" />, section: "Operaciones" },
         { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
+        { label: "Personalización", path: `${t}/configuracion`, icon: <Paintbrush className="w-5 h-5" />, section: "Configuración" },
         { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
         { label: "Mi Perfil", path: `${t}/perfil`, icon: <User className="w-5 h-5" />, section: "Personal" },
       ];
@@ -274,7 +277,7 @@ export function AppLayout() {
         <aside
           onMouseEnter={() => window.innerWidth >= 1024 && setSidebarExpanded(true)}
           onMouseLeave={() => window.innerWidth >= 1024 && setSidebarExpanded(false)}
-          className={`fixed lg:relative inset-y-0 left-0 z-40 bg-gradient-to-b from-[#091320] via-[#0c1828] to-[#070f1a] text-sidebar-foreground flex flex-col shadow-[8px_0_32px_rgba(0,0,0,0.45)] border-r border-white/[0.06] backdrop-blur-xl overflow-hidden transition-all duration-300 ${
+          className={`fixed lg:relative inset-y-0 left-0 z-40 bg-gradient-to-b from-sidebar via-sidebar/90 to-sidebar/80 text-sidebar-foreground flex flex-col shadow-[8px_0_32px_rgba(0,0,0,0.45)] border-r border-white/[0.06] backdrop-blur-xl overflow-hidden transition-all duration-300 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           } ${sidebarExpanded ? "w-64" : "w-64 lg:w-[72px]"}`}
         >
@@ -299,7 +302,7 @@ export function AppLayout() {
             <div className="py-3 px-3 border-b border-white/[0.06]">
               <button
                 onClick={() => setShowChurchSelector(!showChurchSelector)}
-                className="w-full rounded-xl flex items-center justify-between px-3 py-2.5 bg-[#4682b4]/10 border border-[#4682b4]/20 text-[#4682b4] hover:bg-[#4682b4]/25 hover:border-[#4682b4]/40 transition-all duration-200 relative group"
+                className="w-full rounded-xl flex items-center justify-between px-3 py-2.5 bg-primary/10 border border-primary/20 text-primary hover:bg-primary/25 hover:border-primary/40 transition-all duration-200 relative group"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <Building2 className="w-5 h-5 shrink-0" />
@@ -315,7 +318,7 @@ export function AppLayout() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
                       transition={{ duration: 0.18, ease: "easeOut" }}
-                      className="absolute left-3 right-3 top-full mt-2 bg-[#0c1828]/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)] z-50 overflow-hidden"
+                      className="absolute left-3 right-3 top-full mt-2 bg-sidebar/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)] z-50 overflow-hidden"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
@@ -325,7 +328,7 @@ export function AppLayout() {
                             onClick={() => { setIglesiaActual(ig); setShowChurchSelector(false); }}
                             className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-3 mb-1 last:mb-0 ${
                               ig.id === iglesiaActual?.id
-                                ? "text-white bg-gradient-to-r from-[#4682b4] to-[#709dbd]"
+                                ? "text-white bg-gradient-to-r from-primary to-primary/70"
                                 : "text-white/60 hover:bg-white/5 hover:text-white"
                             }`}
                           >
@@ -368,7 +371,7 @@ export function AppLayout() {
                           }}
                           className={`relative w-full flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 focus:outline-none group ${
                             isActive
-                              ? "bg-gradient-to-br from-[#4682b4] to-[#709dbd] text-white shadow-[0_4px_20px_rgba(70,130,180,0.45)] ring-1 ring-[#709dbd]/30"
+                              ? "bg-gradient-to-br from-primary to-primary/70 text-white shadow-[0_4px_20px_rgba(0,0,0,0.25)] ring-1 ring-primary/30"
                               : "text-white/35 hover:text-white/90 hover:bg-white/[0.08] hover:ring-1 hover:ring-white/[0.08]"
                           }`}
                         >
@@ -496,7 +499,7 @@ export function AppLayout() {
                 }}
                 className="flex items-center gap-2 sm:gap-2.5 p-1.5 pr-2 sm:pr-3 rounded-xl hover:bg-accent transition-all duration-200 border border-transparent hover:border-border group"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#4682b4] to-[#709dbd] flex items-center justify-center text-white text-[11px] font-black shadow-[0_2px_8px_rgba(70,130,180,0.35)] ring-2 ring-[#4682b4]/20 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-[11px] font-black shadow-[0_2px_8px_rgba(70,130,180,0.35)] ring-2 ring-primary/20 shrink-0">
                   {initials}
                 </div>
                 <div className="hidden md:flex flex-col items-start min-w-0">
