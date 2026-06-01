@@ -642,35 +642,6 @@ export function EventsPage() {
     presupuestoFilters
   );
 
-  // Scope events by role before applying the ministerio filter
-  const eventosScope = (() => {
-    if (rolActual === 'lider') return eventos.filter(e => effectiveLiderIds.includes(e.idMinisterio ?? 0))
-    // admin_sede and admin_iglesia: trust RLS — eventos already scoped by backend
-    return eventos
-  })()
-
-  const eventosParaResumen = finanzasMinisterioFilter
-    ? eventosScope.filter((e) => e.idMinisterio === finanzasMinisterioFilter)
-    : eventosScope;
-
-  const resumenEventos = buildResumen(
-    eventosParaResumen.map((e) => ({
-      idEvento: e.idEvento,
-      nombre: e.nombre,
-      fechaInicio: e.fechaInicio,
-      idMinisterio: e.idMinisterio ?? null,
-      idSede: e.idSede ?? null,
-    })),
-    presupuestoItems
-  );
-
-  const totalIngresosPlaneados = resumenEventos.reduce((s, r) => s + r.ingresosPlaneados, 0);
-  const totalIngresosReales = resumenEventos.reduce((s, r) => s + r.ingresosReales, 0);
-  const totalEgresosPlaneados = resumenEventos.reduce((s, r) => s + r.egresosPlaneados, 0);
-  const totalEgresosReales = resumenEventos.reduce((s, r) => s + r.egresosReales, 0);
-  const totalBalanceNeto = totalIngresosReales - totalEgresosReales;
-  const eventosConPresupuesto = resumenEventos.filter((r) => r.items.length > 0).length;
-
   const isAdminSede = rolActual === "admin_sede";
   const isLider = rolActual === "lider";
 
@@ -710,6 +681,29 @@ export function EventsPage() {
   const ministeriosDisponiblesParaCrear = ministeriosDisponiblesParaCrearAsync.length > 0
     ? ministeriosDisponiblesParaCrearAsync
     : ministeriosDesdeContexto;
+
+  // ── Finanzas scope (now safe: effectiveLiderIds is declared above) ─────────
+  const eventosScope = isLider
+    ? eventos.filter(e => effectiveLiderIds.includes(e.idMinisterio ?? 0))
+    : eventos
+
+  const eventosParaResumen = finanzasMinisterioFilter
+    ? eventosScope.filter((e) => e.idMinisterio === finanzasMinisterioFilter)
+    : eventosScope
+
+  const resumenEventos = buildResumen(
+    eventosParaResumen.map((e) => ({
+      idEvento: e.idEvento, nombre: e.nombre, fechaInicio: e.fechaInicio,
+      idMinisterio: e.idMinisterio ?? null, idSede: e.idSede ?? null,
+    })),
+    presupuestoItems
+  )
+  const totalIngresosPlaneados = resumenEventos.reduce((s, r) => s + r.ingresosPlaneados, 0)
+  const totalIngresosReales    = resumenEventos.reduce((s, r) => s + r.ingresosReales, 0)
+  const totalEgresosPlaneados  = resumenEventos.reduce((s, r) => s + r.egresosPlaneados, 0)
+  const totalEgresosReales     = resumenEventos.reduce((s, r) => s + r.egresosReales, 0)
+  const totalBalanceNeto       = totalIngresosReales - totalEgresosReales
+  const eventosConPresupuesto  = resumenEventos.filter((r) => r.items.length > 0).length
 
   // Sede IDs where the lider leads a ministerio (from context, always available)
   const liderSedeIds = new Set(liderMinisterios.map(m => m.idSede).filter(Boolean));
