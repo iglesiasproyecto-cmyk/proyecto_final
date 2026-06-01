@@ -20,6 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_epi_tipo   ON public.evento_presupuesto_item(tipo
 ALTER TABLE public.evento_presupuesto_item ENABLE ROW LEVEL SECURITY;
 
 -- Trigger updated_at — reutiliza la función genérica que ya existe en el proyecto
+DROP TRIGGER IF EXISTS trg_epi_updated_at ON public.evento_presupuesto_item;
 CREATE TRIGGER trg_epi_updated_at
   BEFORE UPDATE ON public.evento_presupuesto_item
   FOR EACH ROW EXECUTE FUNCTION public.trigger_set_updated_at();
@@ -68,6 +69,18 @@ CREATE POLICY epi_update ON public.evento_presupuesto_item
           OR (is_lider()         AND e.id_iglesia = get_my_tenant_id())
         )
     )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.evento e
+      WHERE e.id_evento = evento_presupuesto_item.id_evento
+        AND (
+          is_super_admin()
+          OR (is_admin_iglesia() AND e.id_iglesia = get_my_tenant_id())
+          OR (is_admin_sede()    AND e.id_iglesia = get_my_tenant_id())
+          OR (is_lider()         AND e.id_iglesia = get_my_tenant_id())
+        )
+    )
   );
 
 CREATE POLICY epi_delete ON public.evento_presupuesto_item
@@ -84,5 +97,8 @@ CREATE POLICY epi_delete ON public.evento_presupuesto_item
         )
     )
   );
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.evento_presupuesto_item TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE public.evento_presupuesto_item_id_seq TO authenticated;
 
 COMMIT;
