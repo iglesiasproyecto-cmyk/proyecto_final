@@ -276,16 +276,16 @@ export interface AulaCurso {
 
 // ── Presupuesto ──
 export interface PresupuestoItem {
-  id: number
+  idPresupuestoItem: number
   idEvento: number
   tipo: 'ingreso' | 'egreso'
   categoria: string
   descripcion: string | null
   montoPlaneado: number
   montoReal: number | null
-  createdBy: number | null
-  createdAt: string
-  updatedAt: string
+  creadoPor: number | null
+  creadoEn: string
+  actualizadoEn: string
 }
 
 export interface PresupuestoResumenEvento {
