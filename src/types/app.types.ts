@@ -274,6 +274,34 @@ export interface AulaCurso {
   tipo?: 'ministerio' | 'iglesia'
 }
 
+// ── Presupuesto ──
+export interface PresupuestoItem {
+  id: number
+  idEvento: number
+  tipo: 'ingreso' | 'egreso'
+  categoria: string
+  descripcion: string | null
+  montoPlaneado: number
+  montoReal: number | null
+  createdBy: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PresupuestoResumenEvento {
+  idEvento: number
+  nombreEvento: string
+  fechaInicio: string
+  idMinisterio: number | null
+  idSede: number | null
+  items: PresupuestoItem[]
+  ingresosPlaneados: number
+  ingresosReales: number
+  egresosPlaneados: number
+  egresosReales: number
+  balanceNeto: number
+}
+
 // ── Session ──
 export type RolClave = 'super_admin' | 'admin_iglesia' | 'admin_sede' | 'lider' | 'servidor'
 
