@@ -354,6 +354,9 @@ function FinanzasTab({
   finanzasMes,
   setFinanzasMes,
   setPresupuestoEvento,
+  rolActual,
+  liderMinisterioIds,
+  liderMinisterioNombres,
 }: {
   eventos: EventoEnriquecido[]
   ministerios: any[]
@@ -369,7 +372,29 @@ function FinanzasTab({
   finanzasMes: number
   setFinanzasMes: (value: number) => void
   setPresupuestoEvento: (evento: EventoEnriquecido | null) => void
+  rolActual: string
+  liderMinisterioIds: number[]
+  liderMinisterioNombres: { id: number; nombre: string }[]
 }) {
+  const isLider      = rolActual === 'lider'
+  const isAdminSede  = rolActual === 'admin_sede'
+  const isAdminIgle  = rolActual === 'admin_iglesia' || rolActual === 'super_admin'
+
+  // Role banner config
+  const roleBanner = (() => {
+    if (isLider) {
+      const nombres = liderMinisterioNombres.map(m => m.nombre).filter(Boolean)
+      const label = nombres.length > 0 ? nombres.join(' · ') : 'Tu ministerio'
+      return { icon: '👤', title: label, subtitle: 'Solo los eventos de tus ministerios', color: 'border-violet-500/20 bg-violet-500/5 text-violet-300' }
+    }
+    if (isAdminSede) return { icon: '🏢', title: 'Tu sede', subtitle: 'Todos los ministerios y eventos de tu sede', color: 'border-primary/20 bg-primary/5 text-primary' }
+    return { icon: '🏛️', title: 'Vista global de la iglesia', subtitle: 'Todas las sedes y ministerios', color: 'border-amber-500/20 bg-amber-500/5 text-amber-300' }
+  })()
+
+  // For lider: only show their ministerios in the dropdown
+  const ministeriosFiltro = isLider
+    ? ministerios.filter(m => liderMinisterioIds.includes(m.idMinisterio))
+    : ministerios
   const meses = [
     { value: 0, label: "Todos" },
     { value: 1, label: "Enero" }, { value: 2, label: "Febrero" }, { value: 3, label: "Marzo" },
@@ -382,6 +407,21 @@ function FinanzasTab({
 
   return (
     <div className="space-y-6">
+
+      {/* Role-contextual banner */}
+      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+        className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${roleBanner.color}`}>
+        <span className="text-lg">{roleBanner.icon}</span>
+        <div>
+          <p className="text-sm font-bold leading-tight">{roleBanner.title}</p>
+          <p className="text-[11px] opacity-70 mt-0.5">{roleBanner.subtitle}</p>
+        </div>
+        {isLider && liderMinisterioNombres.length > 1 && (
+          <span className="ml-auto text-[10px] font-semibold px-2 py-1 rounded-lg bg-violet-500/20 text-violet-300">
+            {liderMinisterioNombres.length} ministerios
+          </span>
+        )}
+      </motion.div>
 
       {/* KPI Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -450,17 +490,20 @@ function FinanzasTab({
       {/* Filters */}
       <div className="flex gap-2 flex-wrap items-center">
         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Filtrar</span>
-        <Select value={String(finanzasMinisterioFilter)} onValueChange={(v) => setFinanzasMinisterioFilter(Number(v))}>
-          <SelectTrigger className="h-8 bg-card/40 border-border/50 rounded-xl text-xs w-44">
-            <SelectValue placeholder="Todos los ministerios" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="0">Todos los ministerios</SelectItem>
-            {ministerios.map((m) => (
-              <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Show ministerio filter only when there are multiple options */}
+        {ministeriosFiltro.length > 1 && (
+          <Select value={String(finanzasMinisterioFilter)} onValueChange={(v) => setFinanzasMinisterioFilter(Number(v))}>
+            <SelectTrigger className="h-8 bg-card/40 border-border/50 rounded-xl text-xs w-44">
+              <SelectValue placeholder={isLider ? 'Todos tus ministerios' : 'Todos los ministerios'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">{isLider ? 'Todos tus ministerios' : 'Todos los ministerios'}</SelectItem>
+              {ministeriosFiltro.map((m) => (
+                <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre ?? m.nombreMinisterio}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select value={String(finanzasMes)} onValueChange={(v) => setFinanzasMes(Number(v))}>
           <SelectTrigger className="h-8 bg-card/40 border-border/50 rounded-xl text-xs w-32">
             <SelectValue />
@@ -599,9 +642,16 @@ export function EventsPage() {
     presupuestoFilters
   );
 
+  // Scope events by role before applying the ministerio filter
+  const eventosScope = (() => {
+    if (rolActual === 'lider') return eventos.filter(e => effectiveLiderIds.includes(e.idMinisterio ?? 0))
+    // admin_sede and admin_iglesia: trust RLS — eventos already scoped by backend
+    return eventos
+  })()
+
   const eventosParaResumen = finanzasMinisterioFilter
-    ? eventos.filter((e) => e.idMinisterio === finanzasMinisterioFilter)
-    : eventos;
+    ? eventosScope.filter((e) => e.idMinisterio === finanzasMinisterioFilter)
+    : eventosScope;
 
   const resumenEventos = buildResumen(
     eventosParaResumen.map((e) => ({
@@ -1066,7 +1116,7 @@ export function EventsPage() {
         {canSeeBudget && (
           <TabsContent value="finanzas" className="mt-0">
             <FinanzasTab
-              eventos={eventos}
+              eventos={eventosScope}
               ministerios={ministerios}
               resumenEventos={resumenEventos}
               totalIngresosPlaneados={totalIngresosPlaneados}
@@ -1080,6 +1130,9 @@ export function EventsPage() {
               finanzasMes={finanzasMes}
               setFinanzasMes={setFinanzasMes}
               setPresupuestoEvento={setPresupuestoEvento}
+              rolActual={rolActual ?? 'servidor'}
+              liderMinisterioIds={effectiveLiderIds}
+              liderMinisterioNombres={ministeriosDisponiblesParaCrear.map(m => ({ id: m.idMinisterio, nombre: m.nombreMinisterio ?? m.nombre ?? '' }))}
             />
           </TabsContent>
         )}
