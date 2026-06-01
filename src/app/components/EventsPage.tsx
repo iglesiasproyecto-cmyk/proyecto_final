@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { useParams } from "react-router";
 import { useEventosEnriquecidos, useDeleteEvento, useCreateEvento, useUpdateEvento } from "@/hooks/useEventos";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
@@ -19,10 +19,13 @@ import { Skeleton } from "./ui/skeleton";
 import { SedeMinisterioSelector } from "./ui/SedeMinisterioSelector";
 import {
   CalendarDays, Plus, MapPin, Clock, Globe, Users, Pencil, Trash2, Eye,
-  CheckCircle2, XCircle, PlayCircle, BookMarked, Church, ListTodo
+  CheckCircle2, XCircle, PlayCircle, BookMarked, Church, ListTodo, Wallet
 } from "lucide-react";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { toast } from "sonner";
+import { EventoPresupuestoDrawer } from "./EventoPresupuestoDrawer";
+import { usePresupuestoResumenIglesia } from "@/hooks/useEventoPresupuesto";
+import { buildResumen } from "@/services/evento-presupuesto.service";
 
 const estadoConfig: Record<string, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
   programado:  { label: "Programado",  color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",    dot: "bg-[#4682b4]",    icon: <BookMarked className="w-3 h-3" /> },
@@ -92,7 +95,7 @@ function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { fo
           }
           sedeReadOnly={form._sedeReadOnly ?? false}
           ministerioReadOnly={form._ministerioReadOnly ?? false}
-          allowNoMinisterio
+          allowNoMinisterio={form._allowNoMinisterio ?? true}
           allowGeneral={form._allowGeneral ?? false}
         />
       )}
@@ -144,10 +147,151 @@ function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { fo
   );
 }
 
+function FinanzasTab({
+  eventos,
+  ministerios,
+  resumenEventos,
+  totalIngresosPlaneados,
+  totalIngresosReales,
+  totalEgresosPlaneados,
+  totalEgresosReales,
+  totalBalanceNeto,
+  eventosConPresupuesto,
+  finanzasMinisterioFilter,
+  setFinanzasMinisterioFilter,
+  finanzasMes,
+  setFinanzasMes,
+  setPresupuestoEvento,
+}: {
+  eventos: EventoEnriquecido[]
+  ministerios: any[]
+  resumenEventos: ReturnType<typeof buildResumen>
+  totalIngresosPlaneados: number
+  totalIngresosReales: number
+  totalEgresosPlaneados: number
+  totalEgresosReales: number
+  totalBalanceNeto: number
+  eventosConPresupuesto: number
+  finanzasMinisterioFilter: number
+  setFinanzasMinisterioFilter: (value: number) => void
+  finanzasMes: number
+  setFinanzasMes: (value: number) => void
+  setPresupuestoEvento: (evento: EventoEnriquecido | null) => void
+}) {
+  const meses = [
+    { value: 0, label: "Todos" },
+    { value: 1, label: "Enero" }, { value: 2, label: "Febrero" }, { value: 3, label: "Marzo" },
+    { value: 4, label: "Abril" }, { value: 5, label: "Mayo" }, { value: 6, label: "Junio" },
+    { value: 7, label: "Julio" }, { value: 8, label: "Agosto" }, { value: 9, label: "Septiembre" },
+    { value: 10, label: "Octubre" }, { value: 11, label: "Noviembre" }, { value: 12, label: "Diciembre" },
+  ]
+
+  const fmt = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n)
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Ingresos plan.", value: fmt(totalIngresosPlaneados), sub: `Real: ${fmt(totalIngresosReales)}`, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+          { label: "Egresos plan.", value: fmt(totalEgresosPlaneados), sub: `Real: ${fmt(totalEgresosReales)}`, color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20" },
+          { label: "Balance neto", value: `${totalBalanceNeto >= 0 ? "+" : ""}${fmt(totalBalanceNeto)}`, sub: `Plan: ${fmt(totalIngresosPlaneados - totalEgresosPlaneados)}`, color: totalBalanceNeto >= 0 ? "text-emerald-400" : "text-rose-400", bg: "bg-primary/10 border-primary/20" },
+          { label: "Con presupuesto", value: `${eventosConPresupuesto} / ${eventos.length}`, sub: `${eventos.length - eventosConPresupuesto} sin asignar`, color: "text-foreground", bg: "bg-card/40 border-border/50" },
+        ].map((kpi) => (
+          <div key={kpi.label} className={`rounded-2xl border p-4 ${kpi.bg}`}>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{kpi.label}</p>
+            <p className={`text-lg font-bold ${kpi.color}`}>{kpi.value}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{kpi.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 flex-wrap">
+        <Select value={String(finanzasMinisterioFilter)} onValueChange={(v) => setFinanzasMinisterioFilter(Number(v))}>
+          <SelectTrigger className="h-9 bg-card/40 border-border/50 rounded-xl text-xs w-48">
+            <SelectValue placeholder="Todos los ministerios" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="0">Todos los ministerios</SelectItem>
+            {ministerios.map((m) => (
+              <SelectItem key={m.idMinisterio} value={String(m.idMinisterio)}>{m.nombre}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={String(finanzasMes)} onValueChange={(v) => setFinanzasMes(Number(v))}>
+          <SelectTrigger className="h-9 bg-card/40 border-border/50 rounded-xl text-xs w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {meses.map((m) => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        {resumenEventos.map((r) => {
+          const hasBudget = r.items.length > 0
+          const pct = r.ingresosPlaneados + r.egresosPlaneados > 0
+            ? Math.round(((r.ingresosReales + r.egresosReales) / (r.ingresosPlaneados + r.egresosPlaneados)) * 100)
+            : 0
+          const ev = eventos.find((e) => e.idEvento === r.idEvento)
+          if (!ev) return null
+          const nombreMinisterio = r.idMinisterio
+            ? ministerios.find((m) => m.idMinisterio === r.idMinisterio)?.nombre ?? "Ministerio"
+            : "Global"
+
+          return (
+            <div
+              key={r.idEvento}
+              onClick={() => setPresupuestoEvento(ev)}
+              className="bg-card/40 border border-border/50 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:border-primary/40 transition-colors group"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{r.nombreEvento}</p>
+                <p className="text-xs text-muted-foreground">{nombreMinisterio} · {new Date(r.fechaInicio).toLocaleDateString("es-CO")}</p>
+              </div>
+              {hasBudget ? (
+                <>
+                  <div className="text-right hidden sm:block">
+                    <p className="text-[10px] text-muted-foreground">Ingresos</p>
+                    <p className="text-sm font-semibold text-emerald-400">{fmt(r.ingresosReales)}</p>
+                  </div>
+                  <div className="text-right hidden sm:block">
+                    <p className="text-[10px] text-muted-foreground">Egresos</p>
+                    <p className="text-sm font-semibold text-rose-400">{fmt(r.egresosReales)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-muted-foreground">Balance</p>
+                    <p className={`text-sm font-bold ${r.balanceNeto >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {r.balanceNeto >= 0 ? "+" : ""}{fmt(r.balanceNeto)}
+                    </p>
+                  </div>
+                  <div className="w-14 hidden md:block">
+                    <p className="text-[10px] text-muted-foreground mb-1">Ejecutado</p>
+                    <div className="h-1.5 bg-border rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
+                    </div>
+                    <p className="text-[10px] text-primary mt-0.5">{pct}%</p>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-muted-foreground italic">Sin presupuesto</p>
+                  <span className="text-xs text-primary border border-primary/30 rounded-lg px-2 py-0.5 bg-primary/5">+ Agregar</span>
+                </div>
+              )}
+              <span className="text-muted-foreground/40 text-lg">›</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export function EventsPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
   const idIglesiaNum = Number(idIglesia) || undefined;
-  const { iglesiaActual, rolActual, usuarioActual } = useApp();
+  const { iglesiaActual, rolActual, usuarioActual, ministeriosDelUsuario } = useApp();
   const { data: eventos = [], isLoading } = useEventosEnriquecidos(idIglesiaNum);
   const { data: sedes = [] } = useSedesEnriquecidas(idIglesiaNum);
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(idIglesiaNum);
@@ -160,43 +304,128 @@ export function EventsPage() {
   const [editEvento, setEditEvento] = useState<EventoEnriquecido | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventoEnriquecido | null>(null);
   const [confirmDeleteEvento, setConfirmDeleteEvento] = useState<{ isOpen: boolean; id: number; nombre: string }>({ isOpen: false, id: 0, nombre: "" });
+  const [presupuestoEvento, setPresupuestoEvento] = useState<EventoEnriquecido | null>(null);
+  const [finanzasMinisterioFilter, setFinanzasMinisterioFilter] = useState<number>(0);
+  const [finanzasMes, setFinanzasMes] = useState<number>(new Date().getMonth() + 1);
+  const [finanzasAnio] = useState<number>(new Date().getFullYear());
 
-  const [createForm, setCreateForm] = useState({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
+  const [createForm, setCreateForm] = useState<any>({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
   const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", estado: "programado" as string, idSede: 0, idMinisterio: 0 });
 
   const canManageEvents = rolActual === "lider" || rolActual === "admin_iglesia" || rolActual === "admin_sede" || rolActual === "super_admin";
+  const canSeeBudget = rolActual !== "servidor";
+
+  const presupuestoFilters = {
+    idMinisterio: finanzasMinisterioFilter || null,
+    mes: finanzasMes || null,
+    anio: finanzasAnio,
+  };
+  const { data: presupuestoItems = [] } = usePresupuestoResumenIglesia(
+    canSeeBudget ? idIglesiaNum : undefined,
+    presupuestoFilters
+  );
+
+  const resumenEventos = buildResumen(
+    eventos.map((e) => ({
+      idEvento: e.idEvento,
+      nombre: e.nombre,
+      fechaInicio: e.fechaInicio,
+      idMinisterio: e.idMinisterio ?? null,
+      idSede: e.idSede ?? null,
+    })),
+    presupuestoItems
+  );
+
+  const totalIngresosPlaneados = resumenEventos.reduce((s, r) => s + r.ingresosPlaneados, 0);
+  const totalIngresosReales = resumenEventos.reduce((s, r) => s + r.ingresosReales, 0);
+  const totalEgresosPlaneados = resumenEventos.reduce((s, r) => s + r.egresosPlaneados, 0);
+  const totalEgresosReales = resumenEventos.reduce((s, r) => s + r.egresosReales, 0);
+  const totalBalanceNeto = totalIngresosReales - totalEgresosReales;
+  const eventosConPresupuesto = resumenEventos.filter((r) => r.items.length > 0).length;
 
   const isAdminSede = rolActual === "admin_sede";
   const isLider = rolActual === "lider";
-
-  const sedePreFill = isAdminSede || isLider
-    ? (sedes.length === 1 ? sedes[0].idSede : 0)
-    : 0;
 
   const [activeMinisterioFilter] = useState<number>(0);
   const canCreateInContext = useCanManageMinisterio(activeMinisterioFilter || null);
   const canShowCreateButton = canManageEvents && (activeMinisterioFilter === 0 || canCreateInContext);
 
-  // Count how many ministerios the current user leads (for conditional display)
-  const userLeadMinisterios = usuarioMinisterioIds.length;
+  // Use ministeriosDelUsuario from context (available immediately at login) for reliable auto-fill
+  const liderMinisterios = isLider ? ministeriosDelUsuario : [];
+  const liderMinisterioIdsFromContext = liderMinisterios.map(m => m.id).filter(Boolean) as number[];
+  // Fall back to async query IDs if context is empty
+  const effectiveLiderIds = liderMinisterioIdsFromContext.length > 0 ? liderMinisterioIdsFromContext : (isLider ? usuarioMinisterioIds : []);
+  const userLeadMinisterios = liderMinisterios.length || (isLider ? usuarioMinisterioIds.length : 0);
   const hasMultipleMinisterios = userLeadMinisterios >= 2;
-  const shouldShowSelectorFields = !isLider || hasMultipleMinisterios || rolActual === "admin_iglesia" || rolActual === "super_admin" || rolActual === "admin_sede";
+  const shouldShowSelectorFields = true;
 
-  // Get the first ministerio if user leads exactly one
-  const singleUserMinisterio = isLider && userLeadMinisterios === 1
-    ? ministerios.find(m => m.idMinisterio === usuarioMinisterioIds[0])
-    : null;
+  // Full ministerio objects (with idSede) from async query, filtered to user's ministerios
+  const ministeriosDisponiblesParaCrearAsync = isLider
+    ? ministerios.filter((m) => effectiveLiderIds.includes(m.idMinisterio))
+    : ministerios;
 
-  // DEBUG
-  debugLog('EventsPage', 'rolActual:', rolActual, 'usuarioActual:', usuarioActual, 'usuarioMinisterioIds:', usuarioMinisterioIds, 'shouldShowSelectorFields:', shouldShowSelectorFields);
+  // Fallback from context when async data hasn't loaded yet (avoids empty dropdown on open)
+  const ministeriosDesdeContexto = isLider && ministeriosDisponiblesParaCrearAsync.length === 0
+    ? liderMinisterios.map(m => ({
+        idMinisterio: m.id,
+        nombre: m.nombre,
+        idSede: m.idSede,
+        cantidadMiembros: 0,
+        sedeNombre: m.sedeNombre,
+        liderNombre: '',
+        descripcion: null,
+        estado: 'activo' as const,
+        creadoEn: '',
+        actualizadoEn: null,
+      }))
+    : [];
+  const ministeriosDisponiblesParaCrear = ministeriosDisponiblesParaCrearAsync.length > 0
+    ? ministeriosDisponiblesParaCrearAsync
+    : ministeriosDesdeContexto;
 
-  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: sedePreFill, idMinisterio: singleUserMinisterio?.idMinisterio ?? 0, _sedeReadOnly: isAdminSede || isLider, _ministerioReadOnly: isLider, _allowGeneral: rolActual === "super_admin" || rolActual === "admin_iglesia", _hideSelectorFields: !shouldShowSelectorFields } as any);
+  // Sede IDs where the lider leads a ministerio (from context, always available)
+  const liderSedeIds = new Set(liderMinisterios.map(m => m.idSede).filter(Boolean));
+  const liderHasSingleSede = isLider && liderSedeIds.size === 1;
 
-  useEffect(() => {
+  // Sedes for selector: liders only see their own sedes; fallback from context if async not loaded
+  const sedesParaSelector = isLider
+    ? (sedes.length > 0
+        ? sedes.filter(s => liderSedeIds.has(s.idSede))
+        : Array.from(new Map(liderMinisterios.map(m => [m.idSede, m])).values()).map(m => ({
+            idSede: m.idSede,
+            nombre: m.sedeNombre,
+            direccion: null as null,
+            idCiudad: 0,
+            idIglesia: 0,
+            estado: 'activa' as const,
+            creadoEn: '',
+            actualizadoEn: '',
+          }))
+      )
+    : sedes;
+
+  // Pre-fill sede and ministerio: prefer full async data (has sede name), fall back to context
+  const firstFullMinisterio = ministeriosDisponiblesParaCrear[0] ?? null;
+  const firstContextMinisterio = liderMinisterios[0] ?? null;
+  const leaderHasSingleMinisterio = isLider && userLeadMinisterios === 1;
+
+  // Primitive IDs for stable dep tracking
+  const firstLiderMinisterioId = firstFullMinisterio?.idMinisterio ?? firstContextMinisterio?.id ?? 0;
+  const firstLiderSedeId = firstFullMinisterio?.idSede ?? firstContextMinisterio?.idSede
+    ?? (isAdminSede || isLider ? (sedes.length === 1 ? sedes[0].idSede : 0) : 0);
+
+  // Sede is read-only when lider has only 1 sede (regardless of number of ministerios)
+  const liderSedeReadOnly = isAdminSede || leaderHasSingleMinisterio || liderHasSingleSede;
+
+  debugLog('EventsPage', 'rolActual:', rolActual, 'liderMinisterios:', liderMinisterios, 'firstLiderMinisterioId:', firstLiderMinisterioId, 'firstLiderSedeId:', firstLiderSedeId, 'shouldShowSelectorFields:', shouldShowSelectorFields);
+
+  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: firstLiderSedeId, idMinisterio: firstLiderMinisterioId, _sedeReadOnly: liderSedeReadOnly, _ministerioReadOnly: leaderHasSingleMinisterio, _allowNoMinisterio: !isLider, _allowGeneral: rolActual === "super_admin" || rolActual === "admin_iglesia", _hideSelectorFields: !shouldShowSelectorFields } as any);
+
+  useLayoutEffect(() => {
     if (showCreate) {
       resetCreateForm();
     }
-  }, [showCreate, sedePreFill, singleUserMinisterio, isAdminSede, isLider, shouldShowSelectorFields, rolActual]);
+  }, [showCreate, firstLiderMinisterioId, firstLiderSedeId, liderSedeReadOnly, isLider, shouldShowSelectorFields, rolActual]);
 
   const openEditDialog = (ev: EventoEnriquecido) => {
     setEditEvento(ev);
@@ -453,80 +682,110 @@ export function EventsPage() {
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
 
-      {/* ── Header ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 overflow-hidden"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-            <CalendarDays className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Operaciones</p>
-            <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">
-              Eventos
-            </h1>
-            <p className="text-foreground text-xs sm:text-sm mt-1">Agenda y gestiona los eventos de la iglesia</p>
-          </div>
-        </div>
-        {canShowCreateButton && (
-          <Button
-            onClick={() => setShowCreate(true)}
-            disabled={!iglesiaActual}
-            className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all"
+      <Tabs defaultValue="eventos" className="w-full">
+        <TabsList className="bg-card/40 backdrop-blur-md border border-border/50 p-1 rounded-xl mb-5">
+          <TabsTrigger value="eventos" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-[#1a7fa8] data-[state=active]:text-white data-[state=active]:shadow-md">
+            Eventos
+          </TabsTrigger>
+          {canSeeBudget && (
+            <TabsTrigger value="finanzas" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-[#1a7fa8] data-[state=active]:text-white data-[state=active]:shadow-md">
+              <Wallet className="w-3.5 h-3.5 mr-1.5" /> Finanzas
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="eventos" className="mt-0 space-y-5">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 overflow-hidden"
           >
-            <Plus className="w-4 h-4 mr-1.5" /> Nuevo Evento
-          </Button>
-        )}
-      </motion.div>
-
-      {/* ── Stats row ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {stats.map((s, idx) => (
-          <AnimatedCard key={s.label} index={idx} className="p-4 group">
-            <div className="flex justify-between items-start mb-3">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg text-white`}>
-                <CalendarDays className="w-5 h-5" />
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+                <CalendarDays className="w-8 h-8 text-white" />
               </div>
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-[10px] py-0 tracking-widest uppercase">KPI</Badge>
+              <div>
+                <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Operaciones</p>
+                <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Eventos</h1>
+                <p className="text-foreground text-xs sm:text-sm mt-1">Agenda y gestiona los eventos de la iglesia</p>
+              </div>
             </div>
-            <div>
-              <p className="text-4xl font-light tracking-tight text-foreground">{s.value}</p>
-              <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{s.label}</p>
-            </div>
-          </AnimatedCard>
-        ))}
-      </div>
+            {canShowCreateButton && (
+              <Button
+                onClick={() => setShowCreate(true)}
+                disabled={!iglesiaActual}
+                className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all"
+              >
+                <Plus className="w-4 h-4 mr-1.5" /> Nuevo Evento
+              </Button>
+            )}
+          </motion.div>
 
-
-      {/* ── Tabs + Events ── */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <Tabs defaultValue="todos">
-          <TabsList className="bg-card/40 backdrop-blur-md border border-border/50 p-1 rounded-xl w-fit flex mb-5">
-            <TabsTrigger value="todos" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-[#1a7fa8] data-[state=active]:text-white data-[state=active]:shadow-md">Todos ({eventos.length})</TabsTrigger>
-            <TabsTrigger value="global" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">
-              <Globe className="w-3.5 h-3.5 mr-1.5" /> Globales
-            </TabsTrigger>
-            <TabsTrigger value="ministerio" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">
-              <Users className="w-3.5 h-3.5 mr-1.5" /> Ministeriales
-            </TabsTrigger>
-          </TabsList>
-
-          <AnimatePresence>
-            {["todos", "global", "ministerio"].map((tab) => (
-              <TabsContent key={tab} value={tab} className="outline-none space-y-6 mt-0">
-                {renderEventsGrid(
-                  tab === "todos" ? eventos :
-                  tab === "global" ? eventos.filter(e => !e.idMinisterio) :
-                  eventos.filter(e => !!e.idMinisterio)
-                )}
-              </TabsContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {stats.map((s, idx) => (
+              <AnimatedCard key={s.label} index={idx} className="p-4 group">
+                <div className="flex justify-between items-start mb-3">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg text-white`}>
+                    <CalendarDays className="w-5 h-5" />
+                  </div>
+                  <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-[10px] py-0 tracking-widest uppercase">KPI</Badge>
+                </div>
+                <div>
+                  <p className="text-4xl font-light tracking-tight text-foreground">{s.value}</p>
+                  <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">{s.label}</p>
+                </div>
+              </AnimatedCard>
             ))}
-          </AnimatePresence>
-        </Tabs>
-      </motion.div>
+          </div>
+
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <Tabs defaultValue="todos">
+              <TabsList className="bg-card/40 backdrop-blur-md border border-border/50 p-1 rounded-xl w-fit flex mb-5">
+                <TabsTrigger value="todos" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-[#1a7fa8] data-[state=active]:text-white data-[state=active]:shadow-md">Todos ({eventos.length})</TabsTrigger>
+                <TabsTrigger value="global" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <Globe className="w-3.5 h-3.5 mr-1.5" /> Globales
+                </TabsTrigger>
+                <TabsTrigger value="ministerio" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <Users className="w-3.5 h-3.5 mr-1.5" /> Ministeriales
+                </TabsTrigger>
+              </TabsList>
+
+              <AnimatePresence>
+                {["todos", "global", "ministerio"].map((tab) => (
+                  <TabsContent key={tab} value={tab} className="outline-none space-y-6 mt-0">
+                    {renderEventsGrid(
+                      tab === "todos" ? eventos :
+                      tab === "global" ? eventos.filter((e) => !e.idMinisterio) :
+                      eventos.filter((e) => !!e.idMinisterio)
+                    )}
+                  </TabsContent>
+                ))}
+              </AnimatePresence>
+            </Tabs>
+          </motion.div>
+        </TabsContent>
+
+        {canSeeBudget && (
+          <TabsContent value="finanzas" className="mt-0">
+            <FinanzasTab
+              eventos={eventos}
+              ministerios={ministerios}
+              resumenEventos={resumenEventos}
+              totalIngresosPlaneados={totalIngresosPlaneados}
+              totalIngresosReales={totalIngresosReales}
+              totalEgresosPlaneados={totalEgresosPlaneados}
+              totalEgresosReales={totalEgresosReales}
+              totalBalanceNeto={totalBalanceNeto}
+              eventosConPresupuesto={eventosConPresupuesto}
+              finanzasMinisterioFilter={finanzasMinisterioFilter}
+              setFinanzasMinisterioFilter={setFinanzasMinisterioFilter}
+              finanzasMes={finanzasMes}
+              setFinanzasMes={setFinanzasMes}
+              setPresupuestoEvento={setPresupuestoEvento}
+            />
+          </TabsContent>
+        )}
+      </Tabs>
 
       {/* ── Create Dialog ── */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
@@ -537,7 +796,7 @@ export function EventsPage() {
             </DialogTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Completa los datos para programar un nuevo evento.</p>
           </DialogHeader>
-          <EventDialogFields form={createForm} setForm={setCreateForm} sedes={sedes} ministerios={ministerios} />
+          <EventDialogFields form={createForm} setForm={setCreateForm} sedes={sedesParaSelector} ministerios={ministeriosDisponiblesParaCrear} />
           <DialogFooter className="border-t border-border/50 pt-4 mt-2">
             <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
             <Button className="rounded-xl" onClick={handleCreateEvento} disabled={createEventoMutation.isPending}>
@@ -646,6 +905,11 @@ export function EventsPage() {
           })()}
         </DialogContent>
       </Dialog>
+
+      <EventoPresupuestoDrawer
+        evento={presupuestoEvento}
+        onClose={() => setPresupuestoEvento(null)}
+      />
 
       <ConfirmDialog
         isOpen={confirmDeleteEvento.isOpen}
