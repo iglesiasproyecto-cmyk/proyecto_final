@@ -21,7 +21,7 @@ import { useApp } from "@/app/store/AppContext"
 
 const CATEGORIAS: Record<"ingreso" | "egreso", string[]> = {
   ingreso: ["Ofrenda", "Aporte voluntario", "Venta de entradas", "Patrocinio", "Otro (especificar)"],
-  egreso: ["Sonido", "Decoracion", "Comida/Refrigerio", "Transporte", "Material", "Publicidad", "Otro (especificar)"],
+  egreso: ["Sonido", "Decoración", "Comida/Refrigerio", "Transporte", "Material", "Publicidad", "Otro (especificar)"],
 }
 
 const EMPTY_FORM = { categoriaSelect: "", categoriaCustom: "", descripcion: "", montoPlaneado: "", montoReal: "" }
@@ -114,7 +114,7 @@ function ItemsSection({
         className="w-full border border-dashed border-primary/40 rounded-xl p-3 text-sm text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
       >
         <Plus className="w-4 h-4" />
-        Agregar item de {tipo}
+        + Agregar ítem
       </button>
 
       {filtered.length > 0 && (
