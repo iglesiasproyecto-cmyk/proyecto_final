@@ -151,72 +151,190 @@ function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { fo
 type QuickBudgetItem = {
   localId: string
   tipo: 'ingreso' | 'egreso'
-  categoria: string
+  categoria: string      // predefined key OR '__custom__'
+  customCategoria: string // used when categoria === '__custom__'
   montoPlaneado: string
 }
 
 const CATS_INGRESO = ['Ofrenda', 'Aporte voluntario', 'Venta de entradas', 'Patrocinio']
 const CATS_EGRESO  = ['Sonido', 'Decoración', 'Comida/Refrigerio', 'Transporte', 'Material', 'Publicidad']
 
+/** Returns the resolved category name for saving */
+export function resolveCategoria(item: QuickBudgetItem): string {
+  return item.categoria === '__custom__' ? (item.customCategoria.trim() || 'Otro') : item.categoria
+}
+
+function MontoInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  // Allow free typing of numbers; strip non-numeric except decimal comma/dot
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^0-9]/g, '')
+    onChange(raw)
+  }
+  const display = value ? new Intl.NumberFormat('es-CO').format(Number(value)) : ''
+  return (
+    <div className="relative">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none select-none">$</span>
+      <input
+        inputMode="numeric"
+        placeholder={placeholder ?? "0"}
+        value={display}
+        onChange={handleChange}
+        className="w-full pl-6 pr-3 h-10 bg-background/50 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-colors"
+      />
+    </div>
+  )
+}
+
 function BudgetQuickAdd({ items, setItems }: { items: QuickBudgetItem[]; setItems: (v: QuickBudgetItem[]) => void }) {
+  const [mode, setMode] = useState<'total' | 'categorias'>('total')
+  const [totalIngresos, setTotalIngresos] = useState('')
+  const [totalEgresos, setTotalEgresos]   = useState('')
+
+  // Sync total mode values back to items array so parent can read them
+  useEffect(() => {
+    if (mode === 'total') {
+      const newItems: QuickBudgetItem[] = []
+      if (totalIngresos) newItems.push({ localId: 'total-ingreso', tipo: 'ingreso', categoria: 'General', customCategoria: '', montoPlaneado: totalIngresos })
+      if (totalEgresos)  newItems.push({ localId: 'total-egreso',  tipo: 'egreso',  categoria: 'General', customCategoria: '', montoPlaneado: totalEgresos })
+      setItems(newItems)
+    }
+  }, [mode, totalIngresos, totalEgresos])
+
   const addItem = (tipo: 'ingreso' | 'egreso') =>
-    setItems([...items, { localId: Math.random().toString(36).slice(2), tipo, categoria: '', montoPlaneado: '' }])
+    setItems([...items, { localId: Math.random().toString(36).slice(2), tipo, categoria: '', customCategoria: '', montoPlaneado: '' }])
   const remove = (id: string) => setItems(items.filter(i => i.localId !== id))
   const update = (id: string, field: keyof QuickBudgetItem, value: string) =>
     setItems(items.map(i => i.localId === id ? { ...i, [field]: value } : i))
 
-  const ingresos = items.filter(i => i.tipo === 'ingreso')
-  const egresos  = items.filter(i => i.tipo === 'egreso')
+  const catItems = items.filter(i => i.localId !== 'total-ingreso' && i.localId !== 'total-egreso')
+  const catIngresos = catItems.filter(i => i.tipo === 'ingreso')
+  const catEgresos  = catItems.filter(i => i.tipo === 'egreso')
 
-  const Section = ({ tipo, list }: { tipo: 'ingreso' | 'egreso'; list: QuickBudgetItem[] }) => (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className={`text-[10px] font-black uppercase tracking-[0.18em] ${tipo === 'ingreso' ? 'text-emerald-400' : 'text-rose-400'}`}>
-          {tipo === 'ingreso' ? '↑ Ingresos' : '↓ Egresos'}
-        </span>
-        <button onClick={() => addItem(tipo)} className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors
-          ${tipo === 'ingreso' ? 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10' : 'border-rose-500/30 text-rose-400 hover:bg-rose-500/10'}`}>
-          <Plus className="w-3 h-3" /> Agregar
-        </button>
-      </div>
-      {list.length === 0 && (
-        <p className="text-[11px] text-muted-foreground/50 italic pl-1">Sin ítems — opcional</p>
-      )}
-      <AnimatePresence>
-        {list.map(item => (
-          <motion.div key={item.localId} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-            className="grid grid-cols-[1fr_110px_24px] gap-2 items-center">
-            <Select value={item.categoria} onValueChange={v => update(item.localId, 'categoria', v)}>
-              <SelectTrigger className="h-9 bg-background/50 border-white/10 rounded-xl text-xs">
-                <SelectValue placeholder="Categoría" />
-              </SelectTrigger>
-              <SelectContent>
-                {(tipo === 'ingreso' ? CATS_INGRESO : CATS_EGRESO).map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-                <SelectItem value="Otro">Otro</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input type="number" min={0} step={1000} placeholder="$ Monto" value={item.montoPlaneado}
-              onChange={e => update(item.localId, 'montoPlaneado', e.target.value)}
-              className="h-9 bg-background/50 border-white/10 rounded-xl text-xs" />
-            <button onClick={() => remove(item.localId)} className="text-muted-foreground/40 hover:text-destructive transition-colors">
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  )
+  const totalPlaneado = (mode === 'total'
+    ? (Number(totalIngresos) || 0) + (Number(totalEgresos) || 0)
+    : catItems.reduce((s, i) => s + (Number(i.montoPlaneado) || 0), 0))
+  const fmt = (n: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
+
+  const ItemCard = ({ item }: { item: QuickBudgetItem }) => {
+    const cats = item.tipo === 'ingreso' ? CATS_INGRESO : CATS_EGRESO
+    return (
+      <motion.div key={item.localId} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+        className={`rounded-xl border p-3 space-y-2.5 ${item.tipo === 'ingreso' ? 'border-emerald-500/15 bg-emerald-500/5' : 'border-rose-500/15 bg-rose-500/5'}`}>
+        <div className="flex items-center justify-between">
+          <span className={`text-[9px] font-black uppercase tracking-widest ${item.tipo === 'ingreso' ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {item.tipo === 'ingreso' ? '↑ Ingreso' : '↓ Egreso'}
+          </span>
+          <button onClick={() => remove(item.localId)} className="text-muted-foreground/40 hover:text-destructive transition-colors p-0.5">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        {/* Category selector */}
+        <div className="space-y-1.5">
+          <Select value={item.categoria} onValueChange={v => update(item.localId, 'categoria', v)}>
+            <SelectTrigger className="h-9 bg-background/60 border-white/10 rounded-xl text-xs">
+              <SelectValue placeholder="Selecciona categoría..." />
+            </SelectTrigger>
+            <SelectContent>
+              {cats.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              <SelectItem value="__custom__">✏️ Categoría personalizada</SelectItem>
+            </SelectContent>
+          </Select>
+          {item.categoria === '__custom__' && (
+            <input
+              autoFocus
+              placeholder="Escribe el nombre de la categoría..."
+              value={item.customCategoria}
+              onChange={e => update(item.localId, 'customCategoria', e.target.value)}
+              className="w-full px-3 h-9 bg-background/60 border border-white/10 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-colors"
+            />
+          )}
+        </div>
+        {/* Amount */}
+        <MontoInput value={item.montoPlaneado} onChange={v => update(item.localId, 'montoPlaneado', v)} placeholder="Monto planeado" />
+      </motion.div>
+    )
+  }
 
   return (
-    <div className="space-y-5 py-1">
-      <div className="bg-primary/5 border border-primary/20 rounded-2xl px-4 py-3">
-        <p className="text-xs text-primary font-medium">Presupuesto inicial <span className="font-normal text-muted-foreground">— opcional, puedes añadir más después</span></p>
+    <div className="space-y-4 py-1">
+      {/* Mode toggle */}
+      <div className="flex gap-1 p-1 bg-card/40 border border-border/50 rounded-xl">
+        {(['total', 'categorias'] as const).map(m => (
+          <button key={m} onClick={() => {
+            setMode(m)
+            if (m === 'categorias') setItems(catItems) // keep only category items
+          }}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${mode === m ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
+            {m === 'total' ? '💰 Monto total' : '📋 Por categorías'}
+          </button>
+        ))}
       </div>
-      <Section tipo="ingreso" list={ingresos} />
-      <div className="border-t border-border/30" />
-      <Section tipo="egreso"  list={egresos}  />
+
+      {mode === 'total' ? (
+        <div className="space-y-3">
+          <p className="text-[11px] text-muted-foreground/60 italic">Ingresa el monto global. Podrás desglosarlo por categoría después.</p>
+          <div className="space-y-3">
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-400 block mb-1.5">↑ Total ingresos esperados</label>
+              <MontoInput value={totalIngresos} onChange={setTotalIngresos} placeholder="Ej. 500000" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-400 block mb-1.5">↓ Total egresos esperados</label>
+              <MontoInput value={totalEgresos} onChange={setTotalEgresos} placeholder="Ej. 300000" />
+            </div>
+          </div>
+          {(totalIngresos || totalEgresos) && (
+            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+              className={`rounded-xl border px-4 py-2.5 flex items-center justify-between ${(Number(totalIngresos) || 0) >= (Number(totalEgresos) || 0) ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-rose-500/20 bg-rose-500/5'}`}>
+              <span className="text-xs text-muted-foreground">Balance estimado</span>
+              <span className={`text-sm font-bold ${(Number(totalIngresos) || 0) >= (Number(totalEgresos) || 0) ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {(Number(totalIngresos) || 0) - (Number(totalEgresos) || 0) >= 0 ? '+' : ''}{fmt((Number(totalIngresos) || 0) - (Number(totalEgresos) || 0))}
+              </span>
+            </motion.div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Ingresos section */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-400">↑ Ingresos</span>
+              <button onClick={() => addItem('ingreso')} className="text-[10px] flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition-colors">
+                <Plus className="w-3 h-3" /> Agregar
+              </button>
+            </div>
+            {catIngresos.length === 0
+              ? <p className="text-[11px] text-muted-foreground/40 italic pl-1">Sin ítems de ingreso</p>
+              : <AnimatePresence>{catIngresos.map(item => <ItemCard key={item.localId} item={item} />)}</AnimatePresence>
+            }
+          </div>
+
+          <div className="border-t border-border/30" />
+
+          {/* Egresos section */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-400">↓ Egresos</span>
+              <button onClick={() => addItem('egreso')} className="text-[10px] flex items-center gap-1 px-2.5 py-1 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-colors">
+                <Plus className="w-3 h-3" /> Agregar
+              </button>
+            </div>
+            {catEgresos.length === 0
+              ? <p className="text-[11px] text-muted-foreground/40 italic pl-1">Sin ítems de egreso</p>
+              : <AnimatePresence>{catEgresos.map(item => <ItemCard key={item.localId} item={item} />)}</AnimatePresence>
+            }
+          </div>
+        </div>
+      )}
+
+      {/* Running total */}
+      {totalPlaneado > 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          className="flex items-center justify-between pt-2 border-t border-border/30 text-xs">
+          <span className="text-muted-foreground">Total presupuesto</span>
+          <span className="font-bold text-foreground">{fmt(totalPlaneado)}</span>
+        </motion.div>
+      )}
     </div>
   )
 }
@@ -613,7 +731,10 @@ export function EventsPage() {
       toast.error('Como lider debes seleccionar un ministerio para crear el evento');
       return;
     }
-    const validBudgetItems = quickBudgetItems.filter(i => i.categoria && parseFloat(i.montoPlaneado) > 0);
+    const validBudgetItems = quickBudgetItems.filter(i => {
+      const cat = resolveCategoria(i)
+      return cat && parseFloat(i.montoPlaneado) > 0
+    });
     createEventoMutation.mutate(
       { nombre: createForm.nombre.trim(), descripcion: createForm.descripcion.trim() || null, tipoEventoTexto: createForm.tipoEventoTexto.trim() || null, fechaInicio: createForm.fechaInicio, fechaFin: createForm.fechaFin, idIglesia: idIglesiaNum ?? iglesiaActual?.id ?? 0, idSede: createForm.idSede || null, idMinisterio: createForm.idMinisterio || null },
       {
@@ -622,7 +743,7 @@ export function EventsPage() {
           if (newId && validBudgetItems.length > 0) {
             validBudgetItems.forEach(item => {
               const payload: CreateItemPayload = {
-                idEvento: newId, tipo: item.tipo, categoria: item.categoria,
+                idEvento: newId, tipo: item.tipo, categoria: resolveCategoria(item),
                 montoPlaneado: parseFloat(item.montoPlaneado), creadoPor: usuarioActual?.idUsuario ?? null,
               };
               createPresupuestoItem.mutate(payload);
