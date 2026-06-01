@@ -114,7 +114,7 @@ function ItemsSection({
         className="w-full border border-dashed border-primary/40 rounded-xl p-3 text-sm text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
       >
         <Plus className="w-4 h-4" />
-        + Agregar ítem
+        Agregar ítem
       </button>
 
       {filtered.length > 0 && (
@@ -128,7 +128,7 @@ function ItemsSection({
             <span className={`font-semibold ${tipo === "ingreso" ? "text-emerald-400" : "text-rose-400"}`}>{fmt(totalReal)}</span>
           </div>
           <div className="flex justify-between items-center pt-1 border-t border-border/50">
-            <span className="text-muted-foreground text-xs">Ejecucion</span>
+            <span className="text-muted-foreground text-xs">Ejecución</span>
             <span className="font-bold text-primary">{pct}%</span>
           </div>
         </div>
@@ -263,7 +263,7 @@ export function EventoPresupuestoDrawer({
         <DialogContent className="sm:max-w-md rounded-2xl bg-card/95 backdrop-blur-2xl border-white/10">
           <DialogHeader>
             <DialogTitle className="text-base font-bold">
-              {editingItem ? "Editar item" : `Agregar ${activeTab}`}
+              {editingItem ? "Editar ítem" : `Agregar ${activeTab}`}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-1">

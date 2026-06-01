@@ -195,7 +195,7 @@ function FinanzasTab({
           { label: "Ingresos plan.", value: fmt(totalIngresosPlaneados), sub: `Real: ${fmt(totalIngresosReales)}`, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
           { label: "Egresos plan.", value: fmt(totalEgresosPlaneados), sub: `Real: ${fmt(totalEgresosReales)}`, color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20" },
           { label: "Balance neto", value: `${totalBalanceNeto >= 0 ? "+" : ""}${fmt(totalBalanceNeto)}`, sub: `Plan: ${fmt(totalIngresosPlaneados - totalEgresosPlaneados)}`, color: totalBalanceNeto >= 0 ? "text-emerald-400" : "text-rose-400", bg: "bg-primary/10 border-primary/20" },
-          { label: "Con presupuesto", value: `${eventosConPresupuesto} / ${eventos.length}`, sub: `${eventos.length - eventosConPresupuesto} sin asignar`, color: "text-foreground", bg: "bg-card/40 border-border/50" },
+          { label: "Con presupuesto", value: `${eventosConPresupuesto} / ${resumenEventos.length}`, sub: `${resumenEventos.length - eventosConPresupuesto} sin asignar`, color: "text-foreground", bg: "bg-card/40 border-border/50" },
         ].map((kpi) => (
           <div key={kpi.label} className={`rounded-2xl border p-4 ${kpi.bg}`}>
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{kpi.label}</p>
@@ -325,8 +325,12 @@ export function EventsPage() {
     presupuestoFilters
   );
 
+  const eventosParaResumen = finanzasMinisterioFilter
+    ? eventos.filter((e) => e.idMinisterio === finanzasMinisterioFilter)
+    : eventos;
+
   const resumenEventos = buildResumen(
-    eventos.map((e) => ({
+    eventosParaResumen.map((e) => ({
       idEvento: e.idEvento,
       nombre: e.nombre,
       fechaInicio: e.fechaInicio,
