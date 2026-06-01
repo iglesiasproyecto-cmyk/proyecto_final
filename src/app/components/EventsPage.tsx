@@ -24,8 +24,8 @@ import {
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { toast } from "sonner";
 import { EventoPresupuestoDrawer } from "./EventoPresupuestoDrawer";
-import { usePresupuestoResumenIglesia } from "@/hooks/useEventoPresupuesto";
-import { buildResumen } from "@/services/evento-presupuesto.service";
+import { usePresupuestoResumenIglesia, useCreatePresupuestoItem } from "@/hooks/useEventoPresupuesto";
+import { buildResumen, type CreateItemPayload } from "@/services/evento-presupuesto.service";
 
 const estadoConfig: Record<string, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
   programado:  { label: "Programado",  color: "bg-[#4682b4]/10 text-[#4682b4] border-[#4682b4]/20",    dot: "bg-[#4682b4]",    icon: <BookMarked className="w-3 h-3" /> },
@@ -147,6 +147,80 @@ function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { fo
   );
 }
 
+// ── Quick budget item type (used only during event creation) ──────────────────
+type QuickBudgetItem = {
+  localId: string
+  tipo: 'ingreso' | 'egreso'
+  categoria: string
+  montoPlaneado: string
+}
+
+const CATS_INGRESO = ['Ofrenda', 'Aporte voluntario', 'Venta de entradas', 'Patrocinio']
+const CATS_EGRESO  = ['Sonido', 'Decoración', 'Comida/Refrigerio', 'Transporte', 'Material', 'Publicidad']
+
+function BudgetQuickAdd({ items, setItems }: { items: QuickBudgetItem[]; setItems: (v: QuickBudgetItem[]) => void }) {
+  const addItem = (tipo: 'ingreso' | 'egreso') =>
+    setItems([...items, { localId: Math.random().toString(36).slice(2), tipo, categoria: '', montoPlaneado: '' }])
+  const remove = (id: string) => setItems(items.filter(i => i.localId !== id))
+  const update = (id: string, field: keyof QuickBudgetItem, value: string) =>
+    setItems(items.map(i => i.localId === id ? { ...i, [field]: value } : i))
+
+  const ingresos = items.filter(i => i.tipo === 'ingreso')
+  const egresos  = items.filter(i => i.tipo === 'egreso')
+
+  const Section = ({ tipo, list }: { tipo: 'ingreso' | 'egreso'; list: QuickBudgetItem[] }) => (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className={`text-[10px] font-black uppercase tracking-[0.18em] ${tipo === 'ingreso' ? 'text-emerald-400' : 'text-rose-400'}`}>
+          {tipo === 'ingreso' ? '↑ Ingresos' : '↓ Egresos'}
+        </span>
+        <button onClick={() => addItem(tipo)} className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded-lg border transition-colors
+          ${tipo === 'ingreso' ? 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10' : 'border-rose-500/30 text-rose-400 hover:bg-rose-500/10'}`}>
+          <Plus className="w-3 h-3" /> Agregar
+        </button>
+      </div>
+      {list.length === 0 && (
+        <p className="text-[11px] text-muted-foreground/50 italic pl-1">Sin ítems — opcional</p>
+      )}
+      <AnimatePresence>
+        {list.map(item => (
+          <motion.div key={item.localId} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+            className="grid grid-cols-[1fr_110px_24px] gap-2 items-center">
+            <Select value={item.categoria} onValueChange={v => update(item.localId, 'categoria', v)}>
+              <SelectTrigger className="h-9 bg-background/50 border-white/10 rounded-xl text-xs">
+                <SelectValue placeholder="Categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                {(tipo === 'ingreso' ? CATS_INGRESO : CATS_EGRESO).map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+                <SelectItem value="Otro">Otro</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input type="number" min={0} step={1000} placeholder="$ Monto" value={item.montoPlaneado}
+              onChange={e => update(item.localId, 'montoPlaneado', e.target.value)}
+              className="h-9 bg-background/50 border-white/10 rounded-xl text-xs" />
+            <button onClick={() => remove(item.localId)} className="text-muted-foreground/40 hover:text-destructive transition-colors">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  )
+
+  return (
+    <div className="space-y-5 py-1">
+      <div className="bg-primary/5 border border-primary/20 rounded-2xl px-4 py-3">
+        <p className="text-xs text-primary font-medium">Presupuesto inicial <span className="font-normal text-muted-foreground">— opcional, puedes añadir más después</span></p>
+      </div>
+      <Section tipo="ingreso" list={ingresos} />
+      <div className="border-t border-border/30" />
+      <Section tipo="egreso"  list={egresos}  />
+    </div>
+  )
+}
+
 function FinanzasTab({
   eventos,
   ministerios,
@@ -185,29 +259,81 @@ function FinanzasTab({
     { value: 7, label: "Julio" }, { value: 8, label: "Agosto" }, { value: 9, label: "Septiembre" },
     { value: 10, label: "Octubre" }, { value: 11, label: "Noviembre" }, { value: 12, label: "Diciembre" },
   ]
-
   const fmt = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n)
+  const pctReal = (real: number, plan: number) => plan > 0 ? Math.min(Math.round((real / plan) * 100), 100) : 0
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "Ingresos plan.", value: fmt(totalIngresosPlaneados), sub: `Real: ${fmt(totalIngresosReales)}`, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
-          { label: "Egresos plan.", value: fmt(totalEgresosPlaneados), sub: `Real: ${fmt(totalEgresosReales)}`, color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20" },
-          { label: "Balance neto", value: `${totalBalanceNeto >= 0 ? "+" : ""}${fmt(totalBalanceNeto)}`, sub: `Plan: ${fmt(totalIngresosPlaneados - totalEgresosPlaneados)}`, color: totalBalanceNeto >= 0 ? "text-emerald-400" : "text-rose-400", bg: "bg-primary/10 border-primary/20" },
-          { label: "Con presupuesto", value: `${eventosConPresupuesto} / ${resumenEventos.length}`, sub: `${resumenEventos.length - eventosConPresupuesto} sin asignar`, color: "text-foreground", bg: "bg-card/40 border-border/50" },
-        ].map((kpi) => (
-          <div key={kpi.label} className={`rounded-2xl border p-4 ${kpi.bg}`}>
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{kpi.label}</p>
-            <p className={`text-lg font-bold ${kpi.color}`}>{kpi.value}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{kpi.sub}</p>
+    <div className="space-y-6">
+
+      {/* KPI Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Ingresos */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}
+          className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-4 space-y-2 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-emerald-500/10 -translate-y-4 translate-x-4" />
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400/70">Ingresos</p>
+          <p className="text-xl font-bold text-emerald-400 leading-none">{fmt(totalIngresosReales)}</p>
+          <p className="text-[10px] text-muted-foreground">de {fmt(totalIngresosPlaneados)} plan.</p>
+          <div className="h-1 bg-emerald-900/40 rounded-full overflow-hidden">
+            <motion.div className="h-full bg-emerald-400 rounded-full" initial={{ width: 0 }}
+              animate={{ width: `${pctReal(totalIngresosReales, totalIngresosPlaneados)}%` }} transition={{ duration: 0.8, ease: "easeOut" }} />
           </div>
-        ))}
+          <p className="text-[10px] text-emerald-400/80 font-semibold">{pctReal(totalIngresosReales, totalIngresosPlaneados)}% ejecutado</p>
+        </motion.div>
+
+        {/* Egresos */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}
+          className="rounded-2xl border border-rose-500/20 bg-gradient-to-br from-rose-500/10 to-rose-500/5 p-4 space-y-2 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-rose-500/10 -translate-y-4 translate-x-4" />
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-400/70">Egresos</p>
+          <p className="text-xl font-bold text-rose-400 leading-none">{fmt(totalEgresosReales)}</p>
+          <p className="text-[10px] text-muted-foreground">de {fmt(totalEgresosPlaneados)} plan.</p>
+          <div className="h-1 bg-rose-900/40 rounded-full overflow-hidden">
+            <motion.div className="h-full bg-rose-400 rounded-full" initial={{ width: 0 }}
+              animate={{ width: `${pctReal(totalEgresosReales, totalEgresosPlaneados)}%` }} transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }} />
+          </div>
+          <p className="text-[10px] text-rose-400/80 font-semibold">{pctReal(totalEgresosReales, totalEgresosPlaneados)}% ejecutado</p>
+        </motion.div>
+
+        {/* Balance neto */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
+          className={`rounded-2xl border p-4 space-y-1 overflow-hidden relative ${totalBalanceNeto >= 0 ? 'border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5' : 'border-rose-500/30 bg-gradient-to-br from-rose-500/10 to-rose-500/5'}`}>
+          <div className={`absolute top-0 right-0 w-16 h-16 rounded-full -translate-y-4 translate-x-4 ${totalBalanceNeto >= 0 ? 'bg-primary/10' : 'bg-rose-500/10'}`} />
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">Balance neto</p>
+          <p className={`text-xl font-bold leading-none ${totalBalanceNeto >= 0 ? 'text-primary' : 'text-rose-400'}`}>
+            {totalBalanceNeto >= 0 ? '+' : ''}{fmt(totalBalanceNeto)}
+          </p>
+          <p className="text-[10px] text-muted-foreground">Plan: {totalIngresosPlaneados - totalEgresosPlaneados >= 0 ? '+' : ''}{fmt(totalIngresosPlaneados - totalEgresosPlaneados)}</p>
+          <div className="pt-1">
+            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${totalBalanceNeto >= 0 ? 'bg-primary/20 text-primary' : 'bg-rose-500/20 text-rose-400'}`}>
+              {totalBalanceNeto >= 0 ? '↑ Superávit' : '↓ Déficit'}
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Cobertura */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
+          className="rounded-2xl border border-border/50 bg-card/40 p-4 space-y-2 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-white/5 -translate-y-4 translate-x-4" />
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">Cobertura</p>
+          <div className="flex items-end gap-1.5">
+            <p className="text-xl font-bold leading-none">{eventosConPresupuesto}</p>
+            <p className="text-sm text-muted-foreground mb-0.5">/ {resumenEventos.length} eventos</p>
+          </div>
+          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+            <motion.div className="h-full bg-white/60 rounded-full" initial={{ width: 0 }}
+              animate={{ width: resumenEventos.length > 0 ? `${Math.round((eventosConPresupuesto / resumenEventos.length) * 100)}%` : '0%' }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }} />
+          </div>
+          <p className="text-[10px] text-muted-foreground">{resumenEventos.length - eventosConPresupuesto} sin presupuesto</p>
+        </motion.div>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
+      {/* Filters */}
+      <div className="flex gap-2 flex-wrap items-center">
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Filtrar</span>
         <Select value={String(finanzasMinisterioFilter)} onValueChange={(v) => setFinanzasMinisterioFilter(Number(v))}>
-          <SelectTrigger className="h-9 bg-card/40 border-border/50 rounded-xl text-xs w-48">
+          <SelectTrigger className="h-8 bg-card/40 border-border/50 rounded-xl text-xs w-44">
             <SelectValue placeholder="Todos los ministerios" />
           </SelectTrigger>
           <SelectContent>
@@ -218,7 +344,7 @@ function FinanzasTab({
           </SelectContent>
         </Select>
         <Select value={String(finanzasMes)} onValueChange={(v) => setFinanzasMes(Number(v))}>
-          <SelectTrigger className="h-9 bg-card/40 border-border/50 rounded-xl text-xs w-36">
+          <SelectTrigger className="h-8 bg-card/40 border-border/50 rounded-xl text-xs w-32">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -227,63 +353,90 @@ function FinanzasTab({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        {resumenEventos.map((r) => {
-          const hasBudget = r.items.length > 0
-          const pct = r.ingresosPlaneados + r.egresosPlaneados > 0
-            ? Math.round(((r.ingresosReales + r.egresosReales) / (r.ingresosPlaneados + r.egresosPlaneados)) * 100)
-            : 0
-          const ev = eventos.find((e) => e.idEvento === r.idEvento)
-          if (!ev) return null
-          const nombreMinisterio = r.idMinisterio
-            ? ministerios.find((m) => m.idMinisterio === r.idMinisterio)?.nombre ?? "Ministerio"
-            : "Global"
+      {/* Event list */}
+      {resumenEventos.length === 0 ? (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-16 gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-card/60 border border-border/50 flex items-center justify-center">
+            <Wallet className="w-5 h-5 text-muted-foreground/40" />
+          </div>
+          <p className="text-sm text-muted-foreground">No hay eventos para este período</p>
+        </motion.div>
+      ) : (
+        <div className="space-y-2">
+          {resumenEventos.map((r, i) => {
+            const hasBudget = r.items.length > 0
+            const pct = r.ingresosPlaneados + r.egresosPlaneados > 0
+              ? Math.round(((r.ingresosReales + r.egresosReales) / (r.ingresosPlaneados + r.egresosPlaneados)) * 100)
+              : 0
+            const ev = eventos.find((e) => e.idEvento === r.idEvento)
+            if (!ev) return null
+            const nombreMinisterio = r.idMinisterio
+              ? ministerios.find((m) => m.idMinisterio === r.idMinisterio)?.nombre ?? "Ministerio"
+              : "Global"
 
-          return (
-            <div
-              key={r.idEvento}
-              onClick={() => setPresupuestoEvento(ev)}
-              className="bg-card/40 border border-border/50 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:border-primary/40 transition-colors group"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{r.nombreEvento}</p>
-                <p className="text-xs text-muted-foreground">{nombreMinisterio} · {new Date(r.fechaInicio).toLocaleDateString("es-CO")}</p>
-              </div>
-              {hasBudget ? (
-                <>
-                  <div className="text-right hidden sm:block">
-                    <p className="text-[10px] text-muted-foreground">Ingresos</p>
-                    <p className="text-sm font-semibold text-emerald-400">{fmt(r.ingresosReales)}</p>
+            return (
+              <motion.div key={r.idEvento} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                onClick={() => setPresupuestoEvento(ev)}
+                className="group bg-card/40 border border-border/50 rounded-2xl px-4 py-3.5 flex items-center gap-4 cursor-pointer hover:border-primary/50 hover:bg-card/60 transition-all">
+
+                {/* Left: name + meta */}
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{r.nombreEvento}</p>
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md
+                      ${r.idMinisterio ? 'bg-violet-500/15 text-violet-400' : 'bg-primary/15 text-primary'}`}>
+                      {nombreMinisterio}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground/60">{new Date(r.fechaInicio).toLocaleDateString("es-CO")}</span>
                   </div>
-                  <div className="text-right hidden sm:block">
-                    <p className="text-[10px] text-muted-foreground">Egresos</p>
-                    <p className="text-sm font-semibold text-rose-400">{fmt(r.egresosReales)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-muted-foreground">Balance</p>
-                    <p className={`text-sm font-bold ${r.balanceNeto >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                      {r.balanceNeto >= 0 ? "+" : ""}{fmt(r.balanceNeto)}
-                    </p>
-                  </div>
-                  <div className="w-14 hidden md:block">
-                    <p className="text-[10px] text-muted-foreground mb-1">Ejecutado</p>
-                    <div className="h-1.5 bg-border rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
-                    </div>
-                    <p className="text-[10px] text-primary mt-0.5">{pct}%</p>
-                  </div>
-                </>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-xs text-muted-foreground italic">Sin presupuesto</p>
-                  <span className="text-xs text-primary border border-primary/30 rounded-lg px-2 py-0.5 bg-primary/5">+ Agregar</span>
                 </div>
-              )}
-              <span className="text-muted-foreground/40 text-lg">›</span>
-            </div>
-          )
-        })}
-      </div>
+
+                {/* Center: bars (only on wider screens) */}
+                {hasBudget && (
+                  <div className="hidden lg:flex flex-col gap-1 w-28">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] text-emerald-400/70 w-12 text-right">{fmt(r.ingresosReales)}</span>
+                      <div className="flex-1 h-1 bg-emerald-900/30 rounded-full overflow-hidden">
+                        <motion.div className="h-full bg-emerald-400 rounded-full" initial={{ width: 0 }}
+                          animate={{ width: `${pctReal(r.ingresosReales, r.ingresosPlaneados)}%` }} transition={{ duration: 0.6, delay: i * 0.04 }} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] text-rose-400/70 w-12 text-right">{fmt(r.egresosReales)}</span>
+                      <div className="flex-1 h-1 bg-rose-900/30 rounded-full overflow-hidden">
+                        <motion.div className="h-full bg-rose-400 rounded-full" initial={{ width: 0 }}
+                          animate={{ width: `${pctReal(r.egresosReales, r.egresosPlaneados)}%` }} transition={{ duration: 0.6, delay: i * 0.04 + 0.05 }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Right: balance pill or cta */}
+                {hasBudget ? (
+                  <div className="flex items-center gap-3">
+                    <div className={`text-right px-3 py-1.5 rounded-xl border text-sm font-bold
+                      ${r.balanceNeto >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
+                      {r.balanceNeto >= 0 ? '+' : ''}{fmt(r.balanceNeto)}
+                    </div>
+                    <div className="hidden md:block text-right w-10">
+                      <p className="text-[9px] text-muted-foreground/60 mb-0.5">{pct}%</p>
+                      <div className="h-1 bg-border/50 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary/70 rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-[10px] text-primary border border-primary/30 rounded-xl px-2.5 py-1 bg-primary/5 hover:bg-primary/10 transition-colors whitespace-nowrap">
+                    + Presupuesto
+                  </span>
+                )}
+
+                <span className="text-muted-foreground/30 text-base group-hover:text-primary/40 transition-colors">›</span>
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -299,8 +452,11 @@ export function EventsPage() {
   const createEventoMutation = useCreateEvento();
   const deleteEventoMutation = useDeleteEvento();
   const updateEventoMutation = useUpdateEvento();
+  const createPresupuestoItem = useCreatePresupuestoItem();
 
   const [showCreate, setShowCreate] = useState(false);
+  const [createStep, setCreateStep] = useState<1 | 2>(1);
+  const [quickBudgetItems, setQuickBudgetItems] = useState<QuickBudgetItem[]>([]);
   const [editEvento, setEditEvento] = useState<EventoEnriquecido | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventoEnriquecido | null>(null);
   const [confirmDeleteEvento, setConfirmDeleteEvento] = useState<{ isOpen: boolean; id: number; nombre: string }>({ isOpen: false, id: 0, nombre: "" });
@@ -423,7 +579,11 @@ export function EventsPage() {
 
   debugLog('EventsPage', 'rolActual:', rolActual, 'liderMinisterios:', liderMinisterios, 'firstLiderMinisterioId:', firstLiderMinisterioId, 'firstLiderSedeId:', firstLiderSedeId, 'shouldShowSelectorFields:', shouldShowSelectorFields);
 
-  const resetCreateForm = () => setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: firstLiderSedeId, idMinisterio: firstLiderMinisterioId, _sedeReadOnly: liderSedeReadOnly, _ministerioReadOnly: leaderHasSingleMinisterio, _allowNoMinisterio: !isLider, _allowGeneral: rolActual === "super_admin" || rolActual === "admin_iglesia", _hideSelectorFields: !shouldShowSelectorFields } as any);
+  const resetCreateForm = () => {
+    setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: firstLiderSedeId, idMinisterio: firstLiderMinisterioId, _sedeReadOnly: liderSedeReadOnly, _ministerioReadOnly: leaderHasSingleMinisterio, _allowNoMinisterio: !isLider, _allowGeneral: rolActual === "super_admin" || rolActual === "admin_iglesia", _hideSelectorFields: !shouldShowSelectorFields } as any);
+    setCreateStep(1);
+    setQuickBudgetItems([]);
+  };
 
   useLayoutEffect(() => {
     if (showCreate) {
@@ -453,11 +613,24 @@ export function EventsPage() {
       toast.error('Como lider debes seleccionar un ministerio para crear el evento');
       return;
     }
+    const validBudgetItems = quickBudgetItems.filter(i => i.categoria && parseFloat(i.montoPlaneado) > 0);
     createEventoMutation.mutate(
       { nombre: createForm.nombre.trim(), descripcion: createForm.descripcion.trim() || null, tipoEventoTexto: createForm.tipoEventoTexto.trim() || null, fechaInicio: createForm.fechaInicio, fechaFin: createForm.fechaFin, idIglesia: idIglesiaNum ?? iglesiaActual?.id ?? 0, idSede: createForm.idSede || null, idMinisterio: createForm.idMinisterio || null },
       {
-        onSuccess: () => {
-          toast.success('Evento creado exitosamente');
+        onSuccess: (newEvento: any) => {
+          const newId: number | undefined = newEvento?.idEvento ?? newEvento?.id_evento;
+          if (newId && validBudgetItems.length > 0) {
+            validBudgetItems.forEach(item => {
+              const payload: CreateItemPayload = {
+                idEvento: newId, tipo: item.tipo, categoria: item.categoria,
+                montoPlaneado: parseFloat(item.montoPlaneado), creadoPor: usuarioActual?.idUsuario ?? null,
+              };
+              createPresupuestoItem.mutate(payload);
+            });
+            toast.success(`Evento creado con ${validBudgetItems.length} ítem${validBudgetItems.length > 1 ? 's' : ''} de presupuesto`);
+          } else {
+            toast.success('Evento creado exitosamente');
+          }
           setShowCreate(false);
           resetCreateForm();
         },
@@ -791,21 +964,87 @@ export function EventsPage() {
         )}
       </Tabs>
 
-      {/* ── Create Dialog ── */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+      {/* ── Create Dialog (2-step wizard) ── */}
+      <Dialog open={showCreate} onOpenChange={(o) => { if (!o) { setShowCreate(false); resetCreateForm(); } }}>
         <DialogContent className="sm:max-w-lg md:max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
           <DialogHeader>
+            {/* Step indicator */}
+            <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-1.5">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black transition-colors ${createStep === 1 ? 'bg-primary text-white' : 'bg-primary/20 text-primary'}`}>1</div>
+                <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${createStep === 1 ? 'text-foreground' : 'text-muted-foreground'}`}>Datos</span>
+              </div>
+              <div className="flex-1 h-px bg-border/50 max-w-8" />
+              {canSeeBudget && (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black transition-colors ${createStep === 2 ? 'bg-primary text-white' : 'bg-card/60 text-muted-foreground border border-border/50'}`}>2</div>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${createStep === 2 ? 'text-foreground' : 'text-muted-foreground'}`}>Presupuesto</span>
+                  </div>
+                </>
+              )}
+            </div>
             <DialogTitle className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
-              Nuevo Evento
+              {createStep === 1 ? 'Nuevo Evento' : 'Presupuesto Inicial'}
             </DialogTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">Completa los datos para programar un nuevo evento.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {createStep === 1 ? 'Completa los datos para programar un nuevo evento.' : 'Agrega ítems de ingreso y egreso (opcional).'}
+            </p>
           </DialogHeader>
-          <EventDialogFields form={createForm} setForm={setCreateForm} sedes={sedesParaSelector} ministerios={ministeriosDisponiblesParaCrear} />
-          <DialogFooter className="border-t border-border/50 pt-4 mt-2">
+
+          <AnimatePresence mode="wait">
+            {createStep === 1 ? (
+              <motion.div key="step1" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}>
+                <EventDialogFields form={createForm} setForm={setCreateForm} sedes={sedesParaSelector} ministerios={ministeriosDisponiblesParaCrear} />
+              </motion.div>
+            ) : (
+              <motion.div key="step2" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.15 }}>
+                <BudgetQuickAdd items={quickBudgetItems} setItems={setQuickBudgetItems} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <DialogFooter className="border-t border-border/50 pt-4 mt-2 flex-col sm:flex-row gap-2">
             <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
-            <Button className="rounded-xl" onClick={handleCreateEvento} disabled={createEventoMutation.isPending}>
-              {createEventoMutation.isPending ? "Creando..." : "Crear Evento"}
-            </Button>
+            <div className="flex gap-2 ml-auto">
+              {createStep === 2 && (
+                <Button variant="outline" className="rounded-xl" onClick={() => setCreateStep(1)}>← Atrás</Button>
+              )}
+              {createStep === 1 && canSeeBudget ? (
+                <>
+                  <Button variant="outline" className="rounded-xl text-xs" onClick={() => {
+                    if (!createForm.nombre.trim() || !createForm.fechaInicio || !createForm.fechaFin) {
+                      toast.error('Completa nombre y fechas antes de continuar');
+                      return;
+                    }
+                    if (isLider && !createForm.idMinisterio) {
+                      toast.error('Como lider debes seleccionar un ministerio');
+                      return;
+                    }
+                    handleCreateEvento();
+                  }} disabled={createEventoMutation.isPending}>
+                    {createEventoMutation.isPending ? 'Creando...' : 'Crear sin presupuesto'}
+                  </Button>
+                  <Button className="rounded-xl" onClick={() => {
+                    if (!createForm.nombre.trim() || !createForm.fechaInicio || !createForm.fechaFin) {
+                      toast.error('Completa nombre y fechas antes de continuar');
+                      return;
+                    }
+                    if (isLider && !createForm.idMinisterio) {
+                      toast.error('Como lider debes seleccionar un ministerio');
+                      return;
+                    }
+                    setCreateStep(2);
+                  }}>
+                    Agregar presupuesto →
+                  </Button>
+                </>
+              ) : (
+                <Button className="rounded-xl" onClick={handleCreateEvento} disabled={createEventoMutation.isPending}>
+                  {createEventoMutation.isPending ? 'Creando...' : 'Crear Evento'}
+                </Button>
+              )}
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
