@@ -385,10 +385,10 @@ function FinanzasTab({
     if (isLider) {
       const nombres = liderMinisterioNombres.map(m => m.nombre).filter(Boolean)
       const label = nombres.length > 0 ? nombres.join(' · ') : 'Tu ministerio'
-      return { icon: '👤', title: label, subtitle: 'Solo los eventos de tus ministerios', color: 'border-violet-500/20 bg-violet-500/5 text-violet-300' }
+      return { icon: '👤', title: label, subtitle: 'Solo los eventos de tus ministerios', color: 'border-primary/25 bg-primary/10 text-primary' }
     }
-    if (isAdminSede) return { icon: '🏢', title: 'Tu sede', subtitle: 'Todos los ministerios y eventos de tu sede', color: 'border-primary/20 bg-primary/5 text-primary' }
-    return { icon: '🏛️', title: 'Vista global de la iglesia', subtitle: 'Todas las sedes y ministerios', color: 'border-amber-500/20 bg-amber-500/5 text-amber-300' }
+    if (isAdminSede) return { icon: '🏢', title: 'Tu sede', subtitle: 'Todos los ministerios y eventos de tu sede', color: 'border-[var(--color-chart-2)]/30 bg-[var(--color-chart-2)]/10 text-[var(--color-chart-3)]' }
+    return { icon: '🏛️', title: 'Vista global de la iglesia', subtitle: 'Todas las sedes y ministerios', color: 'border-[var(--color-chart-5)]/35 bg-[var(--color-chart-5)]/10 text-[var(--color-chart-3)]' }
   })()
 
   // For lider: only show their ministerios in the dropdown
@@ -404,66 +404,69 @@ function FinanzasTab({
   ]
   const fmt = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n)
   const pctReal = (real: number, plan: number) => plan > 0 ? Math.min(Math.round((real / plan) * 100), 100) : 0
+  const coberturaPct = resumenEventos.length > 0 ? Math.round((eventosConPresupuesto / resumenEventos.length) * 100) : 0
+  const balancePlan = totalIngresosPlaneados - totalEgresosPlaneados
 
   return (
     <div className="space-y-6">
 
       {/* Role-contextual banner */}
       <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-        className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${roleBanner.color}`}>
-        <span className="text-lg">{roleBanner.icon}</span>
-        <div>
-          <p className="text-sm font-bold leading-tight">{roleBanner.title}</p>
-          <p className="text-[11px] opacity-70 mt-0.5">{roleBanner.subtitle}</p>
+        className={`relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-2xl border ${roleBanner.color}`}>
+        <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-primary/10 to-transparent pointer-events-none" />
+        <span className="text-lg relative z-10">{roleBanner.icon}</span>
+        <div className="relative z-10">
+          <p className="text-sm font-bold leading-tight tracking-tight">{roleBanner.title}</p>
+          <p className="text-[11px] opacity-75 mt-0.5">{roleBanner.subtitle}</p>
         </div>
         {isLider && liderMinisterioNombres.length > 1 && (
-          <span className="ml-auto text-[10px] font-semibold px-2 py-1 rounded-lg bg-violet-500/20 text-violet-300">
+          <span className="ml-auto relative z-10 text-[10px] font-semibold px-2 py-1 rounded-lg bg-primary/15 text-primary border border-primary/25">
             {liderMinisterioNombres.length} ministerios
           </span>
         )}
       </motion.div>
 
       {/* KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Ingresos */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}
-          className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-4 space-y-2 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-emerald-500/10 -translate-y-4 translate-x-4" />
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400/70">Ingresos</p>
-          <p className="text-xl font-bold text-emerald-400 leading-none">{fmt(totalIngresosReales)}</p>
-          <p className="text-[10px] text-muted-foreground">de {fmt(totalIngresosPlaneados)} plan.</p>
-          <div className="h-1 bg-emerald-900/40 rounded-full overflow-hidden">
-            <motion.div className="h-full bg-emerald-400 rounded-full" initial={{ width: 0 }}
+          className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-card p-4 space-y-2 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-20 h-20 rounded-full bg-primary/10 -translate-y-6 translate-x-6" />
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary/70">Ingresos reales</p>
+          <p className="text-2xl font-bold text-primary leading-none tracking-tight">{fmt(totalIngresosReales)}</p>
+          <p className="text-[11px] text-muted-foreground">Meta: {fmt(totalIngresosPlaneados)}</p>
+          <div className="h-1.5 bg-primary/20 rounded-full overflow-hidden">
+            <motion.div className="h-full bg-primary rounded-full" initial={{ width: 0 }}
               animate={{ width: `${pctReal(totalIngresosReales, totalIngresosPlaneados)}%` }} transition={{ duration: 0.8, ease: "easeOut" }} />
           </div>
-          <p className="text-[10px] text-emerald-400/80 font-semibold">{pctReal(totalIngresosReales, totalIngresosPlaneados)}% ejecutado</p>
+          <p className="text-[10px] text-primary/80 font-semibold">{pctReal(totalIngresosReales, totalIngresosPlaneados)}% de cumplimiento</p>
         </motion.div>
 
         {/* Egresos */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}
-          className="rounded-2xl border border-rose-500/20 bg-gradient-to-br from-rose-500/10 to-rose-500/5 p-4 space-y-2 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-rose-500/10 -translate-y-4 translate-x-4" />
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-400/70">Egresos</p>
-          <p className="text-xl font-bold text-rose-400 leading-none">{fmt(totalEgresosReales)}</p>
-          <p className="text-[10px] text-muted-foreground">de {fmt(totalEgresosPlaneados)} plan.</p>
-          <div className="h-1 bg-rose-900/40 rounded-full overflow-hidden">
-            <motion.div className="h-full bg-rose-400 rounded-full" initial={{ width: 0 }}
+          className="rounded-2xl border border-[var(--color-chart-3)]/25 bg-gradient-to-br from-[var(--color-chart-3)]/10 via-[var(--color-chart-3)]/5 to-card p-4 space-y-2 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-20 h-20 rounded-full bg-[var(--color-chart-3)]/10 -translate-y-6 translate-x-6" />
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--color-chart-3)]/70">Egresos reales</p>
+          <p className="text-2xl font-bold text-[var(--color-chart-3)] leading-none tracking-tight">{fmt(totalEgresosReales)}</p>
+          <p className="text-[11px] text-muted-foreground">Meta: {fmt(totalEgresosPlaneados)}</p>
+          <div className="h-1.5 bg-[var(--color-chart-3)]/20 rounded-full overflow-hidden">
+            <motion.div className="h-full bg-[var(--color-chart-3)] rounded-full" initial={{ width: 0 }}
               animate={{ width: `${pctReal(totalEgresosReales, totalEgresosPlaneados)}%` }} transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }} />
           </div>
-          <p className="text-[10px] text-rose-400/80 font-semibold">{pctReal(totalEgresosReales, totalEgresosPlaneados)}% ejecutado</p>
+          <p className="text-[10px] text-[var(--color-chart-3)]/80 font-semibold">{pctReal(totalEgresosReales, totalEgresosPlaneados)}% de cumplimiento</p>
         </motion.div>
 
         {/* Balance neto */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
-          className={`rounded-2xl border p-4 space-y-1 overflow-hidden relative ${totalBalanceNeto >= 0 ? 'border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5' : 'border-rose-500/30 bg-gradient-to-br from-rose-500/10 to-rose-500/5'}`}>
-          <div className={`absolute top-0 right-0 w-16 h-16 rounded-full -translate-y-4 translate-x-4 ${totalBalanceNeto >= 0 ? 'bg-primary/10' : 'bg-rose-500/10'}`} />
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">Balance neto</p>
-          <p className={`text-xl font-bold leading-none ${totalBalanceNeto >= 0 ? 'text-primary' : 'text-rose-400'}`}>
+          className={`rounded-2xl border p-4 space-y-1.5 overflow-hidden relative ${totalBalanceNeto >= 0 ? 'border-primary/30 bg-gradient-to-br from-primary/10 to-card' : 'border-[var(--color-chart-5)]/35 bg-gradient-to-br from-[var(--color-chart-5)]/10 to-card'}`}>
+          <div className={`absolute top-0 right-0 w-20 h-20 rounded-full -translate-y-6 translate-x-6 ${totalBalanceNeto >= 0 ? 'bg-primary/10' : 'bg-[var(--color-chart-5)]/15'}`} />
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Balance neto</p>
+          <p className={`text-2xl font-bold leading-none tracking-tight ${totalBalanceNeto >= 0 ? 'text-primary' : 'text-[var(--color-chart-3)]'}`}>
             {totalBalanceNeto >= 0 ? '+' : ''}{fmt(totalBalanceNeto)}
           </p>
-          <p className="text-[10px] text-muted-foreground">Plan: {totalIngresosPlaneados - totalEgresosPlaneados >= 0 ? '+' : ''}{fmt(totalIngresosPlaneados - totalEgresosPlaneados)}</p>
+          <p className="text-[11px] text-muted-foreground">Plan: {balancePlan >= 0 ? '+' : ''}{fmt(balancePlan)}</p>
           <div className="pt-1">
-            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${totalBalanceNeto >= 0 ? 'bg-primary/20 text-primary' : 'bg-rose-500/20 text-rose-400'}`}>
+            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${totalBalanceNeto >= 0 ? 'bg-primary/20 text-primary' : 'bg-[var(--color-chart-5)]/20 text-[var(--color-chart-3)]'}`}>
               {totalBalanceNeto >= 0 ? '↑ Superávit' : '↓ Déficit'}
             </span>
           </div>
@@ -471,29 +474,32 @@ function FinanzasTab({
 
         {/* Cobertura */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
-          className="rounded-2xl border border-border/50 bg-card/40 p-4 space-y-2 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-white/5 -translate-y-4 translate-x-4" />
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">Cobertura</p>
+          className="rounded-2xl border border-border/50 bg-gradient-to-br from-card to-muted/30 p-4 space-y-2 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-20 h-20 rounded-full bg-primary/10 -translate-y-6 translate-x-6" />
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Cobertura</p>
           <div className="flex items-end gap-1.5">
-            <p className="text-xl font-bold leading-none">{eventosConPresupuesto}</p>
+            <p className="text-2xl font-bold leading-none tracking-tight">{eventosConPresupuesto}</p>
             <p className="text-sm text-muted-foreground mb-0.5">/ {resumenEventos.length} eventos</p>
           </div>
-          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-border/50 rounded-full overflow-hidden">
             <motion.div className="h-full bg-white/60 rounded-full" initial={{ width: 0 }}
-              animate={{ width: resumenEventos.length > 0 ? `${Math.round((eventosConPresupuesto / resumenEventos.length) * 100)}%` : '0%' }}
+              animate={{ width: `${coberturaPct}%` }}
               transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }} />
           </div>
-          <p className="text-[10px] text-muted-foreground">{resumenEventos.length - eventosConPresupuesto} sin presupuesto</p>
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-muted-foreground">{resumenEventos.length - eventosConPresupuesto} sin presupuesto</span>
+            <span className="font-semibold text-primary">{coberturaPct}% cubierto</span>
+          </div>
         </motion.div>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 flex-wrap items-center">
-        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Filtrar</span>
+      <div className="flex gap-2 flex-wrap items-center rounded-xl border border-border/50 bg-card/40 px-2.5 py-2">
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Filtrar</span>
         {/* Show ministerio filter only when there are multiple options */}
         {ministeriosFiltro.length > 1 && (
           <Select value={String(finanzasMinisterioFilter)} onValueChange={(v) => setFinanzasMinisterioFilter(Number(v))}>
-            <SelectTrigger className="h-8 bg-card/40 border-border/50 rounded-xl text-xs w-44">
+            <SelectTrigger className="h-8 bg-background/60 border-border/60 rounded-xl text-xs w-44">
               <SelectValue placeholder={isLider ? 'Todos tus ministerios' : 'Todos los ministerios'} />
             </SelectTrigger>
             <SelectContent>
@@ -505,7 +511,7 @@ function FinanzasTab({
           </Select>
         )}
         <Select value={String(finanzasMes)} onValueChange={(v) => setFinanzasMes(Number(v))}>
-          <SelectTrigger className="h-8 bg-card/40 border-border/50 rounded-xl text-xs w-32">
+          <SelectTrigger className="h-8 bg-background/60 border-border/60 rounded-xl text-xs w-32">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -538,14 +544,14 @@ function FinanzasTab({
             return (
               <motion.div key={r.idEvento} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                 onClick={() => setPresupuestoEvento(ev)}
-                className="group bg-card/40 border border-border/50 rounded-2xl px-4 py-3.5 flex items-center gap-4 cursor-pointer hover:border-primary/50 hover:bg-card/60 transition-all">
+                className="group bg-card/50 border border-border/50 rounded-2xl px-4 py-3.5 flex items-center gap-4 cursor-pointer hover:border-primary/50 hover:bg-card transition-all duration-200">
 
                 {/* Left: name + meta */}
                 <div className="flex-1 min-w-0 space-y-0.5">
                   <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{r.nombreEvento}</p>
                   <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md
-                      ${r.idMinisterio ? 'bg-violet-500/15 text-violet-400' : 'bg-primary/15 text-primary'}`}>
+                    <span className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md border
+                      ${r.idMinisterio ? 'bg-[var(--color-chart-2)]/20 text-[var(--color-chart-3)]' : 'bg-primary/15 text-primary'}`}>
                       {nombreMinisterio}
                     </span>
                     <span className="text-[10px] text-muted-foreground/60">{new Date(r.fechaInicio).toLocaleDateString("es-CO")}</span>
@@ -575,8 +581,8 @@ function FinanzasTab({
                 {/* Right: balance pill or cta */}
                 {hasBudget ? (
                   <div className="flex items-center gap-3">
-                    <div className={`text-right px-3 py-1.5 rounded-xl border text-sm font-bold
-                      ${r.balanceNeto >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
+                    <div className={`text-right px-3 py-1.5 rounded-xl border text-sm font-bold tracking-tight
+                      ${r.balanceNeto >= 0 ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-[var(--color-chart-5)]/20 border-[var(--color-chart-5)]/30 text-[var(--color-chart-3)]'}`}>
                       {r.balanceNeto >= 0 ? '+' : ''}{fmt(r.balanceNeto)}
                     </div>
                     <div className="hidden md:block text-right w-10">

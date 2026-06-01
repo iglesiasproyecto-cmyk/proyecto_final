@@ -671,10 +671,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setSedesDelUsuario(Array.from(sedesMap.entries()).map(([id, nombre]) => ({ id, nombre })))
 
         const ministeriosData = (ministerios || []).map((m: any) => ({
-          id: m.idMinisterio,
-          nombre: m.ministerioNombre ?? m.nombre ?? '',
-          idSede: m.idSede ?? 0,
-          sedeNombre: m.sedeNombre ?? '',
+          id: m.id_ministerio ?? m.idMinisterio,
+          nombre: m.ministerio_nombre ?? m.ministerioNombre ?? m.nombre ?? '',
+          idSede: m.id_sede ?? m.idSede ?? 0,
+          sedeNombre: m.sede_nombre ?? m.sedeNombre ?? '',
         }))
         setMinisteriosDelUsuario(ministeriosData)
 

@@ -156,6 +156,8 @@ Deno.serve(async (req) => {
     const sedeId = Number(idSede)
     const ministerioId = idMinisterio ? Number(idMinisterio) : null
 
+    console.log('[invite-user] authz params:', { idRol, idIglesia, sedeId, ministerioId, sedeIdFinal: sedeId || null, ministerioIdFinal: ministerioId || null })
+
     const { data: isAuthorized, error: authzError } = await supabaseClient.rpc(
       'can_assign_role_scoped',
       {
@@ -165,6 +167,8 @@ Deno.serve(async (req) => {
         p_id_ministerio: ministerioId || null,
       }
     )
+
+    console.log('[invite-user] can_assign_role_scoped result:', { isAuthorized, authzError })
 
     if (authzError) {
       console.error('Authorization check error:', authzError)
@@ -313,8 +317,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Assign role directly via RPC
-    const { error: rpcError } = await supabaseAdmin.rpc(
+    // Assign role via RPC using the CALLER's client (user JWT), not service role.
+    // assign_role_with_ministerio is SECURITY DEFINER so privileged inserts still work,
+    // but its internal can_assign_role_scoped() check needs the caller's auth context.
+    const { error: rpcError } = await supabaseClient.rpc(
       'assign_role_with_ministerio',
       {
         p_id_usuario:    usuarioId,
@@ -324,7 +330,10 @@ Deno.serve(async (req) => {
         p_id_ministerio: requiresMinisterio ? ministerioId : null,
       }
     )
-    if (rpcError) throw rpcError
+    if (rpcError) {
+      console.error('[invite-user] assign_role_with_ministerio error:', rpcError)
+      throw rpcError
+    }
 
     return jsonResponse(origin, {
       success: true,
@@ -334,8 +343,14 @@ Deno.serve(async (req) => {
       userAlreadyExisted: true,
     })
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal error'
-    const details = error instanceof Error ? error.stack : String(error)
+    // PostgrestError / RPC errors are plain objects with a `message` field, not Error instances.
+    const anyErr = error as any
+    const message = error instanceof Error
+      ? error.message
+      : (anyErr?.message ?? anyErr?.error ?? 'Internal error')
+    const details = error instanceof Error
+      ? error.stack
+      : JSON.stringify(anyErr)
     console.error('[invite-user] ERROR:', message, details)
     return jsonResponse(origin, { message, details }, 500)
   }
