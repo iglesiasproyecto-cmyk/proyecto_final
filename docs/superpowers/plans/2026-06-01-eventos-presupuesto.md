@@ -52,15 +52,10 @@ CREATE INDEX IF NOT EXISTS idx_epi_tipo   ON public.evento_presupuesto_item(tipo
 
 ALTER TABLE public.evento_presupuesto_item ENABLE ROW LEVEL SECURITY;
 
--- Trigger updated_at
-CREATE OR REPLACE FUNCTION public.set_epi_updated_at()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
-BEGIN NEW.updated_at = now(); RETURN NEW; END;
-$$;
-
+-- Trigger updated_at — reutiliza la función genérica que ya existe en el proyecto
 CREATE TRIGGER trg_epi_updated_at
   BEFORE UPDATE ON public.evento_presupuesto_item
-  FOR EACH ROW EXECUTE FUNCTION public.set_epi_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION public.trigger_set_updated_at();
 
 -- SELECT: todos los roles excepto servidor (is_super_admin, is_admin_iglesia,
 -- is_admin_sede, is_lider ya excluyen servidor por definición)
