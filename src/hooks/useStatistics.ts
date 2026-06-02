@@ -4,7 +4,6 @@ import { useUsuarios, useUsuariosEnriquecidos } from '@/hooks/useUsuarios';
 import { useSedes } from '@/hooks/useIglesias';
 import { useEventos, useTareas } from '@/hooks/useEventos';
 import { useMinisteriosEnriquecidos, useMiembrosMinisterio } from '@/hooks/useMinisterios';
-import { useCursos } from '@/hooks/useCursos';
 import type { StatisticsScope, DateRange, StatisticsDomain, TabData, StatisticsData } from '@/types/statistics.types';
 import { computeStatistics } from '@/services/statistics.service';
 import { useQuery } from '@tanstack/react-query';
@@ -56,7 +55,20 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
     },
   });
 
-  const { data: cursos = [] } = useCursos(scope.idIglesia);
+  // Cursos del aula, alcance resuelto por RLS (super_admin: todos; admin_iglesia: su iglesia;
+  // lider: sus ministerios). NOTA: useCursos() filtra por id_ministerio, no por iglesia, por lo
+  // que pasarle scope.idIglesia devolvía 0 cursos y dejaba las estadísticas de aula en cero.
+  const { data: cursos = [] } = useQuery({
+    queryKey: ['statistics-cursos', scope.idIglesia, scope.type],
+    queryFn: async () => {
+      if (!scope.idIglesia && scope.type !== 'global') return [];
+      const { data } = await supabase
+        .from('aula_curso')
+        .select('id_aula_curso, titulo, estado, creado_en, aula_modulo(id_aula_modulo), aula_inscripcion(id_aula_inscripcion, activo)')
+        .limit(2000);
+      return data ?? [];
+    },
+  });
   const { data: inscripciones = [] } = useQuery({
     queryKey: ['statistics-inscripciones', scope.idIglesia],
     queryFn: async () => {

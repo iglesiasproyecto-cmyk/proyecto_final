@@ -78,9 +78,14 @@ export function AgregarPersonasCursoDialog({
           )}
 
           {!isLoading && candidatos.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No hay personas disponibles para inscribir.
-            </p>
+            <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-5 text-center">
+              <p className="text-sm font-semibold">No hay personas disponibles para inscribir</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Solo se pueden inscribir miembros activos del ministerio de este curso que aún no
+                estén inscritos. Es posible que ya estén todos inscritos, o que el ministerio no
+                tenga más miembros. Agrega personas al ministerio para poder inscribirlas aquí.
+              </p>
+            </div>
           )}
 
           {candidatos.map((usuario: any) => (
