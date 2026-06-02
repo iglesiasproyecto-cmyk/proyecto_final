@@ -36,7 +36,12 @@ export function NotificationsPage() {
   const handleOpenNotification = (n: any) => {
     if (!n.leida) markReadMutation.mutate(n.idNotificacion);
 
-    const base = iglesiaActual?.id ? `/app/${iglesiaActual.id}` : "/app";
+    // Use the iglesia from the notification itself (idIglesia), falling back
+    // to iglesiaActual. A servidor may have no iglesiaActual if they lack a
+    // system role, so relying solely on iglesiaActual causes navigation to
+    // "/app/tareas" which is not a registered route and redirects to "/".
+    const iglesiaId = n.idIglesia || iglesiaActual?.id;
+    const base = iglesiaId ? `/app/${iglesiaId}` : "/app";
 
     // Navigate using referenciaTipo + referenciaId if available
     if (n.referenciaTipo === 'evento' && n.referenciaId) {

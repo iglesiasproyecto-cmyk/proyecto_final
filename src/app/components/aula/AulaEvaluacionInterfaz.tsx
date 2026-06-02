@@ -98,6 +98,7 @@ export function AulaEvaluacionInterfaz({ idModulo, onEvaluacionCompletada }: Pro
         resultados={resultados}
         evaluacion={evaluacion}
         idUsuario={internalUserId!}
+        respuestasSeleccionadas={respuestas}
       />
     )
   }

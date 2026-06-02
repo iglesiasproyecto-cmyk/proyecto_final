@@ -9,11 +9,13 @@ type Props = {
   resultados: any
   evaluacion: any
   idUsuario: number
+  respuestasSeleccionadas?: Record<string, string> // { idPregunta: idOpcion }
 }
 
-export function ResultadosEvaluacion({ resultados, evaluacion, idUsuario }: Props) {
+export function ResultadosEvaluacion({ resultados, evaluacion, idUsuario, respuestasSeleccionadas }: Props) {
   const [mostrarRespuestas, setMostrarRespuestas] = React.useState(false)
-  const { data: respuestasCorrectas } = useRespuestasCorrectas(evaluacion.id_aula_evaluacion)
+  // Uses aula_respuesta.es_correcta (set server-side) — never reads es_correcta from aula_opcion
+  const { data: respuestasCorrectas } = useRespuestasCorrectas(resultados.id_intento)
   const { data: intentos } = useIntentosEvaluacion(evaluacion.id_aula_evaluacion, idUsuario)
 
   const puedeReintentar = evaluacion.reintentos_permitidos && !resultados.aprobado
@@ -38,7 +40,7 @@ export function ResultadosEvaluacion({ resultados, evaluacion, idUsuario }: Prop
             <div>
               <p className="text-6xl font-black text-foreground">{resultados.puntaje_obtenido}%</p>
               <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground mt-2">
-                Tu Calificación
+                Tu Calificación · {resultados.correctas ?? 0}/{resultados.total ?? 0} correctas
               </p>
             </div>
 
@@ -58,7 +60,7 @@ export function ResultadosEvaluacion({ resultados, evaluacion, idUsuario }: Prop
 
             {resultados.aprobado ? (
               <p className="text-base font-medium text-green-600">
-                ¡Felicidades! Aprobaste la evaluación con {resultados.puntaje_obtenido}%. Requería {resultados.puntaje_minimo}%.
+                ¡Felicidades! Aprobaste con {resultados.puntaje_obtenido}%. Requería {resultados.puntaje_minimo}%.
               </p>
             ) : (
               <div className="space-y-2">
@@ -97,21 +99,31 @@ export function ResultadosEvaluacion({ resultados, evaluacion, idUsuario }: Prop
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="font-medium">{pregunta.enunciado}</p>
+                {/* Show per-question result (correct/incorrect) without revealing the answer key */}
+                {respuestasCorrectas && (
+                  <div className={`p-3 rounded-xl border-2 text-sm font-semibold ${
+                    respuestasCorrectas[pregunta.id_aula_pregunta]
+                      ? 'border-green-500 bg-green-500/10 text-green-700'
+                      : 'border-red-400 bg-red-500/10 text-red-700'
+                  }`}>
+                    {respuestasCorrectas[pregunta.id_aula_pregunta] ? '✓ Respuesta correcta' : '✗ Respuesta incorrecta'}
+                  </div>
+                )}
                 <div className="space-y-2">
                   {pregunta.opciones.map((opcion: any) => {
-                    const esCorrecta = respuestasCorrectas[pregunta.id_aula_pregunta] === opcion.id_aula_opcion
+                    const fueSeleccionada = respuestasSeleccionadas?.[pregunta.id_aula_pregunta]?.toString() === opcion.id_aula_opcion.toString()
                     return (
                       <div
                         key={opcion.id_aula_opcion}
                         className={`p-3 rounded-xl border-2 ${
-                          esCorrecta
-                            ? 'border-green-500 bg-green-500/10'
+                          fueSeleccionada
+                            ? 'border-[#4682b4] bg-[#4682b4]/10'
                             : 'border-border bg-muted/30'
                         }`}
                       >
                         <p className="text-sm font-medium">{opcion.texto}</p>
-                        {esCorrecta && (
-                          <p className="text-xs font-bold text-green-600 mt-1">✓ Respuesta Correcta</p>
+                        {fueSeleccionada && (
+                          <p className="text-xs font-bold text-[#4682b4] mt-1">← Tu respuesta</p>
                         )}
                       </div>
                     )

@@ -52,10 +52,10 @@ export function useIntentosEvaluacion(
   })
 }
 
-export function useRespuestasCorrectas(idAulaEvaluacion?: number) {
+export function useRespuestasCorrectas(idIntento?: number) {
   return useQuery({
-    queryKey: ['respuestas-correctas', idAulaEvaluacion],
-    queryFn: () => obtenerRespuestasCorrectasEvaluacion(idAulaEvaluacion!),
-    enabled: !!idAulaEvaluacion,
+    queryKey: ['respuestas-correctas', idIntento],
+    queryFn: () => obtenerRespuestasCorrectasEvaluacion(idIntento!),
+    enabled: !!idIntento,
   })
 }

@@ -87,20 +87,69 @@ export async function obtenerEvaluacionModulo(idModulo: number): Promise<Evaluac
   }
 }
 
-// Submit evaluation attempt via RPC
+// Submit evaluation attempt:
+//   1) INSERT aula_intento_evaluacion (draft)
+//   2) INSERT aula_respuesta for each answer
+//   3) Call finalizar_intento_evaluacion() — SECURITY DEFINER, calculates score server-side
 export async function registrarIntentoEvaluacion(
   idAulaEvaluacion: number,
   idUsuario: number,
-  respuestas: Record<string, string>
-) {
-  const { data, error } = await supabase.rpc('registrar_intento_evaluacion', {
-    p_id_aula_evaluacion: idAulaEvaluacion,
-    p_id_usuario: idUsuario,
-    p_respuestas: respuestas
-  })
+  respuestas: Record<string, string>   // { idPregunta: idOpcion }
+): Promise<{ puntaje: number; aprobado: boolean; correctas: number; total: number; puntaje_min: number }> {
+  // Determine attempt number
+  const { data: prevAttempts, error: cntErr } = await supabase
+    .from('aula_intento_evaluacion')
+    .select('id_aula_intento_evaluacion', { count: 'exact', head: false })
+    .eq('id_aula_evaluacion', idAulaEvaluacion)
+    .eq('id_usuario', idUsuario)
+  if (cntErr) throw cntErr
+  const numeroIntento = (prevAttempts?.length ?? 0) + 1
 
-  if (error) throw error
-  return data
+  // Create draft attempt
+  const { data: intento, error: intentoErr } = await supabase
+    .from('aula_intento_evaluacion')
+    .insert({
+      id_usuario: idUsuario,
+      id_aula_evaluacion: idAulaEvaluacion,
+      puntaje_obtenido: 0,
+      aprobado: false,
+      numero_intento: numeroIntento,
+    })
+    .select('id_aula_intento_evaluacion')
+    .single()
+  if (intentoErr) throw intentoErr
+
+  const idIntento = intento.id_aula_intento_evaluacion
+
+  // Insert one row per answered question
+  const rows = Object.entries(respuestas)
+    .filter(([, val]) => val !== '')
+    .map(([idPregunta, idOpcion]) => ({
+      id_aula_intento_evaluacion: idIntento,
+      id_aula_pregunta: Number(idPregunta),
+      id_aula_opcion: Number(idOpcion),
+    }))
+
+  if (rows.length > 0) {
+    const { error: respErr } = await supabase.from('aula_respuesta').insert(rows)
+    if (respErr) throw respErr
+  }
+
+  // Score calculation is done server-side via SECURITY DEFINER function
+  const { data: resultado, error: finErr } = await supabase
+    .rpc('finalizar_intento_evaluacion', { p_id_intento: idIntento })
+  if (finErr) throw finErr
+
+  const r = resultado as { puntaje: number; aprobado: boolean; correctas: number; total: number; puntaje_min: number }
+  return {
+    id_intento: idIntento,
+    numero_intento: numeroIntento,
+    puntaje_obtenido: r.puntaje,
+    aprobado: r.aprobado,
+    correctas: r.correctas,
+    total: r.total,
+    puntaje_minimo: r.puntaje_min,
+  }
 }
 
 // Get user's previous attempts
@@ -119,32 +168,26 @@ export async function obtenerIntentosUsuario(
   return data || []
 }
 
-// Get correct answers after submission (show only after finalizado_en)
+// Get which of the student's answers were correct, per question.
+// Uses aula_respuesta.es_correcta (set server-side by finalizar_intento_evaluacion)
+// so es_correcta from aula_opcion is never sent to the client.
 export async function obtenerRespuestasCorrectasEvaluacion(
-  idAulaEvaluacion: number
-): Promise<Record<string, number>> {
+  idIntento: number
+): Promise<Record<number, boolean>> {
   const { data, error } = await supabase
-    .from('aula_pregunta')
-    .select(`
-      id_aula_pregunta,
-      opciones:aula_opcion(
-        id_aula_opcion,
-        es_correcta
-      )
-    `)
-    .eq('id_aula_evaluacion', idAulaEvaluacion)
+    .from('aula_respuesta')
+    .select('id_aula_pregunta, id_aula_opcion, es_correcta')
+    .eq('id_aula_intento_evaluacion', idIntento)
 
   if (error) throw error
 
-  const respuestasCorrectas: Record<string, number> = {}
-  data?.forEach((pregunta: any) => {
-    const opcionCorrecta = pregunta.opciones?.find((o: any) => o.es_correcta)
-    if (opcionCorrecta) {
-      respuestasCorrectas[pregunta.id_aula_pregunta] = opcionCorrecta.id_aula_opcion
+  const resultado: Record<number, boolean> = {}
+  data?.forEach((r: any) => {
+    if (r.id_aula_pregunta != null) {
+      resultado[r.id_aula_pregunta] = r.es_correcta ?? false
     }
   })
-
-  return respuestasCorrectas
+  return resultado
 }
 
 // Get user certificates

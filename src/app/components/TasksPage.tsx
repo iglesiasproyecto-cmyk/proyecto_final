@@ -213,15 +213,20 @@ export function TasksPage() {
     const openTask = Number(searchParams.get("openTask") || 0);
     if (!openTask) return;
 
-    if (tareas.some(t => t.idTarea === openTask)) {
-      setSelectedTask(openTask);
-    } else if (!isLoading) {
-      toast.error("La tarea ya no esta disponible");
-    }
+    // Wait until data has loaded before acting — the URL param gets
+    // deleted here, so if we act while isLoading the param disappears
+    // before tareas arrives and the task never opens.
+    if (isLoading) return;
 
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("openTask");
     setSearchParams(nextParams, { replace: true });
+
+    if (tareas.some(t => t.idTarea === openTask)) {
+      setSelectedTask(openTask);
+    } else {
+      toast.error("La tarea ya no esta disponible");
+    }
   }, [searchParams, setSearchParams, tareas, isLoading]);
 
   const handleDeleteTarea = (id: number, titulo: string) => {

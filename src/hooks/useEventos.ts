@@ -211,11 +211,13 @@ export function useEmitirCertificado() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ idUsuario, idCurso }: { idUsuario: number; idCurso: number }) => {
+      const today = new Date().toISOString().split('T')[0]
       const { data, error } = await supabase
         .from('aula_certificado')
         .upsert({
           id_usuario: idUsuario,
           id_aula_curso: idCurso,
+          fecha_certificacion: today,
           emitido_en: new Date().toISOString()
         }, {
           onConflict: 'id_usuario,id_aula_curso'
