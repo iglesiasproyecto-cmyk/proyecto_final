@@ -359,8 +359,8 @@ export function TaskEvidenceReview({ task, currentUserId, isAssignor, isAssignee
         </div>
       )}
 
-      {/* ── Assignor: Approve / Reject buttons ── */}
-      {isAssignor && isInRevision && !isLocked && (
+      {/* ── Assignor: Approve / Reject buttons (siempre permitido en revisión, sin lock) ── */}
+      {isAssignor && isInRevision && (
         <div className="space-y-3 pt-2 border-t border-white/5">
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
             Decisión del Revisor

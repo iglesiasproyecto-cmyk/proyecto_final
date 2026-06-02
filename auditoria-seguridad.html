@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auditoria de Seguridad - IGLESIABD</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #10243e;
+      --muted: #4d6078;
+      --border: #d9e2ec;
+      --crit: #b42318;
+      --crit-bg: #fee4e2;
+      --high: #b54708;
+      --high-bg: #ffead5;
+      --med: #175cd3;
+      --med-bg: #dbe9ff;
+      --ok: #067647;
+      --ok-bg: #dcfae6;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Inter", sans-serif;
+      background: linear-gradient(180deg, #eef3f9 0%, #f9fbfd 40%, #f6f8fb 100%);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 64px;
+    }
+    .hero {
+      background: radial-gradient(circle at 20% 10%, #dbe9ff 0%, #ffffff 60%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(16, 36, 62, 0.06);
+      margin-bottom: 18px;
+    }
+    h1 { margin: 0 0 10px; font-size: 1.8rem; }
+    h2 { margin: 0 0 10px; font-size: 1.25rem; }
+    p { margin: 0 0 10px; color: var(--muted); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .pill {
+      border-radius: 14px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+    }
+    .pill b { display: block; font-size: 1.3rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .sev {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .crit { background: var(--crit-bg); color: var(--crit); }
+    .high { background: var(--high-bg); color: var(--high); }
+    .med { background: var(--med-bg); color: var(--med); }
+    .ok { background: var(--ok-bg); color: var(--ok); }
+
+    .card h3 { margin: 0 0 8px; font-size: 1.02rem; }
+    .card ul { margin: 0; padding-left: 18px; color: var(--muted); }
+    .card li { margin: 6px 0; }
+    .meta {
+      margin-top: 10px;
+      font-size: 0.87rem;
+      color: #2e4665;
+      background: #f4f7fb;
+      border: 1px dashed #c5d0df;
+      padding: 8px;
+      border-radius: 10px;
+    }
+
+    .roadmap {
+      margin-top: 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .step {
+      border-left: 4px solid #9cb4d3;
+      padding: 8px 0 8px 10px;
+      margin: 8px 0;
+    }
+    .step b { color: var(--text); }
+
+    .glossary {
+      margin-top: 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .term { margin: 10px 0; }
+    .term b { color: var(--text); }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: #425a77;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Auditoria de Seguridad - IGLESIABD</h1>
+      <p>
+        Este reporte traduce los hallazgos tecnicos a lenguaje entendible. Objetivo: que puedas decidir
+        que arreglar primero, por que importa y como evitar riesgos reales.
+      </p>
+      <div class="stats">
+        <div class="pill"><b>2</b>Riesgos criticos</div>
+        <div class="pill"><b>3</b>Riesgos altos</div>
+        <div class="pill"><b>2</b>Riesgos medios</div>
+        <div class="pill"><b>48h</b>Tiempo ideal para contencion</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Semaforo de Riesgos</h2>
+      <div class="grid">
+        <article class="card">
+          <span class="sev crit">Critico</span>
+          <h3>Escalada de privilegios por email hardcodeado</h3>
+          <ul>
+            <li><b>Que pasa:</b> si el email coincide con uno fijo, el frontend lo trata como super admin.</li>
+            <li><b>Impacto:</b> un usuario podria obtener permisos maximos sin autorizacion real.</li>
+            <li><b>Accion:</b> eliminar regla por email y derivar permisos solo desde DB/claims firmados.</li>
+          </ul>
+          <div class="meta"><b>En sencillo:</b> hay una "llave maestra" por correo dentro del cliente.</div>
+        </article>
+
+        <article class="card">
+          <span class="sev crit">Critico</span>
+          <h3>Bypass de autenticacion por mock mode</h3>
+          <ul>
+            <li><b>Que pasa:</b> con cambios en localStorage se puede simular sesion/rol.</li>
+            <li><b>Impacto:</b> acceso visual a rutas privadas y comportamiento no confiable de controles UI.</li>
+            <li><b>Accion:</b> deshabilitar mock mode fuera de desarrollo y que nunca altere auth real.</li>
+          </ul>
+          <div class="meta"><b>En sencillo:</b> el navegador permite "fingir" que ya estas logueado.</div>
+        </article>
+
+        <article class="card">
+          <span class="sev high">Alto</span>
+          <h3>Exposicion de hash de contrasena al frontend</h3>
+          <ul>
+            <li><b>Que pasa:</b> se transporta <code>contrasena_hash</code> al cliente en algunos flujos.</li>
+            <li><b>Impacto:</b> aumenta superficie de fuga de datos sensibles.</li>
+            <li><b>Accion:</b> quitar ese campo de select, mapeos y tipos en cliente.</li>
+          </ul>
+          <div class="meta"><b>En sencillo:</b> llega al navegador informacion que nunca deberia salir del servidor.</div>
+        </article>
+
+        <article class="card">
+          <span class="sev high">Alto</span>
+          <h3>complete-invite con CORS abierto (*)</h3>
+          <ul>
+            <li><b>Que pasa:</b> cualquier origen puede invocar esa funcion.</li>
+            <li><b>Impacto:</b> si un token se filtra, se facilita abuso desde sitios externos.</li>
+            <li><b>Accion:</b> usar lista blanca de dominios + rate limit + telemetria.</li>
+          </ul>
+          <div class="meta"><b>En sencillo:</b> la puerta acepta solicitudes desde cualquier web.</div>
+        </article>
+
+        <article class="card">
+          <span class="sev high">Alto</span>
+          <h3>Invitacion puede crear cuenta sin rol valido</h3>
+          <ul>
+            <li><b>Que pasa:</b> si falla asignar rol en <code>complete-invite</code>, el flujo sigue como exito.</li>
+            <li><b>Impacto:</b> usuarios activos con permisos inconsistentes.</li>
+            <li><b>Accion:</b> volver ese error bloqueante y usar transaccion atomica.</li>
+          </ul>
+          <div class="meta"><b>En sencillo:</b> se abre la cuenta aunque la autorizacion quede incompleta.</div>
+        </article>
+
+        <article class="card">
+          <span class="sev med">Medio</span>
+          <h3>Detalle interno de errores expuesto al cliente</h3>
+          <ul>
+            <li><b>Que pasa:</b> algunas respuestas retornan detalles tecnicos de excepciones.</li>
+            <li><b>Impacto:</b> ayuda a un atacante a aprender estructura interna.</li>
+            <li><b>Accion:</b> mensajes genericos al cliente y detalle solo en logs seguros.</li>
+          </ul>
+          <div class="meta"><b>En sencillo:</b> el sistema "habla de mas" cuando falla.</div>
+        </article>
+
+        <article class="card">
+          <span class="sev med">Medio</span>
+          <h3>Uso sensible de funciones SECURITY DEFINER</h3>
+          <ul>
+            <li><b>Que pasa:</b> hay RPC privilegiadas para asignacion de roles y alcance.</li>
+            <li><b>Impacto:</b> si permisos EXECUTE no estan minimizados, hay riesgo de abuso.</li>
+            <li><b>Accion:</b> auditar grants/revokes, mantener minimo privilegio y trazabilidad.</li>
+          </ul>
+          <div class="meta"><b>En sencillo:</b> son funciones "con superpoderes" y hay que encerrarlas bien.</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="roadmap">
+      <h2>Plan de accion recomendado</h2>
+      <div class="step">
+        <b>Fase 1 (0-48h): contencion</b><br />
+        Quitar hardcode de super admin, apagar mock mode en produccion y cerrar CORS en complete-invite.
+      </div>
+      <div class="step">
+        <b>Fase 2 (3-7 dias): correccion estructural</b><br />
+        Eliminar campos sensibles del frontend, hacer asignacion de rol obligatoria en invitaciones,
+        sanitizar errores externos.
+      </div>
+      <div class="step">
+        <b>Fase 3 (1-4 semanas): endurecimiento</b><br />
+        Auditoria integral de funciones SECURITY DEFINER, pruebas de regresion de autorizacion y monitoreo continuo.
+      </div>
+    </section>
+
+    <section class="glossary">
+      <h2>Glosario rapido (sin humo)</h2>
+      <div class="term"><b>RLS:</b> reglas en base de datos que deciden que filas puede leer o editar cada usuario.</div>
+      <div class="term"><b>CORS:</b> filtro que define desde que dominios web se permite llamar tu API/funciones.</div>
+      <div class="term"><b>JWT claims:</b> datos de permisos dentro del token de sesion; deben venir firmados y actualizados.</div>
+      <div class="term"><b>SECURITY DEFINER:</b> funcion SQL que corre con privilegios elevados, no con permisos del usuario normal.</div>
+      <div class="term"><b>Escalada de privilegios:</b> cuando alguien obtiene mas permisos de los que deberia tener.</div>
+    </section>
+
+    <p class="footer">
+      Estado general: <b>riesgo alto</b> hasta completar Fase 1. La arquitectura es recuperable, pero requiere
+      cerrar estos huecos antes de seguir agregando funcionalidades nuevas.
+    </p>
+  </main>
+</body>
+</html>
