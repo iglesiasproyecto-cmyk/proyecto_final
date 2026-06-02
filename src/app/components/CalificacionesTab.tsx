@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabaseClient'
 import { Badge } from '@/app/components/ui/badge'
+import { Card } from '@/app/components/ui/card'
 import {
   CheckCircle2, XCircle, ChevronDown, ChevronRight, Users, ClipboardList,
   TrendingUp, Award, Calendar, Mail
