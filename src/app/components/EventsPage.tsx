@@ -412,7 +412,7 @@ function FinanzasTab({
 
       {/* Role-contextual banner */}
       <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-        className={`relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-2xl border ${roleBanner.color}`}>
+        className={`relative overflow-hidden flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 px-4 py-3 rounded-2xl border ${roleBanner.color}`}>
         <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-primary/10 to-transparent pointer-events-none" />
         <span className="text-lg relative z-10">{roleBanner.icon}</span>
         <div className="relative z-10">
@@ -420,7 +420,7 @@ function FinanzasTab({
           <p className="text-[11px] opacity-75 mt-0.5">{roleBanner.subtitle}</p>
         </div>
         {isLider && liderMinisterioNombres.length > 1 && (
-          <span className="ml-auto relative z-10 text-[10px] font-semibold px-2 py-1 rounded-lg bg-primary/15 text-primary border border-primary/25">
+          <span className="relative z-10 text-[10px] font-semibold px-2 py-1 rounded-lg bg-primary/15 text-primary border border-primary/25 sm:ml-auto self-start sm:self-auto">
             {liderMinisterioNombres.length} ministerios
           </span>
         )}
@@ -433,7 +433,7 @@ function FinanzasTab({
           className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-card p-4 space-y-2 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-20 h-20 rounded-full bg-primary/10 -translate-y-6 translate-x-6" />
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary/70">Ingresos reales</p>
-          <p className="text-2xl font-bold text-primary leading-none tracking-tight">{fmt(totalIngresosReales)}</p>
+          <p className="text-xl sm:text-2xl font-bold text-primary leading-tight tracking-tight break-words">{fmt(totalIngresosReales)}</p>
           <p className="text-[11px] text-muted-foreground">Meta: {fmt(totalIngresosPlaneados)}</p>
           <div className="h-1.5 bg-primary/20 rounded-full overflow-hidden">
             <motion.div className="h-full bg-primary rounded-full" initial={{ width: 0 }}
@@ -447,7 +447,7 @@ function FinanzasTab({
           className="rounded-2xl border border-[var(--color-chart-3)]/25 bg-gradient-to-br from-[var(--color-chart-3)]/10 via-[var(--color-chart-3)]/5 to-card p-4 space-y-2 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-20 h-20 rounded-full bg-[var(--color-chart-3)]/10 -translate-y-6 translate-x-6" />
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--color-chart-3)]/70">Egresos reales</p>
-          <p className="text-2xl font-bold text-[var(--color-chart-3)] leading-none tracking-tight">{fmt(totalEgresosReales)}</p>
+          <p className="text-xl sm:text-2xl font-bold text-[var(--color-chart-3)] leading-tight tracking-tight break-words">{fmt(totalEgresosReales)}</p>
           <p className="text-[11px] text-muted-foreground">Meta: {fmt(totalEgresosPlaneados)}</p>
           <div className="h-1.5 bg-[var(--color-chart-3)]/20 rounded-full overflow-hidden">
             <motion.div className="h-full bg-[var(--color-chart-3)] rounded-full" initial={{ width: 0 }}
@@ -461,7 +461,7 @@ function FinanzasTab({
           className={`rounded-2xl border p-4 space-y-1.5 overflow-hidden relative ${totalBalanceNeto >= 0 ? 'border-primary/30 bg-gradient-to-br from-primary/10 to-card' : 'border-[var(--color-chart-5)]/35 bg-gradient-to-br from-[var(--color-chart-5)]/10 to-card'}`}>
           <div className={`absolute top-0 right-0 w-20 h-20 rounded-full -translate-y-6 translate-x-6 ${totalBalanceNeto >= 0 ? 'bg-primary/10' : 'bg-[var(--color-chart-5)]/15'}`} />
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Balance neto</p>
-          <p className={`text-2xl font-bold leading-none tracking-tight ${totalBalanceNeto >= 0 ? 'text-primary' : 'text-[var(--color-chart-3)]'}`}>
+          <p className={`text-xl sm:text-2xl font-bold leading-tight tracking-tight break-words ${totalBalanceNeto >= 0 ? 'text-primary' : 'text-[var(--color-chart-3)]'}`}>
             {totalBalanceNeto >= 0 ? '+' : ''}{fmt(totalBalanceNeto)}
           </p>
           <p className="text-[11px] text-muted-foreground">Plan: {balancePlan >= 0 ? '+' : ''}{fmt(balancePlan)}</p>
@@ -478,7 +478,7 @@ function FinanzasTab({
           <div className="absolute top-0 right-0 w-20 h-20 rounded-full bg-primary/10 -translate-y-6 translate-x-6" />
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Cobertura</p>
           <div className="flex items-end gap-1.5">
-            <p className="text-2xl font-bold leading-none tracking-tight">{eventosConPresupuesto}</p>
+            <p className="text-xl sm:text-2xl font-bold leading-tight tracking-tight break-words">{eventosConPresupuesto}</p>
             <p className="text-sm text-muted-foreground mb-0.5">/ {resumenEventos.length} eventos</p>
           </div>
           <div className="h-1.5 bg-border/50 rounded-full overflow-hidden">
@@ -494,12 +494,12 @@ function FinanzasTab({
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 flex-wrap items-center rounded-xl border border-border/50 bg-card/40 px-2.5 py-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center rounded-xl border border-border/50 bg-card/40 px-2.5 py-2">
         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Filtrar</span>
         {/* Show ministerio filter only when there are multiple options */}
         {ministeriosFiltro.length > 1 && (
           <Select value={String(finanzasMinisterioFilter)} onValueChange={(v) => setFinanzasMinisterioFilter(Number(v))}>
-            <SelectTrigger className="h-8 bg-background/60 border-border/60 rounded-xl text-xs w-44">
+            <SelectTrigger className="h-9 bg-background/60 border-border/60 rounded-xl text-xs w-full sm:w-44">
               <SelectValue placeholder={isLider ? 'Todos tus ministerios' : 'Todos los ministerios'} />
             </SelectTrigger>
             <SelectContent>
@@ -511,7 +511,7 @@ function FinanzasTab({
           </Select>
         )}
         <Select value={String(finanzasMes)} onValueChange={(v) => setFinanzasMes(Number(v))}>
-          <SelectTrigger className="h-8 bg-background/60 border-border/60 rounded-xl text-xs w-32">
+          <SelectTrigger className="h-9 bg-background/60 border-border/60 rounded-xl text-xs w-full sm:w-32">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -544,12 +544,12 @@ function FinanzasTab({
             return (
               <motion.div key={r.idEvento} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                 onClick={() => setPresupuestoEvento(ev)}
-                className="group bg-card/50 border border-border/50 rounded-2xl px-4 py-3.5 flex items-center gap-4 cursor-pointer hover:border-primary/50 hover:bg-card transition-all duration-200">
+                className="group bg-card/50 border border-border/50 rounded-2xl px-4 py-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 cursor-pointer hover:border-primary/50 hover:bg-card transition-all duration-200">
 
                 {/* Left: name + meta */}
                 <div className="flex-1 min-w-0 space-y-0.5">
                   <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{r.nombreEvento}</p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md border
                       ${r.idMinisterio ? 'bg-[var(--color-chart-2)]/20 text-[var(--color-chart-3)]' : 'bg-primary/15 text-primary'}`}>
                       {nombreMinisterio}
@@ -580,8 +580,8 @@ function FinanzasTab({
 
                 {/* Right: balance pill or cta */}
                 {hasBudget ? (
-                  <div className="flex items-center gap-3">
-                    <div className={`text-right px-3 py-1.5 rounded-xl border text-sm font-bold tracking-tight
+                  <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+                    <div className={`min-w-0 flex-1 sm:flex-none text-left sm:text-right px-3 py-1.5 rounded-xl border text-sm font-bold tracking-tight break-words
                       ${r.balanceNeto >= 0 ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-[var(--color-chart-5)]/20 border-[var(--color-chart-5)]/30 text-[var(--color-chart-3)]'}`}>
                       {r.balanceNeto >= 0 ? '+' : ''}{fmt(r.balanceNeto)}
                     </div>
