@@ -228,7 +228,7 @@ export function computeStatistics(
   },
 ): StatisticsData {
   return {
-    iglesia: computeIglesiaTab(data.usuarios, data.miembros, data.sedes, data.ministerios, data.roles, range),
+    iglesia: computeIglesiaTab(data.usuarios, data.miembros.length > 0 ? data.miembros : data.miembrosMinisterio, data.sedes, data.ministerios, data.roles, range),
     ministerios: computeMinisteriosTab(data.ministerios, data.miembrosMinisterio, data.usuarios, range),
     'eventos-tareas': computeEventosTareasTab(data.eventos, data.tareas, range),
     aula: computeAulaTab(data.cursos, data.inscripciones, data.certificados, range),

@@ -3,7 +3,7 @@ import { useApp } from '@/app/store/AppContext';
 import { useUsuarios, useUsuariosEnriquecidos } from '@/hooks/useUsuarios';
 import { useSedes } from '@/hooks/useIglesias';
 import { useEventos, useTareas } from '@/hooks/useEventos';
-import { useMinisteriosEnriquecidos, useMiembrosMinisterio } from '@/hooks/useMinisterios';
+import { useMinisteriosEnriquecidos, useMiembrosMinisterioEnriquecidos } from '@/hooks/useMinisterios';
 import type { StatisticsScope, DateRange, StatisticsDomain, TabData, StatisticsData } from '@/types/statistics.types';
 import { computeStatistics } from '@/services/statistics.service';
 import { useQuery } from '@tanstack/react-query';
@@ -41,7 +41,7 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
   const { data: eventos = [] } = useEventos(scope.idIglesia);
   const { data: tareas = [] } = useTareas();
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(scope.idIglesia);
-  const { data: miembrosMinisterio = [] } = useMiembrosMinisterio();
+  const { data: miembrosMinisterio = [] } = useMiembrosMinisterioEnriquecidos();
 
   const { data: certificados = [] } = useQuery({
     queryKey: ['statistics-certificados', scope.idIglesia],
