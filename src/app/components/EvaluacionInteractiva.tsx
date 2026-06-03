@@ -104,8 +104,19 @@ export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInter
     let correctas = 0
     preguntas.forEach(pregunta => {
       const respuestaUsuario = respuestas[pregunta.id_evaluacion_detalle]
-      if (respuestaUsuario?.toLowerCase().trim() === pregunta.respuesta_correcta.toLowerCase().trim()) {
-        correctas++
+      if (!respuestaUsuario) return
+
+      const tipo = pregunta.tipo_pregunta
+      if (tipo === 'opcion_multiple' || tipo === 'multiple_choice') {
+        // Buscar la opción marcada como correcta
+        const opciones = (pregunta.opciones as any[]) ?? []
+        const opcionCorrecta = opciones.find((o: any) => o.es_correcta)
+        const textoCorrecto = typeof opcionCorrecta === 'string' ? opcionCorrecta : opcionCorrecta?.texto
+        if (textoCorrecto && respuestaUsuario === textoCorrecto) correctas++
+      } else if (pregunta.respuesta_correcta) {
+        if (respuestaUsuario.toLowerCase().trim() === pregunta.respuesta_correcta.toLowerCase().trim()) {
+          correctas++
+        }
       }
     })
 
@@ -277,19 +288,22 @@ export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInter
                   </div>
                 </div>
 
-                {pregunta.tipo_pregunta === 'multiple_choice' && pregunta.opciones && (
+                {(pregunta.tipo_pregunta === 'opcion_multiple' || pregunta.tipo_pregunta === 'multiple_choice') && pregunta.opciones && (
                   <RadioGroup
                     value={respuestas[pregunta.id_evaluacion_detalle] || ''}
                     onValueChange={(value) => handleRespuestaChange(pregunta.id_evaluacion_detalle, value)}
                   >
-                    {pregunta.opciones.map((opcion, opcionIndex) => (
-                      <div key={opcionIndex} className="flex items-center space-x-2">
-                        <RadioGroupItem value={opcion} id={`q${pregunta.id_evaluacion_detalle}-${opcionIndex}`} />
-                        <Label htmlFor={`q${pregunta.id_evaluacion_detalle}-${opcionIndex}`}>
-                          {String.fromCharCode(65 + opcionIndex)}. {opcion}
-                        </Label>
-                      </div>
-                    ))}
+                    {(pregunta.opciones as any[]).map((opcion, opcionIndex) => {
+                      const texto = typeof opcion === 'string' ? opcion : opcion.texto
+                      return (
+                        <div key={opcionIndex} className="flex items-center space-x-2">
+                          <RadioGroupItem value={texto} id={`q${pregunta.id_evaluacion_detalle}-${opcionIndex}`} />
+                          <Label htmlFor={`q${pregunta.id_evaluacion_detalle}-${opcionIndex}`}>
+                            {String.fromCharCode(65 + opcionIndex)}. {texto}
+                          </Label>
+                        </div>
+                      )
+                    })}
                   </RadioGroup>
                 )}
 
