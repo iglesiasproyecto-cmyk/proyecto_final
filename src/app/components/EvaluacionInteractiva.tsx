@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/app/store/AppContext'
 import { useEvaluacionDetalleModulo } from '@/hooks/useEvaluacionesDetalladas'
 import { useIntentosEvaluacion, useCrearIntentoEvaluacion } from '@/hooks/useEvaluacionesDetalladas'

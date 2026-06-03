@@ -47,9 +47,11 @@ function useMarcarModuloCompletado(idCurso: number) {
       if (error) throw error
       return { sinActividades: false }
     },
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['acceso-modulos', vars.idUsuario, idCurso] })
+    onSuccess: () => {
+      // Invalida todas las queries de acceso y progreso (prefix match)
+      qc.invalidateQueries({ queryKey: ['acceso-modulos'] })
       qc.invalidateQueries({ queryKey: ['progreso-curso'] })
+      qc.refetchQueries({ queryKey: ['acceso-modulos'] })
     },
   })
 }

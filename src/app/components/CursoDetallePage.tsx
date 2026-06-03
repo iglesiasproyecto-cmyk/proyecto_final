@@ -43,6 +43,7 @@ import { ModulosNavegacion } from './ModulosNavegacion'
 import { CrearEvaluacionDialog } from '@/app/components/CrearEvaluacionDialog'
 import { EditarEvaluacionDialog } from '@/app/components/EditarEvaluacionDialog'
 import { CalificacionesTab } from '@/app/components/CalificacionesTab'
+import { EvaluacionInteractiva } from '@/app/components/EvaluacionInteractiva'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog'
 
 export function CursoDetallePage() {
@@ -493,6 +494,7 @@ function EvaluacionesTab({ idCurso, isAdmin, isLider }: { idCurso: number; isAdm
   const [showCrearEvaluacion, setShowCrearEvaluacion] = useState(false)
   const [evaluacionEditar, setEvaluacionEditar] = useState<any | null>(null)
   const [confirmDelete, setConfirmDelete] = useState({ id: 0, titulo: '', isOpen: false })
+  const [evaluacionAbierta, setEvaluacionAbierta] = useState<{ idModulo: number; titulo: string } | null>(null)
 
   const { data: modulos, isLoading } = useQuery({
     queryKey: ['modulos-evaluaciones', idCurso],
@@ -580,27 +582,48 @@ function EvaluacionesTab({ idCurso, isAdmin, isLider }: { idCurso: number; isAdm
                         </div>
                       </div>
                       
-                      {canEdit && (
+                      {canEdit ? (
                         <div className="flex flex-col gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 rounded-lg text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
                             onClick={() => setEvaluacionEditar(ev)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
                             onClick={() => setConfirmDelete({ id: ev.id_aula_evaluacion, titulo: ev.titulo, isOpen: true })}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="rounded-xl bg-[#4682b4] text-white hover:bg-[#4682b4]/90 shrink-0"
+                          onClick={() => setEvaluacionAbierta(
+                            evaluacionAbierta?.idModulo === mod.id_aula_modulo
+                              ? null
+                              : { idModulo: mod.id_aula_modulo, titulo: ev.titulo }
+                          )}
+                        >
+                          <ClipboardList className="w-4 h-4 mr-1.5" />
+                          {evaluacionAbierta?.idModulo === mod.id_aula_modulo ? 'Cerrar' : 'Realizar'}
+                        </Button>
                       )}
                     </div>
+                    {evaluacionAbierta?.idModulo === mod.id_aula_modulo && !canEdit && (
+                      <div className="mt-4 pt-4 border-t border-white/10">
+                        <EvaluacionInteractiva
+                          idModulo={mod.id_aula_modulo}
+                          onCompletar={() => setEvaluacionAbierta(null)}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
