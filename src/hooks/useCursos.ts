@@ -29,6 +29,45 @@ export function useCursos(idMinisterio?: number) {
   })
 }
 
+export function useAulaMinisterioStats(idMinisterio?: number) {
+  return useQuery({
+    queryKey: ['aula-ministerio-stats', idMinisterio],
+    queryFn: async () => {
+      if (!idMinisterio) {
+        return { cursosActivos: 0, inscritos: 0, certificados: 0 }
+      }
+
+      const { data, error } = await supabase
+        .from('aula_curso')
+        .select(`
+          id_aula_curso,
+          estado,
+          inscripciones:aula_inscripcion(id_aula_inscripcion, activo),
+          certificados:aula_certificado(id_aula_certificado)
+        `)
+        .eq('id_ministerio', idMinisterio)
+
+      if (error) throw error
+
+      const cursos = data ?? []
+      const cursosActivos = cursos.filter((curso) => curso.estado === 'activo')
+
+      return {
+        cursosActivos: cursosActivos.length,
+        inscritos: cursosActivos.reduce(
+          (total, curso) => total + (curso.inscripciones?.filter((inscripcion) => inscripcion.activo).length ?? 0),
+          0,
+        ),
+        certificados: cursosActivos.reduce(
+          (total, curso) => total + (curso.certificados?.length ?? 0),
+          0,
+        ),
+      }
+    },
+    enabled: idMinisterio !== undefined,
+  })
+}
+
 // Hook para obtener cursos disponibles para un servidor
 export function useCursosDisponibles(idUsuario: number | null | undefined) {
   return useQuery({

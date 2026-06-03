@@ -56,7 +56,14 @@ export function TasksPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const idIglesiaNum = Number(idIglesia) || undefined;
   const { usuarioActual, rolActual, iglesiaActual, sedesDelUsuario } = useApp();
-  const { data: tareas = [], isLoading } = useTareasEnriquecidas(undefined, idIglesiaNum);
+  const isServidor = rolActual === "servidor";
+  const tareasUsuarioId = isServidor ? usuarioActual?.idUsuario : undefined;
+  const { data: tareas = [], isLoading } = useTareasEnriquecidas(
+    undefined,
+    idIglesiaNum,
+    tareasUsuarioId,
+    !isServidor || !!tareasUsuarioId,
+  );
   const createTareaMutation = useCreateTarea();
   const updateEstadoMutation = useUpdateTareaEstado();
   const updateTareaMutation = useUpdateTarea();

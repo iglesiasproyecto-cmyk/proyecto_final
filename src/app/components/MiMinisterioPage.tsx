@@ -3,7 +3,7 @@ import { useMinisterios, useMiembrosMinisterioEnriquecidos } from "@/hooks/useMi
 import { useEventos } from "@/hooks/useEventos";
 import { useApp } from "../store/AppContext";
 import { useProgresoCurso } from "@/hooks/useProgreso";
-import { useCursos } from "@/hooks/useCursos";
+import { useAulaMinisterioStats, useCursos } from "@/hooks/useCursos";
 import { supabase } from "@/lib/supabaseClient";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -297,9 +297,9 @@ export function MiMinisterioPage() {
 function LiderAulaSection({ ministerio, idIglesia }: { ministerio: any; idIglesia?: string }) {
   const navigate = useNavigate();
   const { data: cursos } = useCursos(ministerio?.idMinisterio);
+  const { data: stats } = useAulaMinisterioStats(ministerio?.idMinisterio);
 
   const cursosActivos = cursos?.filter(c => c.estado === 'activo') || [];
-  const totalInscritos = cursosActivos.length > 0 ? 'Calculando...' : '0'; // TODO: Calcular total de inscritos
 
   return (
     <div className="space-y-4">
@@ -318,21 +318,21 @@ function LiderAulaSection({ ministerio, idIglesia }: { ministerio: any; idIglesi
         <div className="text-center p-2 sm:p-3 bg-primary/5 rounded-lg flex sm:flex-col items-center sm:justify-center gap-3 sm:gap-1">
           <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           <div className="flex-1 sm:flex-none text-left sm:text-center">
-            <div className="text-base sm:text-lg font-bold leading-none">{cursosActivos.length}</div>
+            <div className="text-base sm:text-lg font-bold leading-none">{stats?.cursosActivos ?? cursosActivos.length}</div>
             <div className="text-[10px] sm:text-xs text-muted-foreground">Cursos activos</div>
           </div>
         </div>
         <div className="text-center p-2 sm:p-3 bg-green-500/5 rounded-lg flex sm:flex-col items-center sm:justify-center gap-3 sm:gap-1">
           <Users className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
           <div className="flex-1 sm:flex-none text-left sm:text-center">
-            <div className="text-base sm:text-lg font-bold leading-none">{totalInscritos}</div>
+            <div className="text-base sm:text-lg font-bold leading-none">{stats?.inscritos ?? 0}</div>
             <div className="text-[10px] sm:text-xs text-muted-foreground">Inscritos</div>
           </div>
         </div>
         <div className="text-center p-2 sm:p-3 bg-amber-500/5 rounded-lg flex sm:flex-col items-center sm:justify-center gap-3 sm:gap-1">
           <Award className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
           <div className="flex-1 sm:flex-none text-left sm:text-center">
-            <div className="text-base sm:text-lg font-bold leading-none">0</div>
+            <div className="text-base sm:text-lg font-bold leading-none">{stats?.certificados ?? 0}</div>
             <div className="text-[10px] sm:text-xs text-muted-foreground">Certificados</div>
           </div>
         </div>
@@ -341,9 +341,9 @@ function LiderAulaSection({ ministerio, idIglesia }: { ministerio: any; idIglesi
       {cursosActivos.length > 0 ? (
         <div className="space-y-2">
           {cursosActivos.slice(0, 2).map((curso: any) => (
-            <div key={curso.id_curso} className="flex items-center justify-between p-3 bg-accent/20 rounded-lg">
+            <div key={curso.id_aula_curso} className="flex items-center justify-between p-3 bg-accent/20 rounded-lg">
               <div>
-                <p className="text-sm font-medium">{curso.nombre}</p>
+                <p className="text-sm font-medium">{curso.titulo}</p>
                 <p className="text-xs text-muted-foreground">{curso.descripcion}</p>
               </div>
               <Badge variant="outline" className="text-xs">

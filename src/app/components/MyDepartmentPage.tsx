@@ -3,7 +3,7 @@ import { useMinisteriosEnriquecidos, useMiembrosMinisterioEnriquecidos } from "@
 import { useEventos } from "@/hooks/useEventos";
 import { useApp } from "../store/AppContext";
 import { useProgresoCurso } from "@/hooks/useProgreso";
-import { useCursos } from "@/hooks/useCursos";
+import { useAulaMinisterioStats, useCursos } from "@/hooks/useCursos";
 import { supabase } from "@/lib/supabaseClient";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -296,9 +296,9 @@ export function MyDepartmentPage() {
 function LiderAulaSection({ ministerio }: { ministerio: any }) {
   const navigate = useNavigate();
   const { data: cursos } = useCursos(ministerio?.idMinisterio);
+  const { data: stats } = useAulaMinisterioStats(ministerio?.idMinisterio);
 
   const cursosActivos = cursos?.filter(c => c.estado === 'activo') || [];
-  const totalInscritos = cursosActivos.length > 0 ? 'Calculando...' : '0'; // TODO: Calcular total de inscritos
 
   return (
     <div className="space-y-4">
@@ -316,17 +316,17 @@ function LiderAulaSection({ ministerio }: { ministerio: any }) {
       <div className="grid grid-cols-3 gap-3">
         <div className="text-center p-3 bg-primary/5 rounded-lg">
           <BookOpen className="w-5 h-5 mx-auto mb-1 text-primary" />
-          <div className="text-lg font-bold">{cursosActivos.length}</div>
+          <div className="text-lg font-bold">{stats?.cursosActivos ?? cursosActivos.length}</div>
           <div className="text-xs text-muted-foreground">Cursos activos</div>
         </div>
         <div className="text-center p-3 bg-green-500/5 rounded-lg">
           <Users className="w-5 h-5 mx-auto mb-1 text-green-600" />
-          <div className="text-lg font-bold">{totalInscritos}</div>
+          <div className="text-lg font-bold">{stats?.inscritos ?? 0}</div>
           <div className="text-xs text-muted-foreground">Inscritos</div>
         </div>
         <div className="text-center p-3 bg-amber-500/5 rounded-lg">
           <Award className="w-5 h-5 mx-auto mb-1 text-amber-600" />
-          <div className="text-lg font-bold">0</div>
+          <div className="text-lg font-bold">{stats?.certificados ?? 0}</div>
           <div className="text-xs text-muted-foreground">Certificados</div>
         </div>
       </div>
@@ -334,9 +334,9 @@ function LiderAulaSection({ ministerio }: { ministerio: any }) {
       {cursosActivos.length > 0 ? (
         <div className="space-y-2">
           {cursosActivos.slice(0, 2).map((curso: any) => (
-            <div key={curso.id_curso} className="flex items-center justify-between p-3 bg-accent/20 rounded-lg">
+            <div key={curso.id_aula_curso} className="flex items-center justify-between p-3 bg-accent/20 rounded-lg">
               <div>
-                <p className="text-sm font-medium">{curso.nombre}</p>
+                <p className="text-sm font-medium">{curso.titulo}</p>
                 <p className="text-xs text-muted-foreground">{curso.descripcion}</p>
               </div>
               <Badge variant="outline" className="text-xs">

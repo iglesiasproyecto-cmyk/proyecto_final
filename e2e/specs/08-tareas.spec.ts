@@ -93,6 +93,7 @@ test.describe('Tareas — CRUD por rol', () => {
     await gotoTenant(page, 'tareas')
     await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 10_000 })
     await expect(page.getByRole('button', { name: /nueva tarea/i })).not.toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(/sin tareas aquí/i)).not.toBeVisible({ timeout: 10_000 })
   })
 
   test('servidor puede cambiar estado de tarea asignada', async ({ page, role }) => {
