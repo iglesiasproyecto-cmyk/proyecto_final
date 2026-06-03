@@ -94,7 +94,10 @@ export function useTareasEnriquecidas(idEvento?: number, idIglesia?: number, idU
     queryKey: ['tareas-enriquecidas', idEvento, idIglesia, idUsuario],
     queryFn: () => getTareasEnriquecidas(idEvento, idIglesia, idUsuario),
     enabled,
-    staleTime: 30 * 60 * 1000, gcTime: 60 * 60 * 1000, refetchOnWindowFocus: false,
+    staleTime: 30 * 1000,       // 30s — tareas cambian al aprobar/rechazar/enviar evidencia
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,  // refresca al volver a la pestaña
+    refetchInterval: 60 * 1000, // poll cada 60s para ver aprobaciones del líder en tiempo real
   })
 }
 
