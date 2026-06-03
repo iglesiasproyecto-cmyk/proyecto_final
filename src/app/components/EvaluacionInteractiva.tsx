@@ -124,7 +124,7 @@ export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInter
   }
 
   const enviarEvaluacion = async () => {
-    if (!idInscripcion || !preguntas) return
+    if (!preguntas || !evaluacion || !usuarioActual?.idUsuario) return
 
     setEnviando(true)
     try {
@@ -136,7 +136,7 @@ export function EvaluacionInteractiva({ idModulo, onCompletar }: EvaluacionInter
         id_usuario: usuarioActual!.idUsuario,
         puntaje_obtenido: calificacionObtenida,
         aprobado: aprobado,
-        respuestas: respuestas
+        finalizado_en: new Date().toISOString(),
       })
 
       setCalificacion(calificacionObtenida)
