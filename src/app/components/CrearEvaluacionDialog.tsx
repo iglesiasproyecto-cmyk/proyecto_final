@@ -97,7 +97,7 @@ export function CrearEvaluacionDialog({ open, onOpenChange, idModulo }: CrearEva
                            pregunta.tipo === 'respuesta_corta' ? 'respuesta_corta' :
                            'respuesta_corta' // fallback
 
-        // Crear la pregunta
+        // Crear la pregunta — columnas reales: enunciado, tipo, orden, respuesta_correcta
         const { data: preguntaCreada, error: preguntaError } = await supabase
           .from('aula_pregunta')
           .insert({
@@ -105,26 +105,42 @@ export function CrearEvaluacionDialog({ open, onOpenChange, idModulo }: CrearEva
             enunciado: pregunta.pregunta,
             tipo: tipoMapeado,
             orden: i + 1,
-            puntaje: pregunta.puntaje_minimo || 1,
+            respuesta_correcta: pregunta.tipo === 'verdadero_falso'
+              ? pregunta.respuesta_correcta
+              : null,
           })
           .select()
           .single()
 
         if (preguntaError) throw preguntaError
 
-        // Para opciones múltiples, crear las opciones
+        // Para opciones múltiples: insertar en aula_opcion (texto, es_correcta, orden)
         if (pregunta.tipo === 'multiple_choice' && pregunta.opciones) {
-          const opciones = pregunta.opciones.map((opcion, idx) => ({
-            id_aula_pregunta: preguntaCreada.id_aula_pregunta,
-            texto: opcion,
-            es_correcta: String.fromCharCode(65 + idx) === pregunta.respuesta_correcta.toUpperCase(),
-            orden: idx + 1
-          }))
+          const opcionesValidas = pregunta.opciones.filter(o => o.trim() !== '')
+          if (opcionesValidas.length > 0) {
+            const opciones = opcionesValidas.map((opcion, idx) => ({
+              id_aula_pregunta: preguntaCreada.id_aula_pregunta,
+              texto: opcion,
+              es_correcta: String.fromCharCode(65 + idx) === pregunta.respuesta_correcta.toUpperCase(),
+              orden: idx + 1,
+            }))
 
+            const { error: opcionesError } = await supabase
+              .from('aula_opcion')
+              .insert(opciones)
+
+            if (opcionesError) throw opcionesError
+          }
+        }
+
+        // Para verdadero/falso: crear las 2 opciones fijas
+        if (pregunta.tipo === 'verdadero_falso') {
           const { error: opcionesError } = await supabase
             .from('aula_opcion')
-            .insert(opciones)
-
+            .insert([
+              { id_aula_pregunta: preguntaCreada.id_aula_pregunta, texto: 'Verdadero', es_correcta: pregunta.respuesta_correcta.toLowerCase() === 'verdadero', orden: 1 },
+              { id_aula_pregunta: preguntaCreada.id_aula_pregunta, texto: 'Falso',     es_correcta: pregunta.respuesta_correcta.toLowerCase() === 'falso',     orden: 2 },
+            ])
           if (opcionesError) throw opcionesError
         }
       }
