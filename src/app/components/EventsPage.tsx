@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo } from "react";
 import { useParams } from "react-router";
 import { useEventosEnriquecidos, useDeleteEvento, useCreateEvento, useUpdateEvento } from "@/hooks/useEventos";
 import { useSedesEnriquecidas } from "@/hooks/useIglesias";
@@ -19,7 +19,7 @@ import { Skeleton } from "./ui/skeleton";
 import { SedeMinisterioSelector } from "./ui/SedeMinisterioSelector";
 import {
   CalendarDays, Plus, MapPin, Clock, Globe, Users, Pencil, Trash2, Eye,
-  CheckCircle2, XCircle, PlayCircle, BookMarked, Church, ListTodo, Wallet
+  CheckCircle2, XCircle, PlayCircle, BookMarked, Church, ListTodo, Wallet, Search
 } from "lucide-react";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { toast } from "sonner";
@@ -97,6 +97,7 @@ function EventDialogFields({ form, setForm, sedes = [], ministerios = [] }: { fo
           ministerioReadOnly={form._ministerioReadOnly ?? false}
           allowNoMinisterio={form._allowNoMinisterio ?? true}
           allowGeneral={form._allowGeneral ?? false}
+          hideSede={form._hideSedeField ?? false}
         />
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -645,7 +646,7 @@ function FinanzasTab({
 export function EventsPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>();
   const idIglesiaNum = Number(idIglesia) || undefined;
-  const { iglesiaActual, rolActual, usuarioActual, ministeriosDelUsuario } = useApp();
+  const { iglesiaActual, rolActual, usuarioActual, ministeriosDelUsuario, sedesDelUsuario } = useApp();
   const { data: eventos = [], isLoading } = useEventosEnriquecidos(idIglesiaNum);
   const { data: sedes = [] } = useSedesEnriquecidas(idIglesiaNum);
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(idIglesiaNum);
@@ -665,9 +666,15 @@ export function EventsPage() {
   const [finanzasMinisterioFilter, setFinanzasMinisterioFilter] = useState<number>(0);
   const [finanzasMes, setFinanzasMes] = useState<number>(new Date().getMonth() + 1);
   const [finanzasAnio] = useState<number>(new Date().getFullYear());
+  const [eventSearchQuery, setEventSearchQuery] = useState("");
+  const [eventDateFilter, setEventDateFilter] = useState("");
+  const [eventStatusFilter, setEventStatusFilter] = useState("todos");
+  const [eventSortOrder, setEventSortOrder] = useState<"newest" | "oldest">("newest");
+  const [eventSedeFilter, setEventSedeFilter] = useState<number>(0);
+  const [eventMinisterioFilter, setEventMinisterioFilter] = useState<number>(0);
 
   const [createForm, setCreateForm] = useState<any>({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: 0, idMinisterio: 0 });
-  const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", estado: "programado" as string, idSede: 0, idMinisterio: 0 });
+  const [editForm, setEditForm] = useState<any>({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", estado: "programado" as string, idSede: 0, idMinisterio: 0 });
 
   const canManageEvents = rolActual === "lider" || rolActual === "admin_iglesia" || rolActual === "admin_sede" || rolActual === "super_admin";
   const canSeeBudget = rolActual !== "servidor";
@@ -697,11 +704,17 @@ export function EventsPage() {
   const userLeadMinisterios = liderMinisterios.length || (isLider ? usuarioMinisterioIds.length : 0);
   const hasMultipleMinisterios = userLeadMinisterios >= 2;
   const shouldShowSelectorFields = true;
+  const shouldHideSedeField = isLider || isAdminSede;
 
   // Full ministerio objects (with idSede) from async query, filtered to user's ministerios
-  const ministeriosDisponiblesParaCrearAsync = isLider
-    ? ministerios.filter((m) => effectiveLiderIds.includes(m.idMinisterio))
-    : ministerios;
+  const ministeriosDisponiblesParaCrearAsync = (() => {
+    if (isLider) return ministerios.filter((m) => effectiveLiderIds.includes(m.idMinisterio));
+    if (isAdminSede) {
+      const sedeIds = new Set(sedesDelUsuario.map(s => s.id));
+      return ministerios.filter((m) => sedeIds.has(m.idSede));
+    }
+    return ministerios;
+  })();
 
   // Fallback from context when async data hasn't loaded yet (avoids empty dropdown on open)
   const ministeriosDesdeContexto = isLider && ministeriosDisponiblesParaCrearAsync.length === 0
@@ -723,13 +736,64 @@ export function EventsPage() {
     : ministeriosDesdeContexto;
 
   // ── Finanzas scope (now safe: effectiveLiderIds is declared above) ─────────
-  const eventosScope = isLider
-    ? eventos.filter(e => effectiveLiderIds.includes(e.idMinisterio ?? 0))
-    : eventos
+  const eventosScope = (() => {
+    if (isLider) return eventos.filter(e => effectiveLiderIds.includes(e.idMinisterio ?? 0));
+    if (isAdminSede) {
+      const sedeIds = new Set(sedesDelUsuario.map(s => s.id));
+      return eventos.filter(e => !!e.idSede && sedeIds.has(e.idSede));
+    }
+    return eventos;
+  })()
 
   const eventosParaResumen = finanzasMinisterioFilter
     ? eventosScope.filter((e) => e.idMinisterio === finanzasMinisterioFilter)
     : eventosScope
+
+  const ministeriosDisponiblesFiltroEventos = ministeriosDisponiblesParaCrear;
+
+  useEffect(() => {
+    if (isLider) {
+      if (eventSedeFilter !== 0) setEventSedeFilter(0);
+      if (effectiveLiderIds.length === 0) {
+        if (eventMinisterioFilter !== 0) setEventMinisterioFilter(0);
+        return;
+      }
+      if (effectiveLiderIds.length === 1 && eventMinisterioFilter !== effectiveLiderIds[0]) {
+        setEventMinisterioFilter(effectiveLiderIds[0]);
+        return;
+      }
+      if (eventMinisterioFilter && !effectiveLiderIds.includes(eventMinisterioFilter)) {
+        setEventMinisterioFilter(0);
+      }
+      return;
+    }
+
+    if (isAdminSede) {
+      if (eventSedeFilter !== 0) setEventSedeFilter(0);
+      const allowedIds = new Set(ministeriosDisponiblesFiltroEventos.map(m => m.idMinisterio));
+      if (eventMinisterioFilter && !allowedIds.has(eventMinisterioFilter)) setEventMinisterioFilter(0);
+    }
+  }, [effectiveLiderIds, eventMinisterioFilter, eventSedeFilter, isAdminSede, isLider, ministeriosDisponiblesFiltroEventos]);
+
+  const filteredEventos = useMemo(() => {
+    const q = eventSearchQuery.trim().toLowerCase();
+    return eventosScope
+      .filter((e) => {
+        if (!q) return true;
+        return [e.nombre, e.descripcion, e.tipoEventoTexto, e.ministerioNombre, e.sedeNombre]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(q));
+      })
+      .filter((e) => !eventDateFilter || e.fechaInicio.slice(0, 10) === eventDateFilter)
+      .filter((e) => eventStatusFilter === "todos" || e.estado === eventStatusFilter)
+      .filter((e) => !eventSedeFilter || e.idSede === eventSedeFilter)
+      .filter((e) => !eventMinisterioFilter || e.idMinisterio === eventMinisterioFilter)
+      .sort((a, b) => {
+        const aTime = new Date(a.fechaInicio).getTime();
+        const bTime = new Date(b.fechaInicio).getTime();
+        return eventSortOrder === "newest" ? bTime - aTime : aTime - bTime;
+      });
+  }, [eventDateFilter, eventMinisterioFilter, eventSearchQuery, eventSedeFilter, eventSortOrder, eventStatusFilter, eventosScope]);
 
   const resumenEventos = buildResumen(
     eventosParaResumen.map((e) => ({
@@ -764,7 +828,9 @@ export function EventsPage() {
             actualizadoEn: '',
           }))
       )
-    : sedes;
+    : isAdminSede
+      ? sedes.filter(s => sedesDelUsuario.some(sd => sd.id === s.idSede))
+      : sedes;
 
   // Pre-fill sede and ministerio: prefer full async data (has sede name), fall back to context
   const firstFullMinisterio = ministeriosDisponiblesParaCrear[0] ?? null;
@@ -774,7 +840,7 @@ export function EventsPage() {
   // Primitive IDs for stable dep tracking
   const firstLiderMinisterioId = firstFullMinisterio?.idMinisterio ?? firstContextMinisterio?.id ?? 0;
   const firstLiderSedeId = firstFullMinisterio?.idSede ?? firstContextMinisterio?.idSede
-    ?? (isAdminSede || isLider ? (sedes.length === 1 ? sedes[0].idSede : 0) : 0);
+    ?? (isAdminSede ? (sedesDelUsuario[0]?.id ?? 0) : (isLider ? (sedes.length === 1 ? sedes[0].idSede : 0) : 0));
 
   // Sede is read-only when lider has only 1 sede (regardless of number of ministerios)
   const liderSedeReadOnly = isAdminSede || leaderHasSingleMinisterio || liderHasSingleSede;
@@ -782,7 +848,7 @@ export function EventsPage() {
   debugLog('EventsPage', 'rolActual:', rolActual, 'liderMinisterios:', liderMinisterios, 'firstLiderMinisterioId:', firstLiderMinisterioId, 'firstLiderSedeId:', firstLiderSedeId, 'shouldShowSelectorFields:', shouldShowSelectorFields);
 
   const resetCreateForm = () => {
-    setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: firstLiderSedeId, idMinisterio: firstLiderMinisterioId, _sedeReadOnly: liderSedeReadOnly, _ministerioReadOnly: leaderHasSingleMinisterio, _allowNoMinisterio: !isLider, _allowGeneral: rolActual === "super_admin" || rolActual === "admin_iglesia", _hideSelectorFields: !shouldShowSelectorFields } as any);
+    setCreateForm({ nombre: "", descripcion: "", tipoEventoTexto: "", fechaInicio: "", fechaFin: "", idSede: firstLiderSedeId, idMinisterio: firstLiderMinisterioId, _sedeReadOnly: liderSedeReadOnly, _ministerioReadOnly: leaderHasSingleMinisterio, _allowNoMinisterio: !isLider, _allowGeneral: rolActual === "super_admin" || rolActual === "admin_iglesia", _hideSelectorFields: !shouldShowSelectorFields, _hideSedeField: shouldHideSedeField } as any);
     setCreateStep(1);
     setQuickBudgetItems([]);
   };
@@ -791,7 +857,7 @@ export function EventsPage() {
     if (showCreate) {
       resetCreateForm();
     }
-  }, [showCreate, firstLiderMinisterioId, firstLiderSedeId, liderSedeReadOnly, isLider, shouldShowSelectorFields, rolActual]);
+  }, [showCreate, firstLiderMinisterioId, firstLiderSedeId, liderSedeReadOnly, isLider, shouldHideSedeField, shouldShowSelectorFields, rolActual]);
 
   const openEditDialog = (ev: EventoEnriquecido) => {
     setEditEvento(ev);
@@ -803,6 +869,7 @@ export function EventsPage() {
       estado: ev.estado,
       idSede: ev.idSede ?? 0,
       idMinisterio: ev.idMinisterio ?? 0,
+      _hideSedeField: shouldHideSedeField,
     });
   };
 
@@ -920,11 +987,15 @@ export function EventsPage() {
   const getMon  = (d: string) => new Date(d).toLocaleDateString("es", { month: "short" }).toUpperCase();
 
   const stats = [
-    { label: "Programados", value: eventos.filter(e => e.estado === "programado").length,  color: "from-[#709dbd] to-[#4682b4]" },
-    { label: "En Curso",    value: eventos.filter(e => e.estado === "en_curso").length,    color: "from-amber-500 to-orange-600" },
-    { label: "Finalizados", value: eventos.filter(e => e.estado === "finalizado").length,  color: "from-emerald-500 to-teal-600" },
-    { label: "Total Eventos", value: eventos.length,                                      color: "from-[#709dbd] to-[#4682b4]" },
+    { label: "Programados", value: filteredEventos.filter(e => e.estado === "programado").length,  color: "from-[#709dbd] to-[#4682b4]" },
+    { label: "En Curso",    value: filteredEventos.filter(e => e.estado === "en_curso").length,    color: "from-amber-500 to-orange-600" },
+    { label: "Finalizados", value: filteredEventos.filter(e => e.estado === "finalizado").length,  color: "from-emerald-500 to-teal-600" },
+    { label: "Total Eventos", value: filteredEventos.length,                                      color: "from-[#709dbd] to-[#4682b4]" },
   ];
+
+  const eventTabs = isLider
+    ? (["todos", "ministerio"] as const)
+    : (["todos", "global", "ministerio"] as const);
 
   const renderEventsGrid = (list: typeof eventos) => {
     if (list.length === 0) return (
@@ -1123,25 +1194,123 @@ export function EventsPage() {
             ))}
           </div>
 
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card/40 backdrop-blur-xl border border-border/50 p-3 sm:p-4 rounded-2xl shadow-sm space-y-3"
+          >
+            <div className="relative min-w-0">
+              <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
+              <Input
+                placeholder="Buscar por evento, descripción, ministerio o sede..."
+                value={eventSearchQuery}
+                onChange={(e) => setEventSearchQuery(e.target.value)}
+                className="w-full pl-11 h-12 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-sm"
+              />
+            </div>
+
+            <div className={`grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 ${!isLider && !isAdminSede ? "xl:grid-cols-[minmax(150px,170px)_minmax(160px,190px)_minmax(180px,210px)_minmax(320px,1fr)]" : "xl:grid-cols-[minmax(150px,170px)_minmax(160px,190px)_minmax(180px,210px)_minmax(220px,1fr)]"}`}>
+              <div className="min-w-0">
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Fecha</label>
+                <Input
+                  type="date"
+                  value={eventDateFilter}
+                  onChange={(e) => setEventDateFilter(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl h-12 text-sm shadow-sm focus-visible:ring-primary/20 focus-visible:border-primary/50"
+                  title="Filtrar por fecha del evento"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Estado</label>
+                <select
+                  value={eventStatusFilter}
+                  onChange={(e) => setEventStatusFilter(e.target.value)}
+                  className="w-full h-12 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-sm"
+                >
+                  <option value="todos">Todos los estados</option>
+                  <option value="programado">Programados</option>
+                  <option value="en_curso">En curso</option>
+                  <option value="finalizado">Finalizados</option>
+                  <option value="cancelado">Cancelados</option>
+                </select>
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Orden</label>
+                <select
+                  value={eventSortOrder}
+                  onChange={(e) => setEventSortOrder(e.target.value as "newest" | "oldest")}
+                  className="w-full h-12 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-sm"
+                >
+                  <option value="newest">Más recientes primero</option>
+                  <option value="oldest">Más antiguos primero</option>
+                </select>
+              </div>
+
+              {!isLider && !isAdminSede && (
+                <div className="min-w-0 sm:col-span-2 xl:col-span-1">
+                  <SedeMinisterioSelector
+                    sedes={sedesParaSelector}
+                    ministerios={ministeriosDisponiblesFiltroEventos}
+                    selectedSedeId={eventSedeFilter}
+                    selectedMinisterioId={eventMinisterioFilter}
+                    onSedeChange={(idSede, clearMinisterio) => {
+                      setEventSedeFilter(idSede);
+                      if (clearMinisterio) setEventMinisterioFilter(0);
+                    }}
+                    onMinisterioChange={(idMinisterio, autoSedeId) => {
+                      setEventMinisterioFilter(idMinisterio);
+                      setEventSedeFilter(autoSedeId);
+                    }}
+                    allowNoMinisterio
+                  />
+                </div>
+              )}
+
+              {(isLider || isAdminSede) && (
+                <div className="min-w-0 sm:col-span-2 xl:col-span-1">
+                  <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">
+                    {isLider ? "Tu ministerio" : "Ministerio"}
+                  </label>
+                  <select
+                    value={eventMinisterioFilter}
+                    onChange={(e) => setEventMinisterioFilter(Number(e.target.value))}
+                    disabled={isLider && ministeriosDisponiblesFiltroEventos.length <= 1}
+                    className="w-full h-12 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-sm disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isAdminSede && <option value={0}>Todos los ministerios de mi sede</option>}
+                    {isLider && ministeriosDisponiblesFiltroEventos.length > 1 && <option value={0}>Todos tus ministerios</option>}
+                    {ministeriosDisponiblesFiltroEventos.map((m) => (
+                      <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <Tabs defaultValue="todos">
               <TabsList className="bg-card/40 backdrop-blur-md border border-border/50 p-1 rounded-xl w-fit flex mb-5">
-                <TabsTrigger value="todos" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-[#1a7fa8] data-[state=active]:text-white data-[state=active]:shadow-md">Todos ({eventos.length})</TabsTrigger>
-                <TabsTrigger value="global" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <Globe className="w-3.5 h-3.5 mr-1.5" /> Globales
-                </TabsTrigger>
+                <TabsTrigger value="todos" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-[#1a7fa8] data-[state=active]:text-white data-[state=active]:shadow-md">{isLider ? 'Tus eventos' : 'Todos'} ({filteredEventos.length})</TabsTrigger>
+                {!isLider && (
+                  <TabsTrigger value="global" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">
+                    <Globe className="w-3.5 h-3.5 mr-1.5" /> Globales
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="ministerio" className="rounded-lg text-xs font-medium px-4 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <Users className="w-3.5 h-3.5 mr-1.5" /> Ministeriales
+                  <Users className="w-3.5 h-3.5 mr-1.5" /> {isLider ? 'Tus ministerios' : 'Ministeriales'}
                 </TabsTrigger>
               </TabsList>
 
               <AnimatePresence>
-                {["todos", "global", "ministerio"].map((tab) => (
+                {eventTabs.map((tab) => (
                   <TabsContent key={tab} value={tab} className="outline-none space-y-6 mt-0">
                     {renderEventsGrid(
-                      tab === "todos" ? eventos :
-                      tab === "global" ? eventos.filter((e) => !e.idMinisterio) :
-                      eventos.filter((e) => !!e.idMinisterio)
+                      tab === "todos" ? filteredEventos :
+                      tab === "global" ? filteredEventos.filter((e) => !e.idMinisterio) :
+                      filteredEventos.filter((e) => !!e.idMinisterio)
                     )}
                   </TabsContent>
                 ))}
@@ -1271,7 +1440,7 @@ export function EventsPage() {
             </DialogTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Modifica los datos del evento seleccionado.</p>
           </DialogHeader>
-          <EventDialogFields form={editForm} setForm={setEditForm} sedes={sedes} ministerios={ministerios} />
+          <EventDialogFields form={editForm} setForm={setEditForm} sedes={sedesParaSelector} ministerios={ministeriosDisponiblesParaCrear} />
           <DialogFooter className="border-t border-border/50 pt-4 mt-2">
             <Button variant="ghost" className="rounded-xl" onClick={() => setEditEvento(null)}>Cancelar</Button>
             <Button className="rounded-xl" onClick={handleUpdateEvento} disabled={updateEventoMutation.isPending}>

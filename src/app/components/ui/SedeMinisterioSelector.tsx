@@ -13,6 +13,8 @@ interface SedeMinisterioSelectorProps {
   ministerioReadOnly?: boolean
   allowNoMinisterio?: boolean
   allowGeneral?: boolean
+  hideSede?: boolean
+  hideMinisterio?: boolean
 }
 
 function GlassSelect({
@@ -57,6 +59,8 @@ export function SedeMinisterioSelector({
   ministerioReadOnly = false,
   allowNoMinisterio = false,
   allowGeneral = false,
+  hideSede = false,
+  hideMinisterio = false,
 }: SedeMinisterioSelectorProps) {
   const { rolActual } = useApp()
 
@@ -78,8 +82,8 @@ export function SedeMinisterioSelector({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
+    <div className={`grid grid-cols-1 ${hideSede || hideMinisterio ? '' : 'sm:grid-cols-2'} gap-4`}>
+      {!hideSede && <div>
         <FieldLabel>
           Sede{' '}
           {!sedeReadOnly && (
@@ -104,9 +108,9 @@ export function SedeMinisterioSelector({
             ))}
           </GlassSelect>
         )}
-      </div>
+      </div>}
 
-      <div>
+      {!hideMinisterio && <div>
         <FieldLabel>
           Ministerio{' '}
           {allowNoMinisterio && (
@@ -133,7 +137,7 @@ export function SedeMinisterioSelector({
             ))}
           </GlassSelect>
         )}
-      </div>
+      </div>}
     </div>
   )
 }
