@@ -127,6 +127,17 @@ async function obtenerProgresoModulosBatch(idUsuario: number, moduloIds: number[
         .eq('aprobado', true)
     : { data: [] as Array<{ id_aula_evaluacion: number }> }
 
+  // Módulos marcados explícitamente como completados por el usuario
+  const { data: modulosCompletadosExplicit } = await supabase
+    .from('aula_modulo_completado')
+    .select('id_aula_modulo')
+    .eq('id_usuario', idUsuario)
+    .in('id_aula_modulo', moduloIds)
+
+  const modulosCompletadosSet = new Set(
+    (modulosCompletadosExplicit ?? []).map((r) => r.id_aula_modulo)
+  )
+
   const actividadesByModulo = new Map<number, number[]>()
   for (const actividad of actividades ?? []) {
     const list = actividadesByModulo.get(actividad.id_aula_modulo) ?? []
@@ -149,6 +160,12 @@ async function obtenerProgresoModulosBatch(idUsuario: number, moduloIds: number[
     const evaluacionModuloIds = evaluacionesByModulo.get(modulo.id_aula_modulo) ?? []
     const totalElementos = actividadModuloIds.length + evaluacionModuloIds.length
     const tieneContenido = !!(modulo.contenido_md || modulo.descripcion)
+
+    // Marcado explícitamente como completado (siempre tiene prioridad)
+    if (modulosCompletadosSet.has(modulo.id_aula_modulo)) {
+      result.set(modulo.id_aula_modulo, { completado: true, totalElementos: Math.max(totalElementos, 1) })
+      continue
+    }
 
     if (totalElementos === 0 && tieneContenido) {
       result.set(modulo.id_aula_modulo, { completado: true, totalElementos: 1 })

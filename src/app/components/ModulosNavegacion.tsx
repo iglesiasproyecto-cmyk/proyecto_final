@@ -21,31 +21,31 @@ function useMarcarModuloCompletado(idCurso: number) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ idModulo, idUsuario }: { idModulo: number; idUsuario: number }) => {
-      // Obtener todas las actividades del módulo
+      // 1. Registrar el módulo como completado explícitamente
+      const { error: err1 } = await supabase
+        .from('aula_modulo_completado')
+        .upsert({ id_usuario: idUsuario, id_aula_modulo: idModulo },
+                 { onConflict: 'id_usuario,id_aula_modulo' })
+      if (err1) throw err1
+
+      // 2. Si el módulo tiene actividades, marcarlas también
       const { data: actividades } = await supabase
         .from('aula_actividad')
         .select('id_aula_actividad')
         .eq('id_aula_modulo', idModulo)
 
-      if (!actividades || actividades.length === 0) {
-        // Módulo solo con contenido — ya se auto-completa, nada que insertar
-        return { sinActividades: true }
+      if (actividades && actividades.length > 0) {
+        const rows = actividades.map(a => ({
+          id_aula_actividad: a.id_aula_actividad,
+          id_usuario: idUsuario,
+          completada: true,
+          completada_en: new Date().toISOString(),
+        }))
+        const { error: err2 } = await supabase
+          .from('aula_progreso_actividad')
+          .upsert(rows, { onConflict: 'id_usuario,id_aula_actividad' })
+        if (err2) throw err2
       }
-
-      // Marcar todas las actividades como completadas
-      const rows = actividades.map(a => ({
-        id_aula_actividad: a.id_aula_actividad,
-        id_usuario: idUsuario,
-        completada: true,
-        completada_en: new Date().toISOString(),
-      }))
-
-      const { error } = await supabase
-        .from('aula_progreso_actividad')
-        .upsert(rows, { onConflict: 'id_usuario,id_aula_actividad' })
-
-      if (error) throw error
-      return { sinActividades: false }
     },
     onSuccess: () => {
       // Invalida todas las queries de acceso y progreso (prefix match)
