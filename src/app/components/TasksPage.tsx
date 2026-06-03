@@ -67,7 +67,9 @@ export function TasksPage() {
   const servidorId = isServidor ? stableServidorIdRef.current : null;
   const { data: tareas = [], isLoading } = useTareasEnriquecidas(
     undefined,
-    idIglesiaNum,
+    // Para servidor: NO filtrar por iglesia — sus tareas vienen de RLS (tarea_asignada.id_usuario).
+    // Pasar idIglesia rompe cuando el servidor pertenece a múltiples iglesias/sedes.
+    isServidor ? undefined : idIglesiaNum,
     servidorId ?? undefined,
     isServidor ? servidorId !== null : true,
   );
