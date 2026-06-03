@@ -41,34 +41,34 @@ function ItemRow({
 }) {
   const diff = item.montoReal !== null ? item.montoReal - item.montoPlaneado : null
   return (
-    <div className="bg-card/40 border border-border/50 rounded-xl p-3 space-y-2">
-      <div className="flex justify-between items-start">
-        <div>
+    <div className="bg-card/40 border border-border/50 rounded-xl p-3 sm:p-4 space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{item.categoria}</p>
           {item.descripcion && <p className="text-xs text-muted-foreground">{item.descripcion}</p>}
         </div>
         <div className="flex gap-1">
-          <button onClick={() => onEdit(item)} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={() => onEdit(item)} className="min-h-9 min-w-9 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
             <Pencil className="w-3.5 h-3.5" />
           </button>
-          <button onClick={() => onDelete(item)} className="p-1 text-muted-foreground hover:text-destructive transition-colors">
+          <button onClick={() => onDelete(item)} className="min-h-9 min-w-9 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-muted/50 transition-colors">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2 text-xs">
-        <div className="bg-background/50 rounded-lg p-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+        <div className="bg-background/50 rounded-lg p-2.5 min-w-0">
           <p className="text-muted-foreground mb-0.5">Planeado</p>
-          <p className="font-semibold">{fmt(item.montoPlaneado)}</p>
+          <p className="font-semibold break-words">{fmt(item.montoPlaneado)}</p>
         </div>
-        <div className="bg-background/50 rounded-lg p-2">
+        <div className="bg-background/50 rounded-lg p-2.5 min-w-0">
           <p className="text-muted-foreground mb-0.5">Real</p>
-          <p className="font-semibold text-emerald-400">{item.montoReal !== null ? fmt(item.montoReal) : "-"}</p>
+          <p className="font-semibold text-emerald-400 break-words">{item.montoReal !== null ? fmt(item.montoReal) : "-"}</p>
         </div>
-        <div className="bg-background/50 rounded-lg p-2">
+        <div className="bg-background/50 rounded-lg p-2.5 min-w-0">
           <p className="text-muted-foreground mb-0.5">Diferencia</p>
           {diff !== null ? (
-            <p className={`font-semibold ${diff >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            <p className={`font-semibold break-words ${diff >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
               {diff >= 0 ? "+" : ""}
               {fmt(diff)}
             </p>
@@ -111,25 +111,25 @@ function ItemsSection({
 
       <button
         onClick={onAdd}
-        className="w-full border border-dashed border-primary/40 rounded-xl p-3 text-sm text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
+        className="w-full min-h-11 border border-dashed border-primary/40 rounded-xl p-3 text-sm text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
       >
         <Plus className="w-4 h-4" />
         Agregar ítem
       </button>
 
       {filtered.length > 0 && (
-        <div className="bg-card/30 border border-border/50 rounded-xl p-3 space-y-1.5 text-sm">
-          <div className="flex justify-between">
+        <div className="bg-card/30 border border-border/50 rounded-xl p-3 space-y-2 text-sm">
+          <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-3">
             <span className="text-muted-foreground">Total planeado</span>
-            <span className="font-semibold">{fmt(totalPlaneado)}</span>
+            <span className="font-semibold break-words text-left sm:text-right">{fmt(totalPlaneado)}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-3">
             <span className="text-muted-foreground">Total real</span>
-            <span className={`font-semibold ${tipo === "ingreso" ? "text-emerald-400" : "text-rose-400"}`}>{fmt(totalReal)}</span>
+            <span className={`font-semibold break-words text-left sm:text-right ${tipo === "ingreso" ? "text-emerald-400" : "text-rose-400"}`}>{fmt(totalReal)}</span>
           </div>
-          <div className="flex justify-between items-center pt-1 border-t border-border/50">
+          <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-3 pt-1 border-t border-border/50">
             <span className="text-muted-foreground text-xs">Ejecución</span>
-            <span className="font-bold text-primary">{pct}%</span>
+            <span className="font-bold text-primary break-words text-left sm:text-right">{pct}%</span>
           </div>
         </div>
       )}
@@ -219,14 +219,14 @@ export function EventoPresupuestoDrawer({
   return (
     <>
       <Sheet open={!!evento} onOpenChange={(open) => { if (!open) onClose() }}>
-        <SheetContent className="w-[440px] sm:max-w-[440px] bg-card/95 backdrop-blur-2xl border-border/50 overflow-y-auto">
+        <SheetContent className="w-screen max-w-none sm:w-[440px] sm:max-w-[440px] h-dvh sm:h-auto bg-card/95 backdrop-blur-2xl border-border/50 overflow-y-auto px-4 sm:px-6 pb-6">
           <SheetHeader className="mb-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex-1">
                 <SheetTitle className="text-lg font-bold tracking-tight">{evento?.nombre}</SheetTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">{ministerioTexto} · {evento?.fechaInicio ? new Date(evento.fechaInicio).toLocaleDateString("es-CO") : ""}</p>
               </div>
-              <div className={`rounded-xl px-3 py-2 text-right border ${balanceNeto >= 0 ? "bg-emerald-500/10 border-emerald-500/20" : "bg-rose-500/10 border-rose-500/20"}`}>
+              <div className={`w-full sm:w-auto rounded-xl px-3 py-2 text-left sm:text-right border ${balanceNeto >= 0 ? "bg-emerald-500/10 border-emerald-500/20" : "bg-rose-500/10 border-rose-500/20"}`}>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Balance</p>
                 <p className={`text-base font-bold ${balanceNeto >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                   {balanceNeto >= 0 ? "+" : ""}
@@ -237,11 +237,11 @@ export function EventoPresupuestoDrawer({
           </SheetHeader>
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "ingreso" | "egreso")}>
-            <TabsList className="w-full bg-card/40 border border-border/50 p-1 rounded-xl mb-4">
-              <TabsTrigger value="ingreso" className="flex-1 rounded-lg text-xs data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            <TabsList className="w-full bg-card/40 border border-border/50 p-1 rounded-xl mb-4 h-auto">
+              <TabsTrigger value="ingreso" className="flex-1 min-h-10 rounded-lg text-xs data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
                 <TrendingUp className="w-3.5 h-3.5 mr-1.5" /> Ingresos
               </TabsTrigger>
-              <TabsTrigger value="egreso" className="flex-1 rounded-lg text-xs data-[state=active]:bg-rose-600 data-[state=active]:text-white">
+              <TabsTrigger value="egreso" className="flex-1 min-h-10 rounded-lg text-xs data-[state=active]:bg-rose-600 data-[state=active]:text-white">
                 <TrendingDown className="w-3.5 h-3.5 mr-1.5" /> Egresos
               </TabsTrigger>
             </TabsList>
@@ -260,7 +260,7 @@ export function EventoPresupuestoDrawer({
       </Sheet>
 
       <Dialog open={showForm} onOpenChange={(open) => { if (!open) setShowForm(false) }}>
-        <DialogContent className="sm:max-w-md rounded-2xl bg-card/95 backdrop-blur-2xl border-white/10">
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md rounded-2xl bg-card/95 backdrop-blur-2xl border-white/10">
           <DialogHeader>
             <DialogTitle className="text-base font-bold">
               {editingItem ? "Editar ítem" : `Agregar ${activeTab}`}
@@ -295,7 +295,7 @@ export function EventoPresupuestoDrawer({
                 onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block mb-1.5">Monto planeado</label>
                 <Input
@@ -318,9 +318,9 @@ export function EventoPresupuestoDrawer({
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForm(false)} className="rounded-xl">Cancelar</Button>
-            <Button onClick={handleSave} disabled={isSaving || !form.categoriaSelect || (form.categoriaSelect === "Otro (especificar)" && !form.categoriaCustom.trim())} className="rounded-xl bg-primary">
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-0">
+            <Button variant="outline" onClick={() => setShowForm(false)} className="w-full sm:w-auto rounded-xl">Cancelar</Button>
+            <Button onClick={handleSave} disabled={isSaving || !form.categoriaSelect || (form.categoriaSelect === "Otro (especificar)" && !form.categoriaCustom.trim())} className="w-full sm:w-auto rounded-xl bg-primary">
               {isSaving ? "Guardando..." : "Guardar"}
             </Button>
           </DialogFooter>
