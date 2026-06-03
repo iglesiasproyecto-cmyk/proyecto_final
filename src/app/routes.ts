@@ -34,28 +34,29 @@ import { GlobalTareasPage } from "./components/GlobalTareasPage";
 import { GlobalAulaPage } from "./components/GlobalAulaPage";
 import { ConfiguracionPage } from "./components/ConfiguracionPage";
 import { RootErrorPage, ErrorPage } from "./components/ErrorPage";
+import { loadLazyRoute } from "@/lib/lazyImport";
 
 // Lazy-loaded route components (code splitting for large pages)
 const UsuariosPage = React.lazy(() =>
-  import("./components/UsuariosPage").then(mod => ({ default: mod.UsuariosPage }))
+  loadLazyRoute(() => import("./components/UsuariosPage")).then(mod => ({ default: mod.UsuariosPage }))
 );
 const TasksPage = React.lazy(() =>
-  import("./components/TasksPage").then(mod => ({ default: mod.TasksPage }))
+  loadLazyRoute(() => import("./components/TasksPage")).then(mod => ({ default: mod.TasksPage }))
 );
 const PastoresPage = React.lazy(() =>
-  import("./components/PastoresPage").then(mod => ({ default: mod.PastoresPage }))
+  loadLazyRoute(() => import("./components/PastoresPage")).then(mod => ({ default: mod.PastoresPage }))
 );
 const SedesPage = React.lazy(() =>
-  import("./components/SedesPage").then(mod => ({ default: mod.SedesPage }))
+  loadLazyRoute(() => import("./components/SedesPage")).then(mod => ({ default: mod.SedesPage }))
 );
 const CursoDetallePage = React.lazy(() =>
-  import("./components/CursoDetallePage").then(mod => ({ default: mod.CursoDetallePage }))
+  loadLazyRoute(() => import("./components/CursoDetallePage")).then(mod => ({ default: mod.CursoDetallePage }))
 );
 const EventsPage = React.lazy(() =>
-  import("./components/EventsPage").then(mod => ({ default: mod.EventsPage }))
+  loadLazyRoute(() => import("./components/EventsPage")).then(mod => ({ default: mod.EventsPage }))
 );
 const StatisticsPage = React.lazy(() =>
-  import("./components/StatisticsPage").then(mod => ({ default: mod.StatisticsPage }))
+  loadLazyRoute(() => import("./components/StatisticsPage")).then(mod => ({ default: mod.StatisticsPage }))
 );
 
 export const router = createBrowserRouter([

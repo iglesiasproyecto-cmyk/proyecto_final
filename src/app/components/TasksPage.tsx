@@ -390,6 +390,13 @@ export function TasksPage() {
 
   const isAdmin = rolActual === "admin_iglesia" || rolActual === "super_admin" || rolActual === "admin_sede";
   const canManageTasks = isLider || isAdmin;
+
+  // Devuelve el siguiente estado al que puede avanzar el servidor desde su tarea actual
+  const getActionForServer = (estado: string): { next: string } | null => {
+    if (estado === 'pendiente') return { next: 'en_progreso' };
+    if (estado === 'en_progreso') return { next: 'en_revision' };
+    return null;
+  };
   const canShowCreateButton =
     canManageTasks && (ministerioFilter === 0 || canCreateInContext);
   const myAssignment = task?.asignados?.find(a => a.idUsuario === usuarioActual?.idUsuario) ?? null;
