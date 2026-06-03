@@ -162,7 +162,7 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
   const rawData = useMemo(
     () => ({
       usuarios: filteredUsuarios,
-      miembros: [],
+      miembros: filteredMiembrosMinisterio,
       sedes: filteredSedes,
       ministerios: filteredMinisterios,
       roles,

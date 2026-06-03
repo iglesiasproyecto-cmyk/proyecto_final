@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/app/store/AppContext'
 import { useAccesoModulos } from '@/hooks/useAccesoModulos'
+import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
@@ -8,16 +9,56 @@ import { Skeleton } from '@/app/components/ui/skeleton';
 import { ModuleSkeleton } from '@/app/components/loading/skeletons';
 import { ModuloEditorPanel } from './ModuloEditorPanel'
 import { getInternalUserId } from '@/lib/userHelpers'
-import { BookOpen, CheckCircle, Unlock, Lock } from 'lucide-react'
+import { supabase } from '@/lib/supabaseClient'
+import { toast } from 'sonner'
+import { BookOpen, CheckCircle, Unlock, Lock, Loader2 } from 'lucide-react'
 
 interface ModulosNavegacionProps {
   idCurso: number
+}
+
+function useMarcarModuloCompletado(idCurso: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ idModulo, idUsuario }: { idModulo: number; idUsuario: number }) => {
+      // Obtener todas las actividades del módulo
+      const { data: actividades } = await supabase
+        .from('aula_actividad')
+        .select('id_aula_actividad')
+        .eq('id_aula_modulo', idModulo)
+
+      if (!actividades || actividades.length === 0) {
+        // Módulo solo con contenido — ya se auto-completa, nada que insertar
+        return { sinActividades: true }
+      }
+
+      // Marcar todas las actividades como completadas
+      const rows = actividades.map(a => ({
+        id_aula_actividad: a.id_aula_actividad,
+        id_usuario: idUsuario,
+        completada: true,
+        completada_en: new Date().toISOString(),
+      }))
+
+      const { error } = await supabase
+        .from('aula_progreso_actividad')
+        .upsert(rows, { onConflict: 'id_usuario,id_aula_actividad' })
+
+      if (error) throw error
+      return { sinActividades: false }
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['acceso-modulos', vars.idUsuario, idCurso] })
+      qc.invalidateQueries({ queryKey: ['progreso-curso'] })
+    },
+  })
 }
 
 export function ModulosNavegacion({ idCurso }: ModulosNavegacionProps) {
   const { user } = useAuth()
   const [internalUserId, setInternalUserId] = useState<number | null>(null)
   const [moduloAbierto, setModuloAbierto] = useState<{ id: number; titulo: string } | null>(null)
+  const marcarCompletado = useMarcarModuloCompletado(idCurso)
 
   const { data: modulos, isLoading } = useAccesoModulos({
     idUsuario: internalUserId,
@@ -125,13 +166,40 @@ export function ModulosNavegacion({ idCurso }: ModulosNavegacionProps) {
             </Card>
 
             {moduloAbierto?.id === modulo.idModulo && (
-              <div className="mt-2 rounded-[24px] border border-white/10 bg-background/35 p-4">
+              <div className="mt-2 rounded-[24px] border border-white/10 bg-background/35 p-4 space-y-4">
                 <ModuloEditorPanel
                   idModulo={modulo.idModulo}
                   tituloModulo={modulo.titulo}
                   readOnly
                   onClose={() => setModuloAbierto(null)}
                 />
+                {modulo.estadoAcceso !== 'completado' && (
+                  <div className="flex justify-end pt-2 border-t border-white/10">
+                    <Button
+                      onClick={async () => {
+                        if (!internalUserId) return
+                        try {
+                          await marcarCompletado.mutateAsync({
+                            idModulo: modulo.idModulo,
+                            idUsuario: internalUserId,
+                          })
+                          toast.success('¡Módulo marcado como completado!')
+                          setModuloAbierto(null)
+                        } catch {
+                          toast.error('No se pudo marcar el módulo como completado')
+                        }
+                      }}
+                      disabled={marcarCompletado.isPending}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold shadow-lg shadow-emerald-900/20"
+                    >
+                      {marcarCompletado.isPending ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Guardando...</>
+                      ) : (
+                        <><CheckCircle className="w-4 h-4 mr-2" /> Marcar como completado</>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
