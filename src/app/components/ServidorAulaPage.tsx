@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAuth } from '@/app/store/AppContext'
+import { useAuth, useApp } from '@/app/store/AppContext'
 import { useCertificadosUsuario } from '@/hooks/useCertificados'
 import { useMiAvanceCurso } from '@/hooks/useAvance'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
@@ -15,8 +15,9 @@ import { NotificacionesAula } from './NotificacionesAula'
 
 export function ServidorAulaPage() {
   const { user } = useAuth()
-  const { data: certificados = [] } = useCertificadosUsuario(user?.id)
-  const { data: avanceCursos = [] } = useMiAvanceCurso(user?.id)
+  const { usuarioActual } = useApp()
+  const { data: certificados = [] } = useCertificadosUsuario(usuarioActual?.idUsuario)
+  const { data: avanceCursos = [] } = useMiAvanceCurso(usuarioActual?.idUsuario)
 
   if (!user) return null
 

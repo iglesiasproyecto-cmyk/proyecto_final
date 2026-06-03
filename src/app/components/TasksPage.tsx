@@ -124,6 +124,7 @@ export function TasksPage() {
     titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as TareaEnriquecida['prioridad']
   });
   const [selectedTareaIds, setSelectedTareaIds] = useState<Set<number>>(new Set());
+  const [mobileStatus, setMobileStatus] = useState<"pendiente" | "en_progreso" | "en_revision" | "completada">("pendiente");
 
   const task = selectedTask ? tareas.find(t => t.idTarea === selectedTask) : null;
   const isAdminIglesia = rolActual === "admin_iglesia" || rolActual === "super_admin";
@@ -147,6 +148,18 @@ export function TasksPage() {
     }
     return ministerios;
   }, [assignScope.idSede, isAdminIglesia, isAdminSede, isLider, ministerios, sedesDelUsuario, usuarioMinisterioIds]);
+
+  const ministeriosDisponiblesFiltro = useMemo(() => {
+    if (isLider) return ministerios.filter(m => usuarioMinisterioIds.includes(m.idMinisterio));
+    if (isAdminSede) {
+      const sedeIds = new Set(sedesDelUsuario.map(s => s.id));
+      return ministerios.filter(m => sedeIds.has(m.idSede));
+    }
+    return ministerios;
+  }, [isAdminSede, isLider, ministerios, sedesDelUsuario, usuarioMinisterioIds]);
+
+  const showFullScopeFilters = rolActual === "super_admin" || rolActual === "admin_iglesia";
+  const showMinisterioOnlyFilter = isLider || isAdminSede;
 
   const ministerioAsignacionId = useMemo(() => {
     if (isLider && !assignScope.idMinisterio) return singleUserMinisterio?.idMinisterio ?? 0;
@@ -224,6 +237,26 @@ export function TasksPage() {
     if (createForm.idMinisterio || ministerios.length !== 1) return;
     setCreateForm(prev => ({ ...prev, idMinisterio: ministerios[0].idMinisterio }));
   }, [createForm.idMinisterio, ministerios]);
+
+  useEffect(() => {
+    if (isLider) {
+      if (sedeFilter !== 0) setSedeFilter(0);
+      if (usuarioMinisterioIds.length === 0) {
+        if (ministerioFilter !== 0) setMinisterioFilter(0);
+        return;
+      }
+      if (!usuarioMinisterioIds.includes(ministerioFilter)) {
+        setMinisterioFilter(usuarioMinisterioIds[0]);
+      }
+      return;
+    }
+
+    if (isAdminSede) {
+      if (sedeFilter !== 0) setSedeFilter(0);
+      const allowedIds = new Set(ministeriosDisponiblesFiltro.map(m => m.idMinisterio));
+      if (ministerioFilter && !allowedIds.has(ministerioFilter)) setMinisterioFilter(0);
+    }
+  }, [isAdminSede, isLider, ministerioFilter, ministeriosDisponiblesFiltro, sedeFilter, usuarioMinisterioIds]);
 
   useEffect(() => {
     const openTask = Number(searchParams.get("openTask") || 0);
@@ -367,10 +400,19 @@ export function TasksPage() {
     [tareas, searchQuery, dateFilter, sortOrder]
   );
 
+  const roleScopedTareas = useMemo(() => {
+    if (isLider) return filteredAndSortedTareas.filter(t => usuarioMinisterioIds.includes(t.idMinisterio ?? 0));
+    if (isAdminSede) {
+      const allowedIds = new Set(ministeriosDisponiblesFiltro.map(m => m.idMinisterio));
+      return filteredAndSortedTareas.filter(t => allowedIds.has(t.idMinisterio ?? 0));
+    }
+    return filteredAndSortedTareas;
+  }, [filteredAndSortedTareas, isAdminSede, isLider, ministeriosDisponiblesFiltro, usuarioMinisterioIds]);
+
   const visibleTareas = useMemo(() => {
-    if (!ministerioFilter) return filteredAndSortedTareas;
-    return filteredAndSortedTareas.filter(t => t.idMinisterio === ministerioFilter);
-  }, [filteredAndSortedTareas, ministerioFilter]);
+    if (!ministerioFilter) return roleScopedTareas;
+    return roleScopedTareas.filter(t => t.idMinisterio === ministerioFilter);
+  }, [ministerioFilter, roleScopedTareas]);
 
   // Hooks must be called before any conditional returns
   const canCreateInContext = useCanManageMinisterio(ministerioFilter || null);
@@ -521,8 +563,9 @@ export function TasksPage() {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.12 }}
+        className={`${status === mobileStatus ? "block" : "hidden"} lg:block`}
       >
-        <div className="w-[85vw] sm:w-[350px] lg:w-full shrink-0 snap-center">
+        <div className="w-full">
           {/* Column header */}
           <div className={`flex items-center gap-2 px-4 py-3 rounded-t-2xl bg-card/60 backdrop-blur-xl border border-white/10 border-b-0`}>
             <div className={`w-2 h-2 rounded-full ${cfg.dot} shadow-[0_0_6px_currentColor]`} />
@@ -611,48 +654,77 @@ export function TasksPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row gap-3 bg-card/40 backdrop-blur-xl border border-border/50 p-4 rounded-2xl shadow-sm"
+        className="bg-card/40 backdrop-blur-xl border border-border/50 p-3 sm:p-4 rounded-2xl shadow-sm space-y-3"
       >
-        <div className="flex-1 relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
+        <div className="relative min-w-0">
+          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
           <Input 
             placeholder="Buscar por título o descripción..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 h-11 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-sm"
+            className="w-full pl-11 h-12 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 text-sm"
           />
         </div>
-        <div className="flex gap-3">
-          <Input 
-            type="date"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="w-[150px] bg-background/50 border-white/10 h-11"
-            title="Filtrar por Fecha Límite"
-          />
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
-            className="w-[180px] h-11 rounded-xl border border-white/10 bg-background/50 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-          >
-            <option value="newest">Más recientes primero</option>
-            <option value="oldest">Más antiguas primero</option>
-          </select>
-          <SedeMinisterioSelector
-            sedes={sedes}
-            ministerios={ministerios}
-            selectedSedeId={sedeFilter}
-            selectedMinisterioId={ministerioFilter}
-            onSedeChange={(idSede, clearMinisterio) => {
-              setSedeFilter(idSede);
-              if (clearMinisterio) setMinisterioFilter(0);
-            }}
-            onMinisterioChange={(idMinisterio, autoSedeId) => {
-              setMinisterioFilter(idMinisterio);
-              setSedeFilter(autoSedeId);
-            }}
-            allowNoMinisterio
-          />
+        <div className={`grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 ${showFullScopeFilters ? "xl:grid-cols-[minmax(150px,170px)_minmax(180px,210px)_minmax(320px,1fr)]" : showMinisterioOnlyFilter ? "xl:grid-cols-[minmax(150px,170px)_minmax(180px,210px)_minmax(220px,1fr)]" : "xl:grid-cols-[minmax(150px,170px)_minmax(180px,210px)]"}`}>
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Fecha</label>
+            <Input 
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl h-12 text-sm shadow-sm focus-visible:ring-primary/20 focus-visible:border-primary/50"
+              title="Filtrar por Fecha Límite"
+            />
+          </div>
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Orden</label>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
+              className="w-full h-12 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-sm"
+            >
+              <option value="newest">Más recientes primero</option>
+              <option value="oldest">Más antiguas primero</option>
+            </select>
+          </div>
+          {showFullScopeFilters && (
+            <div className="min-w-0 sm:col-span-2 xl:col-span-1">
+              <SedeMinisterioSelector
+                sedes={sedes}
+                ministerios={ministerios}
+                selectedSedeId={sedeFilter}
+                selectedMinisterioId={ministerioFilter}
+                onSedeChange={(idSede, clearMinisterio) => {
+                  setSedeFilter(idSede);
+                  if (clearMinisterio) setMinisterioFilter(0);
+                }}
+                onMinisterioChange={(idMinisterio, autoSedeId) => {
+                  setMinisterioFilter(idMinisterio);
+                  setSedeFilter(autoSedeId);
+                }}
+                allowNoMinisterio
+              />
+            </div>
+          )}
+
+          {showMinisterioOnlyFilter && (
+            <div className="min-w-0 sm:col-span-2 xl:col-span-1">
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">
+                {isLider ? "Tu ministerio" : "Ministerio"}
+              </label>
+              <select
+                value={ministerioFilter}
+                onChange={(e) => setMinisterioFilter(Number(e.target.value))}
+                disabled={isLider && ministeriosDisponiblesFiltro.length <= 1}
+                className="w-full h-12 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 px-3 text-sm text-foreground/80 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-sm disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isAdminSede && <option value={0}>Todos los ministerios de mi sede</option>}
+                {ministeriosDisponiblesFiltro.map((m) => (
+                  <option key={m.idMinisterio} value={m.idMinisterio}>{m.nombre}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </motion.div>
 
@@ -665,18 +737,40 @@ export function TasksPage() {
         isLoading={false}
       />
 
+      {/* ── Mobile status selector (one column at a time) ── */}
+      <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar lg:hidden">
+        <style dangerouslySetInnerHTML={{ __html: `
+          .hide-scrollbar::-webkit-scrollbar { display: none; }
+          .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        `}} />
+        {COLS.map((status) => {
+          const cfg = statusConfig[status];
+          const count = tasksByStatus(status).length;
+          const active = mobileStatus === status;
+          return (
+            <button
+              key={status}
+              onClick={() => setMobileStatus(status)}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all border ${
+                active ? "bg-primary/10 border-primary/30 text-primary" : "bg-card/40 border-white/10 text-muted-foreground hover:border-white/20"
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+              {cfg.label}
+              <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${active ? "bg-primary/20" : "bg-white/5"}`}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* ── Kanban Board ── */}
       <DndProvider backend={HTML5Backend}>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="flex lg:grid lg:grid-cols-4 gap-6 overflow-x-auto pb-6 lg:pb-0 snap-x lg:snap-none -mx-4 px-4 lg:mx-0 lg:px-0 hide-scrollbar"
+        className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6"
       >
-        <style dangerouslySetInnerHTML={{ __html: `
-          .hide-scrollbar::-webkit-scrollbar { display: none; }
-          .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        `}} />
         {COLS.map((status) => (
           <DroppableColumn key={status} status={status} />
         ))}
@@ -807,6 +901,34 @@ export function TasksPage() {
                         <div className="text-xl font-light text-foreground">{task.asignados?.length || 0}</div>
                       </div>
                     </div>
+
+                    {canManageTasks && (
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                          <ListTodo className="w-3 h-3" /> Cambiar estado
+                        </span>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {COLS.map((s) => {
+                            const sCfg = statusConfig[s];
+                            const active = task.estado === s;
+                            return (
+                              <button
+                                key={s}
+                                onClick={() => handleDropTask(task.idTarea, s)}
+                                disabled={active || isUpdating}
+                                className={`flex items-center justify-center gap-1.5 h-10 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all disabled:cursor-default ${
+                                  active
+                                    ? `${sCfg.color} border ring-1 ring-inset ring-current/30`
+                                    : "bg-white/5 dark:bg-black/20 border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground/80"
+                                }`}
+                              >
+                                {sCfg.icon}{sCfg.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {task.descripcion && (
                       <div className="space-y-2">

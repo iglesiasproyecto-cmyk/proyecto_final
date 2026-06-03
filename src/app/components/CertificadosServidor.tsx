@@ -1,4 +1,4 @@
-import { useAuth } from '@/app/store/AppContext'
+import { useAuth, useApp } from '@/app/store/AppContext'
 import { useCertificadosUsuario } from '@/hooks/useCertificados'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'
@@ -150,7 +150,8 @@ function CertificadoPDF({ certificado, usuario }: CertificadoPDFProps) {
 
 export function CertificadosServidor() {
   const { user } = useAuth()
-  const { data: certificados, isLoading } = useCertificadosUsuario(user?.id)
+  const { usuarioActual } = useApp()
+  const { data: certificados, isLoading } = useCertificadosUsuario(usuarioActual?.idUsuario)
 
   if (isLoading) {
     return (

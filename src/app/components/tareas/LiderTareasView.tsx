@@ -150,32 +150,38 @@ export function LiderTareasView() {
       {/* Filters */}
       <motion.div
         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row gap-3 bg-card/40 backdrop-blur-xl border border-border/50 p-4 rounded-2xl shadow-sm"
+        className="grid grid-cols-1 gap-3 bg-card/40 backdrop-blur-xl border border-border/50 p-3 sm:p-4 rounded-2xl shadow-sm lg:grid-cols-[minmax(260px,1fr)_minmax(320px,auto)]"
       >
-        <div className="relative flex-1">
+        <div className="relative min-w-0">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors" />
           <Input 
             placeholder="Buscar por título o descripción..." 
             value={searchQuery} 
             onChange={e => setSearchQuery(e.target.value)} 
-            className="pl-11 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 h-11 text-sm w-full" 
+            className="pl-11 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 h-12 text-sm w-full" 
           />
         </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Input
-            type="date"
-            value={dateFilter}
-            onChange={e => setDateFilter(e.target.value)}
-            className="w-full sm:w-[150px] bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 h-11 text-sm"
-          />
-          <select
-            value={sortOrder}
-            onChange={e => setSortOrder(e.target.value as "newest" | "oldest")}
-            className="w-full sm:w-[180px] h-11 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 px-3 text-sm text-foreground/80 outline-none cursor-pointer"
-          >
-            <option value="newest">Más recientes primero</option>
-            <option value="oldest">Más antiguas primero</option>
-          </select>
+        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Fecha</label>
+            <Input
+              type="date"
+              value={dateFilter}
+              onChange={e => setDateFilter(e.target.value)}
+              className="w-full bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 h-12 text-sm"
+            />
+          </div>
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Orden</label>
+            <select
+              value={sortOrder}
+              onChange={e => setSortOrder(e.target.value as "newest" | "oldest")}
+              className="w-full h-12 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 px-3 text-sm text-foreground/80 outline-none cursor-pointer"
+            >
+              <option value="newest">Más recientes primero</option>
+              <option value="oldest">Más antiguas primero</option>
+            </select>
+          </div>
         </div>
       </motion.div>
 

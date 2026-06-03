@@ -41,7 +41,10 @@ export function UsuariosPage() {
   const { data: enriched = [], isLoading } = useUsuariosEnriquecidos();
   const { data: roles = [] } = useRoles();
   const { data: allIglesias = [] } = useIglesias({ includeInactive: true });
-  const iglesias = canManageUsers && !isSuperAdmin ? iglesiasDelUsuario : allIglesias;
+  const iglesias: { idIglesia: number; nombre: string; estado?: string }[] =
+    canManageUsers && !isSuperAdmin
+      ? iglesiasDelUsuario.map(ig => ({ idIglesia: (ig as any).idIglesia ?? (ig as any).id, nombre: ig.nombre }))
+      : allIglesias;
   const [search, setSearch] = useState("");
   const [filterEstado, setFilterEstado] = useState("all");
   const [filterRol, setFilterRol] = useState("all");

@@ -960,7 +960,8 @@ export function EventsPage() {
               <AnimatedCard
                 key={evento.idEvento}
                 index={i}
-                className="group relative overflow-hidden bg-card/40 hover:bg-card/60 border border-border/50 hover:border-[#4682b4]/30 transition-all duration-300 rounded-[2rem] p-5 shadow-sm hover:shadow-xl hover:shadow-[#4682b4]/5"
+                onClick={() => setSelectedEvent(evento)}
+                className="group relative overflow-hidden bg-card/40 hover:bg-card/60 border border-border/50 hover:border-[#4682b4]/30 transition-all duration-300 rounded-[2rem] p-5 shadow-sm hover:shadow-xl hover:shadow-[#4682b4]/5 cursor-pointer"
               >
                 {/* Gradiente decorativo de fondo */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#4682b4]/10 to-transparent rounded-bl-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -977,10 +978,10 @@ export function EventsPage() {
                       <h4 className="text-lg font-bold tracking-tight leading-tight text-foreground/90 group-hover:text-[#4682b4] transition-colors truncate">
                         {evento.nombre}
                       </h4>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 bg-background/80 backdrop-blur-md rounded-xl p-1 border border-border/50 shadow-sm">
+                      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 shrink-0 bg-background/80 backdrop-blur-md rounded-xl p-1 border border-border/50 shadow-sm">
                         <button
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
-                          onClick={() => setSelectedEvent(evento)}
+                          className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
+                          onClick={(e) => { e.stopPropagation(); setSelectedEvent(evento); }}
                           title="Ver detalle"
                         >
                           <Eye className="w-4 h-4" />
@@ -988,15 +989,17 @@ export function EventsPage() {
                         {canManageEvents && (
                           <>
                             <button
-                              className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
-                              onClick={() => openEditDialog(evento)}
+                              className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-[#4682b4] hover:bg-[#4682b4]/10 transition-all"
+                              onClick={(e) => { e.stopPropagation(); openEditDialog(evento); }}
+                              title="Editar"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
                             <button
-                              className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                              className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-red-500 hover:bg-red-500/10 transition-all"
                               disabled={deleteEventoMutation.isPending}
-                              onClick={() => handleDeleteEvento(evento.idEvento, evento.nombre)}
+                              onClick={(e) => { e.stopPropagation(); handleDeleteEvento(evento.idEvento, evento.nombre); }}
+                              title="Eliminar"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -1088,7 +1091,7 @@ export function EventsPage() {
               </div>
               <div>
                 <p className="text-primary/80 font-medium uppercase tracking-[0.2em] text-[10px] mb-0.5">Operaciones</p>
-                <h1 className="text-4xl font-light tracking-tight text-foreground leading-tight">Eventos</h1>
+                <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">Eventos</h1>
                 <p className="text-foreground text-xs sm:text-sm mt-1">Agenda y gestiona los eventos de la iglesia</p>
               </div>
             </div>
@@ -1350,8 +1353,27 @@ export function EventsPage() {
                     </div>
                   )}
                 </div>
-                <DialogFooter className="border-t border-border/50 pt-4">
-                  <Button variant="ghost" className="rounded-xl" onClick={() => setSelectedEvent(null)}>Cerrar</Button>
+                <DialogFooter className="border-t border-border/50 pt-4 flex-col-reverse sm:flex-row gap-2">
+                  {canManageEvents && (
+                    <div className="flex gap-2 w-full sm:w-auto sm:mr-auto">
+                      <Button
+                        variant="ghost"
+                        className="rounded-xl flex-1 sm:flex-none text-rose-500 hover:bg-rose-500/10 hover:text-rose-500"
+                        disabled={deleteEventoMutation.isPending}
+                        onClick={() => { handleDeleteEvento(selectedEvent.idEvento, selectedEvent.nombre); setSelectedEvent(null); }}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1.5" /> Eliminar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="rounded-xl flex-1 sm:flex-none"
+                        onClick={() => { openEditDialog(selectedEvent); setSelectedEvent(null); }}
+                      >
+                        <Pencil className="w-4 h-4 mr-1.5" /> Editar
+                      </Button>
+                    </div>
+                  )}
+                  <Button variant="ghost" className="rounded-xl w-full sm:w-auto" onClick={() => setSelectedEvent(null)}>Cerrar</Button>
                 </DialogFooter>
               </>
             );

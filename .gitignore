@@ -49,3 +49,8 @@ mcp*.jsonc
 playwright-report/
 test-results/
 .env.test
+
+# AI tooling skills (local, not part of the app)
+.agents/
+.claude/skills/ckm-*
+.claude/skills/ui-ux-pro-max

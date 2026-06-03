@@ -338,18 +338,19 @@ export function StatisticsPage() {
         </TabsList>
 
         <AnimatePresence mode="wait">
-          {(Object.keys(domainLabels) as StatisticsDomain[]).map((d) => (
-            <TabsContent key={d} value={d}>
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.3 }}
-              >
+          <motion.div
+            key={activeDomain}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.3 }}
+          >
+            {(Object.keys(domainLabels) as StatisticsDomain[]).map((d) => (
+              <TabsContent key={d} value={d}>
                 {allData ? <TabRenderer data={allData[d]} /> : <TabContentSkeleton />}
-              </motion.div>
-            </TabsContent>
-          ))}
+              </TabsContent>
+            ))}
+          </motion.div>
         </AnimatePresence>
       </Tabs>
     </div>
