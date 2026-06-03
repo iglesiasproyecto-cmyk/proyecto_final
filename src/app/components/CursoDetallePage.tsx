@@ -308,10 +308,12 @@ export function CursoDetallePage() {
               Agregar personas
             </Button>
           )}
-          <Button variant="outline" size="sm" className="h-10 rounded-2xl border-white/20 bg-background/55 w-full sm:w-auto">
-            <Settings className="h-4 w-4 mr-2 text-primary" />
-            Configuración
-          </Button>
+          {(isLider || isAdmin) && (
+            <Button variant="outline" size="sm" className="h-10 rounded-2xl border-white/20 bg-background/55 w-full sm:w-auto">
+              <Settings className="h-4 w-4 mr-2 text-primary" />
+              Configuración
+            </Button>
+          )}
         </div>
       </div>
 
@@ -374,7 +376,7 @@ export function CursoDetallePage() {
         </Card>
       </div>
 
-      {cursoVacio && (
+      {cursoVacio && (isLider || isAdmin) && (
         <Card className="rounded-[28px] border border-dashed border-primary/30 bg-primary/5">
           <CardContent className="py-8 px-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -417,14 +419,18 @@ export function CursoDetallePage() {
                 Calificaciones
               </TabsTrigger>
             )}
-            <TabsTrigger value="progreso" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Progreso
-            </TabsTrigger>
-            <TabsTrigger value="servidores" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
-              <Users className="h-4 w-4 mr-2" />
-              Servidores
-            </TabsTrigger>
+            {(isLider || isAdmin) && (
+              <TabsTrigger value="progreso" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Progreso
+              </TabsTrigger>
+            )}
+            {(isLider || isAdmin) && (
+              <TabsTrigger value="servidores" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
+                <Users className="h-4 w-4 mr-2" />
+                Servidores
+              </TabsTrigger>
+            )}
           </TabsList>
         </div>
 
@@ -450,10 +456,13 @@ export function CursoDetallePage() {
           </TabsContent>
         )}
 
-        <TabsContent value="progreso">
-          <ProgresoCursoTab progresoGrupo={progresoGrupo || []} />
-        </TabsContent>
+        {(isLider || isAdmin) && (
+          <TabsContent value="progreso">
+            <ProgresoCursoTab progresoGrupo={progresoGrupo || []} />
+          </TabsContent>
+        )}
 
+        {(isLider || isAdmin) && (
         <TabsContent value="servidores">
           <ServidoresCursoTab
             progresoGrupo={progresoGrupo || []}
@@ -463,6 +472,7 @@ export function CursoDetallePage() {
             onAgregar={() => setShowAgregarPersonas(true)}
           />
         </TabsContent>
+        )}
       </Tabs>
 
       {(isLider || isAdmin) && idCurso && (

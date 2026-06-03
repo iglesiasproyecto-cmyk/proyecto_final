@@ -176,6 +176,7 @@ export async function getMiembrosMinisterioEnriquecidos(idMinisterio?: number): 
   let q = supabase
     .from('miembro_ministerio')
     .select('*, usuario(nombres, apellidos, correo, telefono), ministerio(nombre)')
+    .is('fecha_salida', null)
     .order('creado_en', { ascending: false })
   if (idMinisterio !== undefined) q = q.eq('id_ministerio', idMinisterio)
   const { data, error } = await q
