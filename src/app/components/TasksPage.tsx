@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
@@ -57,12 +57,19 @@ export function TasksPage() {
   const idIglesiaNum = Number(idIglesia) || undefined;
   const { usuarioActual, rolActual, iglesiaActual, sedesDelUsuario } = useApp();
   const isServidor = rolActual === "servidor";
-  const tareasUsuarioId = isServidor ? usuarioActual?.idUsuario : undefined;
+  // Para servidor: fijamos el id numérico en un ref una vez que llega para que no fluctúe
+  // si usuarioActual se resetea momentáneamente durante TOKEN_REFRESHED, evitando que
+  // React Query tire los datos ya cargados al cambiar la queryKey.
+  const stableServidorIdRef = useRef<number | null>(null);
+  if (isServidor && usuarioActual?.idUsuario && stableServidorIdRef.current === null) {
+    stableServidorIdRef.current = usuarioActual.idUsuario;
+  }
+  const servidorId = isServidor ? stableServidorIdRef.current : null;
   const { data: tareas = [], isLoading } = useTareasEnriquecidas(
     undefined,
     idIglesiaNum,
-    tareasUsuarioId,
-    !isServidor || !!tareasUsuarioId,
+    servidorId ?? undefined,
+    isServidor ? servidorId !== null : true,
   );
   const createTareaMutation = useCreateTarea();
   const updateEstadoMutation = useUpdateTareaEstado();
