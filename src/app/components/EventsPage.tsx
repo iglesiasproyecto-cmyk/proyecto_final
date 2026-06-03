@@ -165,23 +165,95 @@ export function resolveCategoria(item: QuickBudgetItem): string {
 }
 
 function MontoInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
-  // Allow free typing of numbers; strip non-numeric except decimal comma/dot
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^0-9]/g, '')
     onChange(raw)
   }
+
   const display = value ? new Intl.NumberFormat('es-CO').format(Number(value)) : ''
+
   return (
-    <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none select-none">$</span>
+    <div className="relative group">
+      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground pointer-events-none select-none group-focus-within:text-primary transition-colors">$</span>
       <input
+        type="text"
         inputMode="numeric"
+        autoComplete="off"
+        enterKeyHint="done"
+        aria-label={placeholder ?? "Monto"}
         placeholder={placeholder ?? "0"}
         value={display}
         onChange={handleChange}
-        className="w-full pl-6 pr-3 h-10 bg-background/50 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-colors"
+        className="w-full pl-8 pr-3 h-11 bg-background/70 border border-border/60 rounded-2xl text-sm font-semibold tabular-nums text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all placeholder:text-muted-foreground/50"
       />
     </div>
+  )
+}
+
+function QuickBudgetItemCard({
+  item,
+  onRemove,
+  onUpdate,
+}: {
+  item: QuickBudgetItem
+  onRemove: (id: string) => void
+  onUpdate: (id: string, field: keyof QuickBudgetItem, value: string) => void
+}) {
+  const cats = item.tipo === 'ingreso' ? CATS_INGRESO : CATS_EGRESO
+  const isIngreso = item.tipo === 'ingreso'
+
+  return (
+    <motion.div
+      key={item.localId}
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className={`rounded-2xl border p-3.5 sm:p-4 space-y-3 shadow-sm ${isIngreso ? 'border-emerald-500/20 bg-emerald-500/[0.06]' : 'border-rose-500/20 bg-rose-500/[0.06]'}`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className={`text-[10px] font-black uppercase tracking-[0.18em] ${isIngreso ? 'text-emerald-500' : 'text-rose-500'}`}>
+          {isIngreso ? '↑ Ingreso' : '↓ Egreso'}
+        </span>
+        <button
+          type="button"
+          onClick={() => onRemove(item.localId)}
+          className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive transition-colors"
+          aria-label={`Eliminar ${isIngreso ? 'ingreso' : 'egreso'}`}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_160px]">
+        <div className="space-y-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Categoría</span>
+          <Select value={item.categoria} onValueChange={v => onUpdate(item.localId, 'categoria', v)}>
+            <SelectTrigger className="h-11 bg-background/70 border-border/60 rounded-2xl text-sm shadow-sm">
+              <SelectValue placeholder="Selecciona categoría..." />
+            </SelectTrigger>
+            <SelectContent>
+              {cats.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              <SelectItem value="__custom__">Categoría personalizada</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Monto</span>
+          <MontoInput value={item.montoPlaneado} onChange={v => onUpdate(item.localId, 'montoPlaneado', v)} placeholder="Monto planeado" />
+        </div>
+      </div>
+
+      {item.categoria === '__custom__' && (
+        <input
+          autoFocus
+          placeholder="Escribe el nombre de la categoría..."
+          value={item.customCategoria}
+          onChange={e => onUpdate(item.localId, 'customCategoria', e.target.value)}
+          className="w-full px-3.5 h-11 bg-background/70 border border-border/60 rounded-2xl text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+        />
+      )}
+    </motion.div>
   )
 }
 
@@ -215,71 +287,33 @@ function BudgetQuickAdd({ items, setItems }: { items: QuickBudgetItem[]; setItem
     : catItems.reduce((s, i) => s + (Number(i.montoPlaneado) || 0), 0))
   const fmt = (n: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
 
-  const ItemCard = ({ item }: { item: QuickBudgetItem }) => {
-    const cats = item.tipo === 'ingreso' ? CATS_INGRESO : CATS_EGRESO
-    return (
-      <motion.div key={item.localId} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-        className={`rounded-xl border p-3 space-y-2.5 ${item.tipo === 'ingreso' ? 'border-emerald-500/15 bg-emerald-500/5' : 'border-rose-500/15 bg-rose-500/5'}`}>
-        <div className="flex items-center justify-between">
-          <span className={`text-[9px] font-black uppercase tracking-widest ${item.tipo === 'ingreso' ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {item.tipo === 'ingreso' ? '↑ Ingreso' : '↓ Egreso'}
-          </span>
-          <button onClick={() => remove(item.localId)} className="text-muted-foreground/40 hover:text-destructive transition-colors p-0.5">
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-        {/* Category selector */}
-        <div className="space-y-1.5">
-          <Select value={item.categoria} onValueChange={v => update(item.localId, 'categoria', v)}>
-            <SelectTrigger className="h-9 bg-background/60 border-white/10 rounded-xl text-xs">
-              <SelectValue placeholder="Selecciona categoría..." />
-            </SelectTrigger>
-            <SelectContent>
-              {cats.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              <SelectItem value="__custom__">✏️ Categoría personalizada</SelectItem>
-            </SelectContent>
-          </Select>
-          {item.categoria === '__custom__' && (
-            <input
-              autoFocus
-              placeholder="Escribe el nombre de la categoría..."
-              value={item.customCategoria}
-              onChange={e => update(item.localId, 'customCategoria', e.target.value)}
-              className="w-full px-3 h-9 bg-background/60 border border-white/10 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-colors"
-            />
-          )}
-        </div>
-        {/* Amount */}
-        <MontoInput value={item.montoPlaneado} onChange={v => update(item.localId, 'montoPlaneado', v)} placeholder="Monto planeado" />
-      </motion.div>
-    )
-  }
-
   return (
     <div className="space-y-4 py-1">
       {/* Mode toggle */}
-      <div className="flex gap-1 p-1 bg-card/40 border border-border/50 rounded-xl">
+      <div className="flex gap-1 p-1 bg-background/60 border border-border/60 rounded-2xl shadow-inner">
         {(['total', 'categorias'] as const).map(m => (
           <button key={m} onClick={() => {
             setMode(m)
             if (m === 'categorias') setItems(catItems) // keep only category items
           }}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${mode === m ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-            {m === 'total' ? '💰 Monto total' : '📋 Por categorías'}
+            type="button"
+            className={`flex-1 min-h-10 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${mode === m ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:bg-card/70 hover:text-foreground'}`}>
+            {m === 'total' ? <Wallet className="w-3.5 h-3.5" /> : <ListTodo className="w-3.5 h-3.5" />}
+            {m === 'total' ? 'Monto total' : 'Por categorías'}
           </button>
         ))}
       </div>
 
       {mode === 'total' ? (
         <div className="space-y-3">
-          <p className="text-[11px] text-muted-foreground/60 italic">Ingresa el monto global. Podrás desglosarlo por categoría después.</p>
+          <p className="text-xs text-muted-foreground/70">Ingresa el monto global. Podrás desglosarlo por categoría después.</p>
           <div className="space-y-3">
             <div>
-              <label className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-400 block mb-1.5">↑ Total ingresos esperados</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-500 block mb-1.5">↑ Total ingresos esperados</label>
               <MontoInput value={totalIngresos} onChange={setTotalIngresos} placeholder="Ej. 500000" />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-400 block mb-1.5">↓ Total egresos esperados</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-500 block mb-1.5">↓ Total egresos esperados</label>
               <MontoInput value={totalEgresos} onChange={setTotalEgresos} placeholder="Ej. 300000" />
             </div>
           </div>
@@ -287,7 +321,7 @@ function BudgetQuickAdd({ items, setItems }: { items: QuickBudgetItem[]; setItem
             <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
               className={`rounded-xl border px-4 py-2.5 flex items-center justify-between ${(Number(totalIngresos) || 0) >= (Number(totalEgresos) || 0) ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-rose-500/20 bg-rose-500/5'}`}>
               <span className="text-xs text-muted-foreground">Balance estimado</span>
-              <span className={`text-sm font-bold ${(Number(totalIngresos) || 0) >= (Number(totalEgresos) || 0) ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <span className={`text-sm font-bold ${(Number(totalIngresos) || 0) >= (Number(totalEgresos) || 0) ? 'text-emerald-500' : 'text-rose-500'}`}>
                 {(Number(totalIngresos) || 0) - (Number(totalEgresos) || 0) >= 0 ? '+' : ''}{fmt((Number(totalIngresos) || 0) - (Number(totalEgresos) || 0))}
               </span>
             </motion.div>
@@ -298,14 +332,14 @@ function BudgetQuickAdd({ items, setItems }: { items: QuickBudgetItem[]; setItem
           {/* Ingresos section */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-400">↑ Ingresos</span>
-              <button onClick={() => addItem('ingreso')} className="text-[10px] flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition-colors">
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-500">↑ Ingresos</span>
+              <button type="button" onClick={() => addItem('ingreso')} className="min-h-9 text-[10px] flex items-center gap-1 px-3 py-1 rounded-full border border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 transition-colors">
                 <Plus className="w-3 h-3" /> Agregar
               </button>
             </div>
             {catIngresos.length === 0
-              ? <p className="text-[11px] text-muted-foreground/40 italic pl-1">Sin ítems de ingreso</p>
-              : <AnimatePresence>{catIngresos.map(item => <ItemCard key={item.localId} item={item} />)}</AnimatePresence>
+              ? <p className="rounded-2xl border border-dashed border-border/60 px-3 py-3 text-xs text-muted-foreground/55">Sin ítems de ingreso</p>
+              : <AnimatePresence>{catIngresos.map(item => <QuickBudgetItemCard key={item.localId} item={item} onRemove={remove} onUpdate={update} />)}</AnimatePresence>
             }
           </div>
 
@@ -314,14 +348,14 @@ function BudgetQuickAdd({ items, setItems }: { items: QuickBudgetItem[]; setItem
           {/* Egresos section */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-400">↓ Egresos</span>
-              <button onClick={() => addItem('egreso')} className="text-[10px] flex items-center gap-1 px-2.5 py-1 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-colors">
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-500">↓ Egresos</span>
+              <button type="button" onClick={() => addItem('egreso')} className="min-h-9 text-[10px] flex items-center gap-1 px-3 py-1 rounded-full border border-rose-500/30 text-rose-600 hover:bg-rose-500/10 transition-colors">
                 <Plus className="w-3 h-3" /> Agregar
               </button>
             </div>
             {catEgresos.length === 0
-              ? <p className="text-[11px] text-muted-foreground/40 italic pl-1">Sin ítems de egreso</p>
-              : <AnimatePresence>{catEgresos.map(item => <ItemCard key={item.localId} item={item} />)}</AnimatePresence>
+              ? <p className="rounded-2xl border border-dashed border-border/60 px-3 py-3 text-xs text-muted-foreground/55">Sin ítems de egreso</p>
+              : <AnimatePresence>{catEgresos.map(item => <QuickBudgetItemCard key={item.localId} item={item} onRemove={remove} onUpdate={update} />)}</AnimatePresence>
             }
           </div>
         </div>
@@ -330,9 +364,9 @@ function BudgetQuickAdd({ items, setItems }: { items: QuickBudgetItem[]; setItem
       {/* Running total */}
       {totalPlaneado > 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="flex items-center justify-between pt-2 border-t border-border/30 text-xs">
+          className="flex items-center justify-between pt-3 border-t border-border/40 text-xs">
           <span className="text-muted-foreground">Total presupuesto</span>
-          <span className="font-bold text-foreground">{fmt(totalPlaneado)}</span>
+          <span className="font-black text-foreground tabular-nums">{fmt(totalPlaneado)}</span>
         </motion.div>
       )}
     </div>
@@ -1140,8 +1174,8 @@ export function EventsPage() {
 
       {/* ── Create Dialog (2-step wizard) ── */}
       <Dialog open={showCreate} onOpenChange={(o) => { if (!o) { setShowCreate(false); resetCreateForm(); } }}>
-        <DialogContent className="sm:max-w-lg md:max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
-          <DialogHeader>
+        <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-lg md:max-w-xl max-h-[calc(100dvh-2rem)] overflow-hidden rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl p-0 flex flex-col">
+          <DialogHeader className="px-5 pt-5 sm:px-6 sm:pt-6 shrink-0">
             {/* Step indicator */}
             <div className="flex items-center gap-2 mb-1">
               <div className="flex items-center gap-1.5">
@@ -1166,27 +1200,29 @@ export function EventsPage() {
             </p>
           </DialogHeader>
 
-          <AnimatePresence mode="wait">
-            {createStep === 1 ? (
-              <motion.div key="step1" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}>
-                <EventDialogFields form={createForm} setForm={setCreateForm} sedes={sedesParaSelector} ministerios={ministeriosDisponiblesParaCrear} />
-              </motion.div>
-            ) : (
-              <motion.div key="step2" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.15 }}>
-                <BudgetQuickAdd items={quickBudgetItems} setItems={setQuickBudgetItems} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 sm:px-6 overscroll-contain">
+            <AnimatePresence mode="wait">
+              {createStep === 1 ? (
+                <motion.div key="step1" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}>
+                  <EventDialogFields form={createForm} setForm={setCreateForm} sedes={sedesParaSelector} ministerios={ministeriosDisponiblesParaCrear} />
+                </motion.div>
+              ) : (
+                <motion.div key="step2" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.15 }}>
+                  <BudgetQuickAdd items={quickBudgetItems} setItems={setQuickBudgetItems} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-          <DialogFooter className="border-t border-border/50 pt-4 mt-2 flex-col sm:flex-row gap-2">
-            <Button variant="ghost" className="rounded-xl" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
-            <div className="flex gap-2 ml-auto">
+          <DialogFooter className="border-t border-border/50 bg-card/95 px-5 py-4 sm:px-6 shrink-0 flex-col-reverse sm:flex-row gap-2">
+            <Button variant="ghost" className="rounded-xl w-full sm:w-auto" onClick={() => { setShowCreate(false); resetCreateForm(); }}>Cancelar</Button>
+            <div className="grid w-full grid-cols-1 gap-2 sm:ml-auto sm:flex sm:w-auto">
               {createStep === 2 && (
-                <Button variant="outline" className="rounded-xl" onClick={() => setCreateStep(1)}>← Atrás</Button>
+                <Button variant="outline" className="rounded-xl w-full sm:w-auto" onClick={() => setCreateStep(1)}>← Atrás</Button>
               )}
               {createStep === 1 && canSeeBudget ? (
                 <>
-                  <Button variant="outline" className="rounded-xl text-xs" onClick={() => {
+                  <Button variant="outline" className="rounded-xl text-xs w-full sm:w-auto" onClick={() => {
                     if (!createForm.nombre.trim() || !createForm.fechaInicio || !createForm.fechaFin) {
                       toast.error('Completa nombre y fechas antes de continuar');
                       return;
@@ -1199,7 +1235,7 @@ export function EventsPage() {
                   }} disabled={createEventoMutation.isPending}>
                     {createEventoMutation.isPending ? 'Creando...' : 'Crear sin presupuesto'}
                   </Button>
-                  <Button className="rounded-xl" onClick={() => {
+                  <Button className="rounded-xl w-full sm:w-auto" onClick={() => {
                     if (!createForm.nombre.trim() || !createForm.fechaInicio || !createForm.fechaFin) {
                       toast.error('Completa nombre y fechas antes de continuar');
                       return;
@@ -1214,7 +1250,7 @@ export function EventsPage() {
                   </Button>
                 </>
               ) : (
-                <Button className="rounded-xl" onClick={handleCreateEvento} disabled={createEventoMutation.isPending}>
+                <Button className="rounded-xl w-full sm:w-auto" onClick={handleCreateEvento} disabled={createEventoMutation.isPending}>
                   {createEventoMutation.isPending ? 'Creando...' : 'Crear Evento'}
                 </Button>
               )}

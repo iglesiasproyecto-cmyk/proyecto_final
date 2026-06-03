@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from "motion/react"
 import { toast } from "sonner"
 import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle,
-  Calendar, Inbox, Trash2, UserPlus, X, Paperclip,
+  Calendar, Inbox, Trash2, UserPlus, X, Paperclip, Search,
 } from "lucide-react"
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { TableSkeleton } from "@/app/components/loading/skeletons";
@@ -63,6 +63,7 @@ export function LiderTareasView() {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest")
   const [assignUserId, setAssignUserId] = useState(0)
   const [confirmRemoveAssign, setConfirmRemoveAssign] = useState<{ open: boolean; id: number; nombre: string }>({ open: false, id: 0, nombre: "" })
+  const [mobileStatus, setMobileStatus] = useState<typeof COLS[number]>("pendiente")
 
   const task = selectedTaskId ? tareas.find(t => t.idTarea === selectedTaskId) ?? null : null
   const { data: evidencias = [] } = useTareaEvidencias(selectedTaskId ?? undefined)
@@ -160,17 +161,17 @@ export function LiderTareasView() {
             className="pl-11 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 h-11 text-sm w-full" 
           />
         </div>
-        <div className="flex gap-3">
-          <Input 
-            type="date" 
-            value={dateFilter} 
-            onChange={e => setDateFilter(e.target.value)} 
-            className="w-[150px] bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 h-11 text-sm" 
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Input
+            type="date"
+            value={dateFilter}
+            onChange={e => setDateFilter(e.target.value)}
+            className="w-full sm:w-[150px] bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 h-11 text-sm"
           />
-          <select 
-            value={sortOrder} 
-            onChange={e => setSortOrder(e.target.value as "newest" | "oldest")} 
-            className="w-[180px] h-11 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 px-3 text-sm text-foreground/80 outline-none cursor-pointer"
+          <select
+            value={sortOrder}
+            onChange={e => setSortOrder(e.target.value as "newest" | "oldest")}
+            className="w-full sm:w-[180px] h-11 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all duration-300 px-3 text-sm text-foreground/80 outline-none cursor-pointer"
           >
             <option value="newest">Más recientes primero</option>
             <option value="oldest">Más antiguas primero</option>
@@ -178,18 +179,44 @@ export function LiderTareasView() {
         </div>
       </motion.div>
 
+      {/* Mobile status selector (one column at a time) */}
+      <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar lg:hidden">
+        {COLS.map(status => {
+          const cfg = statusConfig[status]
+          const count = tasksByStatus(status).length
+          const active = mobileStatus === status
+          return (
+            <button
+              key={status}
+              onClick={() => setMobileStatus(status)}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all border ${
+                active ? "bg-primary/10 border-primary/30 text-primary" : "bg-card/40 border-white/10 text-muted-foreground hover:border-white/20"
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+              {cfg.label}
+              <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${active ? "bg-primary/20" : "bg-white/5"}`}>{count}</span>
+            </button>
+          )
+        })}
+      </div>
+
       {/* Kanban */}
       <motion.div
         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="flex lg:grid lg:grid-cols-4 gap-6 overflow-x-auto pb-6 lg:pb-0 snap-x lg:snap-none -mx-4 px-4 lg:mx-0 lg:px-0 hide-scrollbar"
+        className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6"
       >
         {COLS.map((status, colIdx) => {
           const cfg = statusConfig[status]
           const statusTasks = tasksByStatus(status)
           const isReview = status === "en_revision" && statusTasks.length > 0
           return (
-            <motion.div key={status} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 + colIdx * 0.06 }}>
-              <div className="w-[80vw] sm:w-[320px] lg:w-full shrink-0 snap-center">
+            <motion.div
+              key={status}
+              initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 + colIdx * 0.06 }}
+              className={`${status === mobileStatus ? "block" : "hidden"} lg:block`}
+            >
+              <div className="w-full">
                 <div className={`flex items-center gap-2 px-4 py-3 rounded-t-2xl bg-card/60 backdrop-blur-xl border border-white/10 border-b-0 ${isReview ? "border-violet-500/30" : ""}`}>
                   <div className={`w-2 h-2 rounded-full ${cfg.dot} ${isReview ? "animate-pulse" : ""} shadow-[0_0_6px_currentColor]`} />
                   <span className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/70">{cfg.label}</span>
@@ -430,7 +457,7 @@ export function LiderTareasView() {
       />
 
       <ConfirmDialog
-        isOpen={confirmRemoveAssign.isOpen}
+        isOpen={confirmRemoveAssign.open}
         onClose={() => setConfirmRemoveAssign({ open: false, id: 0, nombre: "" })}
         onConfirm={() => {
           deleteAsignada.mutate(confirmRemoveAssign.id);
