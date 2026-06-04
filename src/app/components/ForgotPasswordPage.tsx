@@ -50,16 +50,25 @@ export function ForgotPasswordPage() {
 
     setIsLoading(true)
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+      const { data, error } = await supabase.functions.invoke('reset-password-request', {
+        body: { email: email.toLowerCase().trim() }
       })
 
       if (error) {
-        setError(error.message || 'Error al enviar el enlace de recuperación.')
+        // Extraer mensaje real de la Edge Function si está disponible
+        let message = error.message || 'Error al enviar el enlace de recuperación.'
+        try {
+          const errBody = await (error as any).context?.json?.()
+          if (errBody?.error) message = errBody.error
+        } catch {
+          // ignorar errores al parsear el cuerpo
+        }
+        setError(message)
         setIsLoading(false)
         return
       }
 
+      // La función responde siempre con success aunque el correo no exista (no revela usuarios)
       setStep('verification')
       toast.success('Enlace de recuperación enviado a tu correo.')
     } catch (err: any) {
@@ -213,7 +222,7 @@ export function ForgotPasswordPage() {
                   ) : (
                     <>
                       <Mail className="w-5 h-5" />
-                      Enviar Código
+                      Enviar Enlace
                     </>
                   )}
                 </Button>

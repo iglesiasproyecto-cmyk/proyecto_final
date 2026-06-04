@@ -31,15 +31,13 @@ export function ResetPasswordPage() {
     if (!authLoading && session) navigate("/app")
   }, [authLoading, session, navigate])
 
-  // Validar token/sesión al cargar la página
+  // Validar token custom al cargar la página (enlace: /auth/reset-password?token=...)
   useEffect(() => {
-    const validateHash = async () => {
+    const validateResetToken = async () => {
       try {
-        // Supabase envía el token en el hash (#token=...)
         const tokenParam = searchParams.get('token')
-        const typeParam = searchParams.get('type')
 
-        if (!tokenParam || typeParam !== 'recovery') {
+        if (!tokenParam) {
           setError('Token de recuperación no encontrado.')
           setIsValidating(false)
           return
@@ -47,26 +45,27 @@ export function ResetPasswordPage() {
 
         setToken(tokenParam)
 
-        // Obtener la sesión actual (Supabase maneja la validación automáticamente)
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        // Validar el token contra la función edge (tabla reset_tokens)
+        const { data, error: fnError } = await supabase.functions.invoke('validate-reset-token', {
+          body: { token: tokenParam }
+        })
 
-        if (sessionError || !session) {
-          setError('Token inválido o expirado.')
+        if (fnError || !data?.valid) {
+          setError(data?.error || 'El enlace es inválido o ha expirado.')
           setIsValidating(false)
           return
         }
 
-        // El token es válido si hay una sesión
         setTokenValid(true)
-        setEmail(session.user?.email || '')
+        setEmail(data.email || '')
       } catch (err: any) {
-        setError('Error al validar el token: ' + err.message)
+        setError('Error al validar el token: ' + (err?.message ?? ''))
       } finally {
         setIsValidating(false)
       }
     }
 
-    validateHash()
+    validateResetToken()
   }, [searchParams])
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -90,12 +89,19 @@ export function ResetPasswordPage() {
 
     setIsLoading(true)
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
+      const { data, error: fnError } = await supabase.functions.invoke('complete-password-reset', {
+        body: { token, password: newPassword }
       })
 
-      if (error) {
-        setError(error.message || 'Error al cambiar la contraseña.')
+      if (fnError || !data?.success) {
+        let message = data?.error || fnError?.message || 'Error al cambiar la contraseña.'
+        try {
+          const errBody = await (fnError as any)?.context?.json?.()
+          if (errBody?.error) message = errBody.error
+        } catch {
+          // ignorar errores al parsear el cuerpo
+        }
+        setError(message)
         setIsLoading(false)
         return
       }

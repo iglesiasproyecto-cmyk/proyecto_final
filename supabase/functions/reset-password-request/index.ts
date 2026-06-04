@@ -52,10 +52,9 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Generar token custom para reset password
-    const crypto = await import('https://deno.land/std@0.208.0/crypto/mod.ts')
-    const token = crypto.getRandomValues(new Uint8Array(32))
-    const tokenString = Array.from(token, byte => byte.toString(16).padStart(2, '0')).join('')
+    // Generar token custom para reset password (crypto es global en Deno)
+    const tokenBytes = globalThis.crypto.getRandomValues(new Uint8Array(32))
+    const tokenString = Array.from(tokenBytes, (byte: number) => byte.toString(16).padStart(2, '0')).join('')
 
     // Insertar token en reset_tokens (necesitamos crear esta tabla también)
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hora
@@ -110,7 +109,7 @@ Deno.serve(async (req) => {
     // Usar la función send-email para enviar el email
     const { error: emailError } = await supabaseAdmin.functions.invoke('send-email', {
       body: {
-        to: normalizedEmail,
+        email: normalizedEmail,
         subject: emailSubject,
         html: emailBody,
       },

@@ -40,3 +40,20 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/complete-invite/deno.json"
 entrypoint = "./functions/complete-invite/index.ts"
+
+[functions.reset-password-request]
+enabled = true
+verify_jwt = false
+import_map = "./functions/reset-password-request/deno.json"
+entrypoint = "./functions/reset-password-request/index.ts"
+
+[functions.validate-reset-token]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/validate-reset-token/index.ts"
+
+[functions.complete-password-reset]
+enabled = true
+verify_jwt = false
+import_map = "./functions/complete-password-reset/deno.json"
+entrypoint = "./functions/complete-password-reset/index.ts"
