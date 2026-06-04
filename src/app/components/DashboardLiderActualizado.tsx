@@ -21,86 +21,71 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
   const { user } = useAuth()
   const navigate = useNavigate()
 
-  // Obtener cursos del líder
-  const { data: cursos } = useQuery({
-    queryKey: ['cursos-lider-dashboard', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return []
-
-      const internalUserId = await getInternalUserId(user.id)
-      if (!internalUserId) return []
-
-      const { data, error } = await supabase
-        .from('aula_curso')
-        .select(`
-          id_aula_curso,
-          titulo,
-          estado,
-          modulos:aula_modulo(id_aula_modulo)
-        `)
-        .eq('id_usuario_creador', internalUserId)
-        .order('creado_en', { ascending: false })
-
-      if (error) throw error
-      return data
-    },
-    enabled: !!user?.id,
-  })
-
-  // Estadísticas generales
+  // Estadísticas del líder en un solo query: cursos creados, miembros activos de sus
+  // ministerios, certificados emitidos e inscripciones activas. Antes vivían en dos queries
+  // acoplados por closure (sin el query de cursos en el queryKey), por lo que las tarjetas
+  // quedaban en 0 al renderizar antes de que cargara el otro query.
   const { data: stats } = useQuery({
-    queryKey: ['stats-lider', user?.id, idCurso],
+    queryKey: ['dashboard-lider-stats', user?.id],
     queryFn: async () => {
       if (!user?.id) return null
 
-      // Obtener el ID interno del usuario
       const internalUserId = await getInternalUserId(user.id)
       if (!internalUserId) return null
 
-      let query = supabase
+      const { data: cursosData, error } = await supabase
         .from('aula_curso')
-        .select(`
-          id_aula_curso,
-          ministerio:ministerio(
-            miembro_ministerio(id_miembro_ministerio)
-          )
-        `)
+        .select('id_aula_curso, titulo, estado, id_ministerio, modulos:aula_modulo(id_aula_modulo)')
         .eq('id_usuario_creador', internalUserId)
-
-      if (idCurso) {
-        query = query.eq('id_aula_curso', idCurso)
-      }
-
-      const { data, error } = await query
-
+        .order('creado_en', { ascending: false })
       if (error) throw error
 
-      const totalCursos = cursos?.length || 0
-      const cursosActivos = cursos?.filter(c => c.estado === 'activo').length || 0
+      const cursos = cursosData ?? []
+      const totalCursos = cursos.length
+      const cursosActivos = cursos.filter(c => c.estado === 'activo').length
+      const cursoIds = cursos.map(c => c.id_aula_curso)
+      const ministerioIds = [...new Set(
+        cursos.map(c => c.id_ministerio).filter((id): id is number => id != null)
+      )]
 
-      // Contar miembros totales en ministerios
-      const totalMiembros = data?.reduce((total, curso) => {
-        return total + (curso.ministerio?.miembro_ministerio?.[0]?.count || 0)
-      }, 0) || 0
-
-      // Obtener certificados emitidos
-      const cursoIds = cursos?.map(c => c.id_aula_curso) || []
-      const { data: certificados } = cursoIds.length
-        ? await supabase
-            .from('aula_certificado')
-            .select('id_aula_certificado')
-            .in('id_aula_curso', cursoIds)
-        : { data: [] as Array<{ id_aula_certificado: number }> }
-
-      return {
-        totalCursos,
-        cursosActivos,
-        totalMiembros,
-        certificadosEmitidos: certificados?.length || 0
+      // Miembros activos (sin fecha de salida) en los ministerios de esos cursos.
+      let totalMiembros = 0
+      if (ministerioIds.length) {
+        const { count } = await supabase
+          .from('miembro_ministerio')
+          .select('id_miembro_ministerio', { count: 'exact', head: true })
+          .in('id_ministerio', ministerioIds)
+          .is('fecha_salida', null)
+        totalMiembros = count ?? 0
       }
+
+      // Certificados emitidos para los cursos del líder.
+      let certificadosEmitidos = 0
+      if (cursoIds.length) {
+        const { count } = await supabase
+          .from('aula_certificado')
+          .select('id_aula_certificado', { count: 'exact', head: true })
+          .in('id_aula_curso', cursoIds)
+        certificadosEmitidos = count ?? 0
+      }
+
+      // Inscripciones activas en los cursos del líder.
+      let inscripcionesActivas = 0
+      if (cursoIds.length) {
+        const { count } = await supabase
+          .from('aula_inscripcion')
+          .select('id_aula_inscripcion', { count: 'exact', head: true })
+          .in('id_aula_curso', cursoIds)
+          .eq('activo', true)
+        inscripcionesActivas = count ?? 0
+      }
+
+      return { totalCursos, cursosActivos, totalMiembros, certificadosEmitidos, inscripcionesActivas, cursos }
     },
     enabled: !!user?.id,
   })
+
+  const cursos = stats?.cursos
 
   // Progreso del grupo para un curso específico
   const { data: progresoGrupo } = useProgresoGrupoCurso(idCurso)
@@ -175,13 +160,13 @@ export function DashboardLider({ idCurso }: DashboardLiderProps) {
             <TrendingUp className="h-12 w-12" />
           </div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Promedio Grupo</CardTitle>
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Inscripciones</CardTitle>
             <TrendingUp className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-foreground">{promedioProgreso}%</div>
+            <div className="text-3xl font-black text-foreground">{stats.inscripcionesActivas}</div>
             <p className="text-xs font-bold text-amber-600 dark:text-amber-400 mt-1">
-              Progreso promedio
+              Inscripciones activas
             </p>
           </CardContent>
         </Card>

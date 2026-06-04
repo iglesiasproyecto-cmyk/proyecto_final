@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useApp } from '@/app/store/AppContext';
 import { useUsuarios, useUsuariosEnriquecidos } from '@/hooks/useUsuarios';
-import { useSedes } from '@/hooks/useIglesias';
-import { useEventos, useTareas } from '@/hooks/useEventos';
+import { useSedes, useIglesiasEnriquecidas } from '@/hooks/useIglesias';
+import { useEventos, useTareas, useTareasEnriquecidas } from '@/hooks/useEventos';
 import { useMinisteriosEnriquecidos, useMiembrosMinisterioEnriquecidos } from '@/hooks/useMinisterios';
 import type { StatisticsScope, DateRange, StatisticsDomain, TabData, StatisticsData } from '@/types/statistics.types';
 import { computeStatistics } from '@/services/statistics.service';
@@ -28,6 +28,7 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
       case 'admin_sede':
         return { type: 'sede', idIglesia: iglesiaActual?.id, idSede: sedesDelUsuario[0]?.id };
       case 'lider':
+        return { type: 'ministerio', idIglesia: iglesiaActual?.id, idUsuario: usuarioActual?.idUsuario };
       case 'servidor':
         return { type: 'personal', idIglesia: iglesiaActual?.id, idUsuario: usuarioActual?.idUsuario };
       default:
@@ -42,6 +43,18 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
   const { data: tareas = [] } = useTareas();
   const { data: ministerios = [] } = useMinisteriosEnriquecidos(scope.idIglesia);
   const { data: miembrosMinisterio = [] } = useMiembrosMinisterioEnriquecidos();
+
+  // Solo super_admin (scope global) necesita el comparativo entre iglesias.
+  const { data: iglesias = [] } = useIglesiasEnriquecidas();
+
+  // Vista personal (servidor): tareas asignadas e inscripciones del propio usuario.
+  const isPersonal = scope.type === 'personal';
+  const { data: misTareas = [] } = useTareasEnriquecidas(
+    undefined,
+    undefined,
+    scope.idUsuario,
+    isPersonal && !!scope.idUsuario,
+  );
 
   const { data: certificados = [] } = useQuery({
     queryKey: ['statistics-certificados', scope.idIglesia],
@@ -81,17 +94,28 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
     },
   });
 
+  // Ministerios donde el lider participa (scope 'ministerio').
+  const liderMinisterioIds = useMemo(() => {
+    if (scope.type !== 'ministerio') return new Set<number>();
+    return new Set(
+      miembrosMinisterio
+        .filter((m: any) => m.idUsuario === scope.idUsuario)
+        .map((m: any) => m.idMinisterio),
+    );
+  }, [miembrosMinisterio, scope]);
+
   const filteredSedes = useMemo(() => {
     if (scope.type === 'sede') return sedes.filter((s: any) => s.idSede === scope.idSede);
-    if (scope.type === 'personal') return [];
+    if (scope.type === 'personal' || scope.type === 'ministerio') return [];
     return sedes;
   }, [sedes, scope]);
 
   const filteredMinisterios = useMemo(() => {
     if (scope.type === 'sede') return ministerios.filter((m: any) => m.idSede === scope.idSede);
+    if (scope.type === 'ministerio') return ministerios.filter((m: any) => liderMinisterioIds.has(m.idMinisterio));
     if (scope.type === 'personal') return [];
     return ministerios;
-  }, [ministerios, scope]);
+  }, [ministerios, scope, liderMinisterioIds]);
 
   const filteredEnrichedUsuarios = useMemo(() => {
     if (scope.type === 'sede') {
@@ -102,11 +126,16 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
         return isSedeRole || isMinRole;
       });
     }
+    if (scope.type === 'ministerio') {
+      return enrichedUsuarios.filter((u: any) =>
+        u.minNames.some((m: any) => liderMinisterioIds.has(m.idMinisterio)),
+      );
+    }
     if (scope.type === 'personal') {
        return enrichedUsuarios.filter((u: any) => u.idUsuario === scope.idUsuario);
     }
     return enrichedUsuarios;
-  }, [enrichedUsuarios, scope, filteredMinisterios]);
+  }, [enrichedUsuarios, scope, filteredMinisterios, liderMinisterioIds]);
 
   const filteredUsuarios = useMemo(() => {
     if (scope.type === 'iglesia' || scope.type === 'global') return usuarios;
@@ -119,16 +148,19 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
       const allowedMinisterios = new Set(filteredMinisterios.map((m: any) => m.idMinisterio));
       return eventos.filter((e: any) => e.idSede === scope.idSede || (e.idMinisterio && allowedMinisterios.has(e.idMinisterio)));
     }
+    if (scope.type === 'ministerio') {
+      return eventos.filter((e: any) => e.idMinisterio && liderMinisterioIds.has(e.idMinisterio));
+    }
     if (scope.type === 'personal') return [];
     return eventos;
-  }, [eventos, scope, filteredMinisterios]);
+  }, [eventos, scope, filteredMinisterios, liderMinisterioIds]);
 
   const filteredTareas = useMemo(() => {
-    if (scope.type === 'sede') {
+    if (scope.type === 'sede' || scope.type === 'ministerio') {
       const allowedMinisterios = new Set(filteredMinisterios.map((m: any) => m.idMinisterio));
       const allowedEventos = new Set(filteredEventos.map((e: any) => e.idEvento));
-      return tareas.filter((t: any) => 
-        (t.idMinisterio && allowedMinisterios.has(t.idMinisterio)) || 
+      return tareas.filter((t: any) =>
+        (t.idMinisterio && allowedMinisterios.has(t.idMinisterio)) ||
         (t.idEvento && allowedEventos.has(t.idEvento))
       );
     }
@@ -137,13 +169,19 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
   }, [tareas, scope, filteredMinisterios, filteredEventos]);
 
   const filteredMiembrosMinisterio = useMemo(() => {
-    if (scope.type === 'sede') {
+    if (scope.type === 'sede' || scope.type === 'ministerio') {
       const allowedMinisterios = new Set(filteredMinisterios.map((m: any) => m.idMinisterio));
       return miembrosMinisterio.filter((m: any) => allowedMinisterios.has(m.idMinisterio));
     }
     if (scope.type === 'personal') return [];
     return miembrosMinisterio;
   }, [miembrosMinisterio, scope, filteredMinisterios]);
+
+  // Inscripciones del propio usuario (vista personal del servidor).
+  const misInscripciones = useMemo(
+    () => inscripciones.filter((i: any) => i.id_usuario === scope.idUsuario),
+    [inscripciones, scope],
+  );
 
   const roles = useMemo(() => {
     const map = new Map<string, number>();
@@ -161,6 +199,7 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
 
   const rawData = useMemo(
     () => ({
+      iglesias,
       usuarios: filteredUsuarios,
       miembros: filteredMiembrosMinisterio,
       sedes: filteredSedes,
@@ -172,8 +211,10 @@ export function useStatistics(domain?: StatisticsDomain, dateRange?: DateRange) 
       inscripciones,
       certificados,
       miembrosMinisterio: filteredMiembrosMinisterio,
+      misTareas,
+      misInscripciones,
     }),
-    [filteredUsuarios, filteredSedes, filteredMinisterios, roles, filteredEventos, filteredTareas, cursos, inscripciones, certificados, filteredMiembrosMinisterio],
+    [iglesias, filteredUsuarios, filteredSedes, filteredMinisterios, roles, filteredEventos, filteredTareas, cursos, inscripciones, certificados, filteredMiembrosMinisterio, misTareas, misInscripciones],
   );
 
   const allData = useMemo<StatisticsData>(() => computeStatistics(scope, range, rawData), [scope, range, rawData]);

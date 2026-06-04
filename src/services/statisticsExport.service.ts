@@ -43,8 +43,8 @@ async function generatePDF(dataset: ReportDataset): Promise<Blob> {
   doc.text('Lumen', margin, 40);
   doc.setFontSize(10);
   const domainLabel: Record<string, string> = {
-    iglesia: 'Iglesia', ministerios: 'Ministerios',
-    'eventos-tareas': 'Eventos y Tareas', aula: 'Aula',
+    global: 'Global', iglesia: 'Iglesia', ministerios: 'Ministerios',
+    'eventos-tareas': 'Eventos y Tareas', aula: 'Aula', personal: 'Mi Actividad',
   };
   doc.text(`Seccion: ${domainLabel[dataset.domain] || dataset.domain}`, margin, 50);
   if (dataset.churchName) doc.text(`Iglesia: ${dataset.churchName}`, margin, 57);

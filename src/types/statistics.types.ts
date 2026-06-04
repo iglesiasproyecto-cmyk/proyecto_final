@@ -1,4 +1,4 @@
-export type StatisticsDomain = 'iglesia' | 'ministerios' | 'eventos-tareas' | 'aula';
+export type StatisticsDomain = 'global' | 'iglesia' | 'ministerios' | 'eventos-tareas' | 'aula' | 'personal';
 
 export interface DateRange {
   start: string | null;

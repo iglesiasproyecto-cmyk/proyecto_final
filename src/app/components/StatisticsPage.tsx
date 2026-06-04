@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '@/app/store/AppContext';
 import { useStatistics } from '@/hooks/useStatistics';
@@ -11,25 +11,48 @@ import { SimpleBarChart, SimpleDonutChart } from '@/app/components/SimpleCharts'
 import {
   Building2, Users, UserCheck, Church, Settings2, ListTodo,
   CheckCircle2, AlertCircle, BookOpen, FileEdit, Award,
-  FileSpreadsheet, FileText, TrendingUp, CalendarDays
+  FileSpreadsheet, FileText, TrendingUp, CalendarDays, Globe
 } from 'lucide-react';
 import type { StatisticsDomain, StatisticsData, TabData, DateRange } from '@/types/statistics.types';
 
 const CHART_COLORS = ['#1a7fa8', '#2596be', '#0c2340', '#5cbcd6', '#c5a96a', '#e8927c'];
 
 const domainLabels: Record<StatisticsDomain, string> = {
+  global: 'Global',
   iglesia: 'Iglesia',
   ministerios: 'Ministerios',
   'eventos-tareas': 'Eventos y Tareas',
   aula: 'Aula',
+  personal: 'Mi Actividad',
 };
 
 const domainIcons: Record<StatisticsDomain, React.ReactNode> = {
+  global: <Globe className="w-4 h-4 text-sky-500/80" />,
   iglesia: <Building2 className="w-4 h-4 text-sky-500/80" />,
   ministerios: <Settings2 className="w-4 h-4 text-violet-500/80" />,
   'eventos-tareas': <CalendarDays className="w-4 h-4 text-amber-500/80" />,
   aula: <BookOpen className="w-4 h-4 text-emerald-500/80" />,
+  personal: <ListTodo className="w-4 h-4 text-rose-500/80" />,
 };
+
+// Pestañas visibles por rol y etiquetas contextuales.
+const ROLE_DOMAINS: Record<string, StatisticsDomain[]> = {
+  super_admin: ['global', 'iglesia', 'ministerios', 'eventos-tareas', 'aula'],
+  admin_iglesia: ['iglesia', 'ministerios', 'eventos-tareas', 'aula'],
+  admin_sede: ['iglesia', 'ministerios', 'eventos-tareas'],
+  lider: ['ministerios', 'eventos-tareas', 'aula'],
+  servidor: ['personal'],
+};
+
+function getRoleDomains(rol: string | null | undefined): StatisticsDomain[] {
+  return ROLE_DOMAINS[rol ?? ''] ?? ['iglesia', 'ministerios', 'eventos-tareas', 'aula'];
+}
+
+function getDomainLabel(domain: StatisticsDomain, rol: string | null | undefined): string {
+  if (domain === 'iglesia' && rol === 'admin_sede') return 'Sede';
+  if (domain === 'ministerios' && rol === 'lider') return 'Mi Ministerio';
+  return domainLabels[domain];
+}
 
 const datePresets = [
   {
@@ -228,22 +251,16 @@ function TabRenderer({ data }: { data: TabData }) {
 export function StatisticsPage() {
   const { iglesiaActual, rolActual } = useApp();
 
-  // Solo admin_iglesia y admin_sede pueden ver estadísticas
-  if (rolActual === 'servidor') {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">Acceso Restringido</h2>
-          <p className="text-muted-foreground">No tienes permiso para acceder a las estadísticas</p>
-        </div>
-      </div>
-    );
-  }
+  const visibleDomains = useMemo(() => getRoleDomains(rolActual), [rolActual]);
 
-  const [activeDomain, setActiveDomain] = useState<StatisticsDomain>('iglesia');
+  const [activeDomain, setActiveDomain] = useState<StatisticsDomain>(() => visibleDomains[0]);
   const [activePreset, setActivePreset] = useState('Este mes');
   const [dateRange, setDateRange] = useState<DateRange>(() => datePresets[0].range());
+
+  // Si el rol cambia y la pestaña activa ya no aplica, vuelve a la primera permitida.
+  useEffect(() => {
+    if (!visibleDomains.includes(activeDomain)) setActiveDomain(visibleDomains[0]);
+  }, [visibleDomains, activeDomain]);
 
   const { data: allData, scope, isReady } = useStatistics(activeDomain, dateRange);
   const [exporting, setExporting] = useState<'xlsx' | 'pdf' | null>(null);
@@ -325,14 +342,14 @@ export function StatisticsPage() {
       {/* ── Tabs Navigation with unified styles ── */}
       <Tabs value={activeDomain} onValueChange={(v) => setActiveDomain(v as StatisticsDomain)}>
         <TabsList className="bg-slate-100/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-1.5 mb-6 flex flex-wrap gap-1 h-auto max-w-fit shadow-sm">
-          {(Object.keys(domainLabels) as StatisticsDomain[]).map((d) => (
-            <TabsTrigger 
-              key={d} 
-              value={d} 
+          {visibleDomains.map((d) => (
+            <TabsTrigger
+              key={d}
+              value={d}
               className="gap-2.5 rounded-xl text-xs font-bold uppercase tracking-wider py-2.5 px-4.5 transition-all duration-300 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/30 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-primary dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-200/60 dark:data-[state=active]:border-slate-800/80 hover:scale-[1.02]"
             >
               {domainIcons[d]}
-              {domainLabels[d]}
+              {getDomainLabel(d, rolActual)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -345,7 +362,7 @@ export function StatisticsPage() {
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.3 }}
           >
-            {(Object.keys(domainLabels) as StatisticsDomain[]).map((d) => (
+            {visibleDomains.map((d) => (
               <TabsContent key={d} value={d}>
                 {allData ? <TabRenderer data={allData[d]} /> : <TabContentSkeleton />}
               </TabsContent>
