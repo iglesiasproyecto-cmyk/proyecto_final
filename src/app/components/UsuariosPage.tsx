@@ -439,7 +439,7 @@ export function UsuariosPage() {
               <h1 className="text-2xl sm:text-4xl font-light tracking-tight text-foreground leading-tight">Gestión de Usuarios</h1>
             </div>
           </div>
-          <Button onClick={() => setShowInvite(true)} className="shrink-0 shadow-md shadow-[#4682b4]/20 rounded-full px-4 sm:px-6 bg-[#4682b4] hover:bg-[#4682b4]/90 text-white h-10 sm:h-11 text-sm sm:text-base">
+          <Button onClick={() => setShowInvite(true)} className="shrink-0 shadow-md shadow-primary/20 rounded-full px-4 sm:px-6 bg-primary hover:bg-primary/90 text-primary-foreground h-10 sm:h-11 text-sm sm:text-base">
             <UserPlus className="w-4 h-4 mr-1 sm:mr-2" /> 
             <span className="hidden xs:inline">Invitar Usuario</span>
             <span className="xs:hidden">Invitar</span>
@@ -571,7 +571,7 @@ export function UsuariosPage() {
                   {u.ultimoAcceso ? new Date(u.ultimoAcceso).toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" }) : "Nunca"}
                 </TableCell>
                 <TableCell>
-                  <Badge className={`text-xs ${technicalArchived ? "bg-amber-100 text-amber-800 border-amber-200" : u.activo ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : "bg-red-100 text-red-800"}`}>
+                  <Badge className={`text-xs ${technicalArchived ? "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800/40" : u.activo ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800/40"}`}>
                     {technicalArchived ? "Archivado" : (u.activo ? "Activo" : "Inactivo")}
                   </Badge>
                 </TableCell>
@@ -579,28 +579,30 @@ export function UsuariosPage() {
                   <div className="flex gap-1 justify-end">
                     {!technicalArchived && (
                       <>
-                    <Button variant="ghost" size="sm" title="Ver Hoja de Vida" onClick={() => setShowHojaDeVida(u.idUsuario)}>
-                      <FileText className="w-3.5 h-3.5 text-cyan-600" />
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground" aria-label={`Ver hoja de vida de ${displayName}`} title="Ver Hoja de Vida" onClick={() => setShowHojaDeVida(u.idUsuario)}>
+                      <FileText className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" title="Ver detalle" onClick={() => setDetail(u.idUsuario)}><Eye className="w-3.5 h-3.5" /></Button>
-                    <Button variant="ghost" size="sm" title="Editar usuario" onClick={() => openEditDialog(u.idUsuario)}>
-                      <Pencil className="w-3.5 h-3.5 text-amber-600" />
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground" aria-label={`Ver detalle de ${displayName}`} title="Ver detalle" onClick={() => setDetail(u.idUsuario)}><Eye className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground" aria-label={`Editar a ${displayName}`} title="Editar usuario" onClick={() => openEditDialog(u.idUsuario)}>
+                      <Pencil className="w-4 h-4" />
                     </Button>
                     {canManageUsers && (
-                      <Button variant="ghost" size="sm" title="Asignar rol" onClick={() => { setShowAssignRol(u.idUsuario); resetAssignForm(); }}>
-                        <ShieldPlus className="w-3.5 h-3.5 text-[#4682b4] dark:text-[#709dbd]" />
+                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-primary" aria-label={`Asignar rol a ${displayName}`} title="Asignar rol" onClick={() => { setShowAssignRol(u.idUsuario); resetAssignForm(); }}>
+                        <ShieldPlus className="w-4 h-4" />
                       </Button>
                     )}
                     {isSuperAdmin && (
-                      <Button variant="ghost" size="sm" title="Eliminar usuario" onClick={() => openDeleteDialog(u.idUsuario)}>
-                        <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive" aria-label={`Eliminar a ${displayName}`} title="Eliminar usuario" onClick={() => openDeleteDialog(u.idUsuario)}>
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     )}
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className={`h-8 w-8 p-0 rounded-full transition-all ${u.activo ? "text-amber-500 hover:bg-amber-500/10" : "text-emerald-500 hover:bg-emerald-500/10"}`}
-                      disabled={toggleActivoMutation.isPending} 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`h-9 w-9 p-0 rounded-full transition-all ${u.activo ? "text-amber-500 hover:bg-amber-500/10" : "text-emerald-500 hover:bg-emerald-500/10"}`}
+                      aria-label={u.activo ? `Desactivar a ${displayName}` : `Activar a ${displayName}`}
+                      title={u.activo ? "Desactivar usuario" : "Activar usuario"}
+                      disabled={toggleActivoMutation.isPending}
                       onClick={() => toggleActivoMutation.mutate(u.idUsuario)}
                     >
                       {u.activo ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
@@ -639,7 +641,7 @@ export function UsuariosPage() {
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-lg text-primary">{detailUser.nombres[0]}{detailUser.apellidos[0]}</div>
                 <div>
                   <p className="text-lg">{detailUser.nombres} {detailUser.apellidos}</p>
-                  <Badge className={`text-xs ${detailUser.activo ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200" : "bg-red-100 text-red-800"}`}>{detailUser.activo ? "Activo" : "Inactivo"}</Badge>
+                  <Badge className={`text-xs ${detailUser.activo ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800/40"}`}>{detailUser.activo ? "Activo" : "Inactivo"}</Badge>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -677,7 +679,7 @@ export function UsuariosPage() {
           {/* Header */}
           <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1a7fa8] to-[#0c5a7a] flex items-center justify-center shadow-md shadow-[#1a7fa8]/20 shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-md shadow-primary/20 shrink-0">
                 <UserPlus className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -697,12 +699,12 @@ export function UsuariosPage() {
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                   inviteStep === 1
-                    ? 'bg-[#1a7fa8] text-white shadow-md shadow-[#1a7fa8]/30 ring-4 ring-[#1a7fa8]/15'
-                    : 'bg-[#1a7fa8] text-white'
+                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30 ring-4 ring-primary/15'
+                    : 'bg-primary text-primary-foreground'
                 }`}>
                   {inviteStep === 2 ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : '1'}
                 </div>
-                <span className={`text-[10px] font-semibold tracking-wide whitespace-nowrap transition-colors ${inviteStep === 1 ? 'text-[#1a7fa8]' : 'text-[#1a7fa8]/70'}`}>
+                <span className={`text-[10px] font-semibold tracking-wide whitespace-nowrap transition-colors ${inviteStep === 1 ? 'text-primary' : 'text-primary/70'}`}>
                   PERSONALES
                 </span>
               </button>
@@ -710,7 +712,7 @@ export function UsuariosPage() {
               {/* Line */}
               <div className="flex-1 mx-3 mb-4 h-[2px] rounded-full overflow-hidden bg-border">
                 <motion.div
-                  className="h-full bg-[#1a7fa8] rounded-full"
+                  className="h-full bg-primary rounded-full"
                   initial={{ width: inviteStep === 2 ? '100%' : '0%' }}
                   animate={{ width: inviteStep === 2 ? '100%' : '0%' }}
                   transition={{ duration: 0.4, ease: 'easeInOut' }}
@@ -721,12 +723,12 @@ export function UsuariosPage() {
               <div className="flex flex-col items-center gap-1.5">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                   inviteStep === 2
-                    ? 'bg-[#1a7fa8] text-white shadow-md shadow-[#1a7fa8]/30 ring-4 ring-[#1a7fa8]/15'
+                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30 ring-4 ring-primary/15'
                     : 'bg-muted text-muted-foreground'
                 }`}>
                   2
                 </div>
-                <span className={`text-[10px] font-semibold tracking-wide whitespace-nowrap transition-colors ${inviteStep === 2 ? 'text-[#1a7fa8]' : 'text-muted-foreground'}`}>
+                <span className={`text-[10px] font-semibold tracking-wide whitespace-nowrap transition-colors ${inviteStep === 2 ? 'text-primary' : 'text-muted-foreground'}`}>
                   ASIGNACIÓN
                 </span>
               </div>
@@ -807,9 +809,9 @@ export function UsuariosPage() {
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mt-2 p-3 rounded-xl bg-[#1a7fa8]/8 border border-[#1a7fa8]/20 flex items-center gap-3"
+                      className="mt-2 p-3 rounded-xl bg-primary/10 border border-primary/20 flex items-center gap-3"
                     >
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1a7fa8] to-[#0c5a7a] flex items-center justify-center text-white text-sm font-bold shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white text-sm font-bold shrink-0">
                         {(inviteForm.nombres[0] ?? '?').toUpperCase()}{(inviteForm.apellidos[0] ?? '').toUpperCase()}
                       </div>
                       <div className="min-w-0">
@@ -832,14 +834,14 @@ export function UsuariosPage() {
                 >
                   {/* Resumen del paso 1 */}
                   <div className="p-3 rounded-xl bg-muted/40 border border-border/50 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a7fa8] to-[#0c5a7a] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-white text-xs font-bold shrink-0">
                       {(inviteForm.nombres[0] ?? '?').toUpperCase()}{(inviteForm.apellidos[0] ?? '').toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold truncate">{inviteForm.nombres} {inviteForm.apellidos}</p>
                       <p className="text-xs text-muted-foreground truncate">{inviteForm.correo}</p>
                     </div>
-                    <Check className="w-4 h-4 text-[#1a7fa8] shrink-0" />
+                    <Check className="w-4 h-4 text-primary shrink-0" />
                   </div>
 
                   {isAdminSede && sedesDelUsuario.length === 0 ? (
@@ -1049,7 +1051,7 @@ export function UsuariosPage() {
                   size="sm"
                   onClick={() => { setInviteStepDir('forward'); setInviteStep(2); }}
                   disabled={!inviteForm.nombres.trim() || !inviteForm.apellidos.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteForm.correo.trim())}
-                  className="bg-[#1a7fa8] hover:bg-[#15709a] text-white gap-2 px-5"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 px-5"
                 >
                   Siguiente <ChevronRight className="w-4 h-4" />
                 </Button>
@@ -1071,7 +1073,7 @@ export function UsuariosPage() {
                     (isAdminSede && sedesDelUsuario.length === 0) ||
                     (isLider && ministeriosDelUsuario.length === 0)
                   }
-                  className="bg-[#1a7fa8] hover:bg-[#15709a] text-white gap-2 px-5"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 px-5"
                 >
                   {inviteMutation.isPending
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>
@@ -1131,7 +1133,7 @@ export function UsuariosPage() {
                       <div>
                         <label className="text-xs text-muted-foreground mb-1 block">Rol *</label>
                     {isLider ? (
-                      <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md opacity-70">
+                      <div className="text-sm text-muted-foreground bg-input-background px-3 py-2 rounded-md opacity-70">
                         Servidor
                       </div>
                     ) : (
@@ -1189,13 +1191,13 @@ export function UsuariosPage() {
                     )}
                     {/* Show as text if admin_sede */}
                     {isAdminSede && (
-                      <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                      <div className="text-sm text-muted-foreground bg-input-background px-3 py-2 rounded-md">
                         Sede: {sedesDelUsuario.find(s => s.id === assignForm.idSede)?.nombre}
                       </div>
                     )}
                     {/* Show as text if lider */}
                     {isLider && (
-                      <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                      <div className="text-sm text-muted-foreground bg-input-background px-3 py-2 rounded-md">
                         Sede: {sedesAssign.find(s => s.idSede === assignForm.idSede)?.nombre ?? "—"}
                       </div>
                     )}
@@ -1241,7 +1243,7 @@ export function UsuariosPage() {
                         </Select>
                       )}
                       {isLider && ministeriosDelUsuario.length <= 1 && (
-                        <div className="text-sm text-gray-600 bg-input-background px-3 py-2 rounded-md">
+                        <div className="text-sm text-muted-foreground bg-input-background px-3 py-2 rounded-md">
                           Ministerio: {ministeriosDelUsuario.find(m => m.id === assignForm.idMinisterio)?.nombre ?? "—"}
                         </div>
                       )}
@@ -1404,11 +1406,13 @@ function RoleRow({ idUsuarioRol, source, rolNombre, iglesiaNombre, sedeNombre, o
         <Button
           variant="ghost"
           size="sm"
-          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+          aria-label={`Remover rol ${rolNombre}`}
+          title="Remover rol"
           disabled={isRemoving}
           onClick={handleRemoveClick}
         >
-          <X className="w-3.5 h-3.5" />
+          <X className="w-4 h-4" />
         </Button>
       )}
     </div>

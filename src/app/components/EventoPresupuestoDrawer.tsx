@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog"
 import { ConfirmDialog } from "./ui/ConfirmDialog"
 import { Skeleton } from "./ui/skeleton"
-import { Plus, Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react"
+import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from "lucide-react"
 import type { EventoEnriquecido } from "@/services/eventos.service"
 import type { PresupuestoItem } from "@/types/app.types"
 import type { CreateItemPayload, UpdateItemPayload } from "@/services/evento-presupuesto.service"
@@ -30,6 +30,10 @@ function fmt(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n)
 }
 
+// Colores semánticos legibles en claro y oscuro (el tema no define token verde)
+const POS = "text-emerald-600 dark:text-emerald-400"
+const NEG = "text-rose-600 dark:text-rose-400"
+
 function ItemRow({
   item,
   onEdit,
@@ -40,6 +44,9 @@ function ItemRow({
   onDelete: (item: PresupuestoItem) => void
 }) {
   const diff = item.montoReal !== null ? item.montoReal - item.montoPlaneado : null
+  // Favorable: en ingresos recaudar de más es bueno; en egresos gastar de menos es bueno
+  const favorable = diff === null ? null : item.tipo === "ingreso" ? diff >= 0 : diff <= 0
+  const realColor = item.tipo === "ingreso" ? POS : NEG
   return (
     <div className="bg-card/40 border border-border/50 rounded-xl p-3 sm:p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
@@ -48,31 +55,44 @@ function ItemRow({
           {item.descripcion && <p className="text-xs text-muted-foreground">{item.descripcion}</p>}
         </div>
         <div className="flex gap-1">
-          <button onClick={() => onEdit(item)} className="min-h-9 min-w-9 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
-            <Pencil className="w-3.5 h-3.5" />
+          <button
+            type="button"
+            onClick={() => onEdit(item)}
+            aria-label={`Editar ${item.categoria}`}
+            className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer transition-colors"
+          >
+            <Pencil className="w-4 h-4" />
           </button>
-          <button onClick={() => onDelete(item)} className="min-h-9 min-w-9 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-muted/50 transition-colors">
-            <Trash2 className="w-3.5 h-3.5" />
+          <button
+            type="button"
+            onClick={() => onDelete(item)}
+            aria-label={`Eliminar ${item.categoria}`}
+            className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
         <div className="bg-background/50 rounded-lg p-2.5 min-w-0">
           <p className="text-muted-foreground mb-0.5">Planeado</p>
-          <p className="font-semibold break-words">{fmt(item.montoPlaneado)}</p>
+          <p className="font-semibold tabular-nums break-words">{fmt(item.montoPlaneado)}</p>
         </div>
         <div className="bg-background/50 rounded-lg p-2.5 min-w-0">
           <p className="text-muted-foreground mb-0.5">Real</p>
-          <p className="font-semibold text-emerald-400 break-words">{item.montoReal !== null ? fmt(item.montoReal) : "-"}</p>
+          <p className={`font-semibold tabular-nums break-words ${item.montoReal !== null ? realColor : "text-muted-foreground"}`}>
+            {item.montoReal !== null ? fmt(item.montoReal) : "—"}
+          </p>
         </div>
         <div className="bg-background/50 rounded-lg p-2.5 min-w-0">
           <p className="text-muted-foreground mb-0.5">Diferencia</p>
           {diff !== null ? (
-            <p className={`font-semibold break-words ${diff >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            <p className={`font-semibold tabular-nums break-words inline-flex items-center gap-1 ${favorable ? POS : NEG}`}>
+              {diff >= 0 ? <ArrowUpRight className="w-3 h-3 shrink-0" /> : <ArrowDownRight className="w-3 h-3 shrink-0" />}
               {diff >= 0 ? "+" : ""}
               {fmt(diff)}
             </p>
-          ) : <p className="text-muted-foreground">-</p>}
+          ) : <p className="text-muted-foreground">—</p>}
         </div>
       </div>
     </div>
@@ -98,11 +118,21 @@ function ItemsSection({
   const totalPlaneado = filtered.reduce((s, i) => s + i.montoPlaneado, 0)
   const totalReal = filtered.reduce((s, i) => s + (i.montoReal ?? 0), 0)
   const pct = totalPlaneado > 0 ? Math.round((totalReal / totalPlaneado) * 100) : 0
+  const EmptyIcon = tipo === "ingreso" ? TrendingUp : TrendingDown
+  const label = tipo === "ingreso" ? "ingresos" : "egresos"
 
   return (
     <div className="space-y-3">
       {isLoading ? (
         Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center text-center gap-2 rounded-xl border border-dashed border-border/60 bg-card/20 px-4 py-8">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted/50">
+            <EmptyIcon className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
+          </div>
+          <p className="text-sm font-medium">Sin {label} registrados</p>
+          <p className="text-xs text-muted-foreground max-w-[240px]">Agrega el primer ítem para empezar a llevar el presupuesto de este evento.</p>
+        </div>
       ) : (
         filtered.map((item) => (
           <ItemRow key={item.idPresupuestoItem} item={item} onEdit={onEdit} onDelete={onDelete} />
@@ -110,26 +140,39 @@ function ItemsSection({
       )}
 
       <button
+        type="button"
         onClick={onAdd}
-        className="w-full min-h-11 border border-dashed border-primary/40 rounded-xl p-3 text-sm text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
+        className="w-full min-h-11 border border-dashed border-primary/40 rounded-xl p-3 text-sm font-medium text-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer transition-colors flex items-center justify-center gap-2"
       >
         <Plus className="w-4 h-4" />
-        Agregar ítem
+        Agregar {tipo === "ingreso" ? "ingreso" : "egreso"}
       </button>
 
       {filtered.length > 0 && (
         <div className="bg-card/30 border border-border/50 rounded-xl p-3 space-y-2 text-sm">
           <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-3">
             <span className="text-muted-foreground">Total planeado</span>
-            <span className="font-semibold break-words text-left sm:text-right">{fmt(totalPlaneado)}</span>
+            <span className="font-semibold tabular-nums break-words text-left sm:text-right">{fmt(totalPlaneado)}</span>
           </div>
           <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-3">
             <span className="text-muted-foreground">Total real</span>
-            <span className={`font-semibold break-words text-left sm:text-right ${tipo === "ingreso" ? "text-emerald-400" : "text-rose-400"}`}>{fmt(totalReal)}</span>
+            <span className={`font-semibold tabular-nums break-words text-left sm:text-right ${tipo === "ingreso" ? POS : NEG}`}>{fmt(totalReal)}</span>
           </div>
-          <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-3 pt-1 border-t border-border/50">
-            <span className="text-muted-foreground text-xs">Ejecución</span>
-            <span className="font-bold text-primary break-words text-left sm:text-right">{pct}%</span>
+          <div className="pt-1 border-t border-border/50 space-y-1.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground text-xs">Ejecución</span>
+              <span className="font-bold text-primary tabular-nums text-xs">{pct}%</span>
+            </div>
+            <div
+              className="h-1.5 w-full overflow-hidden rounded-full bg-muted/60"
+              role="progressbar"
+              aria-valuenow={pct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Ejecución de ${label}`}
+            >
+              <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${Math.min(pct, 100)}%` }} />
+            </div>
           </div>
         </div>
       )}
@@ -260,18 +303,20 @@ export function EventoPresupuestoDrawer({
       </Sheet>
 
       <Dialog open={showForm} onOpenChange={(open) => { if (!open) setShowForm(false) }}>
-        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md rounded-2xl bg-card/95 backdrop-blur-2xl border-white/10">
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md rounded-2xl bg-card/95 backdrop-blur-2xl border-border/60">
           <DialogHeader>
             <DialogTitle className="text-base font-bold">
-              {editingItem ? "Editar ítem" : `Agregar ${activeTab}`}
+              {editingItem ? "Editar ítem" : activeTab === "ingreso" ? "Agregar ingreso" : "Agregar egreso"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-1">
             <div>
-              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block mb-1.5">Categoria</label>
+              <label htmlFor="presupuesto-categoria" className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block mb-1.5">
+                Categoría <span className="text-destructive">*</span>
+              </label>
               <Select value={form.categoriaSelect} onValueChange={(v) => setForm((f) => ({ ...f, categoriaSelect: v, categoriaCustom: "" }))}>
-                <SelectTrigger className="h-10 bg-background/50 border-white/10 rounded-xl text-sm">
-                  <SelectValue placeholder="Selecciona una categoria" />
+                <SelectTrigger id="presupuesto-categoria" className="h-10 bg-background/50 border-border/60 rounded-xl text-sm">
+                  <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>
                 <SelectContent>
                   {categoriaOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -279,17 +324,19 @@ export function EventoPresupuestoDrawer({
               </Select>
               {form.categoriaSelect === "Otro (especificar)" && (
                 <Input
-                  className="mt-2 h-10 bg-background/50 border-white/10 rounded-xl text-sm"
-                  placeholder="Escribe la categoria..."
+                  className="mt-2 h-10 bg-background/50 border-border/60 rounded-xl text-sm"
+                  placeholder="Escribe la categoría..."
+                  aria-label="Categoría personalizada"
                   value={form.categoriaCustom}
                   onChange={(e) => setForm((f) => ({ ...f, categoriaCustom: e.target.value }))}
                 />
               )}
             </div>
             <div>
-              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block mb-1.5">Descripcion (opcional)</label>
+              <label htmlFor="presupuesto-descripcion" className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block mb-1.5">Descripción (opcional)</label>
               <Input
-                className="h-10 bg-background/50 border-white/10 rounded-xl text-sm"
+                id="presupuesto-descripcion"
+                className="h-10 bg-background/50 border-border/60 rounded-xl text-sm"
                 placeholder="Detalle adicional..."
                 value={form.descripcion}
                 onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))}
@@ -297,20 +344,24 @@ export function EventoPresupuestoDrawer({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block mb-1.5">Monto planeado</label>
+                <label htmlFor="presupuesto-monto-planeado" className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block mb-1.5">
+                  Monto planeado <span className="text-destructive">*</span>
+                </label>
                 <Input
-                  type="number" min={0} step={1000}
-                  className="h-10 bg-background/50 border-white/10 rounded-xl text-sm"
+                  id="presupuesto-monto-planeado"
+                  type="number" min={0} step={1000} inputMode="numeric"
+                  className="h-10 bg-background/50 border-border/60 rounded-xl text-sm tabular-nums"
                   placeholder="0"
                   value={form.montoPlaneado}
                   onChange={(e) => setForm((f) => ({ ...f, montoPlaneado: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block mb-1.5">Monto real (opcional)</label>
+                <label htmlFor="presupuesto-monto-real" className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block mb-1.5">Monto real (opcional)</label>
                 <Input
-                  type="number" min={0} step={1000}
-                  className="h-10 bg-background/50 border-white/10 rounded-xl text-sm"
+                  id="presupuesto-monto-real"
+                  type="number" min={0} step={1000} inputMode="numeric"
+                  className="h-10 bg-background/50 border-border/60 rounded-xl text-sm tabular-nums"
                   placeholder="0"
                   value={form.montoReal}
                   onChange={(e) => setForm((f) => ({ ...f, montoReal: e.target.value }))}
@@ -331,8 +382,8 @@ export function EventoPresupuestoDrawer({
         isOpen={confirmDelete.open}
         onClose={() => setConfirmDelete({ open: false, item: null })}
         onConfirm={handleDelete}
-        title="Eliminar item"
-        description={`¿Eliminar "${confirmDelete.item?.categoria}"? Esta accion no se puede deshacer.`}
+        title="Eliminar ítem"
+        description={`¿Eliminar "${confirmDelete.item?.categoria}"? Esta acción no se puede deshacer.`}
       />
     </>
   )
