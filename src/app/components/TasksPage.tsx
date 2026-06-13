@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar,
   ChevronRight, Inbox, Trash2, UserPlus, X, Pencil, Search, CalendarDays,
-  AlertTriangle
+  AlertTriangle, Ban
 } from "lucide-react";
 import { EquipoDisponibilidadPanel } from "./disponibilidad/EquipoDisponibilidadPanel";
 import { useDisponibilidadEquipo, estaDisponible } from "@/hooks/useDisponibilidad";
@@ -1012,32 +1012,75 @@ export function TasksPage() {
                 )}
 
                 {/* Assigned users */}
-                {!editMode && task.asignados && task.asignados.length > 0 && (
-                  <div className="space-y-3">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                      <UserPlus className="w-3 h-3" /> Personas Asignadas
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {task.asignados.map(a => (
-                        <div key={a.idTareaAsignada} className="flex items-center gap-2 bg-background border border-white/10 shadow-sm rounded-xl py-1.5 pl-1.5 pr-3 group">
-                          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
-                            {(a.nombreCompleto || "?").charAt(0).toUpperCase()}
-                          </div>
-                          <span className="text-[11px] font-bold tracking-tight truncate max-w-[120px]">{a.nombreCompleto}</span>
-                          {canManageTasks && (
-                            <button
-                              className="w-5 h-5 rounded-md flex items-center justify-center text-muted-foreground/40 hover:text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0 ml-1 opacity-0 group-hover:opacity-100 focus:opacity-100"
-                              onClick={() => setConfirmRemoveAssign({ open: true, id: a.idTareaAsignada, nombre: a.nombreCompleto || "" })}
-                              disabled={deleteAsignadaMutation.isPending}
+                {!editMode && task.asignados && task.asignados.length > 0 && (() => {
+                  const rechazados = task.asignados.filter(a => a.estadoAsignacion === 'rechazada')
+                  return (
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                        <UserPlus className="w-3 h-3" /> Personas Asignadas
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {task.asignados.map(a => {
+                          const rechazada = a.estadoAsignacion === 'rechazada'
+                          return (
+                            <div
+                              key={a.idTareaAsignada}
+                              title={rechazada && a.motivoRechazo ? `Rechazó: ${a.motivoRechazo}` : undefined}
+                              className={`flex items-center gap-2 border shadow-sm rounded-xl py-1.5 pl-1.5 pr-3 group transition-colors ${
+                                rechazada
+                                  ? 'bg-rose-500/5 border-rose-500/30'
+                                  : 'bg-background border-white/10'
+                              }`}
                             >
-                              <X className="w-3 h-3" />
-                            </button>
-                          )}
+                              <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] text-white font-bold shrink-0 ${
+                                rechazada
+                                  ? 'bg-gradient-to-br from-rose-400 to-rose-600'
+                                  : 'bg-gradient-to-br from-[#709dbd] to-[#4682b4]'
+                              }`}>
+                                {rechazada
+                                  ? <Ban className="w-3 h-3" />
+                                  : (a.nombreCompleto || "?").charAt(0).toUpperCase()
+                                }
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className={`text-[11px] font-bold tracking-tight truncate max-w-[120px] ${rechazada ? 'text-rose-400/80 line-through' : ''}`}>
+                                  {a.nombreCompleto}
+                                </span>
+                                {rechazada && (
+                                  <span className="text-[9px] font-black uppercase tracking-wider text-rose-400/70">Rechazó</span>
+                                )}
+                              </div>
+                              {canManageTasks && (
+                                <button
+                                  className="w-5 h-5 rounded-md flex items-center justify-center text-muted-foreground/40 hover:text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0 ml-1 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                  onClick={() => setConfirmRemoveAssign({ open: true, id: a.idTareaAsignada, nombre: a.nombreCompleto || "" })}
+                                  disabled={deleteAsignadaMutation.isPending}
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* Motivos de rechazo */}
+                      {rechazados.length > 0 && (
+                        <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3 space-y-2">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-rose-400/80 flex items-center gap-1.5">
+                            <Ban className="w-3 h-3" /> Motivos de rechazo
+                          </p>
+                          {rechazados.map(a => (
+                            <div key={a.idTareaAsignada} className="flex flex-col gap-0.5">
+                              <span className="text-[11px] font-bold text-rose-300">{a.nombreCompleto}</span>
+                              <span className="text-[11px] text-foreground/60 leading-relaxed">{a.motivoRechazo || '—'}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                )}
+                  )
+                })()}
 
                 {/* Assign user Panel */}
                 {!editMode && canManageTasks && (
