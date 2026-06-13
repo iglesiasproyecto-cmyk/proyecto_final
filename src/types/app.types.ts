@@ -318,3 +318,19 @@ export interface SessionUser {
   idMinisterio?: number
   idMiembroMinisterio?: number
 }
+
+export interface DisponibilidadRegla {
+  id: number;
+  usuarioId: number;
+  tipo: 'fecha_especifica' | 'recurrente';
+  fecha?: string;        // 'YYYY-MM-DD'
+  fechaFin?: string;     // 'YYYY-MM-DD' — rango opcional
+  patron?: {
+    tipo: 'semanal' | 'mensual';
+    diasSemana?: number[];   // 0=Dom, 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb
+    semanaDelMes?: number;   // 1–4, o -1 = última
+  };
+  nota?: string;
+  activo: boolean;
+  createdAt: string;
+}
