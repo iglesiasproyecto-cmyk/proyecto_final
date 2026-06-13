@@ -17,7 +17,8 @@ export function estaDisponible(
   reglas: DisponibilidadRegla[]
 ): { disponible: boolean; nota?: string } {
   const activas = reglas.filter(r => r.activo && r.usuarioId === usuarioId)
-  const fechaStr = fecha.toISOString().split('T')[0]
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const fechaStr = `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())}`
 
   // Evalúa fecha_especifica primero (mayor precedencia)
   for (const r of activas) {
