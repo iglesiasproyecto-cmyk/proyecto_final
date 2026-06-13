@@ -206,7 +206,7 @@ export function ProfilePage() {
 
           <AccordionItem value="disponibilidad" className="border-0 bg-card/40 backdrop-blur-2xl rounded-3xl overflow-hidden shadow-lg border border-white/10 px-4">
             <AccordionTrigger className="hover:no-underline py-5 text-xs font-black tracking-widest uppercase text-[#4682b4]">
-              <div className="flex items-center gap-2"><CalendarDays className="w-4 h-4" />Disponibilidad</div>
+              <div className="flex items-center gap-3"><CalendarDays className="w-4 h-4" />Disponibilidad</div>
             </AccordionTrigger>
             <AccordionContent className="pt-2 pb-6">
               {usuarioActual && <DisponibilidadTab usuarioId={usuarioActual.idUsuario} />}
