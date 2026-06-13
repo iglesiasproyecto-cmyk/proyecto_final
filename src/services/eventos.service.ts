@@ -41,6 +41,7 @@ function mapTarea(r: TareaRow): Tarea {
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
     archivedAt: (r as any).archived_at ?? null,
+    horasMargenRechazo: (r as any).horas_margen_rechazo ?? 12,
   }
 }
 
@@ -54,6 +55,9 @@ function mapTareaAsignada(r: TareaAsignadaRow): TareaAsignada {
     observaciones: r.observaciones,
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
+    estadoAsignacion: ((r as any).estado_asignacion ?? 'activa') as 'activa' | 'rechazada',
+    motivoRechazo: (r as any).motivo_rechazo ?? null,
+    fechaRechazo: (r as any).fecha_rechazo ?? null,
   }
 }
 
@@ -145,6 +149,7 @@ export async function createTarea(
     idUsuarioCreador: number
     idMinisterio: number
     idEvento?: number | null
+    horasMargenRechazo?: number
   }
 ): Promise<Tarea> {
   debugLog('createTarea', 'Calling RPC with:', data)
@@ -156,6 +161,7 @@ export async function createTarea(
     p_id_usuario_creador: data.idUsuarioCreador,
     p_id_ministerio: data.idMinisterio,
     p_id_evento: data.idEvento ?? null,
+    p_horas_margen_rechazo: data.horasMargenRechazo ?? 12,
   })
   debugLog('createTarea', 'RPC result:', result, 'error:', error)
   if (error) throw error
@@ -530,6 +536,17 @@ export async function updateTareaAsignada(
     .from('tarea_asignada')
     .update(patch)
     .eq('id_tarea_asignada', id)
+  if (error) throw error
+}
+
+export async function rechazarAsignacionTarea(
+  idTareaAsignada: number,
+  motivo: string
+): Promise<void> {
+  const { error } = await supabase.rpc('rpc_rechazar_asignacion_tarea', {
+    p_id_tarea_asignada: idTareaAsignada,
+    p_motivo: motivo,
+  })
   if (error) throw error
 }
 

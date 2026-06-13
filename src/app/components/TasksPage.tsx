@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar,
   ChevronRight, Inbox, Trash2, UserPlus, X, Pencil, Search, CalendarDays,
-  AlertTriangle
+  AlertTriangle, Ban
 } from "lucide-react";
 import { EquipoDisponibilidadPanel } from "./disponibilidad/EquipoDisponibilidadPanel";
 import { useDisponibilidadEquipo, estaDisponible } from "@/hooks/useDisponibilidad";
@@ -32,6 +32,7 @@ import { Skeleton } from "./ui/skeleton";
 import { TableSkeleton } from "./loading/skeletons";
 import { TasksSkeleton } from "./tasks/TasksSkeleton";
 import { TaskBulkActions } from "./tasks/TaskBulkActions";
+import { ServidorTareasView } from "./tareas/ServidorTareasView";
 import { TaskArchiveIndicator } from "./tasks/TaskArchiveIndicator";
 import { TaskEvidenceReview } from "./tasks/TaskEvidenceReview";
 
@@ -122,6 +123,7 @@ export function TasksPage() {
   // (evidenceUploading removed — handled by TaskEvidenceReview)
   const [confirmCancel, setConfirmCancel] = useState<{ open: boolean; id: number }>({ open: false, id: 0 });
   const [confirmRemoveAssign, setConfirmRemoveAssign] = useState<{ open: boolean; id: number; nombre: string }>({ open: false, id: 0, nombre: "" });
+  const [confirmAssignUnavailable, setConfirmAssignUnavailable] = useState<{ open: boolean; nombres: string[]; pendingIds: number[] }>({ open: false, nombres: [], pendingIds: [] });
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState({
     titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as TareaEnriquecida['prioridad']
@@ -200,7 +202,7 @@ export function TasksPage() {
 
   const idsNoDisponibles = useMemo(() => {
     if (!task?.fechaLimite || reglasPanelAsignacion.length === 0) return new Set<number>()
-    const fecha = new Date(task.fechaLimite + 'T12:00:00')
+    const fecha = new Date(task.fechaLimite.substring(0, 10) + 'T12:00:00')
     return new Set(
       usuariosAsignables
         .filter(u => {
@@ -450,6 +452,9 @@ export function TasksPage() {
   // Hooks must be called before any conditional returns
   const canCreateInContext = useCanManageMinisterio(ministerioFilter || null);
 
+  // Servidor has its own dedicated view with rejection, evidence, and tab-based layout
+  if (isServidor) return <ServidorTareasView />
+
   if (isLoading) return (
     <div className="space-y-6 max-w-7xl mx-auto px-4">
       <div className="flex items-center gap-4 p-4">
@@ -652,9 +657,15 @@ export function TasksPage() {
             <Button
               variant="outline"
               onClick={() => setShowDisponibilidad(v => !v)}
-              className="h-10 rounded-xl font-medium border-white/10 text-muted-foreground hover:text-foreground"
+              className={`h-10 px-4 rounded-xl font-semibold transition-all duration-200 border-2 ${
+                showDisponibilidad
+                  ? "bg-primary/15 text-primary border-primary/40 shadow-lg shadow-primary/20"
+                  : "border-white/15 text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-primary/5"
+              }`}
+              title="Ver disponibilidad del equipo"
             >
-              <CalendarDays className="w-4 h-4 mr-1.5" /> Disponibilidad
+              <CalendarDays className={`w-4 h-4 mr-1.5 transition-transform duration-200 ${showDisponibilidad ? "scale-110" : ""}`} />
+              Disponibilidad
             </Button>
           )}
           {canShowCreateButton && (
@@ -1002,32 +1013,75 @@ export function TasksPage() {
                 )}
 
                 {/* Assigned users */}
-                {!editMode && task.asignados && task.asignados.length > 0 && (
-                  <div className="space-y-3">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                      <UserPlus className="w-3 h-3" /> Personas Asignadas
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {task.asignados.map(a => (
-                        <div key={a.idTareaAsignada} className="flex items-center gap-2 bg-background border border-white/10 shadow-sm rounded-xl py-1.5 pl-1.5 pr-3 group">
-                          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
-                            {(a.nombreCompleto || "?").charAt(0).toUpperCase()}
-                          </div>
-                          <span className="text-[11px] font-bold tracking-tight truncate max-w-[120px]">{a.nombreCompleto}</span>
-                          {canManageTasks && (
-                            <button
-                              className="w-5 h-5 rounded-md flex items-center justify-center text-muted-foreground/40 hover:text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0 ml-1 opacity-0 group-hover:opacity-100 focus:opacity-100"
-                              onClick={() => setConfirmRemoveAssign({ open: true, id: a.idTareaAsignada, nombre: a.nombreCompleto || "" })}
-                              disabled={deleteAsignadaMutation.isPending}
+                {!editMode && task.asignados && task.asignados.length > 0 && (() => {
+                  const rechazados = task.asignados.filter(a => a.estadoAsignacion === 'rechazada')
+                  return (
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                        <UserPlus className="w-3 h-3" /> Personas Asignadas
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {task.asignados.map(a => {
+                          const rechazada = a.estadoAsignacion === 'rechazada'
+                          return (
+                            <div
+                              key={a.idTareaAsignada}
+                              title={rechazada && a.motivoRechazo ? `Rechazó: ${a.motivoRechazo}` : undefined}
+                              className={`flex items-center gap-2 border shadow-sm rounded-xl py-1.5 pl-1.5 pr-3 group transition-colors ${
+                                rechazada
+                                  ? 'bg-rose-500/5 border-rose-500/30'
+                                  : 'bg-background border-white/10'
+                              }`}
                             >
-                              <X className="w-3 h-3" />
-                            </button>
-                          )}
+                              <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] text-white font-bold shrink-0 ${
+                                rechazada
+                                  ? 'bg-gradient-to-br from-rose-400 to-rose-600'
+                                  : 'bg-gradient-to-br from-[#709dbd] to-[#4682b4]'
+                              }`}>
+                                {rechazada
+                                  ? <Ban className="w-3 h-3" />
+                                  : (a.nombreCompleto || "?").charAt(0).toUpperCase()
+                                }
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className={`text-[11px] font-bold tracking-tight truncate max-w-[120px] ${rechazada ? 'text-rose-400/80 line-through' : ''}`}>
+                                  {a.nombreCompleto}
+                                </span>
+                                {rechazada && (
+                                  <span className="text-[9px] font-black uppercase tracking-wider text-rose-400/70">Rechazó</span>
+                                )}
+                              </div>
+                              {canManageTasks && (
+                                <button
+                                  className="w-5 h-5 rounded-md flex items-center justify-center text-muted-foreground/40 hover:text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0 ml-1 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                  onClick={() => setConfirmRemoveAssign({ open: true, id: a.idTareaAsignada, nombre: a.nombreCompleto || "" })}
+                                  disabled={deleteAsignadaMutation.isPending}
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* Motivos de rechazo */}
+                      {rechazados.length > 0 && (
+                        <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3 space-y-2">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-rose-400/80 flex items-center gap-1.5">
+                            <Ban className="w-3 h-3" /> Motivos de rechazo
+                          </p>
+                          {rechazados.map(a => (
+                            <div key={a.idTareaAsignada} className="flex flex-col gap-0.5">
+                              <span className="text-[11px] font-bold text-rose-300">{a.nombreCompleto}</span>
+                              <span className="text-[11px] text-foreground/60 leading-relaxed">{a.motivoRechazo || '—'}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                )}
+                  )
+                })()}
 
                 {/* Assign user Panel */}
                 {!editMode && canManageTasks && (
@@ -1130,6 +1184,19 @@ export function TasksPage() {
 
                         const idsToAssign = assignScope.assignAll ? usuariosAsignables.map(u => u.idUsuario) : assignScope.selectedUserIds;
                         if (!idsToAssign.length) { toast.error("Selecciona al menos un usuario"); return; }
+
+                        const noDisponibles = idsToAssign
+                          .filter(id => idsNoDisponibles.has(id))
+                          .map(id => {
+                            const u = usuariosAsignables.find(u => u.idUsuario === id)
+                            return u ? `${u.nombres} ${u.apellidos}`.trim() : ""
+                          })
+                          .filter(Boolean)
+
+                        if (noDisponibles.length > 0) {
+                          setConfirmAssignUnavailable({ open: true, nombres: noDisponibles, pendingIds: idsToAssign })
+                          return
+                        }
 
                         const result = await assignUsuariosMutation.mutateAsync({
                           idTarea: task.idTarea,
@@ -1357,6 +1424,36 @@ export function TasksPage() {
         }}
         title="¿Remover Asignación?"
         description={`¿Estás seguro de que quieres remover a ${confirmRemoveAssign.nombre} de esta tarea?`}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmAssignUnavailable.open}
+        onClose={() => setConfirmAssignUnavailable({ open: false, nombres: [], pendingIds: [] })}
+        onConfirm={async () => {
+          if (!task || !ministerioAsignacionId) return
+          setConfirmAssignUnavailable({ open: false, nombres: [], pendingIds: [] })
+          const result = await assignUsuariosMutation.mutateAsync({
+            idTarea: task.idTarea,
+            idMinisterioContexto: ministerioAsignacionId,
+            idsUsuarios: confirmAssignUnavailable.pendingIds,
+          })
+          if (result.assigned > 0 || result.duplicated > 0) {
+            toast.success(`${result.assigned} asignados, ${result.duplicated} ya asignados`)
+            setAssignScope(prev => ({ ...prev, selectedUserIds: [], assignAll: false }))
+          } else {
+            toast.error("No se pudo asignar la tarea")
+          }
+        }}
+        title="⚠ Usuarios no disponibles"
+        description={
+          <span>
+            {confirmAssignUnavailable.nombres.length === 1
+              ? <><strong>{confirmAssignUnavailable.nombres[0]}</strong> no está disponible en la fecha límite de esta tarea.</>
+              : <><strong>{confirmAssignUnavailable.nombres.join(", ")}</strong> no están disponibles en la fecha límite de esta tarea.</>
+            }
+            {" "}¿Quieres asignarlos de todas formas?
+          </span>
+        }
       />
     </div>
   );

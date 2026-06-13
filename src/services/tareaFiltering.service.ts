@@ -40,6 +40,7 @@ function mapTarea(r: TareaRow): Tarea {
     idIglesia: null,
     creadoEn: r.creado_en,
     actualizadoEn: r.updated_at,
+    horasMargenRechazo: (r as any).horas_margen_rechazo ?? 12,
   }
 }
 

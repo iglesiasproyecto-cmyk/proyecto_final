@@ -2,6 +2,7 @@ import { useState, useMemo } from "react"
 import {
   useTareasEnriquecidas, useUpdateTareaEstado,
   useTareaEvidencias, useCreateTareaEvidencia,
+  useRechazarAsignacion,
 } from "@/hooks/useEventos"
 import { getTareaEvidenciaSignedUrl } from "@/services/eventos.service"
 import { useApp } from "@/app/store/AppContext"
@@ -9,11 +10,12 @@ import { AnimatedCard } from "@/app/components/ui/AnimatedCard"
 import { Button } from "@/app/components/ui/button"
 import { Badge } from "@/app/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/app/components/ui/dialog"
+import { Textarea } from "@/app/components/ui/textarea"
 import { motion, AnimatePresence } from "motion/react"
 import { toast } from "sonner"
 import {
   ListTodo, CheckCircle2, Clock, AlertCircle,
-  Calendar, Paperclip, Inbox, ChevronRight,
+  Calendar, Paperclip, Inbox, ChevronRight, XCircle, Ban,
 } from "lucide-react"
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { ListSkeleton } from "@/app/components/loading/skeletons";
@@ -39,7 +41,22 @@ const STATUS_TABS = [
   { key: "en_progreso", label: "En Progreso" },
   { key: "en_revision", label: "En Revisión" },
   { key: "completada",  label: "Completadas" },
+  { key: "rechazada",   label: "Rechazadas" },
 ] as const
+
+function puedeRechazar(
+  estadoTarea: string,
+  fechaLimite: string | null,
+  horasMargen: number,
+  estadoAsignacion: 'activa' | 'rechazada' | undefined
+): boolean {
+  if (estadoAsignacion !== 'activa') return false
+  if (estadoTarea !== 'pendiente') return false
+  if (!fechaLimite) return true
+  const normalized = fechaLimite.includes('T') ? fechaLimite : fechaLimite.replace(' ', 'T')
+  const corte = new Date(normalized).getTime() - horasMargen * 60 * 60 * 1000
+  return Date.now() <= corte
+}
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -60,17 +77,28 @@ export function ServidorTareasView() {
   )
   const updateEstado = useUpdateTareaEstado()
   const createEvidencia = useCreateTareaEvidencia()
+  const rechazar = useRechazarAsignacion()
 
   const [activeTab, setActiveTab] = useState<TabKey>("todas")
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
   const [evidenceUploading, setEvidenceUploading] = useState(false)
+  const [rejectOpen, setRejectOpen] = useState(false)
+  const [rejectMotivo, setRejectMotivo] = useState("")
+
+  const myId = usuarioActual?.idUsuario
+  const miAsignacion = (t: typeof todasTareas[number]) =>
+    t.asignados?.find(a => a.idUsuario === myId)
 
   const misTareas = useMemo(() => todasTareas, [todasTareas])
 
   const filteredTareas = useMemo(() => {
     if (activeTab === "todas") return misTareas
-    return misTareas.filter(t => t.estado === activeTab)
-  }, [misTareas, activeTab])
+    if (activeTab === "rechazada")
+      return misTareas.filter(t => miAsignacion(t)?.estadoAsignacion === "rechazada")
+    return misTareas.filter(t =>
+      t.estado === activeTab && miAsignacion(t)?.estadoAsignacion !== "rechazada"
+    )
+  }, [misTareas, activeTab, myId])
 
   const task = selectedTaskId ? misTareas.find(t => t.idTarea === selectedTaskId) ?? null : null
   const myAssignment = task?.asignados?.find(a => a.idUsuario === usuarioActual?.idUsuario) ?? null
@@ -83,7 +111,33 @@ export function ServidorTareasView() {
   }
 
   const canUploadEvidence = task && myAssignment &&
+    myAssignment.estadoAsignacion !== "rechazada" &&
     (task.estado === "en_progreso" || task.estado === "en_revision")
+
+  const handleRechazar = () => {
+    if (!myAssignment || !rejectMotivo.trim()) return
+    rechazar.mutate(
+      { idTareaAsignada: myAssignment.idTareaAsignada, motivo: rejectMotivo.trim() },
+      {
+        onSuccess: () => {
+          toast.success("Tarea rechazada. Se notificó al líder.")
+          setRejectOpen(false)
+          setRejectMotivo("")
+          setSelectedTaskId(null)
+        },
+        onError: (e: any) => {
+          const code = e?.message ?? ""
+          const msg =
+            code.includes("fuera_de_ventana") ? "Ya pasó el plazo para rechazar esta tarea." :
+            code.includes("ya_rechazada")     ? "Esta asignación ya fue rechazada." :
+            code.includes("motivo_requerido") ? "Debes escribir un motivo." :
+            code.includes("no_autorizado")    ? "No puedes rechazar esta asignación." :
+            "No se pudo rechazar la tarea."
+          toast.error(msg)
+        },
+      }
+    )
+  }
 
   const handleUploadEvidence = (file: File) => {
     if (!usuarioActual || !myAssignment) return
@@ -138,7 +192,10 @@ export function ServidorTareasView() {
       {/* Status tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
         {STATUS_TABS.map(tab => {
-          const count = tab.key === "todas" ? misTareas.length : misTareas.filter(t => t.estado === tab.key).length
+          const count =
+            tab.key === "todas"     ? misTareas.length :
+            tab.key === "rechazada" ? misTareas.filter(t => miAsignacion(t)?.estadoAsignacion === "rechazada").length :
+            misTareas.filter(t => t.estado === tab.key && miAsignacion(t)?.estadoAsignacion !== "rechazada").length
           const active = activeTab === tab.key
           return (
             <button
@@ -167,7 +224,8 @@ export function ServidorTareasView() {
             {filteredTareas.map((t, idx) => {
               const cfg = statusConfig[t.estado as keyof typeof statusConfig] ?? statusConfig.pendiente
               const prio = prioridadConfig[t.prioridad] ?? prioridadConfig.media
-              const action = getNextAction(t.estado)
+              const isRejected = miAsignacion(t)?.estadoAsignacion === "rechazada"
+              const action = isRejected ? null : getNextAction(t.estado)
               return (
                 <AnimatedCard key={t.idTarea} index={idx} className="p-4 group cursor-pointer" onClick={() => setSelectedTaskId(t.idTarea)}>
                   <div className="flex items-start gap-4">
@@ -196,7 +254,7 @@ export function ServidorTareasView() {
                             {action.icon}{action.label}
                           </button>
                         )}
-                        {t.estado === "en_revision" && (
+                        {t.estado === "en_revision" && !isRejected && (
                           <span className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-violet-500/10 text-violet-400 border border-violet-500/20">
                             <Clock className="w-3 h-3" />Esperando revisión
                           </span>
@@ -212,7 +270,7 @@ export function ServidorTareasView() {
       )}
 
       {/* Task Detail Dialog */}
-      <Dialog open={!!selectedTaskId} onOpenChange={() => setSelectedTaskId(null)}>
+      <Dialog open={!!selectedTaskId} onOpenChange={() => { setSelectedTaskId(null); setRejectOpen(false); setRejectMotivo("") }}>
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             {task && (
@@ -254,6 +312,18 @@ export function ServidorTareasView() {
                   )}
                 </div>
 
+                {/* Estado de rechazo */}
+                {myAssignment?.estadoAsignacion === "rechazada" && (
+                  <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3">
+                    <div className="flex items-center gap-1.5 text-rose-400 text-[11px] font-black uppercase tracking-wider mb-1">
+                      <Ban className="w-3.5 h-3.5" />Rechazaste esta tarea
+                    </div>
+                    {myAssignment.motivoRechazo && (
+                      <p className="text-xs text-foreground/70">{myAssignment.motivoRechazo}</p>
+                    )}
+                  </div>
+                )}
+
                 {/* Evidencias */}
                 <div className="pt-2 border-t border-border/40">
                   <FieldLabel><span className="flex items-center gap-1.5"><Paperclip className="w-3 h-3" />Evidencias</span></FieldLabel>
@@ -290,10 +360,19 @@ export function ServidorTareasView() {
                 </div>
               </div>
 
-              <DialogFooter className="border-t border-border/50 pt-4 gap-2">
+              <DialogFooter className="border-t border-border/50 pt-4 gap-2 flex-wrap">
                 <Button variant="ghost" className="rounded-xl" onClick={() => setSelectedTaskId(null)}>Cerrar</Button>
+                {puedeRechazar(task.estado, task.fechaLimite, task.horasMargenRechazo, myAssignment?.estadoAsignacion) && (
+                  <Button
+                    variant="ghost"
+                    className="rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                    onClick={() => setRejectOpen(true)}
+                  >
+                    <XCircle className="w-4 h-4 mr-1.5" />Rechazar
+                  </Button>
+                )}
                 {(() => {
-                  const action = getNextAction(task.estado)
+                  const action = myAssignment?.estadoAsignacion !== "rechazada" ? getNextAction(task.estado) : null
                   if (!action) return null
                   return (
                     <Button className="rounded-xl" onClick={() => { updateEstado.mutate({ id: task.idTarea, estado: action.next }); setSelectedTaskId(null) }}>
@@ -304,6 +383,40 @@ export function ServidorTareasView() {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Sub-diálogo de motivo de rechazo */}
+      <Dialog open={rejectOpen} onOpenChange={(o) => { setRejectOpen(o); if (!o) setRejectMotivo("") }}>
+        <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">Rechazar tarea</DialogTitle>
+          </DialogHeader>
+          <div className="py-1">
+            <FieldLabel>Motivo (obligatorio)</FieldLabel>
+            <Textarea
+              value={rejectMotivo}
+              onChange={(e) => setRejectMotivo(e.target.value)}
+              placeholder="Explica por qué no puedes asumir esta tarea…"
+              className="min-h-[96px] rounded-xl bg-background/40"
+            />
+          </div>
+          <DialogFooter className="border-t border-border/50 pt-4 gap-2">
+            <Button variant="ghost" className="rounded-xl" onClick={() => { setRejectOpen(false); setRejectMotivo("") }}>
+              Cancelar
+            </Button>
+            <Button
+              className={`rounded-xl text-white transition-colors ${
+                !rejectMotivo.trim() || rechazar.isPending
+                  ? 'bg-slate-500/40 text-foreground/40 cursor-not-allowed'
+                  : 'bg-rose-500 hover:bg-rose-600'
+              }`}
+              disabled={!rejectMotivo.trim() || rechazar.isPending}
+              onClick={handleRechazar}
+            >
+              {rechazar.isPending ? "Rechazando…" : "Confirmar rechazo"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
