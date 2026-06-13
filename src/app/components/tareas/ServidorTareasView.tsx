@@ -53,7 +53,8 @@ function puedeRechazar(
   if (estadoAsignacion !== 'activa') return false
   if (estadoTarea !== 'pendiente') return false
   if (!fechaLimite) return true
-  const corte = new Date(fechaLimite).getTime() - horasMargen * 60 * 60 * 1000
+  const normalized = fechaLimite.includes('T') ? fechaLimite : fechaLimite.replace(' ', 'T')
+  const corte = new Date(normalized).getTime() - horasMargen * 60 * 60 * 1000
   return Date.now() <= corte
 }
 
@@ -223,7 +224,8 @@ export function ServidorTareasView() {
             {filteredTareas.map((t, idx) => {
               const cfg = statusConfig[t.estado as keyof typeof statusConfig] ?? statusConfig.pendiente
               const prio = prioridadConfig[t.prioridad] ?? prioridadConfig.media
-              const action = getNextAction(t.estado)
+              const isRejected = miAsignacion(t)?.estadoAsignacion === "rechazada"
+              const action = isRejected ? null : getNextAction(t.estado)
               return (
                 <AnimatedCard key={t.idTarea} index={idx} className="p-4 group cursor-pointer" onClick={() => setSelectedTaskId(t.idTarea)}>
                   <div className="flex items-start gap-4">
@@ -252,7 +254,7 @@ export function ServidorTareasView() {
                             {action.icon}{action.label}
                           </button>
                         )}
-                        {t.estado === "en_revision" && (
+                        {t.estado === "en_revision" && !isRejected && (
                           <span className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-violet-500/10 text-violet-400 border border-violet-500/20">
                             <Clock className="w-3 h-3" />Esperando revisión
                           </span>
@@ -268,7 +270,7 @@ export function ServidorTareasView() {
       )}
 
       {/* Task Detail Dialog */}
-      <Dialog open={!!selectedTaskId} onOpenChange={() => setSelectedTaskId(null)}>
+      <Dialog open={!!selectedTaskId} onOpenChange={() => { setSelectedTaskId(null); setRejectOpen(false); setRejectMotivo("") }}>
         <DialogContent className="sm:max-w-md rounded-3xl bg-card/95 backdrop-blur-2xl border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             {task && (

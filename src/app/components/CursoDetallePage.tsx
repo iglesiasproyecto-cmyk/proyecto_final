@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router'
+import { motion, AnimatePresence } from 'motion/react'
 import { useAuth } from '@/app/store/AppContext'
 import { debugLog } from '@/lib/debug'
 import { getInternalUserId } from '@/lib/userHelpers'
@@ -269,165 +270,191 @@ export function CursoDetallePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 rounded-[32px] border border-white/10 bg-card/55 p-4 sm:p-5 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => navigate(aulaBasePath)}
-            className="h-9 sm:h-10 rounded-2xl border-white/20 bg-background/55 px-4 w-fit"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
-          </Button>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Detalle del curso</p>
-            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{curso.titulo}</h1>
-            <p className="text-xs font-bold uppercase tracking-widest text-primary/70">{curso.ministerio?.nombre}</p>
+    <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8 py-6">
+      {/* Header - Refined Professional Layout */}
+      <div className="space-y-6">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate(aulaBasePath)}
+          className="h-9 rounded-lg px-3 text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Volver al aula
+        </Button>
+
+        {/* Title Section */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">Detalle del curso</p>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight">{curso.titulo}</h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 rounded-full px-3 py-1 text-xs font-semibold">
+              {curso.ministerio?.nombre}
+            </Badge>
+            <Badge
+              className={`rounded-full px-3 py-1 text-xs font-semibold border-none w-fit ${
+                curso.estado === 'activo'
+                  ? 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                  : 'bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+              }`}
+            >
+              {curso.estado === 'activo' ? '✓ Activo' : 'Inactivo'}
+            </Badge>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-          <Badge 
-            variant={curso.estado === 'activo' ? 'default' : 'secondary'}
-            className={`rounded-full px-4 py-1 text-[10px] font-bold uppercase tracking-widest border-none w-fit ${
-              curso.estado === 'activo' 
-                ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' 
-                : 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
-            }`}
-          >
-            {curso.estado}
-          </Badge>
-          {(isLider || isAdmin) && (
+
+        {/* Action Buttons */}
+        {(isLider || isAdmin) && (
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={() => setShowAgregarPersonas(true)}
-              size="sm"
-              className="h-10 rounded-2xl bg-[#4682b4] text-white hover:bg-[#4682b4]/90 w-full sm:w-auto"
+              className="h-11 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg shadow-primary/20 transition-all"
             >
-              <UserPlus className="h-4 w-4 mr-2 text-white" />
+              <UserPlus className="h-4 w-4 mr-2" />
               Agregar personas
             </Button>
-          )}
-          {(isLider || isAdmin) && (
-            <Button variant="outline" size="sm" className="h-10 rounded-2xl border-white/20 bg-background/55 w-full sm:w-auto">
-              <Settings className="h-4 w-4 mr-2 text-primary" />
+            <Button
+              variant="outline"
+              className="h-11 rounded-xl border-primary/30 hover:bg-primary/5 transition-all"
+            >
+              <Settings className="h-4 w-4 mr-2" />
               Configuración
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Estadísticas Rápidas */}
+      {/* KPI Cards - Modern Elegant Design */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-[#4682b4]/10 text-[#4682b4]">
-                <BookOpen className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-foreground">{totalModulos}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Módulos</p>
-              </div>
+        {/* Modules */}
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-transparent border border-primary/20 p-5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300">
+          <div className="absolute -right-8 -top-8 w-16 h-16 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-all" />
+          <div className="relative z-10 space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+              <BookOpen className="h-5 w-5 text-primary" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-3xl font-bold text-foreground">{totalModulos}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Módulos</p>
+            </div>
+          </div>
+        </div>
 
-        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500">
-                <Eye className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-foreground">{modulosPublicados}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Publicados</p>
-              </div>
+        {/* Published */}
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent border border-emerald-500/20 p-5 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all duration-300">
+          <div className="absolute -right-8 -top-8 w-16 h-16 rounded-full bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-all" />
+          <div className="relative z-10 space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+              <Eye className="h-5 w-5 text-emerald-500" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-3xl font-bold text-foreground">{modulosPublicados}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Publicados</p>
+            </div>
+          </div>
+        </div>
 
-        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-foreground">{miembrosActivos}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Servidores</p>
-              </div>
+        {/* Servers */}
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/10 via-transparent to-transparent border border-blue-500/20 p-5 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all duration-300">
+          <div className="absolute -right-8 -top-8 w-16 h-16 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-all" />
+          <div className="relative z-10 space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <Users className="h-5 w-5 text-blue-500" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-3xl font-bold text-foreground">{miembrosActivos}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Servidores</p>
+            </div>
+          </div>
+        </div>
 
-        <Card className="group overflow-hidden rounded-[28px] border border-white/10 bg-card/55 backdrop-blur-2xl shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500">
-                <TrendingUp className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-foreground">{promedioProgreso}%</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Progreso</p>
-              </div>
+        {/* Progress */}
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 via-transparent to-transparent border border-amber-500/20 p-5 hover:border-amber-500/40 hover:bg-amber-500/5 transition-all duration-300">
+          <div className="absolute -right-8 -top-8 w-16 h-16 rounded-full bg-amber-500/10 group-hover:bg-amber-500/20 transition-all" />
+          <div className="relative z-10 space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-amber-500" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-3xl font-bold text-foreground">{promedioProgreso}%</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Progreso</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {cursoVacio && (isLider || isAdmin) && (
-        <Card className="rounded-[28px] border border-dashed border-primary/30 bg-primary/5">
-          <CardContent className="py-8 px-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Curso en preparación</p>
-                <h3 className="mt-1 text-xl font-black tracking-tight">Este curso aún no tiene módulos publicados</h3>
-                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                  Agrega módulos con objetivos claros, actividades y evaluación para que los servidores puedan iniciar su ruta de aprendizaje.
-                </p>
-              </div>
-              {(isLider || isAdmin) && (
-                <Button
-                  onClick={() => setActiveTab('modulos')}
-                  className="h-11 rounded-2xl px-5"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar módulos
-                </Button>
-              )}
+        <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-transparent to-transparent p-8">
+          <div className="absolute -right-12 -top-12 w-32 h-32 rounded-full bg-primary/10" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex-1 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary/80">Comienza aquí</p>
+              <h3 className="text-2xl font-bold tracking-tight text-foreground">Agrega módulos para comenzar</h3>
+              <p className="text-sm text-muted-foreground/80 max-w-lg">
+                Crea un plan de aprendizaje estructurado. Agrega módulos con objetivos claros, actividades interactivas y evaluaciones para que los servidores puedan avanzar en su ruta de aprendizaje.
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            {(isLider || isAdmin) && (
+              <Button
+                onClick={() => setActiveTab('modulos')}
+                className="h-12 rounded-xl px-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg shadow-primary/20 whitespace-nowrap transition-all"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Agregar módulos
+              </Button>
+            )}
+          </div>
+        </div>
       )}
 
-      {/* Contenido Principal */}
+      {/* Contenido Principal - Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="flex items-center justify-between overflow-x-auto pb-2 no-scrollbar">
-          <TabsList className="inline-flex rounded-2xl border border-border/50 bg-muted/50 p-1.5 backdrop-blur-md">
-            <TabsTrigger value="modulos" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
+        <div className="flex items-center justify-between overflow-x-auto pb-3 no-scrollbar">
+          <TabsList className="inline-flex gap-2 rounded-xl border border-white/10 bg-white/5 dark:bg-black/10 p-1 backdrop-blur-md">
+            <TabsTrigger
+              value="modulos"
+              className="rounded-lg px-4 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-black/30 data-[state=active]:text-primary data-[state=active]:shadow-lg hover:text-primary/80"
+            >
               <BookOpen className="h-4 w-4 mr-2" />
               Módulos
             </TabsTrigger>
-            <TabsTrigger value="evaluaciones" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
+            <TabsTrigger
+              value="evaluaciones"
+              className="rounded-lg px-4 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-black/30 data-[state=active]:text-primary data-[state=active]:shadow-lg hover:text-primary/80"
+            >
               <ClipboardList className="h-4 w-4 mr-2" />
               Evaluaciones
             </TabsTrigger>
             {(isLider || isAdmin) && (
-              <TabsTrigger value="calificaciones" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
+              <TabsTrigger
+                value="calificaciones"
+                className="rounded-lg px-4 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-black/30 data-[state=active]:text-primary data-[state=active]:shadow-lg hover:text-primary/80"
+              >
                 <Award className="h-4 w-4 mr-2" />
                 Calificaciones
               </TabsTrigger>
             )}
             {(isLider || isAdmin) && (
-              <TabsTrigger value="progreso" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
+              <TabsTrigger
+                value="progreso"
+                className="rounded-lg px-4 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-black/30 data-[state=active]:text-primary data-[state=active]:shadow-lg hover:text-primary/80"
+              >
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Progreso
               </TabsTrigger>
             )}
             {(isLider || isAdmin) && (
-              <TabsTrigger value="servidores" className="rounded-xl px-6 py-2.5 transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg">
+              <TabsTrigger
+                value="servidores"
+                className="rounded-lg px-4 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-black/30 data-[state=active]:text-primary data-[state=active]:shadow-lg hover:text-primary/80"
+              >
                 <Users className="h-4 w-4 mr-2" />
                 Servidores
               </TabsTrigger>
@@ -435,45 +462,55 @@ export function CursoDetallePage() {
           </TabsList>
         </div>
 
-        <TabsContent value="modulos">
-          {(isLider || isAdmin) ? (
-            <ModulosGestion
-              idCurso={parseInt(idCurso!)}
-              modulos={curso.modulos || []}
-              desbloqueoSecuencial={curso.orden_secuencial}
-            />
-          ) : (
-            <ModulosNavegacion idCurso={parseInt(idCurso!)} />
-          )}
-        </TabsContent>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <TabsContent value="modulos">
+              {(isLider || isAdmin) ? (
+                <ModulosGestion
+                  idCurso={parseInt(idCurso!)}
+                  modulos={curso.modulos || []}
+                  desbloqueoSecuencial={curso.orden_secuencial}
+                />
+              ) : (
+                <ModulosNavegacion idCurso={parseInt(idCurso!)} />
+              )}
+            </TabsContent>
 
-        <TabsContent value="evaluaciones">
-          <EvaluacionesTab idCurso={parseInt(idCurso!)} isAdmin={isAdmin} isLider={isLider} />
-        </TabsContent>
+            <TabsContent value="evaluaciones">
+              <EvaluacionesTab idCurso={parseInt(idCurso!)} isAdmin={isAdmin} isLider={isLider} />
+            </TabsContent>
 
-        {(isLider || isAdmin) && (
-          <TabsContent value="calificaciones">
-            <CalificacionesTab idCurso={parseInt(idCurso!)} />
-          </TabsContent>
-        )}
+            {(isLider || isAdmin) && (
+              <TabsContent value="calificaciones">
+                <CalificacionesTab idCurso={parseInt(idCurso!)} />
+              </TabsContent>
+            )}
 
-        {(isLider || isAdmin) && (
-          <TabsContent value="progreso">
-            <ProgresoCursoTab progresoGrupo={progresoGrupo || []} />
-          </TabsContent>
-        )}
+            {(isLider || isAdmin) && (
+              <TabsContent value="progreso">
+                <ProgresoCursoTab progresoGrupo={progresoGrupo || []} />
+              </TabsContent>
+            )}
 
-        {(isLider || isAdmin) && (
-        <TabsContent value="servidores">
-          <ServidoresCursoTab
-            progresoGrupo={progresoGrupo || []}
-            aulaBasePath={aulaBasePath}
-            idCurso={Number(idCurso)}
-            puedeGestionar={isLider || isAdmin}
-            onAgregar={() => setShowAgregarPersonas(true)}
-          />
-        </TabsContent>
-        )}
+            {(isLider || isAdmin) && (
+              <TabsContent value="servidores">
+                <ServidoresCursoTab
+                  progresoGrupo={progresoGrupo || []}
+                  aulaBasePath={aulaBasePath}
+                  idCurso={Number(idCurso)}
+                  puedeGestionar={isLider || isAdmin}
+                  onAgregar={() => setShowAgregarPersonas(true)}
+                />
+              </TabsContent>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </Tabs>
 
       {(isLider || isAdmin) && idCurso && (

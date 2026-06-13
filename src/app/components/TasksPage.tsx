@@ -652,9 +652,15 @@ export function TasksPage() {
             <Button
               variant="outline"
               onClick={() => setShowDisponibilidad(v => !v)}
-              className="h-10 rounded-xl font-medium border-white/10 text-muted-foreground hover:text-foreground"
+              className={`h-10 px-4 rounded-xl font-semibold transition-all duration-200 border-2 ${
+                showDisponibilidad
+                  ? "bg-primary/15 text-primary border-primary/40 shadow-lg shadow-primary/20"
+                  : "border-white/15 text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-primary/5"
+              }`}
+              title="Ver disponibilidad del equipo"
             >
-              <CalendarDays className="w-4 h-4 mr-1.5" /> Disponibilidad
+              <CalendarDays className={`w-4 h-4 mr-1.5 transition-transform duration-200 ${showDisponibilidad ? "scale-110" : ""}`} />
+              Disponibilidad
             </Button>
           )}
           {canShowCreateButton && (
