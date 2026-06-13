@@ -32,6 +32,7 @@ import { Skeleton } from "./ui/skeleton";
 import { TableSkeleton } from "./loading/skeletons";
 import { TasksSkeleton } from "./tasks/TasksSkeleton";
 import { TaskBulkActions } from "./tasks/TaskBulkActions";
+import { ServidorTareasView } from "./tareas/ServidorTareasView";
 import { TaskArchiveIndicator } from "./tasks/TaskArchiveIndicator";
 import { TaskEvidenceReview } from "./tasks/TaskEvidenceReview";
 
@@ -449,6 +450,9 @@ export function TasksPage() {
 
   // Hooks must be called before any conditional returns
   const canCreateInContext = useCanManageMinisterio(ministerioFilter || null);
+
+  // Servidor has its own dedicated view with rejection, evidence, and tab-based layout
+  if (isServidor) return <ServidorTareasView />
 
   if (isLoading) return (
     <div className="space-y-6 max-w-7xl mx-auto px-4">
