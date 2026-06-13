@@ -31,6 +31,9 @@ export function DisponibilidadPage() {
   const [filtroPersonaId, setFiltroPersonaId] = useState<number | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
+  const fullName = (u: { nombres: string; apellidos: string }) =>
+    `${u.nombres} ${u.apellidos}`.trim() || '?'
+
   const usuariosBase = useMemo(() => {
     if (rolActual === 'admin_iglesia' || rolActual === 'super_admin') {
       return usuariosDeIglesia
@@ -76,7 +79,7 @@ export function DisponibilidadPage() {
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
-      base = base.filter(u => u.nombreCompleto.toLowerCase().includes(q))
+      base = base.filter(u => fullName(u).toLowerCase().includes(q))
     }
     return base
   }, [usuariosBase, filtroMinisterioId, searchQuery, ministerios])
@@ -197,9 +200,9 @@ export function DisponibilidadPage() {
                     }`}
                   >
                     <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center text-[10px] text-white font-black shrink-0">
-                      {u.nombreCompleto.charAt(0).toUpperCase()}
+                      {fullName(u).charAt(0).toUpperCase()}
                     </div>
-                    <span className="flex-1 font-medium truncate">{u.nombreCompleto}</span>
+                    <span className="flex-1 font-medium truncate">{fullName(u)}</span>
                     {tieneAusencia && (
                       <span
                         className="w-2 h-2 rounded-full bg-rose-400 shrink-0"
@@ -235,7 +238,7 @@ export function DisponibilidadPage() {
               <div className="flex items-center gap-2 mb-3 px-1">
                 <span className="text-[10px] text-primary/70">
                   Mostrando ausencias de{' '}
-                  <strong>{usuariosFiltrados.find(u => u.idUsuario === filtroPersonaId)?.nombreCompleto}</strong>
+                  <strong>{(() => { const u = usuariosFiltrados.find(u => u.idUsuario === filtroPersonaId); return u ? fullName(u) : '' })()}</strong>
                 </span>
                 <button
                   onClick={() => setFiltroPersonaId(null)}
@@ -272,10 +275,10 @@ export function DisponibilidadPage() {
                         {ausentes.slice(0, 3).map(u => (
                           <span
                             key={u.idUsuario}
-                            title={u.nombreCompleto}
+                            title={fullName(u)}
                             className="w-3.5 h-3.5 rounded-full bg-rose-400/80 text-[6px] text-white font-black flex items-center justify-center leading-none"
                           >
-                            {u.nombreCompleto.charAt(0).toUpperCase()}
+                            {fullName(u).charAt(0).toUpperCase()}
                           </span>
                         ))}
                         {ausentes.length > 3 && (
@@ -327,9 +330,9 @@ export function DisponibilidadPage() {
                         {ausenciasSelectedDate.map(u => (
                           <div key={u.idUsuario} className="flex items-center gap-2">
                             <div className="w-5 h-5 rounded-md bg-rose-500/20 flex items-center justify-center text-[9px] text-rose-300 font-black shrink-0">
-                              {u.nombreCompleto.charAt(0).toUpperCase()}
+                              {fullName(u).charAt(0).toUpperCase()}
                             </div>
-                            <span className="text-xs text-foreground/80 truncate">{u.nombreCompleto}</span>
+                            <span className="text-xs text-foreground/80 truncate">{fullName(u)}</span>
                           </div>
                         ))}
                       </div>
@@ -347,9 +350,9 @@ export function DisponibilidadPage() {
                         {disponiblesSelectedDate.map(u => (
                           <div key={u.idUsuario} className="flex items-center gap-2">
                             <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center text-[9px] text-primary font-black shrink-0">
-                              {u.nombreCompleto.charAt(0).toUpperCase()}
+                              {fullName(u).charAt(0).toUpperCase()}
                             </div>
-                            <span className="text-xs text-foreground/80 truncate">{u.nombreCompleto}</span>
+                            <span className="text-xs text-foreground/80 truncate">{fullName(u)}</span>
                           </div>
                         ))}
                       </div>
