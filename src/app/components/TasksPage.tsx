@@ -200,7 +200,7 @@ export function TasksPage() {
 
   const idsNoDisponibles = useMemo(() => {
     if (!task?.fechaLimite || reglasPanelAsignacion.length === 0) return new Set<number>()
-    const fecha = new Date(task.fechaLimite + 'T12:00:00')
+    const fecha = new Date(task.fechaLimite.substring(0, 10) + 'T12:00:00')
     return new Set(
       usuariosAsignables
         .filter(u => {
