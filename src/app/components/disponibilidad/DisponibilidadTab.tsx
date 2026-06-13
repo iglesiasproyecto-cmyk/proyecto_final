@@ -28,7 +28,7 @@ export function DisponibilidadTab({ usuarioId }: Props) {
   const [showReglaForm, setShowReglaForm] = useState(false)
   const [showPatronForm, setShowPatronForm] = useState(false)
 
-  const { data: reglas = [], isLoading } = useDisponibilidadUsuario(usuarioId)
+  const { data: reglas = [] } = useDisponibilidadUsuario(usuarioId)
   const createRegla = useCreateDisponibilidadRegla()
   const toggleRegla = useToggleDisponibilidadRegla()
   const deleteRegla = useDeleteDisponibilidadRegla()
@@ -76,7 +76,7 @@ export function DisponibilidadTab({ usuarioId }: Props) {
   const reglasFecha = reglas.filter(r => r.tipo === 'fecha_especifica')
   const reglasRecurrentes = reglas.filter(r => r.tipo === 'recurrente')
 
-  function describePatro(r: DisponibilidadRegla): string {
+  function describePatron(r: DisponibilidadRegla): string {
     if (!r.patron) return ''
     const dias = (r.patron.diasSemana ?? []).map(d => DIAS[d]).join(', ')
     if (r.patron.tipo === 'semanal') return `Todos los ${dias}`
@@ -183,7 +183,7 @@ export function DisponibilidadTab({ usuarioId }: Props) {
             }`}>
               <Repeat2 className="w-4 h-4 text-primary/60 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-xs">{describePatro(r)}</p>
+                <p className="font-medium text-xs">{describePatron(r)}</p>
                 {r.nota && <p className="text-[10px] text-muted-foreground truncate">{r.nota}</p>}
               </div>
               <button onClick={() => handleToggle(r)} className="shrink-0 text-muted-foreground hover:text-foreground">
