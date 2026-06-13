@@ -1426,35 +1426,66 @@ export function TasksPage() {
         description={`¿Estás seguro de que quieres remover a ${confirmRemoveAssign.nombre} de esta tarea?`}
       />
 
-      <ConfirmDialog
-        isOpen={confirmAssignUnavailable.open}
-        onClose={() => setConfirmAssignUnavailable({ open: false, nombres: [], pendingIds: [] })}
-        onConfirm={async () => {
-          if (!task || !ministerioAsignacionId) return
-          setConfirmAssignUnavailable({ open: false, nombres: [], pendingIds: [] })
-          const result = await assignUsuariosMutation.mutateAsync({
-            idTarea: task.idTarea,
-            idMinisterioContexto: ministerioAsignacionId,
-            idsUsuarios: confirmAssignUnavailable.pendingIds,
-          })
-          if (result.assigned > 0 || result.duplicated > 0) {
-            toast.success(`${result.assigned} asignados, ${result.duplicated} ya asignados`)
-            setAssignScope(prev => ({ ...prev, selectedUserIds: [], assignAll: false }))
-          } else {
-            toast.error("No se pudo asignar la tarea")
-          }
-        }}
-        title="⚠ Usuarios no disponibles"
-        description={
-          <span>
-            {confirmAssignUnavailable.nombres.length === 1
-              ? <><strong>{confirmAssignUnavailable.nombres[0]}</strong> no está disponible en la fecha límite de esta tarea.</>
-              : <><strong>{confirmAssignUnavailable.nombres.join(", ")}</strong> no están disponibles en la fecha límite de esta tarea.</>
-            }
-            {" "}¿Quieres asignarlos de todas formas?
-          </span>
-        }
-      />
+      {/* Warning dialog: assign despite unavailability */}
+      <Dialog open={confirmAssignUnavailable.open} onOpenChange={open => !open && setConfirmAssignUnavailable({ open: false, nombres: [], pendingIds: [] })}>
+        <DialogContent className="sm:max-w-sm rounded-3xl bg-card/95 backdrop-blur-2xl border-amber-500/20 shadow-2xl shadow-amber-900/10">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+              </div>
+              <DialogTitle className="text-base font-bold leading-tight">
+                {confirmAssignUnavailable.nombres.length === 1
+                  ? "Usuario no disponible"
+                  : "Usuarios no disponibles"}
+              </DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-3 py-1">
+            <p className="text-sm text-foreground/70 leading-relaxed">
+              {confirmAssignUnavailable.nombres.length === 1
+                ? "El siguiente usuario no está disponible en la fecha límite de esta tarea:"
+                : "Los siguientes usuarios no están disponibles en la fecha límite de esta tarea:"}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {confirmAssignUnavailable.nombres.map(nombre => (
+                <span key={nombre} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-[11px] font-bold">
+                  <AlertTriangle className="w-3 h-3" />{nombre}
+                </span>
+              ))}
+            </div>
+            <p className="text-[12px] text-muted-foreground/70">¿Quieres asignarlos de todas formas?</p>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setConfirmAssignUnavailable({ open: false, nombres: [], pendingIds: [] })}>
+              Cancelar
+            </Button>
+            <Button
+              className="rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+              onClick={async () => {
+                if (!task || !ministerioAsignacionId) return
+                const ids = confirmAssignUnavailable.pendingIds
+                setConfirmAssignUnavailable({ open: false, nombres: [], pendingIds: [] })
+                const result = await assignUsuariosMutation.mutateAsync({
+                  idTarea: task.idTarea,
+                  idMinisterioContexto: ministerioAsignacionId,
+                  idsUsuarios: ids,
+                })
+                if (result.assigned > 0 || result.duplicated > 0) {
+                  toast.success(`${result.assigned} asignados, ${result.duplicated} ya asignados`)
+                  setAssignScope(prev => ({ ...prev, selectedUserIds: [], assignAll: false }))
+                } else {
+                  toast.error("No se pudo asignar la tarea")
+                }
+              }}
+            >
+              Asignar de todas formas
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

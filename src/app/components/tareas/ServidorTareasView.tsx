@@ -205,16 +205,25 @@ export function ServidorTareasView() {
         {STATUS_TABS.map(tab => {
           const count = tabCounts[tab.key] ?? 0
           const active = activeTab === tab.key
+          const isRejectedTab = tab.key === "rechazada"
           return (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border ${
-                active ? "bg-primary/10 border-primary/30 text-primary" : "bg-card/40 border-white/10 text-muted-foreground hover:border-white/20"
+                active && isRejectedTab  ? "bg-rose-500/10 border-rose-500/30 text-rose-400" :
+                active                   ? "bg-primary/10 border-primary/30 text-primary" :
+                isRejectedTab && count>0 ? "bg-card/40 border-rose-500/20 text-rose-400/70 hover:border-rose-500/30" :
+                                           "bg-card/40 border-white/10 text-muted-foreground hover:border-white/20"
               }`}
             >
               {tab.label}
-              <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${active ? "bg-primary/20" : "bg-white/5"}`}>{count}</span>
+              <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
+                active && isRejectedTab  ? "bg-rose-500/20" :
+                active                   ? "bg-primary/20" :
+                isRejectedTab && count>0 ? "bg-rose-500/10" :
+                                           "bg-white/5"
+              }`}>{count}</span>
             </button>
           )
         })}
@@ -235,22 +244,40 @@ export function ServidorTareasView() {
               const isRejected = miAsignacion(t)?.estadoAsignacion === "rechazada"
               const action = isRejected ? null : getNextAction(t.estado)
               return (
-                <AnimatedCard key={t.idTarea} index={idx} className="p-4 group cursor-pointer" onClick={() => setSelectedTaskId(t.idTarea)}>
+                <AnimatedCard
+                  key={t.idTarea}
+                  index={idx}
+                  className={`p-4 group cursor-pointer transition-colors ${isRejected ? 'border-rose-500/20 bg-rose-500/[0.03]' : ''}`}
+                  onClick={() => setSelectedTaskId(t.idTarea)}
+                >
                   <div className="flex items-start gap-4">
-                    <div className={`w-9 h-9 rounded-xl ${cfg.color} border flex items-center justify-center shrink-0 mt-0.5`}>{cfg.icon}</div>
+                    <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 mt-0.5 ${
+                      isRejected ? 'bg-rose-500/10 border-rose-500/25 text-rose-400' : cfg.color
+                    }`}>
+                      {isRejected ? <Ban className="w-4 h-4" /> : cfg.icon}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1">
-                        <h4 className="text-[14px] font-bold group-hover:text-[#4682b4] transition-colors uppercase italic leading-snug">{t.titulo}</h4>
-                        <Badge variant="outline" className={`${prio.color} border-0 text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-lg shrink-0`}>{prio.label}</Badge>
+                        <h4 className={`text-[14px] font-bold uppercase italic leading-snug transition-colors ${
+                          isRejected ? 'line-through text-foreground/40' : 'group-hover:text-[#4682b4]'
+                        }`}>{t.titulo}</h4>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isRejected && (
+                            <Badge variant="outline" className="bg-rose-500/10 text-rose-400 border-rose-500/25 text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-lg">
+                              Rechazada
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className={`${prio.color} border-0 text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-lg`}>{prio.label}</Badge>
+                        </div>
                       </div>
-                      {t.eventoNombre && <p className="text-[10px] font-bold text-[#4682b4]/60 mb-1 truncate uppercase tracking-wider">↳ {t.eventoNombre}</p>}
-                      {t.descripcion && <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed mb-2">{t.descripcion}</p>}
+                      {t.eventoNombre && <p className={`text-[10px] font-bold mb-1 truncate uppercase tracking-wider ${isRejected ? 'text-rose-400/40' : 'text-[#4682b4]/60'}`}>↳ {t.eventoNombre}</p>}
+                      {t.descripcion && <p className={`text-[11px] line-clamp-2 leading-relaxed mb-2 ${isRejected ? 'text-muted-foreground/40' : 'text-muted-foreground'}`}>{t.descripcion}</p>}
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`${cfg.color} border text-[9px] uppercase font-bold tracking-wider`}>{cfg.label}</Badge>
+                          {!isRejected && <Badge variant="outline" className={`${cfg.color} border text-[9px] uppercase font-bold tracking-wider`}>{cfg.label}</Badge>}
                           {t.fechaLimite && (
-                            <span className="flex items-center gap-1 text-[9px] font-bold text-muted-foreground/60 uppercase">
-                              <Calendar className="w-2.5 h-2.5" />{t.fechaLimite}
+                            <span className={`flex items-center gap-1 text-[9px] font-bold uppercase ${isRejected ? 'text-muted-foreground/30' : 'text-muted-foreground/60'}`}>
+                              <Calendar className="w-2.5 h-2.5" />{t.fechaLimite.substring(0, 10)}
                             </span>
                           )}
                         </div>
