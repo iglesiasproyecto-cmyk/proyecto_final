@@ -1,5 +1,5 @@
 // src/app/components/disponibilidad/EquipoDisponibilidadPanel.tsx
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { X } from 'lucide-react'
 import { CalendarioMensual } from './CalendarioMensual'
 import { useDisponibilidadEquipo, estaDisponible } from '@/hooks/useDisponibilidad'
@@ -17,7 +17,7 @@ interface Props {
 export function EquipoDisponibilidadPanel({ servidores, onClose }: Props) {
   const [filtroId, setFiltroId] = useState<number | 'todos'>('todos')
 
-  const ids = servidores.map(s => s.idUsuario)
+  const ids = useMemo(() => servidores.map(s => s.idUsuario), [servidores])
   const { data: reglas = [], isLoading } = useDisponibilidadEquipo(ids)
 
   const servidoresFiltrados = filtroId === 'todos'

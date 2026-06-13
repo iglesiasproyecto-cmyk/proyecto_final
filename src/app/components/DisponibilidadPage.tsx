@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, X, Users } from 'lucide-react'
@@ -6,7 +6,13 @@ import { useApp } from '../store/AppContext'
 import { useMinisteriosEnriquecidos, useMinisteriosIdsDeUsuario } from '@/hooks/useMinisterios'
 import { useUsuariosDeIglesia } from '@/hooks/useUsuariosDeIglesia'
 import { useDisponibilidadEquipo, estaDisponible } from '@/hooks/useDisponibilidad'
+import type { UsuarioEnriquecido } from '@/services/ministerios.service'
 import { CalendarioMensual } from './disponibilidad/CalendarioMensual'
+
+// Module-level pure helper — stable reference, no closure over component state
+function fullName(u: Pick<UsuarioEnriquecido, 'nombres' | 'apellidos'>) {
+  return `${u.nombres} ${u.apellidos}`.trim() || '?'
+}
 
 export function DisponibilidadPage() {
   const { idIglesia } = useParams<{ idIglesia: string }>()
@@ -26,13 +32,14 @@ export function DisponibilidadPage() {
     rolActual === 'lider' ? usuarioActual?.idUsuario : undefined
   )
 
+  const today = new Date()
   const [searchQuery, setSearchQuery] = useState('')
   const [filtroMinisterioId, setFiltroMinisterioId] = useState(0)
   const [filtroPersonaId, setFiltroPersonaId] = useState<number | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-
-  const fullName = (u: { nombres: string; apellidos: string }) =>
-    `${u.nombres} ${u.apellidos}`.trim() || '?'
+  // Track the month currently displayed by CalendarioMensual so sidebar dots stay in sync
+  const [displayYear, setDisplayYear] = useState(today.getFullYear())
+  const [displayMonth, setDisplayMonth] = useState(today.getMonth())
 
   const usuariosBase = useMemo(() => {
     if (rolActual === 'admin_iglesia' || rolActual === 'super_admin') {
@@ -84,6 +91,12 @@ export function DisponibilidadPage() {
     return base
   }, [usuariosBase, filtroMinisterioId, searchQuery, ministerios])
 
+  // Reset persona filter whenever the search query changes to avoid stale selection
+  const handleSearchChange = useCallback((q: string) => {
+    setSearchQuery(q)
+    setFiltroPersonaId(null)
+  }, [])
+
   const ids = useMemo(() => usuariosFiltrados.map(u => u.idUsuario), [usuariosFiltrados])
   const { data: reglas = [], isLoading } = useDisponibilidadEquipo(ids)
 
@@ -93,21 +106,19 @@ export function DisponibilidadPage() {
       : usuariosFiltrados
   , [filtroPersonaId, usuariosFiltrados])
 
-  function ausenciasDia(date: Date) {
+  const ausenciasDia = useCallback((date: Date) => {
     return usuariosEfectivos.filter(u => {
       const reglasU = reglas.filter(r => r.usuarioId === u.idUsuario)
       return !estaDisponible(u.idUsuario, date, reglasU).disponible
     })
-  }
+  }, [usuariosEfectivos, reglas])
 
+  // Sidebar dots: users with any absence in the displayed month (not hardcoded to today)
   const usuariosConAusenciaMes = useMemo(() => {
-    const ahora = new Date()
-    const año = ahora.getFullYear()
-    const mes = ahora.getMonth()
-    const diasMes = new Date(año, mes + 1, 0).getDate()
+    const diasMes = new Date(displayYear, displayMonth + 1, 0).getDate()
     const con = new Set<number>()
     for (let d = 1; d <= diasMes; d++) {
-      const fecha = new Date(año, mes, d)
+      const fecha = new Date(displayYear, displayMonth, d)
       for (const u of usuariosFiltrados) {
         if (con.has(u.idUsuario)) continue
         const reglasU = reglas.filter(r => r.usuarioId === u.idUsuario)
@@ -117,13 +128,26 @@ export function DisponibilidadPage() {
       }
     }
     return con
-  }, [usuariosFiltrados, reglas])
+  }, [displayYear, displayMonth, usuariosFiltrados, reglas])
 
-  const ausenciasSelectedDate = selectedDate ? ausenciasDia(selectedDate) : []
-  const ausenciasIds = new Set(ausenciasSelectedDate.map(u => u.idUsuario))
-  const disponiblesSelectedDate = selectedDate
-    ? usuariosEfectivos.filter(u => !ausenciasIds.has(u.idUsuario))
-    : []
+  const ausenciasSelectedDate = useMemo(
+    () => selectedDate ? ausenciasDia(selectedDate) : [],
+    [selectedDate, ausenciasDia]
+  )
+  const ausenciasIds = useMemo(
+    () => new Set(ausenciasSelectedDate.map(u => u.idUsuario)),
+    [ausenciasSelectedDate]
+  )
+  const disponiblesSelectedDate = useMemo(
+    () => selectedDate ? usuariosEfectivos.filter(u => !ausenciasIds.has(u.idUsuario)) : [],
+    [selectedDate, usuariosEfectivos, ausenciasIds]
+  )
+
+  const selectedPersonName = useMemo(() => {
+    if (filtroPersonaId === null) return ''
+    const u = usuariosFiltrados.find(u => u.idUsuario === filtroPersonaId)
+    return u ? fullName(u) : ''
+  }, [filtroPersonaId, usuariosFiltrados])
 
   const rolLabel: Record<string, string> = {
     admin_iglesia: 'Toda la iglesia',
@@ -176,7 +200,7 @@ export function DisponibilidadPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <input
                 value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
+                onChange={e => handleSearchChange(e.target.value)}
                 placeholder="Buscar servidor..."
                 className="w-full h-9 pl-8 pr-3 rounded-xl border border-white/10 bg-background/50 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary/20"
               />
@@ -237,8 +261,7 @@ export function DisponibilidadPage() {
             {filtroPersonaId !== null && (
               <div className="flex items-center gap-2 mb-3 px-1">
                 <span className="text-[10px] text-primary/70">
-                  Mostrando ausencias de{' '}
-                  <strong>{(() => { const u = usuariosFiltrados.find(u => u.idUsuario === filtroPersonaId); return u ? fullName(u) : '' })()}</strong>
+                  Mostrando ausencias de <strong>{selectedPersonName}</strong>
                 </span>
                 <button
                   onClick={() => setFiltroPersonaId(null)}
@@ -254,6 +277,10 @@ export function DisponibilidadPage() {
               </div>
             ) : (
               <CalendarioMensual
+                onMonthChange={(y, m) => {
+                  setDisplayYear(y)
+                  setDisplayMonth(m)
+                }}
                 onDayClick={date =>
                   setSelectedDate(prev =>
                     prev?.toDateString() === date.toDateString() ? null : date
