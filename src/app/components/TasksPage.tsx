@@ -22,8 +22,9 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar,
-  ChevronRight, Inbox, Trash2, UserPlus, X, Pencil, Search
+  ChevronRight, Inbox, Trash2, UserPlus, X, Pencil, Search, CalendarDays
 } from "lucide-react";
+import { EquipoDisponibilidadPanel } from "./disponibilidad/EquipoDisponibilidadPanel";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { Skeleton } from "./ui/skeleton";
 import { TableSkeleton } from "./loading/skeletons";
@@ -125,6 +126,7 @@ export function TasksPage() {
   });
   const [selectedTareaIds, setSelectedTareaIds] = useState<Set<number>>(new Set());
   const [mobileStatus, setMobileStatus] = useState<"pendiente" | "en_progreso" | "en_revision" | "completada">("pendiente");
+  const [showDisponibilidad, setShowDisponibilidad] = useState(false);
 
   const task = selectedTask ? tareas.find(t => t.idTarea === selectedTask) : null;
   const isAdminIglesia = rolActual === "admin_iglesia" || rolActual === "super_admin";
@@ -160,6 +162,16 @@ export function TasksPage() {
 
   const showFullScopeFilters = rolActual === "super_admin" || rolActual === "admin_iglesia";
   const showMinisterioOnlyFilter = isLider || isAdminSede;
+
+  const servidoresDelEquipo = useMemo(() => {
+    if (!isLider) return []
+    const misNombres = new Set(
+      ministerios.filter(m => usuarioMinisterioIds.includes(m.idMinisterio)).map(m => m.nombre)
+    )
+    return usuariosDeIglesia
+      .filter(u => u.ministerios.some(mn => misNombres.has(mn)))
+      .map(u => ({ idUsuario: u.idUsuario, nombreCompleto: u.nombreCompleto }))
+  }, [isLider, ministerios, usuarioMinisterioIds, usuariosDeIglesia])
 
   const ministerioAsignacionId = useMemo(() => {
     if (isLider && !assignScope.idMinisterio) return singleUserMinisterio?.idMinisterio ?? 0;
@@ -614,12 +626,37 @@ export function TasksPage() {
             <p className="text-foreground text-xs sm:text-sm mt-1">Gestión de tareas operativas del ministerio</p>
           </div>
         </div>
-        {canShowCreateButton && (
-          <Button onClick={() => setShowCreate(true)} className="h-10 rounded-xl font-medium shrink-0 bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all">
-            <Plus className="w-4 h-4 mr-1.5" /> Nueva Tarea
-          </Button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {isLider && (
+            <Button
+              variant="outline"
+              onClick={() => setShowDisponibilidad(v => !v)}
+              className="h-10 rounded-xl font-medium border-white/10 text-muted-foreground hover:text-foreground"
+            >
+              <CalendarDays className="w-4 h-4 mr-1.5" /> Disponibilidad
+            </Button>
+          )}
+          {canShowCreateButton && (
+            <Button onClick={() => setShowCreate(true)} className="h-10 rounded-xl font-medium bg-gradient-to-r from-[#709dbd] to-[#4682b4] hover:from-[#5b84a1] hover:to-[#3b6d96] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-900/40 transition-all">
+              <Plus className="w-4 h-4 mr-1.5" /> Nueva Tarea
+            </Button>
+          )}
+        </div>
       </motion.div>
+
+      {/* ── Equipo Disponibilidad ── */}
+      {isLider && showDisponibilidad && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-border/50 shadow-sm"
+        >
+          <EquipoDisponibilidadPanel
+            servidores={servidoresDelEquipo}
+            onClose={() => setShowDisponibilidad(false)}
+          />
+        </motion.div>
+      )}
 
       {/* ── Stats row ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
