@@ -406,7 +406,11 @@ export function ServidorTareasView() {
               Cancelar
             </Button>
             <Button
-              className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white"
+              className={`rounded-xl text-white transition-colors ${
+                !rejectMotivo.trim() || rechazar.isPending
+                  ? 'bg-slate-500/40 text-foreground/40 cursor-not-allowed'
+                  : 'bg-rose-500 hover:bg-rose-600'
+              }`}
               disabled={!rejectMotivo.trim() || rechazar.isPending}
               onClick={handleRechazar}
             >

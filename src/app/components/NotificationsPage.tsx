@@ -157,7 +157,7 @@ export function NotificationsPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className={`text-[15px] tracking-tight ${!n.leida ? "font-bold text-foreground" : "font-semibold text-foreground/80 group-hover:text-primary transition-colors"}`}>{n.titulo}</p>
-                        <p className={`text-[13px] mt-1 leading-relaxed ${!n.leida ? "font-medium text-foreground/90" : "text-muted-foreground"}`}>{n.mensaje}</p>
+                        <p className={`text-[13px] mt-1 leading-relaxed ${!n.leida ? "font-medium text-foreground/90" : "text-muted-foreground"}`}>{n.mensaje?.replace(/\s*\[TASK_ID:\d+\]/g, '')}</p>
                       </div>
                       {!n.leida && (
                         <div className="w-3 h-3 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)] animate-pulse" />
@@ -217,7 +217,7 @@ export function NotificationsPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm leading-relaxed text-foreground/90 bg-background/40 rounded-xl p-4 border border-white/5">
-                  {selectedNotification.mensaje}
+                  {selectedNotification.mensaje?.replace(/\s*\[TASK_ID:\d+\]/g, '')}
                 </p>
               </div>
               

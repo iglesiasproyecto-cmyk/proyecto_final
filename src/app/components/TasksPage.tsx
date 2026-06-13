@@ -123,6 +123,7 @@ export function TasksPage() {
   // (evidenceUploading removed — handled by TaskEvidenceReview)
   const [confirmCancel, setConfirmCancel] = useState<{ open: boolean; id: number }>({ open: false, id: 0 });
   const [confirmRemoveAssign, setConfirmRemoveAssign] = useState<{ open: boolean; id: number; nombre: string }>({ open: false, id: 0, nombre: "" });
+  const [confirmAssignUnavailable, setConfirmAssignUnavailable] = useState<{ open: boolean; nombres: string[]; pendingIds: number[] }>({ open: false, nombres: [], pendingIds: [] });
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState({
     titulo: "", descripcion: "", fechaLimite: "", prioridad: "media" as TareaEnriquecida['prioridad']
@@ -1184,6 +1185,19 @@ export function TasksPage() {
                         const idsToAssign = assignScope.assignAll ? usuariosAsignables.map(u => u.idUsuario) : assignScope.selectedUserIds;
                         if (!idsToAssign.length) { toast.error("Selecciona al menos un usuario"); return; }
 
+                        const noDisponibles = idsToAssign
+                          .filter(id => idsNoDisponibles.has(id))
+                          .map(id => {
+                            const u = usuariosAsignables.find(u => u.idUsuario === id)
+                            return u ? `${u.nombres} ${u.apellidos}`.trim() : ""
+                          })
+                          .filter(Boolean)
+
+                        if (noDisponibles.length > 0) {
+                          setConfirmAssignUnavailable({ open: true, nombres: noDisponibles, pendingIds: idsToAssign })
+                          return
+                        }
+
                         const result = await assignUsuariosMutation.mutateAsync({
                           idTarea: task.idTarea,
                           idMinisterioContexto: ministerioAsignacionId,
@@ -1410,6 +1424,36 @@ export function TasksPage() {
         }}
         title="¿Remover Asignación?"
         description={`¿Estás seguro de que quieres remover a ${confirmRemoveAssign.nombre} de esta tarea?`}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmAssignUnavailable.open}
+        onClose={() => setConfirmAssignUnavailable({ open: false, nombres: [], pendingIds: [] })}
+        onConfirm={async () => {
+          if (!task || !ministerioAsignacionId) return
+          setConfirmAssignUnavailable({ open: false, nombres: [], pendingIds: [] })
+          const result = await assignUsuariosMutation.mutateAsync({
+            idTarea: task.idTarea,
+            idMinisterioContexto: ministerioAsignacionId,
+            idsUsuarios: confirmAssignUnavailable.pendingIds,
+          })
+          if (result.assigned > 0 || result.duplicated > 0) {
+            toast.success(`${result.assigned} asignados, ${result.duplicated} ya asignados`)
+            setAssignScope(prev => ({ ...prev, selectedUserIds: [], assignAll: false }))
+          } else {
+            toast.error("No se pudo asignar la tarea")
+          }
+        }}
+        title="⚠ Usuarios no disponibles"
+        description={
+          <span>
+            {confirmAssignUnavailable.nombres.length === 1
+              ? <><strong>{confirmAssignUnavailable.nombres[0]}</strong> no está disponible en la fecha límite de esta tarea.</>
+              : <><strong>{confirmAssignUnavailable.nombres.join(", ")}</strong> no están disponibles en la fecha límite de esta tarea.</>
+            }
+            {" "}¿Quieres asignarlos de todas formas?
+          </span>
+        }
       />
     </div>
   );
