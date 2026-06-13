@@ -16,7 +16,7 @@ import {
 import type { DisponibilidadRegla } from '@/types/app.types'
 
 const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
-const SEMANAS_LABEL: Record<number, string> = { 1:'1ª',2:'2ª',3:'3ª',4:'4ª',-1:'Última' }
+const SEMANAS_LABEL: Record<number, string> = { 1:'1ª', 2:'2ª', 3:'3ª', 4:'4ª', [-1]:'Última' }
 
 interface Props {
   usuarioId: number
