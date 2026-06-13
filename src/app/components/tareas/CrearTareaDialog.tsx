@@ -7,6 +7,7 @@ import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { toast } from "sonner"
 import { Calendar, Link2, Users } from "lucide-react"
+import { DisponibilidadBadge } from "@/app/components/disponibilidad/DisponibilidadBadge"
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -257,6 +258,22 @@ export function CrearTareaDialog({ open, onOpenChange, idUsuarioCreador, onCreat
                 <p className="text-[10px] text-primary/70 mt-1.5">
                   {asignadosIds.length} servidor{asignadosIds.length !== 1 ? "es" : ""} seleccionado{asignadosIds.length !== 1 ? "s" : ""}
                 </p>
+              )}
+              {asignadosIds.length > 0 && form.fechaLimite && (
+                <div className="mt-2 space-y-1.5">
+                  {asignadosIds.map(idU => {
+                    const srv = servidores.find(s => s.idUsuario === idU)
+                    if (!srv) return null
+                    return (
+                      <DisponibilidadBadge
+                        key={idU}
+                        usuarioId={idU}
+                        nombreUsuario={srv.nombreCompleto}
+                        fecha={form.fechaLimite}
+                      />
+                    )
+                  })}
+                </div>
               )}
             </div>
           )}
