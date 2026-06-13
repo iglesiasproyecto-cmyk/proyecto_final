@@ -63,6 +63,7 @@ function getDynamicPageTitle(pathname: string): string {
   if (pathname.match(/\/app\/\d+\/miembros/)) return "Miembros";
   if (pathname.match(/\/app\/\d+\/eventos/)) return "Eventos";
   if (pathname.match(/\/app\/\d+\/tareas/)) return "Tareas";
+  if (pathname.match(/\/app\/\d+\/disponibilidad/)) return "Disponibilidad del Equipo";
   if (pathname.match(/\/app\/\d+\/aula\/curso\/\d+\/servidor/)) return "Progreso Individual";
   if (pathname.match(/\/app\/\d+\/aula\/curso/)) return "Detalle del Curso";
   if (pathname.match(/\/app\/\d+\/aula/)) return "Aula de Formación";
@@ -113,6 +114,7 @@ function getNavItemsForRole(
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
         { label: "Estadísticas", path: `${t}/estadisticas`, icon: <BarChart3 className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Disponibilidad", path: `${t}/disponibilidad`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Cumpleaños", path: `${t}/cumpleanos`, icon: <Cake className="w-5 h-5" />, section: "Operaciones" },
         { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
         { label: "Personalización", path: `${t}/configuracion`, icon: <Paintbrush className="w-5 h-5" />, section: "Configuración" },
@@ -129,6 +131,7 @@ function getNavItemsForRole(
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
         { label: "Estadísticas", path: `${t}/estadisticas`, icon: <BarChart3 className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Disponibilidad", path: `${t}/disponibilidad`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Cumpleaños", path: `${t}/cumpleanos`, icon: <Cake className="w-5 h-5" />, section: "Operaciones" },
         { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
         { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },
@@ -143,6 +146,7 @@ function getNavItemsForRole(
         { label: "Eventos", path: `${t}/eventos`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Tareas", path: `${t}/tareas`, icon: <ListTodo className="w-5 h-5" />, section: "Operaciones" },
         { label: "Estadísticas", path: `${t}/estadisticas`, icon: <BarChart3 className="w-5 h-5" />, section: "Operaciones" },
+        { label: "Disponibilidad", path: `${t}/disponibilidad`, icon: <CalendarDays className="w-5 h-5" />, section: "Operaciones" },
         { label: "Cumpleaños", path: `${t}/cumpleanos`, icon: <Cake className="w-5 h-5" />, section: "Operaciones" },
         { label: "Aula de Formación", path: `${t}/aula`, icon: <BookOpen className="w-5 h-5" />, section: "Formación" },
         { label: "Notificaciones", path: `${t}/notificaciones`, icon: <Bell className="w-5 h-5" />, section: "Personal" },

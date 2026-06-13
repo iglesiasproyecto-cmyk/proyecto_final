@@ -58,6 +58,9 @@ const EventsPage = React.lazy(() =>
 const StatisticsPage = React.lazy(() =>
   loadLazyRoute(() => import("./components/StatisticsPage")).then(mod => ({ default: mod.StatisticsPage }))
 );
+const DisponibilidadPage = React.lazy(() =>
+  loadLazyRoute(() => import("./components/DisponibilidadPage")).then(mod => ({ default: mod.DisponibilidadPage }))
+);
 
 export const router = createBrowserRouter([
   {
@@ -120,6 +123,7 @@ export const router = createBrowserRouter([
               { path: "miembros", Component: MembersPage, ErrorBoundary: ErrorPage },
               { path: "eventos", Component: EventsPage, ErrorBoundary: ErrorPage },
               { path: "tareas", Component: TasksPage, ErrorBoundary: ErrorPage },
+              { path: "disponibilidad", Component: DisponibilidadPage, ErrorBoundary: ErrorPage },
               { path: "aula", Component: AulaPage, ErrorBoundary: ErrorPage },
               { path: "aula/curso/:idCurso", Component: CursoDetallePage, ErrorBoundary: ErrorPage },
               { path: "aula/curso/:idCurso/servidor/:idUsuario", Component: ProgresoIndividualPage, ErrorBoundary: ErrorPage },

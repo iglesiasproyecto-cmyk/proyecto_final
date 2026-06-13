@@ -22,9 +22,11 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import {
   ListTodo, Plus, CheckCircle2, Clock, AlertCircle, Calendar,
-  ChevronRight, Inbox, Trash2, UserPlus, X, Pencil, Search, CalendarDays
+  ChevronRight, Inbox, Trash2, UserPlus, X, Pencil, Search, CalendarDays,
+  AlertTriangle
 } from "lucide-react";
 import { EquipoDisponibilidadPanel } from "./disponibilidad/EquipoDisponibilidadPanel";
+import { useDisponibilidadEquipo, estaDisponible } from "@/hooks/useDisponibilidad";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { Skeleton } from "./ui/skeleton";
 import { TableSkeleton } from "./loading/skeletons";
@@ -189,6 +191,25 @@ export function TasksPage() {
       return u.ministerios.includes(ministerioObjetivo.nombre);
     });
   }, [ministerioAsignacionId, ministerios, task?.asignados, usuariosDeIglesia]);
+
+  const asignablesIds = useMemo(
+    () => usuariosAsignables.map(u => u.idUsuario),
+    [usuariosAsignables]
+  )
+  const { data: reglasPanelAsignacion = [] } = useDisponibilidadEquipo(asignablesIds)
+
+  const idsNoDisponibles = useMemo(() => {
+    if (!task?.fechaLimite || reglasPanelAsignacion.length === 0) return new Set<number>()
+    const fecha = new Date(task.fechaLimite + 'T12:00:00')
+    return new Set(
+      usuariosAsignables
+        .filter(u => {
+          const reglasU = reglasPanelAsignacion.filter(r => r.usuarioId === u.idUsuario)
+          return !estaDisponible(u.idUsuario, fecha, reglasU).disponible
+        })
+        .map(u => u.idUsuario)
+    )
+  }, [task?.fechaLimite, reglasPanelAsignacion, usuariosAsignables])
 
   // Archive and permission hooks
   const archiveMutation = useArchiveTask();
@@ -1088,7 +1109,12 @@ export function TasksPage() {
                                 });
                               }}
                             />
-                            {u.nombres} {u.apellidos}
+                            <span className="flex-1">{u.nombres} {u.apellidos}</span>
+                            {task?.fechaLimite && idsNoDisponibles.has(u.idUsuario) && (
+                              <span title="No disponible en la fecha límite" className="shrink-0">
+                                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                              </span>
+                            )}
                           </label>
                         ))}
                       </div>
