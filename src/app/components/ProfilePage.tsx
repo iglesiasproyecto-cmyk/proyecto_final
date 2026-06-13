@@ -13,9 +13,10 @@ import { Input } from "./ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, CheckCircle2, Loader2, AlertTriangle, Calendar, Star, Award, TrendingUp, FileText, ChevronDown } from "lucide-react";
+import { User, Mail, Phone, Lock, Building2, Shield, Save, Eye, EyeOff, CheckCircle2, Loader2, AlertTriangle, Calendar, Star, Award, TrendingUp, FileText, ChevronDown, CalendarDays } from "lucide-react";
 import { HojaDeVidaView } from "./hojaDeVida/HojaDeVidaView";
 import { HojaDeVidaForm } from "./hojaDeVida/HojaDeVidaForm";
+import { DisponibilidadTab } from './disponibilidad/DisponibilidadTab'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 
 const roleLabels: Record<string, string> = {
@@ -203,6 +204,15 @@ export function ProfilePage() {
             </AccordionContent>
           </AccordionItem>
 
+          <AccordionItem value="disponibilidad" className="border-0 bg-card/40 backdrop-blur-2xl rounded-3xl overflow-hidden shadow-lg border border-white/10 px-4">
+            <AccordionTrigger className="hover:no-underline py-5 text-xs font-black tracking-widest uppercase text-[#4682b4]">
+              <div className="flex items-center gap-2"><CalendarDays className="w-4 h-4" />Disponibilidad</div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 pb-6">
+              {usuarioActual && <DisponibilidadTab usuarioId={usuarioActual.idUsuario} />}
+            </AccordionContent>
+          </AccordionItem>
+
           <div className="pt-4">
             <Button variant="ghost" className="w-full justify-center h-12 rounded-2xl px-4 text-rose-500 bg-rose-500/5 hover:bg-rose-500/10 font-black text-[12px] uppercase tracking-widest transition-all" onClick={() => logout()}>
               <EyeOff className="w-4 h-4 mr-3" /> Salir de la Cuenta
@@ -231,6 +241,9 @@ export function ProfilePage() {
               )}
               <TabsTrigger value="hoja-de-vida" className="shrink-0 lg:w-full justify-start rounded-xl sm:rounded-2xl px-4 sm:px-6 py-2.5 sm:py-4 text-[10px] sm:text-[12px] font-black tracking-widest uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-900/20 transition-all duration-300">
                 <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3" /> Información miembros
+              </TabsTrigger>
+              <TabsTrigger value="disponibilidad" className="shrink-0 lg:w-full justify-start rounded-xl sm:rounded-2xl px-4 sm:px-6 py-2.5 sm:py-4 text-[10px] sm:text-[12px] font-black tracking-widest uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#709dbd] data-[state=active]:to-[#4682b4] data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-900/20 transition-all duration-300">
+                <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3" /> Disponibilidad
               </TabsTrigger>
               <div className="pt-2 sm:pt-4 mt-1 sm:mt-2 border-t lg:border-t border-white/5 px-2">
                 <Button variant="ghost" className="w-full justify-start h-10 sm:h-14 rounded-xl sm:rounded-2xl px-3 sm:px-4 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 font-black text-[10px] sm:text-[12px] uppercase tracking-widest transition-all" onClick={() => logout()}>
@@ -270,6 +283,23 @@ export function ProfilePage() {
             <TabsContent value="hoja-de-vida" className="mt-0">
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                 <HojaDeVidaSection showEditHoja={showEditHoja} setShowEditHoja={setShowEditHoja} hoja={hoja} actualizarHoja={actualizarHoja} marcarCompleta={marcarCompleta} hojaUpdating={hojaUpdating} hojaLoading={hojaLoading} />
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="disponibilidad" className="mt-0">
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <div className="p-6 sm:p-10 rounded-3xl sm:rounded-[40px] bg-card/40 backdrop-blur-3xl border border-white/20 dark:border-white/10 shadow-2xl space-y-6 sm:space-y-8 relative overflow-hidden">
+                  <div className="flex items-center gap-3 pb-4 border-b border-white/10 mb-2">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#709dbd] to-[#4682b4] flex items-center justify-center shadow-lg text-white">
+                      <CalendarDays className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black tracking-tight text-foreground/90 uppercase italic">Mi Disponibilidad</h3>
+                      <p className="text-[11px] font-bold text-muted-foreground tracking-widest uppercase">Marca los días que no puedes</p>
+                    </div>
+                  </div>
+                  {usuarioActual && <DisponibilidadTab usuarioId={usuarioActual.idUsuario} />}
+                </div>
               </motion.div>
             </TabsContent>
           </div>
