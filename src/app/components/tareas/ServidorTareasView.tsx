@@ -89,18 +89,29 @@ export function ServidorTareasView() {
   const miAsignacion = (t: typeof todasTareas[number]) =>
     t.asignados?.find(a => a.idUsuario === myId)
 
-  const misTareas = useMemo(() => todasTareas, [todasTareas])
-
   const filteredTareas = useMemo(() => {
-    if (activeTab === "todas") return misTareas
+    if (activeTab === "todas") return todasTareas
     if (activeTab === "rechazada")
-      return misTareas.filter(t => miAsignacion(t)?.estadoAsignacion === "rechazada")
-    return misTareas.filter(t =>
+      return todasTareas.filter(t => miAsignacion(t)?.estadoAsignacion === "rechazada")
+    return todasTareas.filter(t =>
       t.estado === activeTab && miAsignacion(t)?.estadoAsignacion !== "rechazada"
     )
-  }, [misTareas, activeTab, myId])
+  }, [todasTareas, activeTab, myId])
 
-  const task = selectedTaskId ? misTareas.find(t => t.idTarea === selectedTaskId) ?? null : null
+  const tabCounts = useMemo(() => {
+    const counts: Record<string, number> = { todas: todasTareas.length }
+    for (const t of todasTareas) {
+      const asig = t.asignados?.find(a => a.idUsuario === myId)
+      if (asig?.estadoAsignacion === "rechazada") {
+        counts.rechazada = (counts.rechazada ?? 0) + 1
+      } else {
+        counts[t.estado] = (counts[t.estado] ?? 0) + 1
+      }
+    }
+    return counts
+  }, [todasTareas, myId])
+
+  const task = selectedTaskId ? todasTareas.find(t => t.idTarea === selectedTaskId) ?? null : null
   const myAssignment = task?.asignados?.find(a => a.idUsuario === usuarioActual?.idUsuario) ?? null
   const { data: evidencias = [] } = useTareaEvidencias(selectedTaskId ?? undefined)
 
@@ -183,7 +194,7 @@ export function ServidorTareasView() {
             <p className="text-primary/80 font-bold uppercase tracking-[0.2em] text-[10px] mb-1">Mis Asignaciones</p>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-none">Mis Tareas</h1>
             <p className="text-muted-foreground text-xs mt-1">
-              {misTareas.length} tarea{misTareas.length !== 1 ? "s" : ""} asignada{misTareas.length !== 1 ? "s" : ""}
+              {todasTareas.length} tarea{todasTareas.length !== 1 ? "s" : ""} asignada{todasTareas.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
@@ -192,10 +203,7 @@ export function ServidorTareasView() {
       {/* Status tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
         {STATUS_TABS.map(tab => {
-          const count =
-            tab.key === "todas"     ? misTareas.length :
-            tab.key === "rechazada" ? misTareas.filter(t => miAsignacion(t)?.estadoAsignacion === "rechazada").length :
-            misTareas.filter(t => t.estado === tab.key && miAsignacion(t)?.estadoAsignacion !== "rechazada").length
+          const count = tabCounts[tab.key] ?? 0
           const active = activeTab === tab.key
           return (
             <button

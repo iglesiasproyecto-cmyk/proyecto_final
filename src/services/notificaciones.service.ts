@@ -93,6 +93,10 @@ export function extractTaskIdFromNotificationMessage(message: string): number | 
   return Number.isFinite(id) ? id : null
 }
 
+export function stripTaskMetadata(message: string | null | undefined): string {
+  return (message ?? '').replace(/\s*\[TASK_ID:\d+\]/g, '')
+}
+
 /**
  * Notifica a todos los inscritos de un curso sobre nuevo contenido.
  * Usa RPC SECURITY DEFINER para bypass de RLS (permite notificar a otros usuarios).
