@@ -336,18 +336,28 @@ export function LiderTareasView() {
                     <FieldLabel>Personas asignadas</FieldLabel>
                     <div className="flex flex-wrap gap-2">
                       {task.asignados.map(a => (
-                        <div key={a.idTareaAsignada} className="flex items-center gap-2 bg-background/50 border border-white/10 rounded-xl px-3 py-1.5">
-                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 flex items-center justify-center text-[9px] text-primary font-bold">
-                            {(a.nombreCompleto || "?").charAt(0).toUpperCase()}
+                        <div key={a.idTareaAsignada} className={`flex flex-col gap-1 bg-background/50 border rounded-xl px-3 py-1.5 ${a.estadoAsignacion === "rechazada" ? "border-rose-500/30" : "border-white/10"}`}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 flex items-center justify-center text-[9px] text-primary font-bold">
+                              {(a.nombreCompleto || "?").charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-xs font-medium">{a.nombreCompleto}</span>
+                            {a.estadoAsignacion === "rechazada" && (
+                              <Badge variant="outline" className="bg-rose-500/10 text-rose-400 border-rose-500/20 text-[9px] uppercase font-black tracking-wider px-1.5 py-0">
+                                Rechazada
+                              </Badge>
+                            )}
+                            <button
+                              className="text-muted-foreground/40 hover:text-rose-400 transition-colors ml-0.5"
+                              onClick={() => setConfirmRemoveAssign({ open: true, id: a.idTareaAsignada, nombre: a.nombreCompleto || "" })}
+                              disabled={deleteAsignada.isPending}
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
                           </div>
-                          <span className="text-xs font-medium">{a.nombreCompleto}</span>
-                          <button
-                            className="text-muted-foreground/40 hover:text-rose-400 transition-colors ml-0.5"
-                            onClick={() => setConfirmRemoveAssign({ open: true, id: a.idTareaAsignada, nombre: a.nombreCompleto || "" })}
-                            disabled={deleteAsignada.isPending}
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                          {a.estadoAsignacion === "rechazada" && a.motivoRechazo && (
+                            <p className="text-[10px] text-muted-foreground/70 italic pl-7">"{a.motivoRechazo}"</p>
+                          )}
                         </div>
                       ))}
                     </div>

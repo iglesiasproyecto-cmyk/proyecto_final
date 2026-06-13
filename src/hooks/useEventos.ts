@@ -11,6 +11,7 @@ import {
   assignUsuariosATarea,
   getTareaEvidencias, createTareaEvidencia,
   getEventosPorMinisterio,
+  rechazarAsignacionTarea,
 } from '@/services/eventos.service'
 import { archiveTask, unarchiveTask } from '@/services/tareaArchive.service'
 import {
@@ -74,6 +75,20 @@ export function useUpdateTareaEstado() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tareas'] })
       qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+    },
+  })
+}
+
+export function useRechazarAsignacion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ idTareaAsignada, motivo }: { idTareaAsignada: number; motivo: string }) =>
+      rechazarAsignacionTarea(idTareaAsignada, motivo),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tareas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-enriquecidas'] })
+      qc.invalidateQueries({ queryKey: ['tareas-asignadas'] })
+      qc.invalidateQueries({ queryKey: ['notificaciones'] })
     },
   })
 }

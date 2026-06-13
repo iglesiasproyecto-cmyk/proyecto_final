@@ -440,6 +440,42 @@ export type Database = {
           },
         ]
       }
+      aula_modulo_completado: {
+        Row: {
+          completado_en: string
+          id_aula_modulo: number
+          id_aula_modulo_completado: number
+          id_usuario: number
+        }
+        Insert: {
+          completado_en?: string
+          id_aula_modulo: number
+          id_aula_modulo_completado?: never
+          id_usuario: number
+        }
+        Update: {
+          completado_en?: string
+          id_aula_modulo?: number
+          id_aula_modulo_completado?: never
+          id_usuario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aula_modulo_completado_id_aula_modulo_fkey"
+            columns: ["id_aula_modulo"]
+            isOneToOne: false
+            referencedRelation: "aula_modulo"
+            referencedColumns: ["id_aula_modulo"]
+          },
+          {
+            foreignKeyName: "aula_modulo_completado_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
       aula_modulo_enlace: {
         Row: {
           creado_en: string
@@ -969,51 +1005,47 @@ export type Database = {
           },
         ]
       }
-      evaluacion: {
+      disponibilidad: {
         Row: {
-          calificacion: number | null
-          creado_en: string
-          estado: Database["public"]["Enums"]["estado_evaluacion"]
-          fecha_evaluacion: string | null
-          id_evaluacion: number
-          id_modulo: number
-          id_usuario: number
-          observaciones: string | null
+          activo: boolean
+          created_at: string
+          fecha: string | null
+          fecha_fin: string | null
+          id: number
+          nota: string | null
+          patron: Json | null
+          tipo: string
           updated_at: string
+          usuario_id: number
         }
         Insert: {
-          calificacion?: number | null
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_evaluacion"]
-          fecha_evaluacion?: string | null
-          id_evaluacion?: number
-          id_modulo: number
-          id_usuario: number
-          observaciones?: string | null
+          activo?: boolean
+          created_at?: string
+          fecha?: string | null
+          fecha_fin?: string | null
+          id?: never
+          nota?: string | null
+          patron?: Json | null
+          tipo: string
           updated_at?: string
+          usuario_id: number
         }
         Update: {
-          calificacion?: number | null
-          creado_en?: string
-          estado?: Database["public"]["Enums"]["estado_evaluacion"]
-          fecha_evaluacion?: string | null
-          id_evaluacion?: number
-          id_modulo?: number
-          id_usuario?: number
-          observaciones?: string | null
+          activo?: boolean
+          created_at?: string
+          fecha?: string | null
+          fecha_fin?: string | null
+          id?: never
+          nota?: string | null
+          patron?: Json | null
+          tipo?: string
           updated_at?: string
+          usuario_id?: number
         }
         Relationships: [
           {
-            foreignKeyName: "evaluacion_id_modulo_fkey"
-            columns: ["id_modulo"]
-            isOneToOne: false
-            referencedRelation: "modulo"
-            referencedColumns: ["id_modulo"]
-          },
-          {
-            foreignKeyName: "evaluacion_id_usuario_fkey"
-            columns: ["id_usuario"]
+            foreignKeyName: "disponibilidad_usuario_id_fkey"
+            columns: ["usuario_id"]
             isOneToOne: false
             referencedRelation: "usuario"
             referencedColumns: ["id_usuario"]
@@ -1133,35 +1165,104 @@ export type Database = {
           },
         ]
       }
-      hoja_de_vida: {
+      evento_presupuesto_item: {
         Row: {
-          creado_en: string
-          experiencia_laboral: string | null
-          formacion_academica: string | null
-          habilidades: string | null
-          id_hoja_de_vida: number
-          id_usuario: number
-          perfil_profesional: string | null
+          categoria: string
+          created_at: string
+          created_by: number | null
+          descripcion: string | null
+          id: number
+          id_evento: number
+          monto_planeado: number
+          monto_real: number | null
+          tipo: string
           updated_at: string
         }
         Insert: {
-          creado_en?: string
-          experiencia_laboral?: string | null
-          formacion_academica?: string | null
-          habilidades?: string | null
-          id_hoja_de_vida?: number
-          id_usuario: number
-          perfil_profesional?: string | null
+          categoria: string
+          created_at?: string
+          created_by?: number | null
+          descripcion?: string | null
+          id?: number
+          id_evento: number
+          monto_planeado?: number
+          monto_real?: number | null
+          tipo: string
           updated_at?: string
         }
         Update: {
+          categoria?: string
+          created_at?: string
+          created_by?: number | null
+          descripcion?: string | null
+          id?: number
+          id_evento?: number
+          monto_planeado?: number
+          monto_real?: number | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evento_presupuesto_item_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "usuario"
+            referencedColumns: ["id_usuario"]
+          },
+          {
+            foreignKeyName: "evento_presupuesto_item_id_evento_fkey"
+            columns: ["id_evento"]
+            isOneToOne: false
+            referencedRelation: "evento"
+            referencedColumns: ["id_evento"]
+          },
+        ]
+      }
+      hoja_de_vida: {
+        Row: {
+          actualizado_en: string
+          completa: boolean
+          completada_en: string | null
+          creado_en: string
+          experiencia_laboral: string | null
+          formacion_academica: Json | null
+          foto_perfil_url: string | null
+          habilidades: Json | null
+          id_hoja_de_vida: number
+          id_usuario: number
+          perfil_profesional: string | null
+          resumen_profesional: string | null
+          updated_at: string
+        }
+        Insert: {
+          actualizado_en?: string
+          completa?: boolean
+          completada_en?: string | null
           creado_en?: string
           experiencia_laboral?: string | null
-          formacion_academica?: string | null
-          habilidades?: string | null
+          formacion_academica?: Json | null
+          foto_perfil_url?: string | null
+          habilidades?: Json | null
+          id_hoja_de_vida?: number
+          id_usuario: number
+          perfil_profesional?: string | null
+          resumen_profesional?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actualizado_en?: string
+          completa?: boolean
+          completada_en?: string | null
+          creado_en?: string
+          experiencia_laboral?: string | null
+          formacion_academica?: Json | null
+          foto_perfil_url?: string | null
+          habilidades?: Json | null
           id_hoja_de_vida?: number
           id_usuario?: number
           perfil_profesional?: string | null
+          resumen_profesional?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1466,6 +1567,7 @@ export type Database = {
           creado_en: string
           email: string
           expires_at: string
+          fecha_nacimiento: string | null
           id_iglesia: number
           id_invite_token: number
           id_ministerio: number | null
@@ -1481,6 +1583,7 @@ export type Database = {
           creado_en?: string
           email: string
           expires_at: string
+          fecha_nacimiento?: string | null
           id_iglesia: number
           id_invite_token?: number
           id_ministerio?: number | null
@@ -1496,6 +1599,7 @@ export type Database = {
           creado_en?: string
           email?: string
           expires_at?: string
+          fecha_nacimiento?: string | null
           id_iglesia?: number
           id_invite_token?: number
           id_ministerio?: number | null
@@ -1671,10 +1775,15 @@ export type Database = {
         Row: {
           creado_en: string
           fecha_lectura: string | null
+          id_iglesia: number | null
+          id_ministerio: number | null
           id_notificacion: number
+          id_sede: number | null
           id_usuario: number
           leida: boolean
           mensaje: string
+          referencia_id: number | null
+          referencia_tipo: string | null
           tipo: Database["public"]["Enums"]["tipo_notificacion"]
           titulo: string
           updated_at: string
@@ -1682,10 +1791,15 @@ export type Database = {
         Insert: {
           creado_en?: string
           fecha_lectura?: string | null
+          id_iglesia?: number | null
+          id_ministerio?: number | null
           id_notificacion?: number
+          id_sede?: number | null
           id_usuario: number
           leida?: boolean
           mensaje: string
+          referencia_id?: number | null
+          referencia_tipo?: string | null
           tipo?: Database["public"]["Enums"]["tipo_notificacion"]
           titulo: string
           updated_at?: string
@@ -1693,15 +1807,41 @@ export type Database = {
         Update: {
           creado_en?: string
           fecha_lectura?: string | null
+          id_iglesia?: number | null
+          id_ministerio?: number | null
           id_notificacion?: number
+          id_sede?: number | null
           id_usuario?: number
           leida?: boolean
           mensaje?: string
+          referencia_id?: number | null
+          referencia_tipo?: string | null
           tipo?: Database["public"]["Enums"]["tipo_notificacion"]
           titulo?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notificacion_id_iglesia_fkey"
+            columns: ["id_iglesia"]
+            isOneToOne: false
+            referencedRelation: "iglesia"
+            referencedColumns: ["id_iglesia"]
+          },
+          {
+            foreignKeyName: "notificacion_id_ministerio_fkey"
+            columns: ["id_ministerio"]
+            isOneToOne: false
+            referencedRelation: "ministerio"
+            referencedColumns: ["id_ministerio"]
+          },
+          {
+            foreignKeyName: "notificacion_id_sede_fkey"
+            columns: ["id_sede"]
+            isOneToOne: false
+            referencedRelation: "sede"
+            referencedColumns: ["id_sede"]
+          },
           {
             foreignKeyName: "notificacion_id_usuario_fkey"
             columns: ["id_usuario"]
@@ -2023,6 +2163,7 @@ export type Database = {
           descripcion: string | null
           estado: Database["public"]["Enums"]["estado_tarea"]
           fecha_limite: string | null
+          horas_margen_rechazo: number
           id_evento: number | null
           id_iglesia: number | null
           id_ministerio: number | null
@@ -2037,6 +2178,7 @@ export type Database = {
           descripcion?: string | null
           estado?: Database["public"]["Enums"]["estado_tarea"]
           fecha_limite?: string | null
+          horas_margen_rechazo?: number
           id_evento?: number | null
           id_iglesia?: number | null
           id_ministerio?: number | null
@@ -2051,6 +2193,7 @@ export type Database = {
           descripcion?: string | null
           estado?: Database["public"]["Enums"]["estado_tarea"]
           fecha_limite?: string | null
+          horas_margen_rechazo?: number
           id_evento?: number | null
           id_iglesia?: number | null
           id_ministerio?: number | null
@@ -2136,31 +2279,40 @@ export type Database = {
       tarea_asignada: {
         Row: {
           creado_en: string
+          estado_asignacion: Database["public"]["Enums"]["estado_asignacion_tarea"]
           fecha_asignacion: string
           fecha_completado: string | null
+          fecha_rechazo: string | null
           id_tarea: number
           id_tarea_asignada: number
           id_usuario: number
+          motivo_rechazo: string | null
           observaciones: string | null
           updated_at: string
         }
         Insert: {
           creado_en?: string
+          estado_asignacion?: Database["public"]["Enums"]["estado_asignacion_tarea"]
           fecha_asignacion?: string
           fecha_completado?: string | null
+          fecha_rechazo?: string | null
           id_tarea: number
           id_tarea_asignada?: number
           id_usuario: number
+          motivo_rechazo?: string | null
           observaciones?: string | null
           updated_at?: string
         }
         Update: {
           creado_en?: string
+          estado_asignacion?: Database["public"]["Enums"]["estado_asignacion_tarea"]
           fecha_asignacion?: string
           fecha_completado?: string | null
+          fecha_rechazo?: string | null
           id_tarea?: number
           id_tarea_asignada?: number
           id_usuario?: number
+          motivo_rechazo?: string | null
           observaciones?: string | null
           updated_at?: string
         }
@@ -2393,7 +2545,7 @@ export type Database = {
           activo: boolean
           apellidos: string
           auth_user_id: string | null
-          contrasena_hash: string
+          contrasena_hash: string | null
           correo: string
           creado_en: string
           fecha_nacimiento: string | null
@@ -2407,7 +2559,7 @@ export type Database = {
           activo?: boolean
           apellidos: string
           auth_user_id?: string | null
-          contrasena_hash: string
+          contrasena_hash?: string | null
           correo: string
           creado_en?: string
           fecha_nacimiento?: string | null
@@ -2421,7 +2573,7 @@ export type Database = {
           activo?: boolean
           apellidos?: string
           auth_user_id?: string | null
-          contrasena_hash?: string
+          contrasena_hash?: string | null
           correo?: string
           creado_en?: string
           fecha_nacimiento?: string | null
@@ -2619,6 +2771,7 @@ export type Database = {
           id_aula_evaluacion: number | null
           id_aula_modulo: number | null
           id_evaluacion_detalle: number | null
+          opciones: Json | null
           orden: number | null
           pregunta: string | null
           respuesta_correcta: string | null
@@ -2705,6 +2858,28 @@ export type Database = {
     Functions: {
       _current_app_user_id: { Args: never; Returns: number }
       _is_manager: { Args: never; Returns: boolean }
+      actualizar_evaluacion: {
+        Args: {
+          p_descripcion?: string
+          p_id_evaluacion: number
+          p_max_intentos?: number
+          p_puntaje_minimo?: number
+          p_titulo: string
+        }
+        Returns: Json
+      }
+      actualizar_evaluacion_completa: {
+        Args: {
+          p_descripcion?: string
+          p_id_evaluacion: number
+          p_max_intentos?: number
+          p_preguntas?: Json
+          p_puntaje_minimo?: number
+          p_reintentos_permitidos?: boolean
+          p_titulo: string
+        }
+        Returns: Json
+      }
       assign_role_with_ministerio: {
         Args: {
           p_id_iglesia: number
@@ -2719,17 +2894,38 @@ export type Database = {
         Args: { object_name: string }
         Returns: number
       }
+      calificar_y_guardar_intento: {
+        Args: { p_id_modulo: number; p_respuestas: Json }
+        Returns: Json
+      }
       can_access_aula_curso: {
         Args: { p_id_aula_curso: number }
         Returns: boolean
       }
       can_assign_role: { Args: { target_role_id: number }; Returns: boolean }
+      can_assign_role_scoped: {
+        Args: {
+          p_id_iglesia: number
+          p_id_ministerio?: number
+          p_id_sede?: number
+          p_target_role_id: number
+        }
+        Returns: boolean
+      }
       can_enroll_in_ciclo: {
         Args: { target_ciclo_id: number }
         Returns: boolean
       }
+      can_manage_aula_curso: {
+        Args: { p_id_aula_curso: number }
+        Returns: boolean
+      }
       can_manage_curso_scope: {
         Args: { target_curso_id: number }
+        Returns: boolean
+      }
+      can_manage_ministerio: {
+        Args: { p_id_ministerio: number }
         Returns: boolean
       }
       can_manage_ministerio_formacion_scope: {
@@ -2740,6 +2936,7 @@ export type Database = {
         Args: { target_ministerio_id: number }
         Returns: boolean
       }
+      can_manage_sede: { Args: { p_id_sede: number }; Returns: boolean }
       can_read_modulo_as_student: {
         Args: { p_id_modulo: number }
         Returns: boolean
@@ -2747,6 +2944,44 @@ export type Database = {
       can_read_proceso_as_student: {
         Args: { target_ciclo_id: number }
         Returns: boolean
+      }
+      crear_evaluacion:
+        | {
+            Args: {
+              p_descripcion?: string
+              p_id_aula_modulo: number
+              p_max_intentos?: number
+              p_puntaje_minimo?: number
+              p_reintentos_permitidos?: boolean
+              p_titulo: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_descripcion?: string
+              p_id_aula_modulo: number
+              p_max_intentos?: number
+              p_preguntas?: Json
+              p_puntaje_minimo?: number
+              p_reintentos_permitidos?: boolean
+              p_titulo: string
+            }
+            Returns: Json
+          }
+      crear_notificaciones_masivas: {
+        Args: {
+          p_id_iglesia?: number
+          p_id_ministerio?: number
+          p_id_sede?: number
+          p_mensaje: string
+          p_referencia_id?: number
+          p_referencia_tipo?: string
+          p_tipo: Database["public"]["Enums"]["tipo_notificacion"]
+          p_titulo: string
+          p_usuario_ids: number[]
+        }
+        Returns: undefined
       }
       create_evento_with_ministerios: {
         Args: {
@@ -2785,6 +3020,7 @@ export type Database = {
         Args: {
           p_descripcion?: string
           p_fecha_limite?: string
+          p_horas_margen_rechazo?: number
           p_id_evento?: number
           p_id_ministerio?: number
           p_id_usuario_creador?: number
@@ -2796,6 +3032,7 @@ export type Database = {
           descripcion: string | null
           estado: Database["public"]["Enums"]["estado_tarea"]
           fecha_limite: string | null
+          horas_margen_rechazo: number
           id_evento: number | null
           id_iglesia: number | null
           id_ministerio: number | null
@@ -2822,6 +3059,14 @@ export type Database = {
         Args: { target_usuario_id: number }
         Returns: string
       }
+      eliminar_evaluacion: {
+        Args: { p_id_evaluacion: number }
+        Returns: boolean
+      }
+      emitir_certificado_si_corresponde: {
+        Args: { p_id_aula_curso: number; p_id_usuario: number }
+        Returns: undefined
+      }
       enroll_users: {
         Args: {
           p_ciclo_id: number
@@ -2835,6 +3080,10 @@ export type Database = {
         }[]
       }
       finalizar_ciclo: { Args: { p_id_proceso: number }; Returns: undefined }
+      finalizar_intento_evaluacion: {
+        Args: { p_id_intento: number }
+        Returns: Json
+      }
       get_all_usuarios_enriquecidos: {
         Args: never
         Returns: {
@@ -2852,6 +3101,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_calificaciones_curso: { Args: { p_id_curso: number }; Returns: Json }
       get_enrollment_candidates: {
         Args: { p_ciclo_id: number; p_override_ministerio?: boolean }
         Returns: {
@@ -2862,6 +3112,14 @@ export type Database = {
           nombres: string
           ya_inscrito_activo_en_curso: boolean
         }[]
+      }
+      get_evaluacion_detalle: {
+        Args: { p_id_evaluacion: number }
+        Returns: Json
+      }
+      get_evaluacion_estudiante: {
+        Args: { p_id_modulo: number }
+        Returns: Json
       }
       get_hoja_de_vida_completa: {
         Args: { usuario_id: number }
@@ -2888,6 +3146,20 @@ export type Database = {
         Args: { target_ministerio_id: number }
         Returns: number
       }
+      get_lideres_superiores: {
+        Args: { p_id_usuario: number }
+        Returns: number[]
+      }
+      get_modulos_con_evaluaciones: {
+        Args: { p_id_curso: number }
+        Returns: Json
+      }
+      get_my_ministerio_member_ids: {
+        Args: never
+        Returns: {
+          id_usuario: number
+        }[]
+      }
       get_my_ministerios: {
         Args: never
         Returns: {
@@ -2895,6 +3167,15 @@ export type Database = {
         }[]
       }
       get_my_ministerios_as_lider: { Args: never; Returns: number[] }
+      get_my_ministerios_v2: {
+        Args: never
+        Returns: {
+          idMinisterio: number
+          idSede: number
+          ministerioNombre: string
+          sedeNombre: string
+        }[]
+      }
       get_my_permissions_updated_at: { Args: never; Returns: string }
       get_my_role: { Args: never; Returns: string }
       get_my_roles: {
@@ -2923,7 +3204,7 @@ export type Database = {
           activo: boolean
           apellidos: string
           auth_user_id: string | null
-          contrasena_hash: string
+          contrasena_hash: string | null
           correo: string
           creado_en: string
           fecha_nacimiento: string | null
@@ -2941,6 +3222,25 @@ export type Database = {
         }
       }
       get_my_usuario_id: { Args: never; Returns: number }
+      get_opciones_para_responder: {
+        Args: { p_id_aula_evaluacion: number }
+        Returns: {
+          id_aula_opcion: number
+          id_aula_pregunta: number
+          opcion: string
+          orden: number
+          texto: string
+        }[]
+      }
+      get_preguntas_para_responder: {
+        Args: { p_id_aula_evaluacion: number }
+        Returns: {
+          enunciado: string
+          id_aula_pregunta: number
+          orden: number
+          tipo: string
+        }[]
+      }
       get_tarea_ministerio: { Args: { p_id_tarea: number }; Returns: number }
       get_tarea_timeline: {
         Args: { p_id_tarea: number }
@@ -2984,6 +3284,41 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_usuarios_enriquecidos_scoped: {
+        Args: never
+        Returns: {
+          activo: boolean
+          apellidos: string
+          auth_user_id: string
+          correo: string
+          creado_en: string
+          fecha_nacimiento: string
+          id_usuario: number
+          ministerios: Json
+          nombres: string
+          roles: Json
+          telefono: string
+          ultimo_acceso: string
+          updated_at: string
+        }[]
+      }
+      get_usuarios_iglesia: {
+        Args: { p_id_iglesia: number }
+        Returns: number[]
+      }
+      get_usuarios_ministerio: {
+        Args: { p_id_ministerio: number }
+        Returns: number[]
+      }
+      get_usuarios_sede: { Args: { p_id_sede: number }; Returns: number[] }
+      hdv_can_review_usuario: {
+        Args: { p_target_usuario: number }
+        Returns: boolean
+      }
+      hdv_can_view_usuario: {
+        Args: { p_target_usuario: number }
+        Returns: boolean
+      }
       inscribir_usuarios_curso: {
         Args: { p_id_aula_curso: number; p_user_ids: number[] }
         Returns: {
@@ -3018,17 +3353,19 @@ export type Database = {
         Args: { target_role_id: number }
         Returns: boolean
       }
-      listar_hojas_de_vida_scoped: {
-        Args: {
-          p_estado_revision?: string
-          p_etiqueta_ids?: number[]
-          p_id_iglesia?: number
-          p_id_ministerio?: number
-          p_id_sede?: number
-          p_solo_completas?: boolean
-        }
-        Returns: Json
-      }
+      listar_hojas_de_vida_scoped:
+        | { Args: { filtros?: Json }; Returns: Json[] }
+        | {
+            Args: {
+              p_estado_revision?: string
+              p_etiqueta_ids?: number[]
+              p_id_iglesia?: number
+              p_id_ministerio?: number
+              p_id_sede?: number
+              p_solo_completas?: boolean
+            }
+            Returns: Json
+          }
       remove_rol_by_criteria: {
         Args: {
           target_iglesia_id: number
@@ -3036,6 +3373,22 @@ export type Database = {
           target_usuario_id: number
         }
         Returns: boolean
+      }
+      remover_miembro_ministerio: {
+        Args: { p_id_miembro_ministerio: number }
+        Returns: boolean
+      }
+      rpc_notificar_contenido_curso: {
+        Args: {
+          p_id_curso: number
+          p_tipo_contenido: string
+          p_titulo_contenido: string
+        }
+        Returns: number
+      }
+      rpc_rechazar_asignacion_tarea: {
+        Args: { p_id_tarea_asignada: number; p_motivo: string }
+        Returns: undefined
       }
       toggle_tarea_checklist: {
         Args: { p_completada: boolean; p_id_checklist: number }
@@ -3064,6 +3417,7 @@ export type Database = {
           descripcion: string | null
           estado: Database["public"]["Enums"]["estado_tarea"]
           fecha_limite: string | null
+          horas_margen_rechazo: number
           id_evento: number | null
           id_iglesia: number | null
           id_ministerio: number | null
@@ -3082,6 +3436,7 @@ export type Database = {
       }
     }
     Enums: {
+      estado_asignacion_tarea: "activa" | "rechazada"
       estado_curso: "borrador" | "activo" | "inactivo" | "archivado"
       estado_detalle: "inscrito" | "en_progreso" | "completado" | "retirado"
       estado_evaluacion: "pendiente" | "aprobado" | "reprobado" | "en_revision"
@@ -3226,6 +3581,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      estado_asignacion_tarea: ["activa", "rechazada"],
       estado_curso: ["borrador", "activo", "inactivo", "archivado"],
       estado_detalle: ["inscrito", "en_progreso", "completado", "retirado"],
       estado_evaluacion: ["pendiente", "aprobado", "reprobado", "en_revision"],

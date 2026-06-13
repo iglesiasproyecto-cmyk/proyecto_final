@@ -228,6 +228,7 @@ export interface Tarea {
   creadoEn: string
   actualizadoEn: string
   archivedAt?: string | null
+  horasMargenRechazo: number
   asignados?: TareaAsignada[]
 }
 
@@ -241,6 +242,9 @@ export interface TareaAsignada {
   creadoEn: string
   actualizadoEn: string
   nombreCompleto?: string
+  estadoAsignacion: 'activa' | 'rechazada'
+  motivoRechazo: string | null
+  fechaRechazo: string | null
 }
 
 export interface TareaEvidencia {

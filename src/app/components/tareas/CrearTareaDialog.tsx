@@ -44,6 +44,7 @@ export function CrearTareaDialog({ open, onOpenChange, idUsuarioCreador, onCreat
     prioridad: "media" as "baja" | "media" | "alta" | "urgente",
     idMinisterio: 0,
     idEvento: 0,
+    horasMargenRechazo: 12,
   })
   const [asignadosIds, setAsignadosIds] = useState<number[]>([])
 
@@ -56,7 +57,7 @@ export function CrearTareaDialog({ open, onOpenChange, idUsuarioCreador, onCreat
   }, [ministerios, form.idMinisterio])
 
   const resetForm = () => {
-    setForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: 0, idEvento: 0 })
+    setForm({ titulo: "", descripcion: "", fechaLimite: "", prioridad: "media", idMinisterio: 0, idEvento: 0, horasMargenRechazo: 12 })
     setAsignadosIds([])
   }
 
@@ -76,6 +77,7 @@ export function CrearTareaDialog({ open, onOpenChange, idUsuarioCreador, onCreat
         idUsuarioCreador,
         idMinisterio: form.idMinisterio,
         idEvento: form.idEvento || null,
+        horasMargenRechazo: form.horasMargenRechazo,
       })
       if (asignadosIds.length > 0) {
         await Promise.allSettled(
@@ -212,6 +214,21 @@ export function CrearTareaDialog({ open, onOpenChange, idUsuarioCreador, onCreat
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* Margen para rechazar */}
+          <div>
+            <FieldLabel>Margen para rechazar (horas)</FieldLabel>
+            <Input
+              type="number"
+              min={0}
+              value={form.horasMargenRechazo}
+              onChange={e => setForm(p => ({ ...p, horasMargenRechazo: Number(e.target.value) || 0 }))}
+              className="h-11 bg-background/50 border-white/10 rounded-xl text-sm"
+            />
+            <p className="text-[10px] text-muted-foreground/60 mt-1">
+              El asignado podrá rechazar hasta esta cantidad de horas antes del vencimiento. Default 12.
+            </p>
           </div>
 
           {/* Servidores */}
